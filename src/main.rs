@@ -8,17 +8,16 @@ use bevy::{
     input::mouse::MouseMotion,
     prelude::{
         default, shape, App, AssetServer, Assets, Bundle, Camera, Camera3d, Camera3dBundle, Color,
-        Commands, Component, EventReader, GlobalTransform, Image, Input, KeyCode, Material, Mesh,
-        OrthographicProjection, PbrBundle, PointLightBundle, Query, Res, ResMut, StandardMaterial,
-        Transform, Vec2, Vec3, With,
+        Commands, Component, EventReader, GlobalTransform, Image, Input, KeyCode, Mat4, Material,
+        Mesh, Msaa, OrthographicProjection, PbrBundle, PointLightBundle, Query, Ray, Res, ResMut,
+        StandardMaterial, Transform, Vec2, Vec3, With, Without,
     },
     render::camera::ScalingMode,
     sprite::ColorMaterial,
     window::Windows,
     DefaultPlugins,
 };
-
-use crate::config::CONFIG;
+use tracing::info;
 
 #[derive(Component)]
 struct Position {
@@ -136,7 +135,7 @@ fn move_player(input: Res<Input<KeyCode>>, mut query: Query<&mut Transform, With
     let mut transform = query.single_mut();
     let mut vec = Vec2::new(0.0, 0.0);
 
-    let controls = &LazyLock::force(&CONFIG).controls;
+    let controls = &config::config().controls;
 
     if input.pressed(controls.left) {
         vec += Vec2::new(-SPEED, 0.0);
@@ -156,27 +155,70 @@ fn move_player(input: Res<Input<KeyCode>>, mut query: Query<&mut Transform, With
     transform.translation += delta;
 }
 
+// Logic taken from here:
+// https://github.com/lucaspoffo/renet/blob/c963b65b66325c536d115faab31638f3ad2b5e48/demo_bevy/src/lib.rs#L196-L215
+fn ray_from_screenspace(
+    windows: &Res<Windows>,
+    camera: &Camera,
+    camera_transform: &GlobalTransform,
+) -> Option<Ray> {
+    let window = windows.get_primary().unwrap();
+    let cursor_position = window.cursor_position()?;
+
+    let view = camera_transform.compute_matrix();
+    let screen_size = camera.logical_target_size()?;
+    let projection = camera.projection_matrix();
+    let far_ndc = projection.project_point3(Vec3::NEG_Z).z;
+    let near_ndc = projection.project_point3(Vec3::Z).z;
+    let cursor_ndc = (cursor_position / screen_size) * 2.0 - Vec2::ONE;
+    let ndc_to_world: Mat4 = view * projection.inverse();
+    let near = ndc_to_world.project_point3(cursor_ndc.extend(near_ndc));
+    let far = ndc_to_world.project_point3(cursor_ndc.extend(far_ndc));
+    let ray_direction = far - near;
+
+    Some(Ray {
+        origin: near,
+        direction: ray_direction,
+    })
+}
+
+// Logic taken from here:
+// https://github.com/lucaspoffo/renet/blob/c963b65b66325c536d115faab31638f3ad2b5e48/demo_bevy/src/lib.rs#L217-L228
+fn intersect_xy_plane(ray: &Ray, z_offset: f32) -> Option<Vec3> {
+    let plane_normal = Vec3::Z;
+    let plane_origin = Vec3::new(0.0, z_offset, 0.0);
+    let denominator = ray.direction.dot(plane_normal);
+    if denominator.abs() > f32::EPSILON {
+        let point_to_point = plane_origin * z_offset - ray.origin;
+        let intersect_dist = plane_normal.dot(point_to_point) / denominator;
+        let intersect_position = ray.direction * intersect_dist + ray.origin;
+        Some(intersect_position)
+    } else {
+        None
+    }
+}
+
+/// Moves the camera and orients the player based on the mouse cursor.
 fn move_camera(
     windows: Res<Windows>,
-    mut mouse: EventReader<MouseMotion>,
-    mut query: Query<(&mut Transform, &Camera, &GlobalTransform)>,
+    mut camera_query: Query<(&mut Transform, &Camera, &GlobalTransform)>,
+    player_query: Query<&Transform, (With<Player>, Without<Camera>)>,
 ) {
-    let (transform, camera, global_transform) = query.single();
+    let (mut transform, camera, global_transform) = camera_query.single_mut();
+    let player_transform = player_query.single();
 
-    let window = windows.get_primary().unwrap();
-    let pos = match window.cursor_position() {
-        Some(pos) => pos,
+    let cursor = match ray_from_screenspace(&windows, camera, global_transform)
+        .as_ref()
+        .and_then(|ray| intersect_xy_plane(ray, 0.0))
+    {
+        Some(ray) => ray,
         None => return,
     };
-    let window_size = Vec2::new(window.width(), window.height());
-    // convert screen position ot ndc (gpu coords)
-    let ndc = (pos / window_size) * 2.00 - Vec2::ONE;
-    // Matrix for undoing the projection and camera transform
-    // let ndc_to_world = transform.compute_matrix() * camera.projection_matrix().inverse();
-    // let world_pos = ndc_to_world.project_point3(ndc.extend(-1.0));
-    // let world_pos: Vec2 = world_pos.truncate();
 
-    // println!("{world_pos}");
+    const CURSOR_WEIGHT: f32 = 0.33;
+    let look_at = cursor * CURSOR_WEIGHT + player_transform.translation * (1.0 - CURSOR_WEIGHT);
+
+    *transform = Transform::from_translation(CAMERA_OFFSET + look_at).looking_at(look_at, Vec3::Z);
 }
 
 fn main() {
