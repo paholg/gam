@@ -1,3 +1,9 @@
+#![feature(once_cell)]
+
+pub mod config;
+
+use std::sync::LazyLock;
+
 use bevy::{
     input::mouse::MouseMotion,
     prelude::{
@@ -11,6 +17,8 @@ use bevy::{
     window::Windows,
     DefaultPlugins,
 };
+
+use crate::config::CONFIG;
 
 #[derive(Component)]
 struct Position {
@@ -59,9 +67,8 @@ fn setup(
     mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    commands
-        .spawn()
-        .insert_bundle(CharacterBundle {
+    commands.spawn((
+        CharacterBundle {
             pos: Position {
                 x: 0.0,
                 y: 0.0,
@@ -73,8 +80,8 @@ fn setup(
                 max: 100.0,
             },
             radius: Radius { r: PLAYER_R },
-        })
-        .insert_bundle(PbrBundle {
+        },
+        PbrBundle {
             mesh: meshes.add(
                 shape::Icosphere {
                     radius: 1.0,
@@ -89,11 +96,12 @@ fn setup(
                 ..default()
             },
             ..default()
-        })
-        .insert(Player);
+        },
+        Player,
+    ));
 
     // ground plane
-    commands.spawn_bundle(PbrBundle {
+    commands.spawn(PbrBundle {
         mesh: meshes.add(
             shape::Quad {
                 size: Vec2::new(20.0, 20.0),
@@ -105,7 +113,7 @@ fn setup(
         ..default()
     });
 
-    commands.spawn_bundle(Camera3dBundle {
+    commands.spawn(Camera3dBundle {
         projection: OrthographicProjection {
             scale: 10.0,
             scaling_mode: ScalingMode::FixedVertical(2.0),
@@ -117,7 +125,7 @@ fn setup(
     });
 
     // light
-    commands.spawn_bundle(PointLightBundle {
+    commands.spawn(PointLightBundle {
         transform: Transform::from_xyz(0.0, 0.0, 5.0),
         ..default()
     });
@@ -127,16 +135,19 @@ fn move_player(input: Res<Input<KeyCode>>, mut query: Query<&mut Transform, With
     const SPEED: f32 = 0.1;
     let mut transform = query.single_mut();
     let mut vec = Vec2::new(0.0, 0.0);
-    if input.pressed(KeyCode::S) {
+
+    let controls = &LazyLock::force(&CONFIG).controls;
+
+    if input.pressed(controls.left) {
         vec += Vec2::new(-SPEED, 0.0);
     }
-    if input.pressed(KeyCode::F) {
+    if input.pressed(controls.right) {
         vec += Vec2::new(SPEED, 0.0);
     }
-    if input.pressed(KeyCode::E) {
+    if input.pressed(controls.up) {
         vec += Vec2::new(0.0, SPEED);
     }
-    if input.pressed(KeyCode::D) {
+    if input.pressed(controls.down) {
         vec += Vec2::new(0.0, -SPEED);
     }
     vec = vec.clamp_length_max(SPEED);
@@ -150,7 +161,6 @@ fn move_camera(
     mut mouse: EventReader<MouseMotion>,
     mut query: Query<(&mut Transform, &Camera, &GlobalTransform)>,
 ) {
-    // Assume one camera
     let (transform, camera, global_transform) = query.single();
 
     let window = windows.get_primary().unwrap();
@@ -162,11 +172,11 @@ fn move_camera(
     // convert screen position ot ndc (gpu coords)
     let ndc = (pos / window_size) * 2.00 - Vec2::ONE;
     // Matrix for undoing the projection and camera transform
-    let ndc_to_world = transform.compute_matrix() * camera.projection_matrix().inverse();
-    let world_pos = ndc_to_world.project_point3(ndc.extend(-1.0));
+    // let ndc_to_world = transform.compute_matrix() * camera.projection_matrix().inverse();
+    // let world_pos = ndc_to_world.project_point3(ndc.extend(-1.0));
     // let world_pos: Vec2 = world_pos.truncate();
 
-    println!("{world_pos}");
+    // println!("{world_pos}");
 }
 
 fn main() {
