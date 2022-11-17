@@ -1,13 +1,20 @@
 use std::{fs, io, path::PathBuf, sync::LazyLock};
 
-use bevy::{core_pipeline::fxaa, prelude::KeyCode};
+use bevy::{
+    core_pipeline::fxaa,
+    prelude::{GamepadButton, Input, KeyCode, MouseButton, Res},
+};
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, error, info};
 
+use crate::ability::Ability;
+
 // TODO: NAME THESE THINGS
 const ORG: &str = "Paho Corp";
 const NAME: &str = "Gam";
+
+const ABILITY_COUNT: usize = 3;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -15,14 +22,18 @@ pub enum Error {
     HomeDirNotFound,
     #[error("IO error: {0}")]
     Io(#[from] io::Error),
-    #[error("Config parse error: {0}")]
-    TomlDe(#[from] toml::de::Error),
-    #[error("Config save error: {0}")]
-    TomlSer(#[from] toml::ser::Error),
+    // #[error("Config parse error: {0}")]
+    // TomlDe(#[from] toml::de::Error),
+    // #[error("Config save error: {0}")]
+    // TomlSer(#[from] toml::ser::Error),
+    #[error("Config parse/serialize error: {0}")]
+    Json(#[from] serde_json::Error),
 }
 
 /// Return the path to the config file, if able.
 /// Creates any necessary directories of they do not exist.
+// TODO: The toml crate does not currently support enums. SAD. So we're using
+//  json.
 fn config_file() -> Result<PathBuf, Error> {
     let proj_dirs = ProjectDirs::from("", ORG, NAME).ok_or(Error::HomeDirNotFound)?;
     let config_dir = proj_dirs.config_dir();
@@ -30,30 +41,38 @@ fn config_file() -> Result<PathBuf, Error> {
     fs::create_dir_all(&config_dir)?;
 
     let mut path = config_dir.to_owned();
-    path.push("config.toml");
+    path.push("config.json");
     Ok(path)
 }
 
 fn load_config() -> Result<Config, Error> {
     let contents = fs::read_to_string(config_file()?)?;
-    let config = toml::de::from_str(&contents)?;
-    info!(?config, "Config loaded");
+    let config = serde_json::from_str(&contents)?;
+    info!("Config loaded: {:#?}", config);
     Ok(config)
 }
 
-pub fn save_config() -> Result<(), Error> {
-    let config = toml::ser::to_string(LazyLock::force(&CONFIG))?;
+pub fn save_config(config: &Config) -> Result<(), Error> {
+    let config = serde_json::to_string_pretty(config)?;
     fs::write(&config_file()?, &config)?;
 
     Ok(())
 }
 
-static CONFIG: LazyLock<Config> = LazyLock::new(|| match load_config() {
-    Ok(config) => config,
-    Err(error) => {
-        error!(%error, "Error loading config");
-        Config::default()
+static CONFIG: LazyLock<Config> = LazyLock::new(|| {
+    let config = match load_config() {
+        Ok(config) => config,
+        Err(error) => {
+            error!(%error, "Error loading config");
+            Config::default()
+        }
+    };
+    // TODO: For now, we always save config on load to pickup changes. Stop
+    // doing this once we can edit the config in-game.
+    if let Err(error) = save_config(&config) {
+        error!(?error, "Error saving config");
     }
+    config
 });
 
 pub fn config() -> &'static Config {
@@ -65,28 +84,66 @@ pub fn config() -> &'static Config {
 pub struct Config {
     pub controls: Controls,
     pub graphics: Graphics,
+    pub player: Player,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Button {
+    Keyboard(KeyCode),
+    Mouse(MouseButton),
+    Controller(GamepadButton),
+}
+
+impl Button {
+    pub fn pressed(
+        &self,
+        keyboard_input: &Res<Input<KeyCode>>,
+        mouse_input: &Res<Input<MouseButton>>,
+    ) -> bool {
+        match self {
+            Button::Keyboard(button) => keyboard_input.pressed(*button),
+            Button::Mouse(button) => mouse_input.pressed(*button),
+            Button::Controller(_) => todo!(),
+        }
+    }
+
+    pub fn just_pressed(
+        &self,
+        keyboard_input: &Res<Input<KeyCode>>,
+        mouse_input: &Res<Input<MouseButton>>,
+    ) -> bool {
+        match self {
+            Button::Keyboard(button) => keyboard_input.just_pressed(*button),
+            Button::Mouse(button) => mouse_input.just_pressed(*button),
+            Button::Controller(_) => todo!(),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Controls {
-    pub left: KeyCode,
-    pub right: KeyCode,
-    pub up: KeyCode,
-    pub down: KeyCode,
+    pub left: Button,
+    pub right: Button,
+    pub up: Button,
+    pub down: Button,
 
-    pub ability1: KeyCode,
+    pub abilities: [Button; ABILITY_COUNT],
 }
 
 impl Default for Controls {
     fn default() -> Self {
         Self {
-            left: KeyCode::A,
-            right: KeyCode::D,
-            up: KeyCode::W,
-            down: KeyCode::S,
+            left: Button::Keyboard(KeyCode::A),
+            right: Button::Keyboard(KeyCode::D),
+            up: Button::Keyboard(KeyCode::W),
+            down: Button::Keyboard(KeyCode::S),
 
-            ability1: KeyCode::Space,
+            abilities: [
+                Button::Mouse(MouseButton::Left),
+                Button::Mouse(MouseButton::Right),
+                Button::Keyboard(KeyCode::Space),
+            ],
         }
     }
 }
@@ -138,4 +195,9 @@ impl From<Sensitivity> for fxaa::Sensitivity {
             Sensitivity::Extreme => Self::Extreme,
         }
     }
+}
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct Player {
+    pub abilities: [Ability; ABILITY_COUNT],
 }
