@@ -1507,8 +1507,8 @@ dependencies = [
  "directories",
  "rand",
  "serde",
+ "serde_json",
  "thiserror",
- "toml",
  "tracing",
  "tracing-subscriber",
 ]

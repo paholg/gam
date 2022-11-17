@@ -10,8 +10,9 @@ bevy_rapier3d = { git = "https://github.com/devil-ira/bevy_rapier", branch = "be
 directories = "4"
 rand = "0.8"
 serde = "1"
+serde_json = "1"
 thiserror = "1"
-toml = "0.5"
+# toml = "0.5"
 tracing = "0.1"
 tracing-subscriber = "0.3"
 
