@@ -2,44 +2,40 @@
 
 pub mod config;
 
-use std::sync::LazyLock;
+use std::{f32::consts::PI, sync::LazyLock};
 
 use bevy::{
+    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
     input::mouse::MouseMotion,
     prelude::{
-        default, shape, App, AssetServer, Assets, Bundle, Camera, Camera3d, Camera3dBundle, Color,
-        Commands, Component, EventReader, GlobalTransform, Image, Input, KeyCode, Mat4, Material,
-        Mesh, Msaa, OrthographicProjection, PbrBundle, PointLightBundle, Query, Ray, Res, ResMut,
-        StandardMaterial, Transform, Vec2, Vec3, With, Without,
+        default, shape, AmbientLight, App, AssetServer, Assets, Bundle, Camera, Camera3d,
+        Camera3dBundle, Color, Commands, Component, ComputedVisibility, DirectionalLight,
+        DirectionalLightBundle, EventReader, GlobalTransform, Handle, Image, Input, KeyCode, Mat4,
+        Material, Mesh, Msaa, OrthographicProjection, PbrBundle, PointLight, PointLightBundle,
+        Quat, Query, Ray, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3, Visibility, With,
+        Without,
     },
     render::camera::ScalingMode,
+    scene::{Scene, SceneBundle},
     sprite::ColorMaterial,
     window::Windows,
     DefaultPlugins,
 };
+use bevy_rapier3d::{
+    prelude::{
+        Collider, Friction, LockedAxes, NoUserData, RapierConfiguration, RapierPhysicsPlugin,
+        RigidBody, Velocity,
+    },
+    rapier::prelude::ColliderBuilder,
+    render::RapierDebugRenderPlugin,
+};
+use rand::Rng;
 use tracing::info;
-
-#[derive(Component)]
-struct Position {
-    x: f32,
-    y: f32,
-    z: f32,
-}
-
-#[derive(Component)]
-struct Direction {
-    phi: f32,
-}
 
 #[derive(Component)]
 struct Health {
     cur: f32,
     max: f32,
-}
-
-#[derive(Component)]
-struct Radius {
-    r: f32,
 }
 
 #[derive(Component)]
@@ -49,68 +45,132 @@ struct Player;
 struct Enemy;
 
 #[derive(Bundle)]
-struct CharacterBundle {
-    pos: Position,
-    dir: Direction,
+struct CharacterBundle<M: Material> {
     health: Health,
-    radius: Radius,
+    scene: Handle<Scene>,
+    outline: Handle<Mesh>,
+    material: Handle<M>,
+    transform: Transform,
+    global_transform: GlobalTransform,
+    visibility: Visibility,
+    computed_visibility: ComputedVisibility,
+    collider: Collider,
+    body: RigidBody,
+    velocity: Velocity,
+    locked_axes: LockedAxes,
 }
 
 const PLAYER_R: f32 = 1.0;
+const SPEED: f32 = 10.0;
+const NUM_ENEMIES: u32 = 25;
 
 const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, -50.0, 50.0);
 
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    asset_server: Res<AssetServer>,
 ) {
     commands.spawn((
+        Player,
         CharacterBundle {
-            pos: Position {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
-            dir: Direction { phi: 0.0 },
             health: Health {
                 cur: 100.0,
                 max: 100.0,
             },
-            radius: Radius { r: PLAYER_R },
+            scene: asset_server.load("models/temp/craft_speederB.glb#Scene0"),
+            outline: meshes.add(
+                shape::Circle {
+                    radius: 1.0,
+                    vertices: 100,
+                }
+                .into(),
+            ),
+            material: materials.add(Color::GREEN.into()),
+            transform: Transform::default(),
+            global_transform: GlobalTransform::default(),
+            visibility: Visibility::VISIBLE,
+            computed_visibility: ComputedVisibility::default(),
+            collider: Collider::ball(1.0),
+            body: RigidBody::Dynamic,
+            velocity: Velocity::default(),
+            locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
         },
+    ));
+
+    let mut rng = rand::thread_rng();
+    for _ in 0..NUM_ENEMIES {
+        let x = rng.gen::<f32>() * (PLANE_SIZE - PLAYER_R) - (PLANE_SIZE - PLAYER_R) * 0.5;
+        let y = rng.gen::<f32>() * (PLANE_SIZE - PLAYER_R) - (PLANE_SIZE - PLAYER_R) * 0.5;
+        commands.spawn((
+            Enemy,
+            CharacterBundle {
+                health: Health {
+                    cur: 100.0,
+                    max: 100.0,
+                },
+                scene: asset_server.load("models/temp/craft_speederB.glb#Scene0"),
+                outline: meshes.add(
+                    shape::Circle {
+                        radius: 1.0,
+                        vertices: 100,
+                    }
+                    .into(),
+                ),
+                material: materials.add(Color::RED.into()),
+                transform: Transform::from_xyz(x, y, 0.0),
+                global_transform: GlobalTransform::default(),
+                visibility: Visibility::VISIBLE,
+                computed_visibility: ComputedVisibility::default(),
+                collider: Collider::ball(1.0),
+                body: RigidBody::Dynamic,
+                velocity: Velocity::default(),
+                locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+            },
+        ));
+    }
+
+    // ground plane
+    const PLANE_SIZE: f32 = 30.0;
+    let collider = Collider::compound(vec![
+        (
+            Vec3::new(PLANE_SIZE * 1.5, 0.0, 0.0),
+            Quat::IDENTITY,
+            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
+        ),
+        (
+            Vec3::new(-PLANE_SIZE * 1.5, 0.0, 0.0),
+            Quat::IDENTITY,
+            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
+        ),
+        (
+            Vec3::new(0.0, PLANE_SIZE * 1.5, 0.0),
+            Quat::IDENTITY,
+            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
+        ),
+        (
+            Vec3::new(0.0, -PLANE_SIZE * 1.5, 0.0),
+            Quat::IDENTITY,
+            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
+        ),
+    ]);
+    commands.spawn((
         PbrBundle {
             mesh: meshes.add(
-                shape::Icosphere {
-                    radius: 1.0,
+                shape::Quad {
+                    size: Vec2::new(PLANE_SIZE, PLANE_SIZE),
                     ..default()
                 }
                 .into(),
             ),
-            material: materials.add(Color::LIME_GREEN.into()),
-            transform: Transform {
-                translation: Vec3::new(0.0, 0.0, 0.0),
-                scale: Vec3::new(PLAYER_R, PLAYER_R, PLAYER_R),
-                ..default()
-            },
+            material: materials.add(Color::SILVER.into()),
+            transform: Transform::from_xyz(0.0, 0.0, -0.1),
             ..default()
         },
-        Player,
+        RigidBody::KinematicPositionBased,
+        collider,
     ));
-
-    // ground plane
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(
-            shape::Quad {
-                size: Vec2::new(20.0, 20.0),
-                ..default()
-            }
-            .into(),
-        ),
-        material: materials.add(Color::SILVER.into()),
-        ..default()
-    });
 
     commands.spawn(Camera3dBundle {
         projection: OrthographicProjection {
@@ -125,14 +185,18 @@ fn setup(
 
     // light
     commands.spawn(PointLightBundle {
+        point_light: PointLight {
+            range: PLANE_SIZE,
+            intensity: 2000.0,
+            ..default()
+        },
         transform: Transform::from_xyz(0.0, 0.0, 5.0),
         ..default()
     });
 }
 
-fn move_player(input: Res<Input<KeyCode>>, mut query: Query<&mut Transform, With<Player>>) {
-    const SPEED: f32 = 0.1;
-    let mut transform = query.single_mut();
+fn move_player(input: Res<Input<KeyCode>>, mut query: Query<&mut Velocity, With<Player>>) {
+    let mut velocity = query.single_mut();
     let mut vec = Vec2::new(0.0, 0.0);
 
     let controls = &config::config().controls;
@@ -152,7 +216,7 @@ fn move_player(input: Res<Input<KeyCode>>, mut query: Query<&mut Transform, With
     vec = vec.clamp_length_max(SPEED);
 
     let delta = Vec3::new(vec.x, vec.y, 0.0);
-    transform.translation += delta;
+    velocity.linvel = delta;
 }
 
 // Logic taken from here:
@@ -198,14 +262,25 @@ fn intersect_xy_plane(ray: &Ray, z_offset: f32) -> Option<Vec3> {
     }
 }
 
+// Returns an angle of rotation, along the z-axis, so that `from` will be pointing to `to`
+fn pointing_angle(from: Vec3, to: Vec3) -> f32 {
+    let dir = to - from;
+    let angle = dir.angle_between(Vec3::Y);
+    if dir.x > 0.0 {
+        angle * -1.0
+    } else {
+        angle
+    }
+}
+
 /// Moves the camera and orients the player based on the mouse cursor.
-fn move_camera(
+fn update_cursor(
     windows: Res<Windows>,
     mut camera_query: Query<(&mut Transform, &Camera, &GlobalTransform)>,
-    player_query: Query<&Transform, (With<Player>, Without<Camera>)>,
+    mut player_query: Query<&mut Transform, (With<Player>, Without<Camera>)>,
 ) {
     let (mut transform, camera, global_transform) = camera_query.single_mut();
-    let player_transform = player_query.single();
+    let mut player_transform = player_query.single_mut();
 
     let cursor = match ray_from_screenspace(&windows, camera, global_transform)
         .as_ref()
@@ -219,13 +294,39 @@ fn move_camera(
     let look_at = cursor * CURSOR_WEIGHT + player_transform.translation * (1.0 - CURSOR_WEIGHT);
 
     *transform = Transform::from_translation(CAMERA_OFFSET + look_at).looking_at(look_at, Vec3::Z);
+
+    let angle = pointing_angle(player_transform.translation, cursor);
+    player_transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
+}
+
+fn update_enemy_orientation(
+    player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
+    mut enemy_query: Query<(&mut Transform, &mut Velocity), (With<Enemy>, Without<Player>)>,
+) {
+    let player_transform = player_query.single();
+    enemy_query.for_each_mut(|(mut transform, mut velocity)| {
+        let angle = pointing_angle(transform.translation, player_transform.translation);
+        if !angle.is_nan() {
+            transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
+        }
+        // Stop sliding after collisions
+        velocity.linvel *= 0.9;
+    });
 }
 
 fn main() {
+    let mut rapier_config = RapierConfiguration::default();
+    rapier_config.gravity = Vec3::ZERO;
     App::new()
         .add_startup_system(setup)
         .add_system(move_player)
-        .add_system(move_camera)
+        .add_system(update_cursor)
+        .add_system(update_enemy_orientation)
         .add_plugins(DefaultPlugins)
+        .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+        .insert_resource(rapier_config)
+        // .add_plugin(RapierDebugRenderPlugin::default())
+        // .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        // .add_plugin(LogDiagnosticsPlugin::default())
         .run();
 }
