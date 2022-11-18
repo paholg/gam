@@ -5,11 +5,13 @@ use bevy::prelude::{
 use tracing::info;
 
 #[derive(Component)]
-pub struct HealthbarMarker;
+pub struct Healthbar {
+    pub displacement: Vec3,
+}
 
 #[derive(Bundle)]
-pub struct Healthbar {
-    pub marker: HealthbarMarker,
+pub struct HealthbarBundle {
+    pub bar: Healthbar,
     pub material: Handle<StandardMaterial>,
     pub mesh: Handle<Mesh>,
     pub transform: Transform,
@@ -19,13 +21,13 @@ pub struct Healthbar {
 }
 
 pub fn healthbar_system(
-    mut q_healthbar: Query<(&Parent, &mut Transform), With<HealthbarMarker>>,
-    q_parent: Query<(&Transform), Without<HealthbarMarker>>,
+    mut q_healthbar: Query<(&Parent, &mut Transform, &Healthbar)>,
+    q_parent: Query<&Transform, Without<Healthbar>>,
 ) {
-    for (parent, mut transform) in q_healthbar.iter_mut() {
+    for (parent, mut transform, healthbar) in q_healthbar.iter_mut() {
         let parent_transform = q_parent.get(parent.get()).unwrap();
-        transform.rotation = parent_transform.rotation.inverse();
-        // transform.translation = Vec3::ZERO;
-        info!(?transform, ?parent_transform);
+        let rotation = parent_transform.rotation.inverse();
+        transform.rotation = rotation;
+        transform.translation = rotation * healthbar.displacement;
     }
 }

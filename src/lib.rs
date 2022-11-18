@@ -22,7 +22,7 @@ use rand::Rng;
 
 use crate::{
     ability::{cooldown, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN},
-    healthbar::{Healthbar, HealthbarMarker},
+    healthbar::{Healthbar, HealthbarBundle},
 };
 
 #[derive(Component)]
@@ -137,8 +137,10 @@ pub fn setup(
         ))
         .id();
     let player_health_bar = commands
-        .spawn(Healthbar {
-            marker: HealthbarMarker,
+        .spawn(HealthbarBundle {
+            bar: Healthbar {
+                displacement: Vec3::new(0.0, -1.3, 0.01),
+            },
             material: materials.add(Color::DARK_GREEN.into()),
             mesh: meshes.add(
                 shape::Quad {
@@ -147,7 +149,7 @@ pub fn setup(
                 }
                 .into(),
             ),
-            transform: Transform::from_xyz(0.0, -1.3, 0.01),
+            transform: Transform::default(),
             global_transform: GlobalTransform::default(),
             visibility: Visibility::VISIBLE,
             computed_visibility: ComputedVisibility::default(),
