@@ -4,33 +4,22 @@ pub mod ability;
 pub mod config;
 pub mod system;
 
-
-
 use bevy::{
     prelude::{
-        default, shape, AssetServer, Assets, Bundle, Camera,
-        Camera3dBundle, Color, Commands, Component, ComputedVisibility, GlobalTransform, Handle, Mat4,
-        Material, Mesh, OrthographicProjection, PbrBundle, PointLight,
-        PointLightBundle, Quat, Query, Ray, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3,
-        Visibility,
+        default, shape, AssetServer, Assets, Bundle, Camera, Camera3dBundle, Color, Commands,
+        Component, ComputedVisibility, GlobalTransform, Handle, Mat4, Material, Mesh,
+        OrthographicProjection, PbrBundle, PointLight, PointLightBundle, Quat, Query, Ray, Res,
+        ResMut, StandardMaterial, Transform, Vec2, Vec3, Visibility,
     },
     render::camera::ScalingMode,
-    scene::{Scene},
+    scene::Scene,
     time::{Time, Timer},
     window::Windows,
 };
-use bevy_rapier3d::{
-    prelude::{
-        Collider, LockedAxes,
-        RigidBody, Velocity,
-    },
-};
+use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
 use rand::Rng;
 
-
-use crate::{
-    ability::{cooldown, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN},
-};
+use crate::ability::{cooldown, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN};
 
 #[derive(Component)]
 pub struct Health {
@@ -63,6 +52,20 @@ pub struct Enemy;
 
 #[derive(Component)]
 pub struct Ally;
+
+#[derive(Bundle)]
+pub struct Object<M: Material> {
+    material: Handle<M>,
+    mesh: Handle<Mesh>,
+    transform: Transform,
+    global_transform: GlobalTransform,
+    visibility: Visibility,
+    computed_visibility: ComputedVisibility,
+    collider: Collider,
+    body: RigidBody,
+    velocity: Velocity,
+    locked_axes: LockedAxes,
+}
 
 #[derive(Bundle)]
 struct Character<M: Material> {
