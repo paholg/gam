@@ -1,33 +1,53 @@
 use bevy::{
     prelude::{
-        Camera, Commands, Entity, GlobalTransform, Input, KeyCode, MouseButton, Quat, Query, Res,
-        Transform, Vec2, Vec3, With, Without,
+        Assets, Camera, Commands, Entity, GlobalTransform, Input, KeyCode, Mesh, MouseButton, Quat,
+        Query, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3, With, Without,
     },
     window::Windows,
 };
 use bevy_rapier3d::prelude::Velocity;
 
 use crate::{
-    config::config, intersect_xy_plane, pointing_angle, ray_from_screenspace,
-    Enemy, MaxSpeed, Player, PlayerCooldowns, CAMERA_OFFSET,
+    config::config, intersect_xy_plane, pointing_angle, ray_from_screenspace, Enemy, Health,
+    MaxSpeed, Player, PlayerCooldowns, CAMERA_OFFSET,
 };
 
 pub fn player_input(
     keyboard_input: Res<Input<KeyCode>>,
     mouse_input: Res<Input<MouseButton>>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
     mut commands: Commands,
-    mut query: Query<(Entity, &mut PlayerCooldowns, &mut Velocity, &mut MaxSpeed), With<Player>>,
+    mut query: Query<
+        (
+            Entity,
+            &mut PlayerCooldowns,
+            &mut Velocity,
+            &mut MaxSpeed,
+            &Transform,
+        ),
+        With<Player>,
+    >,
 ) {
     let config = config();
     let controls = &config.controls;
 
-    let (entity, mut player_cooldowns, mut velocity, mut max_speed) = query.single_mut();
+    let (entity, mut player_cooldowns, mut velocity, mut max_speed, transform) = query.single_mut();
 
     // Abilities:
     let abilities = &config.player.abilities;
     for (control, ability) in controls.abilities.iter().zip(abilities.iter()) {
         if control.just_pressed(&keyboard_input, &mouse_input) {
-            ability.fire(&mut commands, entity, &mut player_cooldowns, &mut max_speed)
+            ability.fire(
+                &mut commands,
+                &mut meshes,
+                &mut materials,
+                entity,
+                &mut player_cooldowns,
+                &mut max_speed,
+                &transform,
+                &velocity,
+            )
         }
     }
 
@@ -90,4 +110,12 @@ pub fn update_enemy_orientation(
         // Stop sliding after collisions
         velocity.linvel *= 0.9;
     });
+}
+
+pub fn die(mut commands: Commands, query: Query<(Entity, &Health)>) {
+    for (entity, health) in query.iter() {
+        if health.cur <= 0.0 {
+            commands.entity(entity).despawn();
+        }
+    }
 }
