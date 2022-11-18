@@ -2,12 +2,13 @@
 
 pub mod ability;
 pub mod config;
+pub mod healthbar;
 pub mod system;
 
 use bevy::{
     prelude::{
-        default, shape, AssetServer, Assets, Bundle, Camera, Camera3dBundle, Color, Commands,
-        Component, ComputedVisibility, GlobalTransform, Handle, Mat4, Material, Mesh,
+        default, shape, AssetServer, Assets, BuildChildren, Bundle, Camera, Camera3dBundle, Color,
+        Commands, Component, ComputedVisibility, GlobalTransform, Handle, Mat4, Material, Mesh,
         OrthographicProjection, PbrBundle, PointLight, PointLightBundle, Quat, Query, Ray, Res,
         ResMut, StandardMaterial, Transform, Vec2, Vec3, Visibility,
     },
@@ -19,7 +20,10 @@ use bevy::{
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
 use rand::Rng;
 
-use crate::ability::{cooldown, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN};
+use crate::{
+    ability::{cooldown, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN},
+    healthbar::{Healthbar, HealthbarMarker},
+};
 
 #[derive(Component)]
 pub struct Health {
@@ -102,34 +106,54 @@ pub fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     asset_server: Res<AssetServer>,
 ) {
-    commands.spawn((
-        Player,
-        Character {
-            health: Health::new(100.0),
-            scene: asset_server.load("models/temp/craft_speederB.glb#Scene0"),
-            outline: meshes.add(
-                shape::Circle {
-                    radius: 1.0,
-                    vertices: 100,
+    let player = commands
+        .spawn((
+            Player,
+            Character {
+                health: Health::new(100.0),
+                scene: asset_server.load("models/temp/craft_speederB.glb#Scene0"),
+                outline: meshes.add(
+                    shape::Circle {
+                        radius: 1.0,
+                        vertices: 100,
+                    }
+                    .into(),
+                ),
+                material: materials.add(Color::CYAN.into()),
+                transform: Transform::default(),
+                global_transform: GlobalTransform::default(),
+                visibility: Visibility::VISIBLE,
+                computed_visibility: ComputedVisibility::default(),
+                collider: Collider::ball(1.0),
+                body: RigidBody::Dynamic,
+                max_speed: MaxSpeed(SPEED),
+                velocity: Velocity::default(),
+                locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+            },
+            PlayerCooldowns {
+                hyper_sprint: cooldown(HYPER_SPRINT_COOLDOWN),
+                shoot: cooldown(SHOOT_COOLDOWN),
+            },
+        ))
+        .id();
+    let player_health_bar = commands
+        .spawn(Healthbar {
+            marker: HealthbarMarker,
+            material: materials.add(Color::DARK_GREEN.into()),
+            mesh: meshes.add(
+                shape::Quad {
+                    size: Vec2::new(1.8, 0.3),
+                    ..default()
                 }
                 .into(),
             ),
-            material: materials.add(Color::GREEN.into()),
-            transform: Transform::default(),
+            transform: Transform::from_xyz(0.0, -1.3, 0.01),
             global_transform: GlobalTransform::default(),
             visibility: Visibility::VISIBLE,
             computed_visibility: ComputedVisibility::default(),
-            collider: Collider::ball(1.0),
-            body: RigidBody::Dynamic,
-            max_speed: MaxSpeed(SPEED),
-            velocity: Velocity::default(),
-            locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
-        },
-        PlayerCooldowns {
-            hyper_sprint: cooldown(HYPER_SPRINT_COOLDOWN),
-            shoot: cooldown(SHOOT_COOLDOWN),
-        },
-    ));
+        })
+        .id();
+    commands.entity(player).push_children(&[player_health_bar]);
 
     let mut rng = rand::thread_rng();
     for _ in 0..NUM_ENEMIES {

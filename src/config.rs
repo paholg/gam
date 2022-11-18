@@ -129,6 +129,8 @@ pub struct Controls {
     pub down: Button,
 
     pub abilities: [Button; ABILITY_COUNT],
+
+    pub menu: Button,
 }
 
 impl Default for Controls {
@@ -144,6 +146,8 @@ impl Default for Controls {
                 Button::Mouse(MouseButton::Right),
                 Button::Keyboard(KeyCode::Space),
             ],
+
+            menu: Button::Keyboard(KeyCode::Escape),
         }
     }
 }
