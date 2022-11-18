@@ -20,6 +20,7 @@ use bevy::{
     render::camera::ScalingMode,
     scene::{Scene, SceneBundle},
     sprite::ColorMaterial,
+    time::{Time, Timer, TimerMode},
     window::Windows,
     DefaultPlugins,
 };
@@ -34,7 +35,10 @@ use bevy_rapier3d::{
 use rand::Rng;
 use tracing::info;
 
-use crate::config::Button;
+use crate::{
+    ability::{cooldown, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN},
+    config::Button,
+};
 
 #[derive(Component)]
 pub struct Health {
@@ -42,8 +46,25 @@ pub struct Health {
     max: f32,
 }
 
+#[derive(Component, Copy, Clone, Debug)]
+pub struct MaxSpeed(f32);
+
 #[derive(Component)]
 pub struct Player;
+
+#[derive(Component)]
+pub struct PlayerCooldowns {
+    hyper_sprint: Timer,
+    shoot: Timer,
+}
+
+// TODO: Do cooldowns betterer
+pub fn player_cooldown_system(mut player_cooldowns: Query<&mut PlayerCooldowns>, time: Res<Time>) {
+    for mut pcd in player_cooldowns.iter_mut() {
+        pcd.hyper_sprint.tick(time.delta());
+        pcd.shoot.tick(time.delta());
+    }
+}
 
 #[derive(Component)]
 pub struct Enemy;
@@ -63,6 +84,7 @@ struct Character<M: Material> {
     computed_visibility: ComputedVisibility,
     collider: Collider,
     body: RigidBody,
+    max_speed: MaxSpeed,
     velocity: Velocity,
     locked_axes: LockedAxes,
 }
@@ -101,8 +123,13 @@ pub fn setup(
             computed_visibility: ComputedVisibility::default(),
             collider: Collider::ball(1.0),
             body: RigidBody::Dynamic,
+            max_speed: MaxSpeed(SPEED),
             velocity: Velocity::default(),
             locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+        },
+        PlayerCooldowns {
+            hyper_sprint: cooldown(HYPER_SPRINT_COOLDOWN),
+            shoot: cooldown(SHOOT_COOLDOWN),
         },
     ));
 
@@ -132,6 +159,7 @@ pub fn setup(
                 computed_visibility: ComputedVisibility::default(),
                 collider: Collider::ball(1.0),
                 body: RigidBody::Dynamic,
+                max_speed: MaxSpeed(SPEED),
                 velocity: Velocity::default(),
                 locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
             },
