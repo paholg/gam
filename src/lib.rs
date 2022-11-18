@@ -27,6 +27,12 @@ pub struct Health {
     max: f32,
 }
 
+impl Health {
+    pub fn new(max: f32) -> Self {
+        Self { cur: max, max }
+    }
+}
+
 #[derive(Component, Copy, Clone, Debug)]
 pub struct MaxSpeed(f32);
 
@@ -99,10 +105,7 @@ pub fn setup(
     commands.spawn((
         Player,
         Character {
-            health: Health {
-                cur: 100.0,
-                max: 100.0,
-            },
+            health: Health::new(100.0),
             scene: asset_server.load("models/temp/craft_speederB.glb#Scene0"),
             outline: meshes.add(
                 shape::Circle {
@@ -135,10 +138,7 @@ pub fn setup(
         commands.spawn((
             Enemy,
             Character {
-                health: Health {
-                    cur: 100.0,
-                    max: 100.0,
-                },
+                health: Health::new(100.0),
                 scene: asset_server.load("models/temp/craft_speederB.glb#Scene0"),
                 outline: meshes.add(
                     shape::Circle {

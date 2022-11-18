@@ -1,7 +1,8 @@
 use bevy::{
     prelude::{
-        Assets, Camera, Commands, Entity, GlobalTransform, Input, KeyCode, Mesh, MouseButton, Quat,
-        Query, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3, With, Without,
+        Assets, Camera, Commands, Entity, GlobalTransform, Input, KeyCode, Mesh,
+        MouseButton, Quat, Query, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3, With,
+        Without,
     },
     window::Windows,
 };
