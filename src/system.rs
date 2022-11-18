@@ -1,37 +1,38 @@
 use bevy::{
     prelude::{
-        Camera, GlobalTransform, Input, KeyCode, MouseButton, Quat, Query, Res, Transform, Vec2,
-        Vec3, With, Without,
+        Camera, Commands, Entity, GlobalTransform, Input, KeyCode, MouseButton, Quat, Query, Res,
+        Transform, Vec2, Vec3, With, Without,
     },
+    time::Time,
     window::Windows,
 };
 use bevy_rapier3d::prelude::Velocity;
 
 use crate::{
     ability::Ability, config::config, intersect_xy_plane, pointing_angle, ray_from_screenspace,
-    Enemy, Player, CAMERA_OFFSET, SPEED,
+    Enemy, MaxSpeed, Player, PlayerCooldowns, CAMERA_OFFSET, SPEED,
 };
 
 pub fn player_input(
     keyboard_input: Res<Input<KeyCode>>,
     mouse_input: Res<Input<MouseButton>>,
-    mut query: Query<&mut Velocity, With<Player>>,
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut PlayerCooldowns, &mut Velocity, &mut MaxSpeed), With<Player>>,
 ) {
     let config = config();
     let controls = &config.controls;
-    let mut speed = SPEED;
+
+    let (entity, mut player_cooldowns, mut velocity, mut max_speed) = query.single_mut();
+
     // Abilities:
     let abilities = &config.player.abilities;
     for (control, ability) in controls.abilities.iter().zip(abilities.iter()) {
-        if control.pressed(&keyboard_input, &mouse_input) {
-            if let Ability::HyperSprint = ability {
-                speed *= 5.0;
-            }
+        if control.just_pressed(&keyboard_input, &mouse_input) {
+            ability.fire(&mut commands, entity, &mut player_cooldowns, &mut max_speed)
         }
     }
 
     // Movement:
-    let mut velocity = query.single_mut();
     let mut delta_v = Vec2::new(0.0, 0.0);
 
     for (control, dir) in [
@@ -45,9 +46,7 @@ pub fn player_input(
         }
     }
 
-    // let speed = SPEED;
-
-    delta_v = delta_v.clamp_length_max(1.0) * speed;
+    delta_v = delta_v.clamp_length_max(1.0) * max_speed.0;
 
     velocity.linvel = delta_v.extend(0.0);
 }
