@@ -1,9 +1,9 @@
 use bevy::{
-    prelude::{App, Vec3},
+    prelude::{App, CoreStage, Vec3},
     DefaultPlugins,
 };
 use bevy_rapier3d::prelude::{NoUserData, RapierConfiguration, RapierPhysicsPlugin};
-use gam::{ability, healthbar, player_cooldown_system, system};
+use gam::{ability, healthbar, menu::MenuPlugin, player_cooldown_system, system};
 
 fn main() {
     let mut rapier_config = RapierConfiguration::default();
@@ -18,10 +18,11 @@ fn main() {
         .add_system(ability::shot_despawn_system)
         .add_system(ability::shot_hit_system)
         .add_system(ability::shot_miss_system)
-        .add_system(healthbar::healthbar_system)
+        .add_system_to_stage(CoreStage::PostUpdate, healthbar::healthbar_system)
         .add_system(player_cooldown_system)
         .add_plugins(DefaultPlugins)
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugin(MenuPlugin)
         .insert_resource(rapier_config)
         // .add_plugin(bevy_rapier3d::render::RapierDebugRenderPlugin::default())
         // .add_plugin(FrameTimeDiagnosticsPlugin::default())
