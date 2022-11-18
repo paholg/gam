@@ -10,7 +10,7 @@ use bevy_rapier3d::prelude::Velocity;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::{MaxSpeed, PlayerCooldowns, SPEED};
+use crate::{MaxSpeed, PlayerCooldowns};
 
 /// Construct a cooldown timer
 pub fn cooldown(cooldown: Duration) -> Timer {
@@ -87,10 +87,10 @@ pub fn hyper_sprint_system(
 pub const SHOOT_COOLDOWN: Duration = Duration::from_millis(500);
 
 fn shoot(
-    commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-    transform: &Transform,
-    velocity: &Velocity,
+    _commands: &mut Commands,
+    _meshes: &mut ResMut<Assets<Mesh>>,
+    _materials: &mut ResMut<Assets<StandardMaterial>>,
+    _transform: &Transform,
+    _velocity: &Velocity,
 ) {
 }

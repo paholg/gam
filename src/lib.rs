@@ -4,40 +4,32 @@ pub mod ability;
 pub mod config;
 pub mod system;
 
-use std::{f32::consts::PI, sync::LazyLock};
+
 
 use bevy::{
-    diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin},
-    input::mouse::MouseMotion,
     prelude::{
-        default, shape, AmbientLight, App, AssetServer, Assets, Bundle, Camera, Camera3d,
-        Camera3dBundle, Color, Commands, Component, ComputedVisibility, DirectionalLight,
-        DirectionalLightBundle, EventReader, GlobalTransform, Handle, Image, Input, KeyCode, Mat4,
-        Material, Mesh, MouseButton, Msaa, OrthographicProjection, PbrBundle, PointLight,
+        default, shape, AssetServer, Assets, Bundle, Camera,
+        Camera3dBundle, Color, Commands, Component, ComputedVisibility, GlobalTransform, Handle, Mat4,
+        Material, Mesh, OrthographicProjection, PbrBundle, PointLight,
         PointLightBundle, Quat, Query, Ray, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3,
-        Visibility, With, Without,
+        Visibility,
     },
     render::camera::ScalingMode,
-    scene::{Scene, SceneBundle},
-    sprite::ColorMaterial,
-    time::{Time, Timer, TimerMode},
+    scene::{Scene},
+    time::{Time, Timer},
     window::Windows,
-    DefaultPlugins,
 };
 use bevy_rapier3d::{
     prelude::{
-        Collider, Friction, LockedAxes, NoUserData, RapierConfiguration, RapierPhysicsPlugin,
+        Collider, LockedAxes,
         RigidBody, Velocity,
     },
-    rapier::prelude::ColliderBuilder,
-    render::RapierDebugRenderPlugin,
 };
 use rand::Rng;
-use tracing::info;
+
 
 use crate::{
     ability::{cooldown, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN},
-    config::Button,
 };
 
 #[derive(Component)]

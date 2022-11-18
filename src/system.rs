@@ -3,14 +3,13 @@ use bevy::{
         Camera, Commands, Entity, GlobalTransform, Input, KeyCode, MouseButton, Quat, Query, Res,
         Transform, Vec2, Vec3, With, Without,
     },
-    time::Time,
     window::Windows,
 };
 use bevy_rapier3d::prelude::Velocity;
 
 use crate::{
-    ability::Ability, config::config, intersect_xy_plane, pointing_angle, ray_from_screenspace,
-    Enemy, MaxSpeed, Player, PlayerCooldowns, CAMERA_OFFSET, SPEED,
+    config::config, intersect_xy_plane, pointing_angle, ray_from_screenspace,
+    Enemy, MaxSpeed, Player, PlayerCooldowns, CAMERA_OFFSET,
 };
 
 pub fn player_input(
