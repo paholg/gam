@@ -1,8 +1,8 @@
 use bevy::{
     prelude::{
-        Assets, Camera, Commands, Entity, GlobalTransform, Input, KeyCode, Mesh,
-        MouseButton, Quat, Query, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3, With,
-        Without,
+        Assets, BuildChildren, Camera, Commands, DespawnRecursiveExt, Entity, GlobalTransform,
+        Input, KeyCode, Mesh, MouseButton, Quat, Query, Res, ResMut, StandardMaterial, Transform,
+        Vec2, Vec3, With, Without,
     },
     window::Windows,
 };
@@ -116,7 +116,7 @@ pub fn update_enemy_orientation(
 pub fn die(mut commands: Commands, query: Query<(Entity, &Health)>) {
     for (entity, health) in query.iter() {
         if health.cur <= 0.0 {
-            commands.entity(entity).despawn();
+            commands.entity(entity).despawn_recursive();
         }
     }
 }
