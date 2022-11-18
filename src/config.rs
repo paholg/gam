@@ -197,7 +197,15 @@ impl From<Sensitivity> for fxaa::Sensitivity {
     }
 }
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Player {
     pub abilities: [Ability; ABILITY_COUNT],
+}
+
+impl Default for Player {
+    fn default() -> Self {
+        Self {
+            abilities: [Ability::Shoot, Ability::None, Ability::HyperSprint],
+        }
+    }
 }
