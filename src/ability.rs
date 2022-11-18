@@ -117,7 +117,7 @@ fn shoot(
         let vel = velocity.linvel + dir * SHOT_SPEED;
         commands.spawn((
             Object {
-                material: materials.add(Color::RED.into()),
+                material: materials.add(Color::BLUE.into()),
                 mesh: meshes.add(Mesh::from(Icosphere {
                     radius: SHOT_R,
                     subdivisions: 5,
