@@ -561,9 +561,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c36f4d3af0cda50c07e2010d0351ab79594681116edd280592ca394db73ef32b"
 
 [[package]]
+name = "bevy_quickmenu"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d295dcc06d923a2151abb141ff351d37185b55128c958f51de96dab63c5b24f"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bevy_rapier3d"
-version = "0.18.0"
-source = "git+https://github.com/devil-ira/bevy_rapier?branch=bevy-0.9#3fabadc0503835caf1e9dc2be1d4da8825046f92"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9e2805bef07b206854b417a544e32782677106c99f4e001d00d884f74ed4d37f"
 dependencies = [
  "bevy",
  "bitflags",
@@ -1503,6 +1513,7 @@ name = "gam"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy_quickmenu",
  "bevy_rapier3d",
  "directories",
  "rand",
