@@ -6,7 +6,8 @@ edition = "2021"
 [dependencies]
 bevy = { version = "0.9", features = ["serialize"] }
 # Use until merged: https://github.com/dimforge/bevy_rapier/pull/272
-bevy_rapier3d = { git = "https://github.com/devil-ira/bevy_rapier", branch = "bevy-0.9", features = ["dim3"] }
+bevy_quickmenu = "0.1"
+bevy_rapier3d = "0.19"
 directories = "4"
 rand = "0.8"
 serde = "1"

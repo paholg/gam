@@ -1,8 +1,8 @@
 use bevy::{
     prelude::{
-        Assets, BuildChildren, Camera, Commands, DespawnRecursiveExt, Entity, GlobalTransform,
-        Input, KeyCode, Mesh, MouseButton, Quat, Query, Res, ResMut, StandardMaterial, Transform,
-        Vec2, Vec3, With, Without,
+        Assets, Camera, Commands, DespawnRecursiveExt, Entity, GlobalTransform, Input, KeyCode,
+        Mesh, MouseButton, Quat, Query, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3, With,
+        Without,
     },
     window::Windows,
 };
@@ -38,7 +38,7 @@ pub fn player_input(
     // Abilities:
     let abilities = &config.player.abilities;
     for (control, ability) in controls.abilities.iter().zip(abilities.iter()) {
-        if control.just_pressed(&keyboard_input, &mouse_input) {
+        if control.pressed(&keyboard_input, &mouse_input) {
             ability.fire(
                 &mut commands,
                 &mut meshes,
