@@ -10,7 +10,7 @@ use bevy::{
 };
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RapierContext, RigidBody, Sensor, Velocity};
 use serde::{Deserialize, Serialize};
-use tracing::info;
+use tracing::debug;
 
 use crate::{Health, MaxSpeed, Object, PlayerCooldowns, PLAYER_R};
 
@@ -70,7 +70,7 @@ fn hyper_sprint(
             duration: Timer::from_seconds(0.15, TimerMode::Once),
         });
     } else {
-        info!(
+        debug!(
             hyper_sprint = cooldowns.hyper_sprint.remaining_secs(),
             "Remaining"
         );
@@ -94,7 +94,7 @@ pub const SHOOT_COOLDOWN: Duration = Duration::from_millis(100);
 const SHOT_DURATION: Duration = Duration::from_secs(2);
 const SHOT_SPEED: f32 = 50.0;
 const SHOT_R: f32 = 0.1;
-const SHOT_DAMAGE: f32 = 100.0;
+const SHOT_DAMAGE: f32 = 21.0;
 
 #[derive(Component)]
 pub struct Shot {
@@ -140,7 +140,7 @@ fn shoot(
             },
         ));
     } else {
-        info!(shoot = cooldowns.shoot.remaining_secs(), "Remaining");
+        debug!(shoot = cooldowns.shoot.remaining_secs(), "Remaining");
     }
 }
 
