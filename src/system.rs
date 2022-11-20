@@ -1,18 +1,16 @@
 use bevy::{
     prelude::{
         shape, AssetServer, Assets, Camera, Color, Commands, ComputedVisibility,
-        DespawnRecursiveExt, Entity, GlobalTransform, Input, KeyCode, Mesh, MouseButton, Mut, Quat,
+        DespawnRecursiveExt, Entity, GlobalTransform, Input, KeyCode, Mesh, MouseButton, Quat,
         Query, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3, Visibility, With, Without,
     },
     window::Windows,
 };
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
-use big_brain::{prelude::FirstToScore, thinker::Thinker};
 use rand::Rng;
 
 use crate::{
     ability::{cooldown, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN},
-    ai::{ShotAction, ShotScorer},
     config::config,
     healthbar::Healthbar,
     intersect_xy_plane, pointing_angle, ray_from_screenspace, Ai, Ally, Character, Cooldowns,
@@ -203,9 +201,6 @@ fn spawn_enemies(
                 hyper_sprint: cooldown(HYPER_SPRINT_COOLDOWN),
                 shoot: cooldown(SHOOT_COOLDOWN * 10),
             },
-            Thinker::build()
-                .picker(FirstToScore { threshold: 0.8 })
-                .when(ShotScorer, ShotAction),
         ));
     }
 }
@@ -251,9 +246,6 @@ fn spawn_allies(
                 hyper_sprint: cooldown(HYPER_SPRINT_COOLDOWN),
                 shoot: cooldown(SHOOT_COOLDOWN * 10),
             },
-            Thinker::build()
-                .picker(FirstToScore { threshold: 0.8 })
-                .when(ShotScorer, ShotAction),
         ));
     }
 }
