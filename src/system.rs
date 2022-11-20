@@ -1,16 +1,22 @@
 use bevy::{
     prelude::{
-        Assets, Camera, Commands, DespawnRecursiveExt, Entity, GlobalTransform, Input, KeyCode,
-        Mesh, MouseButton, Quat, Query, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3, With,
-        Without,
+        shape, AssetServer, Assets, Camera, Color, Commands, ComputedVisibility,
+        DespawnRecursiveExt, Entity, GlobalTransform, Input, KeyCode, Mesh, MouseButton, Quat,
+        Query, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3, Visibility, With, Without,
     },
     window::Windows,
 };
-use bevy_rapier3d::prelude::Velocity;
+use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
+use big_brain::{prelude::FirstToScore, thinker::Thinker};
+use rand::Rng;
 
 use crate::{
-    config::config, intersect_xy_plane, pointing_angle, ray_from_screenspace, Enemy, Health,
-    MaxSpeed, Player, PlayerCooldowns, CAMERA_OFFSET,
+    ability::{cooldown, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN},
+    ai::{ShotAction, ShotScorer},
+    config::config,
+    healthbar::Healthbar,
+    intersect_xy_plane, pointing_angle, ray_from_screenspace, Character, Enemy, Health, MaxSpeed,
+    NumEnemies, Player, PlayerCooldowns, CAMERA_OFFSET, PLANE_SIZE, PLAYER_R, SPEED,
 };
 
 pub fn player_input(
@@ -33,7 +39,11 @@ pub fn player_input(
     let config = config();
     let controls = &config.controls;
 
-    let (entity, mut player_cooldowns, mut velocity, mut max_speed, transform) = query.single_mut();
+    let (entity, mut player_cooldowns, mut velocity, mut max_speed, transform) =
+        match query.get_single_mut() {
+            Ok(q) => q,
+            Err(_) => return,
+        };
 
     // Abilities:
     let abilities = &config.player.abilities;
@@ -48,7 +58,7 @@ pub fn player_input(
                 &mut max_speed,
                 &transform,
                 &velocity,
-            )
+            );
         }
     }
 
@@ -78,7 +88,10 @@ pub fn update_cursor(
     mut player_query: Query<&mut Transform, (With<Player>, Without<Camera>)>,
 ) {
     let (mut transform, camera, global_transform) = camera_query.single_mut();
-    let mut player_transform = player_query.single_mut();
+    let mut player_transform = match player_query.get_single_mut() {
+        Ok(transform) => transform,
+        Err(_) => return,
+    };
 
     let cursor = match ray_from_screenspace(&windows, camera, global_transform)
         .as_ref()
@@ -97,26 +110,129 @@ pub fn update_cursor(
     player_transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
 }
 
-// TODO: This should be part of whatever AI we're using.
-pub fn update_enemy_orientation(
-    player_query: Query<&Transform, (With<Player>, Without<Enemy>)>,
-    mut enemy_query: Query<(&mut Transform, &mut Velocity), (With<Enemy>, Without<Player>)>,
-) {
-    let player_transform = player_query.single();
-    enemy_query.for_each_mut(|(mut transform, mut velocity)| {
-        let angle = pointing_angle(transform.translation, player_transform.translation);
-        if !angle.is_nan() {
-            transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
-        }
-        // Stop sliding after collisions
-        velocity.linvel *= 0.9;
-    });
-}
-
 pub fn die(mut commands: Commands, query: Query<(Entity, &Health)>) {
     for (entity, health) in query.iter() {
         if health.cur <= 0.0 {
             commands.entity(entity).despawn_recursive();
         }
+    }
+}
+
+fn spawn_player(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    asset_server: &mut Res<AssetServer>,
+) {
+    commands.spawn((
+        Player,
+        Character {
+            health: Health::new(100.0),
+            healthbar: Healthbar::default(),
+            scene: asset_server.load("models/temp/craft_speederB.glb#Scene0"),
+            outline: meshes.add(
+                shape::Circle {
+                    radius: 1.0,
+                    vertices: 100,
+                }
+                .into(),
+            ),
+            material: materials.add(Color::CYAN.into()),
+            transform: Transform::default(),
+            global_transform: GlobalTransform::default(),
+            visibility: Visibility::VISIBLE,
+            computed_visibility: ComputedVisibility::default(),
+            collider: Collider::ball(1.0),
+            body: RigidBody::Dynamic,
+            max_speed: MaxSpeed(SPEED),
+            velocity: Velocity::default(),
+            locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+        },
+        PlayerCooldowns {
+            hyper_sprint: cooldown(HYPER_SPRINT_COOLDOWN),
+            shoot: cooldown(SHOOT_COOLDOWN),
+        },
+    ));
+}
+
+fn spawn_enemies(
+    commands: &mut Commands,
+    meshes: &mut ResMut<Assets<Mesh>>,
+    materials: &mut ResMut<Assets<StandardMaterial>>,
+    asset_server: &mut Res<AssetServer>,
+    num_enemies: u32,
+) {
+    let mut rng = rand::thread_rng();
+    for _ in 0..num_enemies {
+        let x = rng.gen::<f32>() * (PLANE_SIZE - PLAYER_R) - (PLANE_SIZE - PLAYER_R) * 0.5;
+        let y = rng.gen::<f32>() * (PLANE_SIZE - PLAYER_R) - (PLANE_SIZE - PLAYER_R) * 0.5;
+        let _entity = commands
+            .spawn((
+                Enemy,
+                Character {
+                    health: Health::new(100.0),
+                    healthbar: Healthbar::default(),
+                    scene: asset_server.load("models/temp/craft_speederB.glb#Scene0"),
+                    outline: meshes.add(
+                        shape::Circle {
+                            radius: 1.0,
+                            vertices: 100,
+                        }
+                        .into(),
+                    ),
+                    material: materials.add(Color::RED.into()),
+                    transform: Transform::from_xyz(x, y, 0.0),
+                    global_transform: GlobalTransform::default(),
+                    visibility: Visibility::VISIBLE,
+                    computed_visibility: ComputedVisibility::default(),
+                    collider: Collider::ball(1.0),
+                    body: RigidBody::Dynamic,
+                    max_speed: MaxSpeed(SPEED),
+                    velocity: Velocity::default(),
+                    locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+                },
+                // TODO: Refactor cooldowns. This is temporary.
+                PlayerCooldowns {
+                    hyper_sprint: cooldown(HYPER_SPRINT_COOLDOWN),
+                    shoot: cooldown(SHOOT_COOLDOWN * 10),
+                },
+                Thinker::build()
+                    .picker(FirstToScore { threshold: 0.8 })
+                    .when(ShotScorer, ShotAction),
+            ))
+            .id();
+    }
+}
+
+pub fn reset(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut asset_server: Res<AssetServer>,
+    mut num_enemies: ResMut<NumEnemies>,
+    player_query: Query<Entity, With<Player>>,
+    enemy_query: Query<Entity, With<Enemy>>,
+) {
+    if player_query.iter().next().is_none() {
+        if num_enemies.value > 0 {
+            num_enemies.value -= 1;
+        }
+        spawn_player(
+            &mut commands,
+            &mut meshes,
+            &mut materials,
+            &mut asset_server,
+        );
+    }
+
+    if enemy_query.iter().next().is_none() {
+        num_enemies.value += 1;
+        spawn_enemies(
+            &mut commands,
+            &mut meshes,
+            &mut materials,
+            &mut asset_server,
+            num_enemies.value,
+        );
     }
 }

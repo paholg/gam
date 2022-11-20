@@ -863,6 +863,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "big-brain"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9b71b1b0fda97b3e5021da6982afc74f8e6f61c8c7042e240a9de63baafec40"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bindgen"
 version = "0.59.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1515,6 +1524,7 @@ dependencies = [
  "bevy",
  "bevy_quickmenu",
  "bevy_rapier3d",
+ "big-brain",
  "directories",
  "rand",
  "serde",
