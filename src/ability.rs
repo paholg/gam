@@ -10,7 +10,6 @@ use bevy::{
 };
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RapierContext, RigidBody, Sensor, Velocity};
 use serde::{Deserialize, Serialize};
-use tracing::debug;
 
 use crate::{Health, MaxSpeed, Object, PlayerCooldowns, PLAYER_R};
 
@@ -40,9 +39,9 @@ impl Ability {
         max_speed: &mut MaxSpeed,
         transform: &Transform,
         velocity: &Velocity,
-    ) {
+    ) -> bool {
         match self {
-            Ability::None => (),
+            Ability::None => true,
             Ability::HyperSprint => hyper_sprint(commands, entity, cooldowns, max_speed),
             Ability::Shoot => shoot(commands, cooldowns, meshes, materials, transform, velocity),
         }
@@ -62,18 +61,16 @@ fn hyper_sprint(
     entity: Entity,
     cooldowns: &mut PlayerCooldowns,
     max_speed: &mut MaxSpeed,
-) {
+) -> bool {
     if cooldowns.hyper_sprint.finished() {
         cooldowns.hyper_sprint.reset();
         max_speed.0 *= HYPER_SPRINT_FACTOR;
         commands.entity(entity).insert(HyperSprinting {
             duration: Timer::from_seconds(0.15, TimerMode::Once),
         });
+        true
     } else {
-        debug!(
-            hyper_sprint = cooldowns.hyper_sprint.remaining_secs(),
-            "Remaining"
-        );
+        false
     }
 }
 
@@ -108,7 +105,7 @@ fn shoot(
     materials: &mut ResMut<Assets<StandardMaterial>>,
     transform: &Transform,
     velocity: &Velocity,
-) {
+) -> bool {
     if cooldowns.shoot.finished() {
         cooldowns.shoot.reset();
 
@@ -139,8 +136,9 @@ fn shoot(
                 duration: Timer::new(SHOT_DURATION, TimerMode::Once),
             },
         ));
+        true
     } else {
-        debug!(shoot = cooldowns.shoot.remaining_secs(), "Remaining");
+        false
     }
 }
 

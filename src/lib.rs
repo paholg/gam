@@ -1,16 +1,17 @@
 #![feature(once_cell)]
 
 pub mod ability;
+pub mod ai;
 pub mod config;
 pub mod healthbar;
 pub mod system;
 
 use bevy::{
     prelude::{
-        default, shape, AssetServer, Assets, Bundle, Camera, Camera3dBundle, Color,
-        Commands, Component, ComputedVisibility, GlobalTransform, Handle, Mat4, Material, Mesh,
+        default, shape, Assets, Bundle, Camera, Camera3dBundle, Color, Commands,
+        Component, ComputedVisibility, GlobalTransform, Handle, Mat4, Material, Mesh,
         OrthographicProjection, PbrBundle, PointLight, PointLightBundle, Quat, Query, Ray, Res,
-        ResMut, StandardMaterial, Transform, Vec2, Vec3, Visibility,
+        ResMut, Resource, StandardMaterial, Transform, Vec2, Vec3, Visibility,
     },
     render::camera::ScalingMode,
     scene::Scene,
@@ -18,10 +19,10 @@ use bevy::{
     window::Windows,
 };
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
-use rand::Rng;
+
+
 
 use crate::{
-    ability::{cooldown, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN},
     healthbar::Healthbar,
 };
 
@@ -97,83 +98,22 @@ struct Character<M: Material> {
 
 const PLAYER_R: f32 = 1.0;
 const SPEED: f32 = 15.0;
-const NUM_ENEMIES: u32 = 25;
 
 const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, -50.0, 50.0);
+
+pub const PLANE_SIZE: f32 = 30.0;
+
+#[derive(Resource)]
+pub struct NumEnemies {
+    pub value: u32,
+}
 
 pub fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    asset_server: Res<AssetServer>,
 ) {
-    let _player = commands
-        .spawn((
-            Player,
-            Character {
-                health: Health::new(100.0),
-                healthbar: Healthbar::default(),
-                scene: asset_server.load("models/temp/craft_speederB.glb#Scene0"),
-                outline: meshes.add(
-                    shape::Circle {
-                        radius: 1.0,
-                        vertices: 100,
-                    }
-                    .into(),
-                ),
-                material: materials.add(Color::CYAN.into()),
-                transform: Transform::default(),
-                global_transform: GlobalTransform::default(),
-                visibility: Visibility::VISIBLE,
-                computed_visibility: ComputedVisibility::default(),
-                collider: Collider::ball(1.0),
-                body: RigidBody::Dynamic,
-                max_speed: MaxSpeed(SPEED),
-                velocity: Velocity::default(),
-                locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
-            },
-            PlayerCooldowns {
-                hyper_sprint: cooldown(HYPER_SPRINT_COOLDOWN),
-                shoot: cooldown(SHOOT_COOLDOWN),
-            },
-        ))
-        .id();
-
-    let mut rng = rand::thread_rng();
-    for _ in 0..NUM_ENEMIES {
-        let x = rng.gen::<f32>() * (PLANE_SIZE - PLAYER_R) - (PLANE_SIZE - PLAYER_R) * 0.5;
-        let y = rng.gen::<f32>() * (PLANE_SIZE - PLAYER_R) - (PLANE_SIZE - PLAYER_R) * 0.5;
-        let _entity = commands
-            .spawn((
-                Enemy,
-                Character {
-                    health: Health::new(100.0),
-                    healthbar: Healthbar::default(),
-                    scene: asset_server.load("models/temp/craft_speederB.glb#Scene0"),
-                    outline: meshes.add(
-                        shape::Circle {
-                            radius: 1.0,
-                            vertices: 100,
-                        }
-                        .into(),
-                    ),
-                    material: materials.add(Color::RED.into()),
-                    transform: Transform::from_xyz(x, y, 0.0),
-                    global_transform: GlobalTransform::default(),
-                    visibility: Visibility::VISIBLE,
-                    computed_visibility: ComputedVisibility::default(),
-                    collider: Collider::ball(1.0),
-                    body: RigidBody::Dynamic,
-                    max_speed: MaxSpeed(SPEED),
-                    velocity: Velocity::default(),
-                    locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
-                },
-            ))
-            .id();
-    }
-
-    // ground plane
-    const PLANE_SIZE: f32 = 30.0;
+    // Ground plane
     let collider = Collider::compound(vec![
         (
             Vec3::new(PLANE_SIZE * 1.5, 0.0, 0.0),
@@ -213,6 +153,7 @@ pub fn setup(
         collider,
     ));
 
+    // Camera
     commands.spawn(Camera3dBundle {
         projection: OrthographicProjection {
             scale: 10.0,
@@ -224,7 +165,7 @@ pub fn setup(
         ..default()
     });
 
-    // light
+    // Light
     commands.spawn(PointLightBundle {
         point_light: PointLight {
             range: PLANE_SIZE,
