@@ -3,9 +3,7 @@ use bevy::{
     DefaultPlugins,
 };
 use bevy_rapier3d::prelude::{NoUserData, RapierConfiguration, RapierPhysicsPlugin};
-use gam::{
-    ability, ai::AiPlugin, healthbar::HealthbarPlugin, player_cooldown_system, system, NumAi,
-};
+use gam::{ability, ai, healthbar::HealthbarPlugin, player_cooldown_system, system, NumAi};
 
 fn main() {
     let mut rapier_config = RapierConfiguration::default();
@@ -27,7 +25,7 @@ fn main() {
         .add_system(ability::shot_miss_system)
         .add_system(player_cooldown_system)
         .add_plugin(HealthbarPlugin)
-        .add_plugin(AiPlugin)
+        .add_plugin(ai::simple::SimpleAiPlugin)
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .insert_resource(rapier_config)
         // .add_plugin(bevy_rapier3d::render::RapierDebugRenderPlugin::default())
