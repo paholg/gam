@@ -11,7 +11,7 @@ use bevy::{
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RapierContext, RigidBody, Sensor, Velocity};
 use serde::{Deserialize, Serialize};
 
-use crate::{Health, MaxSpeed, Object, PlayerCooldowns, PLAYER_R};
+use crate::{Cooldowns, Health, MaxSpeed, Object, PLAYER_R};
 
 /// Construct a cooldown timer
 pub fn cooldown(cooldown: Duration) -> Timer {
@@ -35,7 +35,7 @@ impl Ability {
         meshes: &mut ResMut<Assets<Mesh>>,
         materials: &mut ResMut<Assets<StandardMaterial>>,
         entity: Entity,
-        cooldowns: &mut PlayerCooldowns,
+        cooldowns: &mut Cooldowns,
         max_speed: &mut MaxSpeed,
         transform: &Transform,
         velocity: &Velocity,
@@ -59,7 +59,7 @@ pub const HYPER_SPRINT_COOLDOWN: Duration = Duration::new(5, 0);
 fn hyper_sprint(
     commands: &mut Commands,
     entity: Entity,
-    cooldowns: &mut PlayerCooldowns,
+    cooldowns: &mut Cooldowns,
     max_speed: &mut MaxSpeed,
 ) -> bool {
     if cooldowns.hyper_sprint.finished() {
@@ -100,7 +100,7 @@ pub struct Shot {
 
 fn shoot(
     commands: &mut Commands,
-    cooldowns: &mut PlayerCooldowns,
+    cooldowns: &mut Cooldowns,
     meshes: &mut ResMut<Assets<Mesh>>,
     materials: &mut ResMut<Assets<StandardMaterial>>,
     transform: &Transform,

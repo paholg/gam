@@ -8,10 +8,10 @@ pub mod system;
 
 use bevy::{
     prelude::{
-        default, shape, Assets, Bundle, Camera, Camera3dBundle, Color, Commands,
-        Component, ComputedVisibility, GlobalTransform, Handle, Mat4, Material, Mesh,
-        OrthographicProjection, PbrBundle, PointLight, PointLightBundle, Quat, Query, Ray, Res,
-        ResMut, Resource, StandardMaterial, Transform, Vec2, Vec3, Visibility,
+        default, shape, Assets, Bundle, Camera, Camera3dBundle, Color, Commands, Component,
+        ComputedVisibility, GlobalTransform, Handle, Mat4, Material, Mesh, OrthographicProjection,
+        PbrBundle, PointLight, PointLightBundle, Quat, Query, Ray, Res, ResMut, Resource,
+        StandardMaterial, Transform, Vec2, Vec3, Visibility,
     },
     render::camera::ScalingMode,
     scene::Scene,
@@ -20,11 +20,7 @@ use bevy::{
 };
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
 
-
-
-use crate::{
-    healthbar::Healthbar,
-};
+use crate::healthbar::Healthbar;
 
 #[derive(Component)]
 pub struct Health {
@@ -41,28 +37,35 @@ impl Health {
 #[derive(Component, Copy, Clone, Debug)]
 pub struct MaxSpeed(f32);
 
+/// Indicate this entity is a player. Currently, we assume one player.
 #[derive(Component)]
 pub struct Player;
 
+/// Indicate this entity is controlled by AI.
 #[derive(Component)]
-pub struct PlayerCooldowns {
+pub struct Ai;
+
+/// Indicate this entity is on the enemy team.
+#[derive(Component)]
+pub struct Enemy;
+
+/// Indicate this entity is on the players' team.
+#[derive(Component)]
+pub struct Ally;
+
+#[derive(Component)]
+pub struct Cooldowns {
     hyper_sprint: Timer,
     shoot: Timer,
 }
 
 // TODO: Do cooldowns betterer
-pub fn player_cooldown_system(mut player_cooldowns: Query<&mut PlayerCooldowns>, time: Res<Time>) {
+pub fn player_cooldown_system(mut player_cooldowns: Query<&mut Cooldowns>, time: Res<Time>) {
     for mut pcd in player_cooldowns.iter_mut() {
         pcd.hyper_sprint.tick(time.delta());
         pcd.shoot.tick(time.delta());
     }
 }
-
-#[derive(Component)]
-pub struct Enemy;
-
-#[derive(Component)]
-pub struct Ally;
 
 #[derive(Bundle)]
 pub struct Object<M: Material> {
@@ -104,8 +107,9 @@ const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, -50.0, 50.0);
 pub const PLANE_SIZE: f32 = 30.0;
 
 #[derive(Resource)]
-pub struct NumEnemies {
-    pub value: u32,
+pub struct NumAi {
+    pub enemies: u32,
+    pub allies: u32,
 }
 
 pub fn setup(
