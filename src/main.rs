@@ -4,7 +4,7 @@ use bevy::{
 };
 use bevy_rapier3d::prelude::{NoUserData, RapierConfiguration, RapierPhysicsPlugin};
 use gam::{
-    ability, ai::AiPlugin, healthbar::HealthbarPlugin, player_cooldown_system, system, NumEnemies,
+    ability, ai::AiPlugin, healthbar::HealthbarPlugin, player_cooldown_system, system, NumAi,
 };
 
 fn main() {
@@ -12,7 +12,10 @@ fn main() {
     rapier_config.gravity = Vec3::ZERO;
     App::new()
         .add_plugins(DefaultPlugins)
-        .insert_resource(NumEnemies { value: 1 })
+        .insert_resource(NumAi {
+            enemies: 1,
+            allies: 1,
+        })
         .add_startup_system(gam::setup)
         .add_system(system::player_input)
         .add_system(system::update_cursor)
