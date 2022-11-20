@@ -1,15 +1,21 @@
+use std::time::Duration;
+
 use bevy::{
     prelude::{App, Vec3},
     DefaultPlugins,
 };
 use bevy_rapier3d::prelude::{NoUserData, RapierConfiguration, RapierPhysicsPlugin};
 use gam::{ability, ai, healthbar::HealthbarPlugin, player_cooldown_system, system, NumAi};
+use iyes_loopless::prelude::AppLooplessFixedTimestepExt;
+
+const TIMESTEP: Duration = Duration::from_millis(17);
 
 fn main() {
     let mut rapier_config = RapierConfiguration::default();
     rapier_config.gravity = Vec3::ZERO;
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_fixed_timestep(TIMESTEP, "timestep")
         .insert_resource(NumAi {
             enemies: 1,
             allies: 1,
