@@ -1401,6 +1401,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "eq-float"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c02b5d1d1e6ba431b960d4bf971c8b0e2d2942b8cbc577d9bdf9c60fca5d41d"
+
+[[package]]
 name = "erased-serde"
 version = "0.3.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1526,7 +1532,9 @@ dependencies = [
  "bevy_rapier3d",
  "big-brain",
  "directories",
+ "eq-float",
  "rand",
+ "rurel",
  "serde",
  "serde_json",
  "thiserror",
@@ -2787,6 +2795,15 @@ dependencies = [
  "base64",
  "bitflags",
  "serde",
+]
+
+[[package]]
+name = "rurel"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e61f4c6eaa9fcee61ff7934036c3d32f2a5781d924b67b92d1a8d62ee8be557f"
+dependencies = [
+ "rand",
 ]
 
 [[package]]

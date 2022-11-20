@@ -26,6 +26,7 @@ fn main() {
         .add_system(player_cooldown_system)
         .add_plugin(HealthbarPlugin)
         .add_plugin(ai::simple::SimpleAiPlugin)
+        .add_plugin(ai::qlearning::QLearningPlugin)
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
         .insert_resource(rapier_config)
         // .add_plugin(bevy_rapier3d::render::RapierDebugRenderPlugin::default())
