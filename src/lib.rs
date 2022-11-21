@@ -79,13 +79,14 @@ pub struct Enemy;
 #[derive(Component)]
 pub struct Ally;
 
+// TODO: Do cooldowns better. We don't want every entity to have a giant
+// cooldowns struct.
 #[derive(Component)]
 pub struct Cooldowns {
     hyper_sprint: Tick,
     shoot: Tick,
 }
 
-// TODO: Do cooldowns betterer
 pub fn cooldown_system(mut cooldowns: Query<&mut Cooldowns>) {
     for mut cd in cooldowns.iter_mut() {
         cd.hyper_sprint.tick();
