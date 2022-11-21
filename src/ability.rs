@@ -2,12 +2,13 @@ use std::time::Duration;
 
 use bevy::prelude::{
     shape::Icosphere, Assets, Color, Commands, Component, ComputedVisibility, Entity,
-    GlobalTransform, Mesh, Query, Res, ResMut, StandardMaterial, Transform, Vec3, Visibility, With,
-    Without,
+    GlobalTransform, Mesh, Quat, Query, Res, ResMut, StandardMaterial, Transform, Vec3, Visibility,
+    With, Without,
 };
 use bevy_rapier2d::prelude::{Collider, LockedAxes, RapierContext, RigidBody, Sensor, Velocity};
 use serde::{Deserialize, Serialize};
-use tracing::info;
+use smallvec::SmallVec;
+use tracing::{info, warn};
 
 use crate::{
     ai::qlearning::{AllyAi, EnemyAi},
@@ -151,15 +152,7 @@ fn shoot(
     }
 }
 
-pub fn shot_despawn_system(
-    mut commands: Commands,
-    mut query: Query<(Entity, &mut Shot)>,
-    tick_counter: Res<TickCounter>,
-) {
-    if tick_counter.diagnostic_iter() {
-        let num_shots = query.iter().count();
-        info!(%num_shots, "Shots fired!");
-    }
+pub fn shot_despawn_system(mut commands: Commands, mut query: Query<(Entity, &mut Shot)>) {
     for (entity, mut shot) in query.iter_mut() {
         if shot.duration.tick().is_zero() {
             commands.entity(entity).despawn();
@@ -167,71 +160,51 @@ pub fn shot_despawn_system(
     }
 }
 
-pub fn shot_hit_system_ally(
+// Note: This iterates through all intersection_pairs. We should use one system
+// for all such intersections to avoid duplicate work.
+pub fn shot_hit_system(
+    rapier_context: Res<RapierContext>,
+    mut commands: Commands,
+    shot_query: Query<Entity, With<Shot>>,
+    mut ally_query: Query<&mut Health, (With<Ally>, Without<Enemy>)>,
+    mut enemy_query: Query<&mut Health, (With<Enemy>, Without<Ally>)>,
+    miss_query: Query<Entity, Without<Health>>,
     // TODO: This is a temporary hack for Ai tracking of damage done.
-    rapier_context: Res<RapierContext>,
-    mut commands: Commands,
-    shot_query: Query<Entity, With<Shot>>,
-    mut target_query: Query<&mut Health, (With<Ally>, Without<Enemy>)>,
     mut ally_ai: ResMut<AllyAi>,
     mut enemy_ai: ResMut<EnemyAi>,
 ) {
-    for shot in shot_query.iter() {
-        let mut despawn = false;
-        for (other_entity, _, intersecting) in rapier_context.intersections_with(shot) {
-            if intersecting {
-                if let Ok(mut health) = target_query.get_mut(other_entity) {
-                    despawn = true;
-                    health.cur -= SHOT_DAMAGE;
-                    enemy_ai.do_damage(SHOT_DAMAGE);
-                    ally_ai.take_damage(SHOT_DAMAGE);
-                }
+    let mut shots_to_despawn: SmallVec<[Entity; 10]> = smallvec::SmallVec::new();
+    for (entity1, entity2, intersecting) in rapier_context.intersection_pairs() {
+        if intersecting {
+            let (shot_entity, target_entity) = if shot_query.get(entity1).is_ok() {
+                (entity1, entity2)
+            } else if shot_query.get(entity2).is_ok() {
+                (entity2, entity1)
+            } else {
+                continue;
+            };
+
+            if let Ok(mut health) = ally_query.get_mut(target_entity) {
+                health.cur -= SHOT_DAMAGE;
+                ally_ai.take_damage(SHOT_DAMAGE);
+                enemy_ai.do_damage(SHOT_DAMAGE);
+                shots_to_despawn.push(shot_entity);
             }
-        }
-        if despawn {
-            commands.entity(shot).despawn();
+            if let Ok(mut health) = enemy_query.get_mut(target_entity) {
+                health.cur -= SHOT_DAMAGE;
+                ally_ai.do_damage(SHOT_DAMAGE);
+                enemy_ai.take_damage(SHOT_DAMAGE);
+                shots_to_despawn.push(shot_entity);
+            }
+            if miss_query.get(target_entity).is_ok() {
+                shots_to_despawn.push(shot_entity);
+            }
         }
     }
-}
+    shots_to_despawn.sort();
+    shots_to_despawn.dedup();
 
-pub fn shot_hit_system_enemy(
-    rapier_context: Res<RapierContext>,
-    mut commands: Commands,
-    shot_query: Query<Entity, With<Shot>>,
-    mut target_query: Query<&mut Health, (With<Enemy>, Without<Ally>)>,
-    mut ally_ai: ResMut<AllyAi>,
-    mut enemy_ai: ResMut<EnemyAi>,
-) {
-    for shot in shot_query.iter() {
-        let mut despawn = false;
-        for (other_entity, _, intersecting) in rapier_context.intersections_with(shot) {
-            if intersecting {
-                if let Ok(mut health) = target_query.get_mut(other_entity) {
-                    despawn = true;
-                    health.cur -= SHOT_DAMAGE;
-                    ally_ai.do_damage(SHOT_DAMAGE);
-                    enemy_ai.take_damage(SHOT_DAMAGE);
-                }
-            }
-        }
-        if despawn {
-            commands.entity(shot).despawn();
-        }
-    }
-}
-
-pub fn shot_miss_system(
-    rapier_context: Res<RapierContext>,
-    mut commands: Commands,
-    shot_query: Query<Entity, With<Shot>>,
-    target_query: Query<Entity, Without<Health>>,
-) {
-    for shot in shot_query.iter() {
-        for (other_entity, _, intersecting) in rapier_context.intersections_with(shot) {
-            if intersecting && target_query.get(other_entity).is_ok() {
-                commands.entity(shot).despawn();
-                break;
-            }
-        }
+    for shot in shots_to_despawn.into_iter() {
+        commands.entity(shot).despawn();
     }
 }

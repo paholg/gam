@@ -1,5 +1,3 @@
-
-
 use bevy::{
     prelude::{default, App, PluginGroup},
     window::{PresentMode, WindowDescriptor, WindowPlugin},
@@ -23,6 +21,10 @@ fn main() {
         .add_plugin(gam::time::TickDebugPlugin)
         .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
         .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
-        // .add_plugin(bevy_rapier2d::render::RapierDebugRenderPlugin::default())
+        // .add_plugin(bevy_rapier2d::render::RapierDebugRenderPlugin {
+        //     enabled: true,
+        //     always_on_top: true,
+        //     ..default()
+        // })
         .run();
 }
