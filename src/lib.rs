@@ -1,24 +1,49 @@
-#![feature(once_cell)]
+#![feature(
+    once_cell,
+    duration_consts_float,
+    div_duration,
+    const_fn_floating_point_arithmetic
+)]
 
 pub mod ability;
 pub mod ai;
 pub mod config;
 pub mod healthbar;
 pub mod system;
+pub mod time;
 
 use bevy::{
+    app::PluginGroupBuilder,
+    audio::AudioPlugin,
+    diagnostic::DiagnosticsPlugin,
+    gltf::GltfPlugin,
+    input::InputPlugin,
+    log::LogPlugin,
+    pbr::PbrPlugin,
     prelude::{
-        default, shape, Assets, Bundle, Camera, Camera3dBundle, Color, Commands, Component,
-        ComputedVisibility, GlobalTransform, Handle, Mat4, Material, Mesh, OrthographicProjection,
-        PbrBundle, PointLight, PointLightBundle, Quat, Query, Ray, Res, ResMut, Resource,
-        StandardMaterial, Transform, Vec2, Vec3, Visibility,
+        default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera, Camera3dBundle,
+        Color, Commands, Component, ComputedVisibility, CorePlugin, GilrsPlugin, GlobalTransform,
+        Handle, HierarchyPlugin, ImagePlugin, IntoSystemDescriptor, Mat4, Material, Mesh,
+        OrthographicProjection, PbrBundle, Plugin, PluginGroup, PointLight, PointLightBundle, Quat,
+        Query, Ray, Res, ResMut, Resource, StandardMaterial, Transform, Vec2, Vec3, Visibility,
     },
-    render::camera::ScalingMode,
-    scene::Scene,
-    time::{Time, Timer},
-    window::Windows,
+    render::{camera::ScalingMode, RenderPlugin},
+    scene::{Scene, ScenePlugin},
+    sprite::SpritePlugin,
+    text::TextPlugin,
+    time::{TimePlugin},
+    transform::TransformPlugin,
+    ui::UiPlugin,
+    window::{WindowPlugin, Windows},
+    winit::WinitPlugin,
 };
-use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
+use bevy_rapier3d::prelude::{
+    Collider, LockedAxes, NoUserData, RapierConfiguration, RapierPhysicsPlugin, RigidBody,
+    TimestepMode, Velocity,
+};
+use healthbar::HealthbarPlugin;
+use iyes_loopless::prelude::AppLooplessFixedTimestepExt;
+use time::{Tick, ENGINE_TICK, TIMESTEP};
 
 use crate::healthbar::Healthbar;
 
@@ -55,15 +80,15 @@ pub struct Ally;
 
 #[derive(Component)]
 pub struct Cooldowns {
-    hyper_sprint: Timer,
-    shoot: Timer,
+    hyper_sprint: Tick,
+    shoot: Tick,
 }
 
 // TODO: Do cooldowns betterer
-pub fn player_cooldown_system(mut player_cooldowns: Query<&mut Cooldowns>, time: Res<Time>) {
-    for mut pcd in player_cooldowns.iter_mut() {
-        pcd.hyper_sprint.tick(time.delta());
-        pcd.shoot.tick(time.delta());
+pub fn cooldown_system(mut cooldowns: Query<&mut Cooldowns>) {
+    for mut cd in cooldowns.iter_mut() {
+        cd.hyper_sprint.tick();
+        cd.shoot.tick();
     }
 }
 
@@ -110,6 +135,117 @@ pub const PLANE_SIZE: f32 = 30.0;
 pub struct NumAi {
     pub enemies: u32,
     pub allies: u32,
+}
+
+// TODO: For whatever reason, our PluginGroups based on the DefaultPlugins but
+// split into two aren't working. Investigate later.
+
+/// The subset of DefaultPlugins that we want in headless mode.
+/// For this to be useful, we'll have to refactor things to only take in assets
+/// when we're not in headless mode.
+pub struct HeadlessDefaultPlugins;
+
+impl PluginGroup for HeadlessDefaultPlugins {
+    fn build(self) -> bevy::app::PluginGroupBuilder {
+        let mut group = PluginGroupBuilder::start::<Self>();
+        group = group
+            .add(LogPlugin::default())
+            .add(CorePlugin::default())
+            .add(TimePlugin::default())
+            .add(TransformPlugin::default())
+            .add(HierarchyPlugin::default())
+            .add(DiagnosticsPlugin::default());
+
+        group
+    }
+}
+
+/// The set of DefaultPlugins not included in HeadlessDefaultPlugins.
+pub struct ClientDefaultPlugins;
+
+impl PluginGroup for ClientDefaultPlugins {
+    fn build(self) -> bevy::app::PluginGroupBuilder {
+        let mut group = PluginGroupBuilder::start::<Self>();
+        group = group
+            .add(InputPlugin::default())
+            .add(WindowPlugin::default())
+            .add(AssetPlugin::default())
+            // .add(DebugAssetServerPlugin::default())
+            .add(ScenePlugin::default())
+            .add(WinitPlugin::default())
+            .add(RenderPlugin::default())
+            .add(ImagePlugin::default())
+            .add(SpritePlugin::default())
+            .add(TextPlugin::default())
+            .add(UiPlugin::default())
+            .add(PbrPlugin::default())
+            .add(GltfPlugin::default())
+            .add(AudioPlugin::default())
+            .add(GilrsPlugin::default())
+            .add(AnimationPlugin::default());
+        group
+    }
+}
+
+/// This plugin contains everything needed to run the game headlessly.
+pub struct GamPlugin;
+
+impl Plugin for GamPlugin {
+    fn build(&self, app: &mut bevy::prelude::App) {
+        let mut rapier_config = RapierConfiguration::default();
+        rapier_config.gravity = Vec3::ZERO;
+        rapier_config.timestep_mode = TimestepMode::Fixed {
+            dt: TIMESTEP.as_secs_f32(),
+            substeps: 1,
+        };
+
+        app.add_fixed_timestep(TIMESTEP, ENGINE_TICK)
+            .insert_resource(NumAi {
+                enemies: 1,
+                allies: 1,
+            })
+            .insert_resource(rapier_config)
+            .add_startup_system(setup)
+            .add_engine_tick_system(system::die)
+            .add_engine_tick_system(system::reset)
+            .add_engine_tick_system(ability::hyper_sprint_system)
+            .add_engine_tick_system(ability::shot_despawn_system)
+            .add_engine_tick_system(ability::shot_hit_system)
+            .add_engine_tick_system(ability::shot_miss_system)
+            .add_engine_tick_system(cooldown_system)
+            .add_plugin(ai::simple::SimpleAiPlugin)
+            .add_plugin(ai::qlearning::QLearningPlugin)
+            .add_plugin(RapierPhysicsPlugin::<NoUserData>::default());
+    }
+}
+
+/// This plugin includes user input and graphics.
+pub struct GamClientPlugin;
+
+impl Plugin for GamClientPlugin {
+    fn build(&self, app: &mut bevy::prelude::App) {
+        app.add_engine_tick_system(system::player_input)
+            .add_engine_tick_system(system::update_cursor)
+            .add_plugin(HealthbarPlugin);
+    }
+}
+
+trait FixedTimestepSystem {
+    fn add_engine_tick_system<Params>(
+        &mut self,
+        system: impl IntoSystemDescriptor<Params>,
+    ) -> &mut Self;
+
+    // fn add_engine_tick_system_to
+}
+
+impl FixedTimestepSystem for App {
+    fn add_engine_tick_system<Params>(
+        &mut self,
+        system: impl IntoSystemDescriptor<Params>,
+    ) -> &mut Self {
+        self.add_fixed_timestep_system("engine_tick", 0, system)
+    }
 }
 
 pub fn setup(

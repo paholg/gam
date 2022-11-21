@@ -9,8 +9,9 @@ use bevy::{
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
 use rand::Rng;
 
+
 use crate::{
-    ability::{cooldown, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN},
+    ability::{HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN},
     config::config,
     healthbar::Healthbar,
     intersect_xy_plane, pointing_angle, ray_from_screenspace, Ai, Ally, Character, Cooldowns,
@@ -154,8 +155,8 @@ fn spawn_player(
             locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
         },
         Cooldowns {
-            hyper_sprint: cooldown(HYPER_SPRINT_COOLDOWN),
-            shoot: cooldown(SHOOT_COOLDOWN),
+            hyper_sprint: HYPER_SPRINT_COOLDOWN,
+            shoot: SHOOT_COOLDOWN,
         },
     ));
 }
@@ -196,10 +197,9 @@ fn spawn_enemies(
                 velocity: Velocity::default(),
                 locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
             },
-            // TODO: Refactor cooldowns. This is temporary.
             Cooldowns {
-                hyper_sprint: cooldown(HYPER_SPRINT_COOLDOWN),
-                shoot: cooldown(SHOOT_COOLDOWN * 10),
+                hyper_sprint: HYPER_SPRINT_COOLDOWN,
+                shoot: SHOOT_COOLDOWN * 10,
             },
         ));
     }
@@ -243,8 +243,8 @@ fn spawn_allies(
             },
             // TODO: Refactor cooldowns. This is temporary.
             Cooldowns {
-                hyper_sprint: cooldown(HYPER_SPRINT_COOLDOWN),
-                shoot: cooldown(SHOOT_COOLDOWN * 10),
+                hyper_sprint: HYPER_SPRINT_COOLDOWN,
+                shoot: SHOOT_COOLDOWN * 10,
             },
         ));
     }
