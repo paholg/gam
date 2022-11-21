@@ -3,17 +3,17 @@ use std::cmp::Ordering;
 use bevy::{
     ecs::query::ReadOnlyWorldQuery,
     prelude::{
-        Added, Assets, Commands, Component, Entity, Mesh, Plugin, Quat, Query, ResMut,
-        StandardMaterial, Transform, Vec3, With, Without,
+        Assets, Commands, Entity, Mesh, Plugin, Quat, Query, ResMut, StandardMaterial, Transform,
+        Vec3, With, Without,
     },
 };
 use bevy_rapier2d::prelude::Velocity;
-use big_brain::{
-    prelude::{ActionState, FirstToScore},
-    scorers::Score,
-    thinker::{Actor, Thinker},
-    BigBrainPlugin, BigBrainStage,
-};
+// use big_brain::{
+//     prelude::{ActionState, FirstToScore},
+//     scorers::Score,
+//     thinker::{Actor, Thinker},
+//     BigBrainPlugin, BigBrainStage,
+// };
 
 use crate::{
     ability::Ability, pointing_angle, Ai, Ally, Cooldowns, Enemy, FixedTimestepSystem, MaxSpeed,
@@ -23,8 +23,7 @@ pub struct SimpleAiPlugin;
 
 impl Plugin for SimpleAiPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_engine_tick_system(add_ai_system)
-            .add_engine_tick_system(update_enemy_orientation)
+        app.add_engine_tick_system(update_enemy_orientation)
             .add_engine_tick_system(update_ally_orientation)
             .add_engine_tick_system(stupid_shoot_system);
         // // TODO: These should tick with the engine.
@@ -72,14 +71,14 @@ fn update_ally_orientation(
     point_to_closest(ally_query, enemy_query);
 }
 
-#[derive(Debug, Clone, Component)]
-pub struct ShotScorer;
+// #[derive(Debug, Clone, Component)]
+// pub struct ShotScorer;
 
-fn shot_scorer_system(mut query: Query<(&Actor, &mut Score), With<ShotScorer>>) {
-    for (Actor(_actor), mut score) in query.iter_mut() {
-        score.set(0.8);
-    }
-}
+// fn shot_scorer_system(mut query: Query<(&Actor, &mut Score), With<ShotScorer>>) {
+//     for (Actor(_actor), mut score) in query.iter_mut() {
+//         score.set(0.8);
+//     }
+// }
 
 fn stupid_shoot_system(
     mut commands: Commands,
@@ -104,52 +103,52 @@ fn stupid_shoot_system(
     }
 }
 
-#[derive(Debug, Clone, Component)]
-pub struct ShotAction;
+// #[derive(Debug, Clone, Component)]
+// pub struct ShotAction;
 
-fn shot_action_system(
-    mut commands: Commands,
-    #[cfg(feature = "graphics")] mut meshes: ResMut<Assets<Mesh>>,
-    #[cfg(feature = "graphics")] mut materials: ResMut<Assets<StandardMaterial>>,
+// fn shot_action_system(
+//     mut commands: Commands,
+//     #[cfg(feature = "graphics")] mut meshes: ResMut<Assets<Mesh>>,
+//     #[cfg(feature = "graphics")] mut materials: ResMut<Assets<StandardMaterial>>,
 
-    mut query: Query<(&Actor, &mut ActionState), With<ShotAction>>,
-    mut q_enemy: Query<(Entity, &mut Cooldowns, &Velocity, &mut MaxSpeed, &Transform), With<Ai>>,
-) {
-    // for (Actor(actor), mut state, entity, mut cooldowns, velocity, mut max_speed, transform) in
-    for (Actor(actor), mut state) in query.iter_mut() {
-        if let Ok((entity, mut cooldowns, velocity, mut max_speed, transform)) =
-            q_enemy.get_mut(*actor)
-        {
-            match *state {
-                ActionState::Requested => {
-                    if Ability::Shoot.fire(
-                        &mut commands,
-                        #[cfg(feature = "graphics")]
-                        &mut meshes,
-                        #[cfg(feature = "graphics")]
-                        &mut materials,
-                        entity,
-                        &mut cooldowns,
-                        &mut max_speed,
-                        transform,
-                        velocity,
-                    ) {
-                        *state = ActionState::Success;
-                    } else {
-                        *state = ActionState::Failure;
-                    }
-                }
-                ActionState::Cancelled => *state = ActionState::Failure,
-                _ => {}
-            }
-        }
-    }
-}
+//     mut query: Query<(&Actor, &mut ActionState), With<ShotAction>>,
+//     mut q_enemy: Query<(Entity, &mut Cooldowns, &Velocity, &mut MaxSpeed, &Transform), With<Ai>>,
+// ) {
+//     // for (Actor(actor), mut state, entity, mut cooldowns, velocity, mut max_speed, transform) in
+//     for (Actor(actor), mut state) in query.iter_mut() {
+//         if let Ok((entity, mut cooldowns, velocity, mut max_speed, transform)) =
+//             q_enemy.get_mut(*actor)
+//         {
+//             match *state {
+//                 ActionState::Requested => {
+//                     if Ability::Shoot.fire(
+//                         &mut commands,
+//                         #[cfg(feature = "graphics")]
+//                         &mut meshes,
+//                         #[cfg(feature = "graphics")]
+//                         &mut materials,
+//                         entity,
+//                         &mut cooldowns,
+//                         &mut max_speed,
+//                         transform,
+//                         velocity,
+//                     ) {
+//                         *state = ActionState::Success;
+//                     } else {
+//                         *state = ActionState::Failure;
+//                     }
+//                 }
+//                 ActionState::Cancelled => *state = ActionState::Failure,
+//                 _ => {}
+//             }
+//         }
+//     }
+// }
 
-fn add_ai_system(mut commands: Commands, ai_query: Query<Entity, Added<Ai>>) {
-    for entity in ai_query.iter() {
-        commands.entity(entity).insert((Thinker::build()
-            .picker(FirstToScore { threshold: 0.8 })
-            .when(ShotScorer, ShotAction),));
-    }
-}
+// fn add_ai_system(mut commands: Commands, ai_query: Query<Entity, Added<Ai>>) {
+//     for entity in ai_query.iter() {
+//         commands.entity(entity).insert((Thinker::build()
+//             .picker(FirstToScore { threshold: 0.8 })
+//             .when(ShotScorer, ShotAction),));
+//     }
+// }

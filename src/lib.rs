@@ -25,7 +25,7 @@ use bevy::{
     prelude::{
         default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera, Camera3dBundle,
         Color, Commands, Component, ComputedVisibility, CorePlugin, GilrsPlugin, GlobalTransform,
-        Handle, HierarchyPlugin, ImagePlugin, IntoSystemDescriptor, Mat4, Material, Mesh,
+        Handle, HierarchyPlugin, ImagePlugin, IntoSystemDescriptor, Mat4, Mesh,
         OrthographicProjection, PbrBundle, Plugin, PluginGroup, PointLight, PointLightBundle,
         Query, Ray, Res, ResMut, Resource, StandardMaterial, SystemSet, Transform, Vec2, Vec3,
         Visibility,

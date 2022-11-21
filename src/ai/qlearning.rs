@@ -1,9 +1,6 @@
 use std::{fs, path::PathBuf};
 
-use bevy::prelude::{
-    Added, Commands, Component, Entity, Plugin, Query, Res, ResMut, Resource, Transform, Vec2,
-    With, Without,
-};
+use bevy::prelude::{Plugin, Query, Res, ResMut, Resource, Transform, Vec2, With, Without};
 use bevy_rapier2d::prelude::Velocity;
 use rurel::{
     mdp::{Agent, State},
@@ -13,9 +10,7 @@ use rurel::{
 use serde::{Deserialize, Serialize};
 use tracing::{info, warn};
 
-use crate::{
-    config::project_dirs, time::TickCounter, Ai, Ally, Enemy, FixedTimestepSystem, Health, SPEED,
-};
+use crate::{config::project_dirs, time::TickCounter, Ai, Ally, Enemy, FixedTimestepSystem, SPEED};
 
 use super::f32::F32;
 
@@ -283,12 +278,12 @@ fn train_ai_system(
         info!("Saving ally...");
         let ally_values = ally_ai.trainer.as_ref().unwrap().export_learned_values();
         let data = ron::to_string(&ally_values).unwrap();
-        fs::write(&ally_path(), &data).unwrap();
+        fs::write(ally_path(), data).unwrap();
 
         info!("Saving enemy...");
         let enemy_values = enemy_ai.trainer.as_ref().unwrap().export_learned_values();
         let data = ron::to_string(&enemy_values).unwrap();
-        fs::write(&enemy_path(), &data).unwrap();
+        fs::write(enemy_path(), data).unwrap();
         info!("Done saving");
     }
 }
