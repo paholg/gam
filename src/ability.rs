@@ -5,7 +5,7 @@ use bevy::prelude::{
     GlobalTransform, Mesh, Query, Res, ResMut, StandardMaterial, Transform, Vec3, Visibility, With,
     Without,
 };
-use bevy_rapier3d::prelude::{Collider, LockedAxes, RapierContext, RigidBody, Sensor, Velocity};
+use bevy_rapier2d::prelude::{Collider, LockedAxes, RapierContext, RigidBody, Sensor, Velocity};
 use serde::{Deserialize, Serialize};
 
 use crate::{time::Tick, Cooldowns, Health, MaxSpeed, Object, PLAYER_R};
@@ -102,7 +102,7 @@ fn shoot(
 
         let dir = transform.rotation * Vec3::Y;
         let position = transform.translation + dir * (PLAYER_R + SHOT_R);
-        let vel = velocity.linvel + dir * SHOT_SPEED;
+        let vel = velocity.linvel + dir.truncate() * SHOT_SPEED;
         commands.spawn((
             Object {
                 material: materials.add(Color::BLUE.into()),
@@ -118,7 +118,7 @@ fn shoot(
                 body: RigidBody::Dynamic,
                 velocity: Velocity {
                     linvel: vel,
-                    angvel: Vec3::ZERO,
+                    angvel: 0.0,
                 },
                 locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
             },

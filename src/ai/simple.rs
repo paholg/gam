@@ -7,7 +7,7 @@ use bevy::{
         StandardMaterial, Transform, Vec3, With, Without,
     },
 };
-use bevy_rapier3d::prelude::Velocity;
+use bevy_rapier2d::prelude::Velocity;
 use big_brain::{
     prelude::{ActionState, FirstToScore},
     scorers::Score,

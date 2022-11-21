@@ -6,7 +6,7 @@ use bevy::{
     },
     window::Windows,
 };
-use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
+use bevy_rapier2d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
 use rand::Rng;
 
 use crate::{
@@ -76,7 +76,7 @@ pub fn player_input(
 
     delta_v = delta_v.clamp_length_max(1.0) * max_speed.0;
 
-    velocity.linvel = delta_v.extend(0.0);
+    velocity.linvel = delta_v;
 }
 
 /// Moves the camera and orients the player based on the mouse cursor.

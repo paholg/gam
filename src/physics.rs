@@ -1,5 +1,5 @@
-use bevy::prelude::{default, CoreStage, Plugin, Vec3};
-use bevy_rapier3d::prelude::{
+use bevy::prelude::{default, CoreStage, Plugin, Vec2};
+use bevy_rapier2d::prelude::{
     NoUserData, PhysicsStages, RapierConfiguration, RapierPhysicsPlugin, TimestepMode,
 };
 use iyes_loopless::prelude::AppLooplessFixedTimestepExt;
@@ -16,7 +16,7 @@ pub struct PhysicsPlugin;
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         let rapier_config = RapierConfiguration {
-            gravity: Vec3::ZERO,
+            gravity: Vec2::ZERO,
             timestep_mode: TimestepMode::Fixed {
                 dt: PHYSICS_TIMESTEP,
                 substeps: 1,
