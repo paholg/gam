@@ -45,7 +45,7 @@ use bevy_rapier2d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
 use healthbar::HealthbarPlugin;
 use iyes_loopless::{fixedtimestep::TimestepName, prelude::AppLooplessFixedTimestepExt};
 use physics::PhysicsPlugin;
-use time::{Tick, TIMESTEP};
+use time::Tick;
 
 use crate::healthbar::Healthbar;
 
@@ -205,21 +205,23 @@ pub struct GamPlugin;
 
 impl Plugin for GamPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_fixed_timestep(TIMESTEP, BEFORE_CORESTAGE_UPDATE)
-            .insert_resource(NumAi {
-                enemies: 5,
-                allies: 5,
-            })
-            .add_startup_system(setup)
-            .add_engine_tick_system(system::die)
-            .add_engine_tick_system(system::reset)
-            .add_engine_tick_system(ability::hyper_sprint_system)
-            .add_engine_tick_system(ability::shot_despawn_system)
-            .add_engine_tick_system(ability::shot_hit_system)
-            .add_engine_tick_system(cooldown_system)
-            .add_plugin(ai::simple::SimpleAiPlugin)
-            .add_plugin(ai::qlearning::QLearningPlugin)
-            .add_plugin(PhysicsPlugin);
+        #[cfg(not(feature = "train"))]
+        app.add_fixed_timestep(time::TIMESTEP, BEFORE_CORESTAGE_UPDATE);
+        app.insert_resource(NumAi {
+            enemies: 5,
+            allies: 5,
+        })
+        .add_startup_system(setup)
+        .add_engine_tick_system(system::die)
+        .add_engine_tick_system(system::reset)
+        .add_engine_tick_system(ability::hyper_sprint_system)
+        .add_engine_tick_system(ability::shot_despawn_system)
+        .add_engine_tick_system(ability::shot_hit_system)
+        .add_engine_tick_system(cooldown_system)
+        .add_plugin(ai::simple::SimpleAiPlugin)
+        .add_plugin(ai::torch::TorchPlugin)
+        // .add_plugin(ai::qlearning::QLearningPlugin)
+        .add_plugin(PhysicsPlugin);
     }
 }
 
@@ -278,12 +280,14 @@ trait FixedTimestepSystem {
         system: impl IntoSystemDescriptor<Params>,
     ) -> &mut Self;
 
+    #[cfg(not(feature = "train"))]
     fn add_engine_tick_system_to_stage<Params>(
         &mut self,
         stage: CustomStage,
         system: impl IntoSystemDescriptor<Params>,
     ) -> &mut Self;
 
+    #[cfg(not(feature = "train"))]
     fn add_engine_tick_system_set_to_stage(
         &mut self,
         stage: CustomStage,
@@ -291,6 +295,7 @@ trait FixedTimestepSystem {
     ) -> &mut Self;
 }
 
+#[cfg(not(feature = "train"))]
 impl FixedTimestepSystem for App {
     fn add_engine_tick_system<Params>(
         &mut self,
@@ -316,6 +321,16 @@ impl FixedTimestepSystem for App {
         system_set: SystemSet,
     ) -> &mut Self {
         self.add_fixed_timestep_system_set(stage.timestep_name(), stage.substage(), system_set)
+    }
+}
+
+#[cfg(feature = "train")]
+impl FixedTimestepSystem for App {
+    fn add_engine_tick_system<Params>(
+        &mut self,
+        system: impl IntoSystemDescriptor<Params>,
+    ) -> &mut Self {
+        self.add_system(system)
     }
 }
 
