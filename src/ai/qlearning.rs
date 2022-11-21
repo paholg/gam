@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf};
 
-use bevy::prelude::{Plugin, Query, Res, ResMut, Resource, Transform, Vec2, With, Without};
+use bevy::prelude::{Plugin, Query, Res, ResMut, Resource, Transform, Vec2, Vec3, With, Without};
 use bevy_rapier2d::prelude::Velocity;
 use rurel::{
     mdp::{Agent, State},

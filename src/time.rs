@@ -14,7 +14,7 @@ use crate::FixedTimestepSystem;
 #[cfg(feature = "graphics")]
 pub const TIMESTEP: Duration = Duration::from_secs_f32(PHYSICS_TIMESTEP);
 #[cfg(not(feature = "graphics"))]
-pub const TIMESTEP: Duration = Duration::from_secs_f32(PHYSICS_TIMESTEP);
+pub const TIMESTEP: Duration = Duration::from_secs_f32(PHYSICS_TIMESTEP / 100.0);
 /// The timestep the physics engine sees.
 pub const PHYSICS_INVERSE_TIMESTEP: f32 = 60.0;
 pub const PHYSICS_TIMESTEP: f32 = 1.0 / PHYSICS_INVERSE_TIMESTEP;

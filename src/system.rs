@@ -274,6 +274,7 @@ pub fn reset(
     num_ai: ResMut<NumAi>,
     enemy_query: Query<Entity, With<Enemy>>,
     ally_query: Query<Entity, With<Ally>>,
+    player_query: Query<Entity, With<Player>>,
     #[cfg(feature = "graphics")] mut meshes: ResMut<Assets<Mesh>>,
     #[cfg(feature = "graphics")] mut materials: ResMut<Assets<StandardMaterial>>,
     #[cfg(feature = "graphics")] mut asset_server: Res<AssetServer>,
@@ -292,17 +293,20 @@ pub fn reset(
         );
     }
 
+    // if player_query.iter().next().is_none() {
+    //     spawn_player(
+    //         &mut commands,
+    //         #[cfg(feature = "graphics")]
+    //         &mut meshes,
+    //         #[cfg(feature = "graphics")]
+    //         &mut materials,
+    //         #[cfg(feature = "graphics")]
+    //         &mut asset_server,
+    //     );
+    // }
+
     if ally_query.iter().next().is_none() {
         // num_ai.allies += 1;
-        // spawn_player(
-        //     &mut commands,
-        //     #[cfg(feature = "graphics")]
-        //     &mut meshes,
-        //     #[cfg(feature = "graphics")]
-        //     &mut materials,
-        //     #[cfg(feature = "graphics")]
-        //     &mut asset_server,
-        // );
         spawn_allies(
             &mut commands,
             #[cfg(feature = "graphics")]

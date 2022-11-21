@@ -26,7 +26,7 @@ use bevy::{
         default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera, Camera3dBundle,
         Color, Commands, Component, ComputedVisibility, CorePlugin, GilrsPlugin, GlobalTransform,
         Handle, HierarchyPlugin, ImagePlugin, IntoSystemDescriptor, Mat4, Mesh,
-        OrthographicProjection, PbrBundle, Plugin, PluginGroup, PointLight, PointLightBundle,
+        OrthographicProjection, PbrBundle, Plugin, PluginGroup, PointLight, PointLightBundle, Quat,
         Query, Ray, Res, ResMut, Resource, StandardMaterial, SystemSet, Transform, Vec2, Vec3,
         Visibility,
     },
@@ -214,9 +214,7 @@ impl Plugin for GamPlugin {
             .add_engine_tick_system(system::reset)
             .add_engine_tick_system(ability::hyper_sprint_system)
             .add_engine_tick_system(ability::shot_despawn_system)
-            .add_engine_tick_system(ability::shot_hit_system_ally)
-            .add_engine_tick_system(ability::shot_hit_system_enemy)
-            .add_engine_tick_system(ability::shot_miss_system)
+            .add_engine_tick_system(ability::shot_hit_system)
             .add_engine_tick_system(cooldown_system)
             .add_plugin(ai::simple::SimpleAiPlugin)
             .add_plugin(ai::qlearning::QLearningPlugin)
