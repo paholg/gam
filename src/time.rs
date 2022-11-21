@@ -79,6 +79,12 @@ impl TickCounter {
         self.tick.val % Self::DIAGNOSTIC_ITERS == 0 && self.tick.val > 0
     }
 
+    #[cfg(feature = "graphics")]
+    pub fn should_save(&self) -> bool {
+        false
+    }
+
+    #[cfg(not(feature = "graphics"))]
     pub fn should_save(&self) -> bool {
         self.tick.val % 10_000 == 0 && self.tick.val > 0
     }
