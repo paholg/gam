@@ -38,7 +38,7 @@ fn config_file() -> Result<PathBuf, Error> {
     let proj_dirs = ProjectDirs::from("", ORG, NAME).ok_or(Error::HomeDirNotFound)?;
     let config_dir = proj_dirs.config_dir();
 
-    fs::create_dir_all(&config_dir)?;
+    fs::create_dir_all(config_dir)?;
 
     let mut path = config_dir.to_owned();
     path.push("config.json");
@@ -54,7 +54,7 @@ fn load_config() -> Result<Config, Error> {
 
 pub fn save_config(config: &Config) -> Result<(), Error> {
     let config = serde_json::to_string_pretty(config)?;
-    fs::write(&config_file()?, &config)?;
+    fs::write(config_file()?, config)?;
 
     Ok(())
 }
