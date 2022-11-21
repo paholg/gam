@@ -271,7 +271,7 @@ fn spawn_allies(
 
 pub fn reset(
     mut commands: Commands,
-    num_ai: ResMut<NumAi>,
+    num_ai: Res<NumAi>,
     enemy_query: Query<Entity, With<Enemy>>,
     ally_query: Query<Entity, With<Ally>>,
     player_query: Query<Entity, With<Player>>,
@@ -279,7 +279,7 @@ pub fn reset(
     #[cfg(feature = "graphics")] mut materials: ResMut<Assets<StandardMaterial>>,
     #[cfg(feature = "graphics")] mut asset_server: Res<AssetServer>,
 ) {
-    if enemy_query.iter().next().is_none() {
+    if enemy_query.iter().count() < num_ai.enemies as usize {
         // num_ai.enemies += 1;
         spawn_enemies(
             &mut commands,
@@ -289,7 +289,7 @@ pub fn reset(
             &mut materials,
             #[cfg(feature = "graphics")]
             &mut asset_server,
-            num_ai.enemies,
+            1,
         );
     }
 
@@ -305,7 +305,7 @@ pub fn reset(
     //     );
     // }
 
-    if ally_query.iter().next().is_none() {
+    if ally_query.iter().count() < num_ai.allies as usize {
         // num_ai.allies += 1;
         spawn_allies(
             &mut commands,
@@ -315,7 +315,7 @@ pub fn reset(
             &mut materials,
             #[cfg(feature = "graphics")]
             &mut asset_server,
-            num_ai.allies,
+            1,
         );
     }
 }
