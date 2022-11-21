@@ -4,6 +4,7 @@
     div_duration,
     const_fn_floating_point_arithmetic
 )]
+#![allow(clippy::type_complexity)]
 
 pub mod ability;
 pub mod ai;
@@ -39,14 +40,9 @@ use bevy::{
     window::{WindowPlugin, Windows},
     winit::WinitPlugin,
 };
-use bevy_rapier3d::prelude::{
-    Collider, LockedAxes, RigidBody, Velocity,
-};
+use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
 use healthbar::HealthbarPlugin;
-use iyes_loopless::{
-    fixedtimestep::TimestepName,
-    prelude::{AppLooplessFixedTimestepExt},
-};
+use iyes_loopless::{fixedtimestep::TimestepName, prelude::AppLooplessFixedTimestepExt};
 use physics::PhysicsPlugin;
 use time::{Tick, TIMESTEP};
 

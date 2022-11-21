@@ -54,7 +54,7 @@ pub fn player_input(
                 entity,
                 &mut cooldowns,
                 &mut max_speed,
-                &transform,
+                transform,
                 &velocity,
             );
         }
