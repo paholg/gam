@@ -1,11 +1,12 @@
-use bevy::prelude::{CoreStage, Plugin, Vec3};
+use bevy::prelude::{CoreStage, Plugin, StageLabel, Vec3};
 use bevy_rapier3d::prelude::{
     NoUserData, PhysicsStages, RapierConfiguration, RapierPhysicsPlugin, TimestepMode,
 };
 use iyes_loopless::prelude::AppLooplessFixedTimestepExt;
 
 use crate::{
-    time::TIMESTEP, CustomStage, FixedTimestepSystem, AFTER_CORESTAGE_UPDATE, BEFORE_CORESTAGE_LAST,
+    time::{PHYSICS_TIMESTEP, TIMESTEP},
+    CustomStage, FixedTimestepSystem, AFTER_CORESTAGE_UPDATE, BEFORE_CORESTAGE_LAST,
 };
 
 type RapierPlugin = RapierPhysicsPlugin<NoUserData>;
@@ -17,7 +18,7 @@ impl Plugin for PhysicsPlugin {
         let mut rapier_config = RapierConfiguration::default();
         rapier_config.gravity = Vec3::ZERO;
         rapier_config.timestep_mode = TimestepMode::Fixed {
-            dt: TIMESTEP.as_secs_f32(),
+            dt: PHYSICS_TIMESTEP,
             substeps: 1,
         };
 
