@@ -2,7 +2,8 @@
     once_cell,
     duration_consts_float,
     div_duration,
-    const_fn_floating_point_arithmetic
+    const_fn_floating_point_arithmetic,
+    io_error_other
 )]
 #![allow(clippy::type_complexity)]
 

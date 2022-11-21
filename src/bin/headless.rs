@@ -1,15 +1,15 @@
-
-
 use bevy::{
     app::{ScheduleRunnerPlugin, ScheduleRunnerSettings},
-    prelude::{App},
+    prelude::App,
 };
-use gam::{GamPlugin, HeadlessDefaultPlugins};
+use gam::{time::TIMESTEP, GamPlugin, HeadlessDefaultPlugins};
 
 fn main() {
     App::new()
         .insert_resource(ScheduleRunnerSettings {
-            run_mode: bevy::app::RunMode::Loop { wait: None },
+            run_mode: bevy::app::RunMode::Loop {
+                wait: Some(TIMESTEP),
+            },
         })
         // .add_plugins(MinimalPlugins)
         .add_plugins(HeadlessDefaultPlugins)
