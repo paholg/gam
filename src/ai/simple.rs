@@ -15,15 +15,18 @@ use big_brain::{
     BigBrainPlugin, BigBrainStage,
 };
 
-use crate::{ability::Ability, pointing_angle, Ai, Ally, Cooldowns, Enemy, MaxSpeed};
+use crate::{
+    ability::Ability, pointing_angle, Ai, Ally, Cooldowns, Enemy, FixedTimestepSystem, MaxSpeed,
+};
 
 pub struct SimpleAiPlugin;
 
 impl Plugin for SimpleAiPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_system(add_ai_system)
-            .add_system(update_enemy_orientation)
-            .add_system(update_ally_orientation)
+        app.add_engine_tick_system(add_ai_system)
+            .add_engine_tick_system(update_enemy_orientation)
+            .add_engine_tick_system(update_ally_orientation)
+            // TODO: These should tick with the engine.
             .add_plugin(BigBrainPlugin)
             .add_system_to_stage(BigBrainStage::Actions, shot_action_system)
             .add_system_to_stage(BigBrainStage::Scorers, shot_scorer_system);

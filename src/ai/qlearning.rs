@@ -6,7 +6,7 @@ use rurel::{
     AgentTrainer,
 };
 
-use crate::{Ai, Ally, Enemy, Health, SPEED};
+use crate::{Ai, Ally, Enemy, FixedTimestepSystem, Health, SPEED};
 
 // For now, we will still use the simple ai that rotates and shoots, and use
 // this just for movement.
@@ -15,8 +15,8 @@ pub struct QLearningPlugin;
 
 impl Plugin for QLearningPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_system(add_ai_system)
-            .add_system(train_enemy_ai_system);
+        app.add_engine_tick_system(add_ai_system)
+            .add_engine_tick_system(train_enemy_ai_system);
     }
 }
 
