@@ -9,6 +9,7 @@ pub mod ability;
 pub mod ai;
 pub mod config;
 pub mod healthbar;
+pub mod physics;
 pub mod system;
 pub mod time;
 
@@ -25,25 +26,29 @@ use bevy::{
         Color, Commands, Component, ComputedVisibility, CorePlugin, GilrsPlugin, GlobalTransform,
         Handle, HierarchyPlugin, ImagePlugin, IntoSystemDescriptor, Mat4, Material, Mesh,
         OrthographicProjection, PbrBundle, Plugin, PluginGroup, PointLight, PointLightBundle, Quat,
-        Query, Ray, Res, ResMut, Resource, StandardMaterial, Transform, Vec2, Vec3, Visibility,
+        Query, Ray, Res, ResMut, Resource, StandardMaterial, SystemSet, Transform, Vec2, Vec3,
+        Visibility,
     },
     render::{camera::ScalingMode, RenderPlugin},
     scene::{Scene, ScenePlugin},
     sprite::SpritePlugin,
     text::TextPlugin,
-    time::{TimePlugin},
+    time::TimePlugin,
     transform::TransformPlugin,
     ui::UiPlugin,
     window::{WindowPlugin, Windows},
     winit::WinitPlugin,
 };
 use bevy_rapier3d::prelude::{
-    Collider, LockedAxes, NoUserData, RapierConfiguration, RapierPhysicsPlugin, RigidBody,
-    TimestepMode, Velocity,
+    Collider, LockedAxes, RigidBody, Velocity,
 };
 use healthbar::HealthbarPlugin;
-use iyes_loopless::prelude::AppLooplessFixedTimestepExt;
-use time::{Tick, ENGINE_TICK, TIMESTEP};
+use iyes_loopless::{
+    fixedtimestep::TimestepName,
+    prelude::{AppLooplessFixedTimestepExt},
+};
+use physics::PhysicsPlugin;
+use time::{Tick, TIMESTEP};
 
 use crate::healthbar::Healthbar;
 
@@ -192,19 +197,11 @@ pub struct GamPlugin;
 
 impl Plugin for GamPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        let mut rapier_config = RapierConfiguration::default();
-        rapier_config.gravity = Vec3::ZERO;
-        rapier_config.timestep_mode = TimestepMode::Fixed {
-            dt: TIMESTEP.as_secs_f32(),
-            substeps: 1,
-        };
-
-        app.add_fixed_timestep(TIMESTEP, ENGINE_TICK)
+        app.add_fixed_timestep(TIMESTEP, BEFORE_CORESTAGE_UPDATE)
             .insert_resource(NumAi {
                 enemies: 1,
                 allies: 1,
             })
-            .insert_resource(rapier_config)
             .add_startup_system(setup)
             .add_engine_tick_system(system::die)
             .add_engine_tick_system(system::reset)
@@ -215,7 +212,7 @@ impl Plugin for GamPlugin {
             .add_engine_tick_system(cooldown_system)
             .add_plugin(ai::simple::SimpleAiPlugin)
             .add_plugin(ai::qlearning::QLearningPlugin)
-            .add_plugin(RapierPhysicsPlugin::<NoUserData>::default());
+            .add_plugin(PhysicsPlugin);
     }
 }
 
@@ -230,13 +227,61 @@ impl Plugin for GamClientPlugin {
     }
 }
 
+/// A helper enum to make tracking our custom Fixedtimestep stages a bit more
+/// sane.
+pub enum CustomStage {
+    CoreUpdate,
+    // The Physics stages are added by the PhysicsPlugin, based on the order in
+    // bevy_rapier's RapierPhysicsPlugin::build().
+    PhysicsSyncBackend,
+    PhysicsStepSimulation,
+    PhysicsWriteback,
+    PhysicsDetectDespawn,
+}
+
+pub const BEFORE_CORESTAGE_UPDATE: &str = "Before CoreStage::Update";
+pub const AFTER_CORESTAGE_UPDATE: &str = "After CoreStage::Update";
+pub const BEFORE_CORESTAGE_LAST: &str = "Before CoreStage::Last";
+
+impl CustomStage {
+    pub fn timestep_name(&self) -> TimestepName {
+        match self {
+            CustomStage::CoreUpdate => BEFORE_CORESTAGE_UPDATE,
+            CustomStage::PhysicsSyncBackend => AFTER_CORESTAGE_UPDATE,
+            CustomStage::PhysicsStepSimulation => AFTER_CORESTAGE_UPDATE,
+            CustomStage::PhysicsWriteback => AFTER_CORESTAGE_UPDATE,
+            CustomStage::PhysicsDetectDespawn => BEFORE_CORESTAGE_LAST,
+        }
+    }
+
+    pub fn substage(&self) -> usize {
+        match self {
+            CustomStage::CoreUpdate => 0,
+            CustomStage::PhysicsSyncBackend => 0,
+            CustomStage::PhysicsStepSimulation => 1,
+            CustomStage::PhysicsWriteback => 2,
+            CustomStage::PhysicsDetectDespawn => 0,
+        }
+    }
+}
+
 trait FixedTimestepSystem {
     fn add_engine_tick_system<Params>(
         &mut self,
         system: impl IntoSystemDescriptor<Params>,
     ) -> &mut Self;
 
-    // fn add_engine_tick_system_to
+    fn add_engine_tick_system_to_stage<Params>(
+        &mut self,
+        stage: CustomStage,
+        system: impl IntoSystemDescriptor<Params>,
+    ) -> &mut Self;
+
+    fn add_engine_tick_system_set_to_stage(
+        &mut self,
+        stage: CustomStage,
+        system_set: SystemSet,
+    ) -> &mut Self;
 }
 
 impl FixedTimestepSystem for App {
@@ -244,7 +289,26 @@ impl FixedTimestepSystem for App {
         &mut self,
         system: impl IntoSystemDescriptor<Params>,
     ) -> &mut Self {
-        self.add_fixed_timestep_system("engine_tick", 0, system)
+        self.add_fixed_timestep_system(
+            CustomStage::CoreUpdate.timestep_name(),
+            CustomStage::CoreUpdate.substage(),
+            system,
+        )
+    }
+    fn add_engine_tick_system_to_stage<Params>(
+        &mut self,
+        stage: CustomStage,
+        system: impl IntoSystemDescriptor<Params>,
+    ) -> &mut Self {
+        self.add_fixed_timestep_system(stage.timestep_name(), stage.substage(), system)
+    }
+
+    fn add_engine_tick_system_set_to_stage(
+        &mut self,
+        stage: CustomStage,
+        system_set: SystemSet,
+    ) -> &mut Self {
+        self.add_fixed_timestep_system_set(stage.timestep_name(), stage.substage(), system_set)
     }
 }
 

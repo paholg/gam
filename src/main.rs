@@ -3,9 +3,7 @@ use bevy::{
     window::{PresentMode, WindowDescriptor, WindowPlugin},
     DefaultPlugins,
 };
-use gam::{
-    time::TickDebugPlugin, GamClientPlugin, GamPlugin,
-};
+use gam::{GamClientPlugin, GamPlugin};
 
 fn main() {
     App::new()
@@ -20,7 +18,7 @@ fn main() {
         }))
         .add_plugin(GamPlugin)
         .add_plugin(GamClientPlugin)
-        .add_plugin(TickDebugPlugin)
+        // .add_plugin(gam::time::TickDebugPlugin)
         // .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
         // .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
         // .add_plugin(bevy_rapier3d::render::RapierDebugRenderPlugin::default())

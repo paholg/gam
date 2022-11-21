@@ -1,15 +1,15 @@
-use std::{ops::Mul, time::Duration};
-
-use bevy::{
-    prelude::{Plugin, Res, ResMut, Resource},
-    time::Time,
+use std::{
+    ops::Mul,
+    time::{Duration, Instant},
 };
+
+use bevy::prelude::{Plugin, Res, ResMut, Resource};
+use iyes_loopless::prelude::FixedTimesteps;
 use tracing::info;
 
 use crate::FixedTimestepSystem;
 
 pub const TIMESTEP: Duration = Duration::from_secs_f64(1.0 / 60.0);
-pub const ENGINE_TICK: &str = "engine_tick";
 
 /// Represents a duration in ticks rather than time.
 #[derive(Default)]
@@ -49,24 +49,40 @@ impl Mul<u64> for Tick {
     }
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource)]
 struct TickCounter {
     tick: Tick,
+    since: Instant,
 }
 
-fn log_tick_system(mut tick_counter: ResMut<TickCounter>, time: Res<Time>) {
+impl TickCounter {
+    fn new() -> Self {
+        Self {
+            tick: Tick { val: 0 },
+            since: Instant::now(),
+        }
+    }
+}
+
+fn debug_tick_system(mut tick_counter: ResMut<TickCounter>, timesteps: Res<FixedTimesteps>) {
     tick_counter.tick.val += 1;
     let tick = tick_counter.tick.val;
-    let delta = time.delta_seconds();
 
-    info!(tick, delta, "Tick");
+    let now = Instant::now();
+    let dur = now.duration_since(tick_counter.since);
+    tick_counter.since = now;
+
+    let info = timesteps.get_current().unwrap();
+    let dur_iyes = info.timestep();
+
+    info!(tick, ?dur, ?dur_iyes, "Tick");
 }
 
 pub struct TickDebugPlugin;
 
 impl Plugin for TickDebugPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.insert_resource(TickCounter::default())
-            .add_engine_tick_system(log_tick_system);
+        app.insert_resource(TickCounter::new())
+            .add_engine_tick_system(debug_tick_system);
     }
 }
