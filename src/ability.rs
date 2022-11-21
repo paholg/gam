@@ -19,6 +19,7 @@ pub enum Ability {
 }
 
 impl Ability {
+    #[allow(clippy::too_many_arguments)]
     pub fn fire(
         &self,
         commands: &mut Commands,

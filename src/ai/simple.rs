@@ -106,7 +106,7 @@ fn shot_action_system(
                         &mut cooldowns,
                         &mut max_speed,
                         transform,
-                        &velocity,
+                        velocity,
                     ) {
                         *state = ActionState::Success;
                     } else {
