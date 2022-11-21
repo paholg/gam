@@ -1,5 +1,5 @@
-use bevy::prelude::{Added, Commands, Component, Entity, Plugin, Query, Vec3, With};
-use bevy_rapier3d::prelude::Velocity;
+use bevy::prelude::{Added, Commands, Component, Entity, Plugin, Query, Vec2, With};
+use bevy_rapier2d::prelude::Velocity;
 use rurel::{
     mdp::{Agent, State},
     strategy::{explore::RandomExploration, learn::QLearning, terminate::FixedIterations},
@@ -121,6 +121,6 @@ fn train_enemy_ai_system(
             &mut FixedIterations::new(1),
             &RandomExploration::new(),
         );
-        velocity.linvel = Vec3::new(agent.state.dx.into(), agent.state.dy.into(), 0.0);
+        velocity.linvel = Vec2::new(agent.state.dx.into(), agent.state.dy.into());
     }
 }

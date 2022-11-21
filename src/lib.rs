@@ -26,7 +26,7 @@ use bevy::{
         default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera, Camera3dBundle,
         Color, Commands, Component, ComputedVisibility, CorePlugin, GilrsPlugin, GlobalTransform,
         Handle, HierarchyPlugin, ImagePlugin, IntoSystemDescriptor, Mat4, Material, Mesh,
-        OrthographicProjection, PbrBundle, Plugin, PluginGroup, PointLight, PointLightBundle, Quat,
+        OrthographicProjection, PbrBundle, Plugin, PluginGroup, PointLight, PointLightBundle,
         Query, Ray, Res, ResMut, Resource, StandardMaterial, SystemSet, Transform, Vec2, Vec3,
         Visibility,
     },
@@ -40,7 +40,7 @@ use bevy::{
     window::{WindowPlugin, Windows},
     winit::WinitPlugin,
 };
-use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
+use bevy_rapier2d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
 use healthbar::HealthbarPlugin;
 use iyes_loopless::{fixedtimestep::TimestepName, prelude::AppLooplessFixedTimestepExt};
 use physics::PhysicsPlugin;
@@ -317,24 +317,24 @@ pub fn setup(
     // Ground plane
     let collider = Collider::compound(vec![
         (
-            Vec3::new(PLANE_SIZE * 1.5, 0.0, 0.0),
-            Quat::IDENTITY,
-            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
+            Vec2::new(PLANE_SIZE * 1.5, 0.0),
+            0.0,
+            Collider::cuboid(PLANE_SIZE, PLANE_SIZE),
         ),
         (
-            Vec3::new(-PLANE_SIZE * 1.5, 0.0, 0.0),
-            Quat::IDENTITY,
-            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
+            Vec2::new(-PLANE_SIZE * 1.5, 0.0),
+            0.0,
+            Collider::cuboid(PLANE_SIZE, PLANE_SIZE),
         ),
         (
-            Vec3::new(0.0, PLANE_SIZE * 1.5, 0.0),
-            Quat::IDENTITY,
-            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
+            Vec2::new(0.0, PLANE_SIZE * 1.5),
+            0.0,
+            Collider::cuboid(PLANE_SIZE, PLANE_SIZE),
         ),
         (
-            Vec3::new(0.0, -PLANE_SIZE * 1.5, 0.0),
-            Quat::IDENTITY,
-            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
+            Vec2::new(0.0, -PLANE_SIZE * 1.5),
+            0.0,
+            Collider::cuboid(PLANE_SIZE, PLANE_SIZE),
         ),
     ]);
     commands.spawn((

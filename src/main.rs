@@ -21,6 +21,6 @@ fn main() {
         // .add_plugin(gam::time::TickDebugPlugin)
         // .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
         // .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
-        // .add_plugin(bevy_rapier3d::render::RapierDebugRenderPlugin::default())
+        // .add_plugin(bevy_rapier2d::render::RapierDebugRenderPlugin::default())
         .run();
 }
