@@ -7,8 +7,13 @@ use bevy::prelude::{
 };
 use bevy_rapier2d::prelude::{Collider, LockedAxes, RapierContext, RigidBody, Sensor, Velocity};
 use serde::{Deserialize, Serialize};
+use tracing::info;
 
-use crate::{time::Tick, Cooldowns, Health, MaxSpeed, Object, PLAYER_R};
+use crate::{
+    ai::qlearning::{AllyAi, EnemyAi},
+    time::{Tick, TickCounter},
+    Ally, Cooldowns, Enemy, Health, MaxSpeed, Object, PLAYER_R,
+};
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub enum Ability {
@@ -23,8 +28,8 @@ impl Ability {
     pub fn fire(
         &self,
         commands: &mut Commands,
-        meshes: &mut ResMut<Assets<Mesh>>,
-        materials: &mut ResMut<Assets<StandardMaterial>>,
+        #[cfg(feature = "graphics")] meshes: &mut ResMut<Assets<Mesh>>,
+        #[cfg(feature = "graphics")] materials: &mut ResMut<Assets<StandardMaterial>>,
         entity: Entity,
         cooldowns: &mut Cooldowns,
         max_speed: &mut MaxSpeed,
@@ -34,7 +39,16 @@ impl Ability {
         match self {
             Ability::None => true,
             Ability::HyperSprint => hyper_sprint(commands, entity, cooldowns, max_speed),
-            Ability::Shoot => shoot(commands, cooldowns, meshes, materials, transform, velocity),
+            Ability::Shoot => shoot(
+                commands,
+                cooldowns,
+                #[cfg(feature = "graphics")]
+                meshes,
+                #[cfg(feature = "graphics")]
+                materials,
+                transform,
+                velocity,
+            ),
         }
     }
 }
@@ -92,8 +106,8 @@ pub struct Shot {
 fn shoot(
     commands: &mut Commands,
     cooldowns: &mut Cooldowns,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
+    #[cfg(feature = "graphics")] meshes: &mut ResMut<Assets<Mesh>>,
+    #[cfg(feature = "graphics")] materials: &mut ResMut<Assets<StandardMaterial>>,
     transform: &Transform,
     velocity: &Velocity,
 ) -> bool {
@@ -105,14 +119,18 @@ fn shoot(
         let vel = velocity.linvel + dir.truncate() * SHOT_SPEED;
         commands.spawn((
             Object {
+                #[cfg(feature = "graphics")]
                 material: materials.add(Color::BLUE.into()),
+                #[cfg(feature = "graphics")]
                 mesh: meshes.add(Mesh::from(Icosphere {
                     radius: SHOT_R,
                     subdivisions: 5,
                 })),
                 transform: Transform::from_translation(position),
                 global_transform: GlobalTransform::default(),
+                #[cfg(feature = "graphics")]
                 visibility: Visibility::VISIBLE,
+                #[cfg(feature = "graphics")]
                 computed_visibility: ComputedVisibility::default(),
                 collider: Collider::ball(SHOT_R),
                 body: RigidBody::Dynamic,
@@ -133,7 +151,15 @@ fn shoot(
     }
 }
 
-pub fn shot_despawn_system(mut commands: Commands, mut query: Query<(Entity, &mut Shot)>) {
+pub fn shot_despawn_system(
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut Shot)>,
+    tick_counter: Res<TickCounter>,
+) {
+    if tick_counter.diagnostic_iter() {
+        let num_shots = query.iter().count();
+        info!(%num_shots, "Shots fired!");
+    }
     for (entity, mut shot) in query.iter_mut() {
         if shot.duration.tick().is_zero() {
             commands.entity(entity).despawn();
@@ -141,17 +167,42 @@ pub fn shot_despawn_system(mut commands: Commands, mut query: Query<(Entity, &mu
     }
 }
 
-pub fn shot_hit_system(
+pub fn shot_hit_system_ally(
+    // TODO: This is a temporary hack for Ai tracking of damage done.
     rapier_context: Res<RapierContext>,
     mut commands: Commands,
     shot_query: Query<Entity, With<Shot>>,
-    mut target_query: Query<(Entity, &mut Health)>,
+    mut target_query: Query<(Entity, &mut Health), With<Ally>>,
+    mut ally_ai: ResMut<AllyAi>,
+    mut enemy_ai: ResMut<EnemyAi>,
 ) {
     for shot in shot_query.iter() {
         for (target, mut health) in target_query.iter_mut() {
             if rapier_context.intersection_pair(shot, target) == Some(true) {
                 commands.entity(shot).despawn();
                 health.cur -= SHOT_DAMAGE;
+                ally_ai.take_damage(SHOT_DAMAGE);
+                enemy_ai.do_damage(SHOT_DAMAGE);
+            }
+        }
+    }
+}
+
+pub fn shot_hit_system_enemy(
+    rapier_context: Res<RapierContext>,
+    mut commands: Commands,
+    shot_query: Query<Entity, With<Shot>>,
+    mut target_query: Query<(Entity, &mut Health), With<Enemy>>,
+    mut ally_ai: ResMut<AllyAi>,
+    mut enemy_ai: ResMut<EnemyAi>,
+) {
+    for shot in shot_query.iter() {
+        for (target, mut health) in target_query.iter_mut() {
+            if rapier_context.intersection_pair(shot, target) == Some(true) {
+                commands.entity(shot).despawn();
+                health.cur -= SHOT_DAMAGE;
+                ally_ai.do_damage(SHOT_DAMAGE);
+                enemy_ai.take_damage(SHOT_DAMAGE);
             }
         }
     }
@@ -161,11 +212,11 @@ pub fn shot_miss_system(
     rapier_context: Res<RapierContext>,
     mut commands: Commands,
     shot_query: Query<Entity, With<Shot>>,
-    mut target_query: Query<Entity, Without<Health>>,
+    target_query: Query<Entity, Without<Health>>,
 ) {
     for shot in shot_query.iter() {
-        for target in target_query.iter_mut() {
-            if rapier_context.intersection_pair(shot, target) == Some(true) {
+        for (other_entity, _, intersecting) in rapier_context.intersections_with(shot) {
+            if intersecting && target_query.get(other_entity).is_ok() {
                 commands.entity(shot).despawn();
             }
         }

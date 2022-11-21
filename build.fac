@@ -1,2 +1,0 @@
-| nix-shell --run "cargo build --color always --features bevy/dynamic"
-

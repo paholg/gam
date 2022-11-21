@@ -95,12 +95,16 @@ pub fn cooldown_system(mut cooldowns: Query<&mut Cooldowns>) {
 }
 
 #[derive(Bundle)]
-pub struct Object<M: Material> {
-    material: Handle<M>,
+pub struct Object {
+    #[cfg(feature = "graphics")]
+    material: Handle<StandardMaterial>,
+    #[cfg(feature = "graphics")]
     mesh: Handle<Mesh>,
     transform: Transform,
     global_transform: GlobalTransform,
+    #[cfg(feature = "graphics")]
     visibility: Visibility,
+    #[cfg(feature = "graphics")]
     computed_visibility: ComputedVisibility,
     collider: Collider,
     body: RigidBody,
@@ -109,15 +113,21 @@ pub struct Object<M: Material> {
 }
 
 #[derive(Bundle)]
-struct Character<M: Material> {
+struct Character {
     health: Health,
+    #[cfg(feature = "graphics")]
     healthbar: Healthbar,
+    #[cfg(feature = "graphics")]
     scene: Handle<Scene>,
+    #[cfg(feature = "graphics")]
     outline: Handle<Mesh>,
-    material: Handle<M>,
+    #[cfg(feature = "graphics")]
+    material: Handle<StandardMaterial>,
     transform: Transform,
     global_transform: GlobalTransform,
+    #[cfg(feature = "graphics")]
     visibility: Visibility,
+    #[cfg(feature = "graphics")]
     computed_visibility: ComputedVisibility,
     collider: Collider,
     body: RigidBody,
@@ -196,15 +206,16 @@ impl Plugin for GamPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_fixed_timestep(TIMESTEP, BEFORE_CORESTAGE_UPDATE)
             .insert_resource(NumAi {
-                enemies: 1,
-                allies: 1,
+                enemies: 5,
+                allies: 5,
             })
             .add_startup_system(setup)
             .add_engine_tick_system(system::die)
             .add_engine_tick_system(system::reset)
             .add_engine_tick_system(ability::hyper_sprint_system)
             .add_engine_tick_system(ability::shot_despawn_system)
-            .add_engine_tick_system(ability::shot_hit_system)
+            .add_engine_tick_system(ability::shot_hit_system_ally)
+            .add_engine_tick_system(ability::shot_hit_system_enemy)
             .add_engine_tick_system(ability::shot_miss_system)
             .add_engine_tick_system(cooldown_system)
             .add_plugin(ai::simple::SimpleAiPlugin)
@@ -311,8 +322,8 @@ impl FixedTimestepSystem for App {
 
 pub fn setup(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    #[cfg(feature = "graphics")] mut meshes: ResMut<Assets<Mesh>>,
+    #[cfg(feature = "graphics")] mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Ground plane
     let collider = Collider::compound(vec![
@@ -337,24 +348,25 @@ pub fn setup(
             Collider::cuboid(PLANE_SIZE, PLANE_SIZE),
         ),
     ]);
-    commands.spawn((
-        PbrBundle {
-            mesh: meshes.add(
-                shape::Quad {
-                    size: Vec2::new(PLANE_SIZE, PLANE_SIZE),
-                    ..default()
-                }
-                .into(),
-            ),
-            material: materials.add(Color::SILVER.into()),
-            transform: Transform::from_xyz(0.0, 0.0, -0.1),
-            ..default()
-        },
-        RigidBody::KinematicPositionBased,
-        collider,
-    ));
+    let ground_plane = commands
+        .spawn((RigidBody::KinematicPositionBased, collider))
+        .id();
+    #[cfg(feature = "graphics")]
+    commands.entity(ground_plane).insert(PbrBundle {
+        mesh: meshes.add(
+            shape::Quad {
+                size: Vec2::new(PLANE_SIZE, PLANE_SIZE),
+                ..default()
+            }
+            .into(),
+        ),
+        material: materials.add(Color::SILVER.into()),
+        transform: Transform::from_xyz(0.0, 0.0, -0.1),
+        ..default()
+    });
 
     // Camera
+    #[cfg(feature = "graphics")]
     commands.spawn(Camera3dBundle {
         projection: OrthographicProjection {
             scale: 10.0,
@@ -367,6 +379,7 @@ pub fn setup(
     });
 
     // Light
+    #[cfg(feature = "graphics")]
     commands.spawn(PointLightBundle {
         point_light: PointLight {
             range: PLANE_SIZE,

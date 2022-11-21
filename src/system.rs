@@ -20,8 +20,8 @@ use crate::{
 pub fn player_input(
     keyboard_input: Res<Input<KeyCode>>,
     mouse_input: Res<Input<MouseButton>>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    #[cfg(feature = "graphics")] mut meshes: ResMut<Assets<Mesh>>,
+    #[cfg(feature = "graphics")] mut materials: ResMut<Assets<StandardMaterial>>,
     mut commands: Commands,
     mut query: Query<
         (
@@ -49,7 +49,9 @@ pub fn player_input(
         if control.pressed(&keyboard_input, &mouse_input) {
             ability.fire(
                 &mut commands,
+                #[cfg(feature = "graphics")]
                 &mut meshes,
+                #[cfg(feature = "graphics")]
                 &mut materials,
                 entity,
                 &mut cooldowns,
@@ -124,17 +126,20 @@ pub fn die(mut commands: Commands, query: Query<(Entity, &Health)>) {
 
 fn spawn_player(
     commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-    asset_server: &mut Res<AssetServer>,
+    #[cfg(feature = "graphics")] meshes: &mut ResMut<Assets<Mesh>>,
+    #[cfg(feature = "graphics")] materials: &mut ResMut<Assets<StandardMaterial>>,
+    #[cfg(feature = "graphics")] asset_server: &mut Res<AssetServer>,
 ) {
     commands.spawn((
         Player,
         Ally,
         Character {
             health: Health::new(100.0),
+            #[cfg(feature = "graphics")]
             healthbar: Healthbar::default(),
+            #[cfg(feature = "graphics")]
             scene: asset_server.load("models/temp/craft_speederB.glb#Scene0"),
+            #[cfg(feature = "graphics")]
             outline: meshes.add(
                 shape::Circle {
                     radius: 1.0,
@@ -142,10 +147,13 @@ fn spawn_player(
                 }
                 .into(),
             ),
+            #[cfg(feature = "graphics")]
             material: materials.add(Color::GREEN.into()),
             transform: Transform::default(),
             global_transform: GlobalTransform::default(),
+            #[cfg(feature = "graphics")]
             visibility: Visibility::VISIBLE,
+            #[cfg(feature = "graphics")]
             computed_visibility: ComputedVisibility::default(),
             collider: Collider::ball(1.0),
             body: RigidBody::Dynamic,
@@ -162,9 +170,9 @@ fn spawn_player(
 
 fn spawn_enemies(
     commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-    asset_server: &mut Res<AssetServer>,
+    #[cfg(feature = "graphics")] meshes: &mut ResMut<Assets<Mesh>>,
+    #[cfg(feature = "graphics")] materials: &mut ResMut<Assets<StandardMaterial>>,
+    #[cfg(feature = "graphics")] asset_server: &mut Res<AssetServer>,
     num: u32,
 ) {
     let mut rng = rand::thread_rng();
@@ -176,8 +184,11 @@ fn spawn_enemies(
             Ai,
             Character {
                 health: Health::new(100.0),
+                #[cfg(feature = "graphics")]
                 healthbar: Healthbar::default(),
+                #[cfg(feature = "graphics")]
                 scene: asset_server.load("models/temp/craft_speederB.glb#Scene0"),
+                #[cfg(feature = "graphics")]
                 outline: meshes.add(
                     shape::Circle {
                         radius: 1.0,
@@ -185,10 +196,13 @@ fn spawn_enemies(
                     }
                     .into(),
                 ),
+                #[cfg(feature = "graphics")]
                 material: materials.add(Color::RED.into()),
                 transform: Transform::from_xyz(x, y, 0.0),
                 global_transform: GlobalTransform::default(),
+                #[cfg(feature = "graphics")]
                 visibility: Visibility::VISIBLE,
+                #[cfg(feature = "graphics")]
                 computed_visibility: ComputedVisibility::default(),
                 collider: Collider::ball(1.0),
                 body: RigidBody::Dynamic,
@@ -206,9 +220,9 @@ fn spawn_enemies(
 
 fn spawn_allies(
     commands: &mut Commands,
-    meshes: &mut ResMut<Assets<Mesh>>,
-    materials: &mut ResMut<Assets<StandardMaterial>>,
-    asset_server: &mut Res<AssetServer>,
+    #[cfg(feature = "graphics")] meshes: &mut ResMut<Assets<Mesh>>,
+    #[cfg(feature = "graphics")] materials: &mut ResMut<Assets<StandardMaterial>>,
+    #[cfg(feature = "graphics")] asset_server: &mut Res<AssetServer>,
     num: u32,
 ) {
     let mut rng = rand::thread_rng();
@@ -220,8 +234,11 @@ fn spawn_allies(
             Ai,
             Character {
                 health: Health::new(100.0),
+                #[cfg(feature = "graphics")]
                 healthbar: Healthbar::default(),
+                #[cfg(feature = "graphics")]
                 scene: asset_server.load("models/temp/craft_speederB.glb#Scene0"),
+                #[cfg(feature = "graphics")]
                 outline: meshes.add(
                     shape::Circle {
                         radius: 1.0,
@@ -229,10 +246,13 @@ fn spawn_allies(
                     }
                     .into(),
                 ),
+                #[cfg(feature = "graphics")]
                 material: materials.add(Color::CYAN.into()),
                 transform: Transform::from_xyz(x, y, 0.0),
                 global_transform: GlobalTransform::default(),
+                #[cfg(feature = "graphics")]
                 visibility: Visibility::VISIBLE,
+                #[cfg(feature = "graphics")]
                 computed_visibility: ComputedVisibility::default(),
                 collider: Collider::ball(1.0),
                 body: RigidBody::Dynamic,
@@ -251,36 +271,45 @@ fn spawn_allies(
 
 pub fn reset(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut asset_server: Res<AssetServer>,
-    mut num_ai: ResMut<NumAi>,
+    num_ai: ResMut<NumAi>,
     enemy_query: Query<Entity, With<Enemy>>,
     ally_query: Query<Entity, With<Ally>>,
+    #[cfg(feature = "graphics")] mut meshes: ResMut<Assets<Mesh>>,
+    #[cfg(feature = "graphics")] mut materials: ResMut<Assets<StandardMaterial>>,
+    #[cfg(feature = "graphics")] mut asset_server: Res<AssetServer>,
 ) {
     if enemy_query.iter().next().is_none() {
-        num_ai.enemies += 1;
+        // num_ai.enemies += 1;
         spawn_enemies(
             &mut commands,
+            #[cfg(feature = "graphics")]
             &mut meshes,
+            #[cfg(feature = "graphics")]
             &mut materials,
+            #[cfg(feature = "graphics")]
             &mut asset_server,
             num_ai.enemies,
         );
     }
 
     if ally_query.iter().next().is_none() {
-        num_ai.allies += 1;
-        spawn_player(
-            &mut commands,
-            &mut meshes,
-            &mut materials,
-            &mut asset_server,
-        );
+        // num_ai.allies += 1;
+        // spawn_player(
+        //     &mut commands,
+        //     #[cfg(feature = "graphics")]
+        //     &mut meshes,
+        //     #[cfg(feature = "graphics")]
+        //     &mut materials,
+        //     #[cfg(feature = "graphics")]
+        //     &mut asset_server,
+        // );
         spawn_allies(
             &mut commands,
+            #[cfg(feature = "graphics")]
             &mut meshes,
+            #[cfg(feature = "graphics")]
             &mut materials,
+            #[cfg(feature = "graphics")]
             &mut asset_server,
             num_ai.allies,
         );

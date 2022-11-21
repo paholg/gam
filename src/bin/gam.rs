@@ -1,9 +1,12 @@
+use std::time::Duration;
+
 use bevy::{
+    app::ScheduleRunnerSettings,
     prelude::{default, App, PluginGroup},
     window::{PresentMode, WindowDescriptor, WindowPlugin},
-    DefaultPlugins,
+    DefaultPlugins, MinimalPlugins,
 };
-use gam::{GamClientPlugin, GamPlugin};
+use gam::{time::TIMESTEP, GamClientPlugin, GamPlugin, HeadlessDefaultPlugins};
 
 fn main() {
     App::new()
@@ -18,9 +21,9 @@ fn main() {
         }))
         .add_plugin(GamPlugin)
         .add_plugin(GamClientPlugin)
-        // .add_plugin(gam::time::TickDebugPlugin)
-        // .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
-        // .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
+        .add_plugin(gam::time::TickDebugPlugin)
+        .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
+        .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
         // .add_plugin(bevy_rapier2d::render::RapierDebugRenderPlugin::default())
         .run();
 }
