@@ -9,7 +9,10 @@ use tracing::info;
 
 use crate::FixedTimestepSystem;
 
-pub const TIMESTEP: Duration = Duration::from_secs_f64(1.0 / 60.0);
+/// The timestep at which we run our game.
+pub const TIMESTEP: Duration = Duration::from_secs_f32(PHYSICS_TIMESTEP);
+/// The timestep the physics engine sees.
+pub const PHYSICS_TIMESTEP: f32 = 1.0 / 60.0;
 
 /// Represents a duration in ticks rather than time.
 #[derive(Default)]
@@ -22,6 +25,9 @@ impl Tick {
     pub const fn new(duration: Duration) -> Self {
         // This function is a bit funky as we're limited by what we can do in a
         // const function. E.g. No access to `round` or `max`.
+
+        // TODO: Account for PHYSICS_TIMESTEP and TIMESTEP being different.
+        // Things should have a duration that is sped up as we speed up the game.
         let ticks = (duration.div_duration_f64(TIMESTEP) + 0.5) as u64;
 
         let val = if ticks == 0 { 1 } else { ticks };
