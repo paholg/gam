@@ -1,6 +1,10 @@
-use std::{fs, path::PathBuf};
+use std::{
+    collections::HashMap,
+    fs, io,
+    path::{Path, PathBuf},
+};
 
-use bevy::prelude::{Plugin, Query, Res, ResMut, Resource, Transform, Vec2, Vec3, With, Without};
+use bevy::prelude::{Plugin, Query, Res, ResMut, Resource, Transform, Vec2, With, Without};
 use bevy_rapier2d::prelude::Velocity;
 use rurel::{
     mdp::{Agent, State},
@@ -139,6 +143,12 @@ impl Agent<AiState> for AiAgent {
     }
 }
 
+fn load_ai_data(path: &Path) -> Result<HashMap<AiState, HashMap<AiAction, f64>>, io::Error> {
+    let contents = fs::read_to_string(path)?;
+    let state = ron::from_str(&contents).map_err(|e| io::Error::other(e))?;
+    Ok(state)
+}
+
 // We wrap the fields in Option so we can mutable borrow them both at the same
 // time.
 #[derive(Resource)]
@@ -151,8 +161,7 @@ impl Default for EnemyAi {
     fn default() -> Self {
         info!("Loading enemy data...");
         let mut trainer = AgentTrainer::default();
-        let contents = fs::read_to_string(enemy_path()).unwrap();
-        if let Ok(state) = ron::from_str(&contents) {
+        if let Ok(state) = load_ai_data(&enemy_path()) {
             trainer.import_state(state);
             info!("Done loading");
         } else {
@@ -189,8 +198,7 @@ impl Default for AllyAi {
     fn default() -> Self {
         info!("Loading ally data...");
         let mut trainer = AgentTrainer::default();
-        let contents = fs::read_to_string(ally_path()).unwrap();
-        if let Ok(state) = ron::from_str(&contents) {
+        if let Ok(state) = load_ai_data(&ally_path()) {
             trainer.import_state(state);
             info!("Done loading");
         } else {
