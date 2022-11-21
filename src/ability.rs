@@ -1,24 +1,14 @@
 use std::time::Duration;
 
-use bevy::{
-    prelude::{
-        shape::Icosphere, Assets, Color, Commands, Component, ComputedVisibility, Entity,
-        GlobalTransform, Mesh, Query, Res, ResMut, StandardMaterial, Transform, Vec3, Visibility,
-        With, Without,
-    },
-    time::{Time, Timer, TimerMode},
+use bevy::prelude::{
+    shape::Icosphere, Assets, Color, Commands, Component, ComputedVisibility, Entity,
+    GlobalTransform, Mesh, Query, Res, ResMut, StandardMaterial, Transform, Vec3, Visibility, With,
+    Without,
 };
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RapierContext, RigidBody, Sensor, Velocity};
 use serde::{Deserialize, Serialize};
 
-use crate::{Cooldowns, Health, MaxSpeed, Object, PLAYER_R};
-
-/// Construct a cooldown timer
-pub fn cooldown(cooldown: Duration) -> Timer {
-    let mut timer = Timer::new(cooldown, TimerMode::Once);
-    timer.tick(cooldown);
-    timer
-}
+use crate::{time::Tick, Cooldowns, Health, MaxSpeed, Object, PLAYER_R};
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub enum Ability {
@@ -50,11 +40,12 @@ impl Ability {
 
 #[derive(Component)]
 pub struct HyperSprinting {
-    duration: Timer,
+    duration: Tick,
 }
 
 const HYPER_SPRINT_FACTOR: f32 = 5.0;
-pub const HYPER_SPRINT_COOLDOWN: Duration = Duration::new(5, 0);
+pub const HYPER_SPRINT_COOLDOWN: Tick = Tick::new(Duration::new(5, 0));
+const HYPER_SPRINT_DURATION: Tick = Tick::new(Duration::from_secs_f32(0.15));
 
 fn hyper_sprint(
     commands: &mut Commands,
@@ -62,11 +53,11 @@ fn hyper_sprint(
     cooldowns: &mut Cooldowns,
     max_speed: &mut MaxSpeed,
 ) -> bool {
-    if cooldowns.hyper_sprint.finished() {
-        cooldowns.hyper_sprint.reset();
+    if cooldowns.hyper_sprint.is_zero() {
+        cooldowns.hyper_sprint = HYPER_SPRINT_COOLDOWN;
         max_speed.0 *= HYPER_SPRINT_FACTOR;
         commands.entity(entity).insert(HyperSprinting {
-            duration: Timer::from_seconds(0.15, TimerMode::Once),
+            duration: HYPER_SPRINT_DURATION,
         });
         true
     } else {
@@ -77,25 +68,24 @@ fn hyper_sprint(
 pub fn hyper_sprint_system(
     mut commands: Commands,
     mut query: Query<(Entity, &mut HyperSprinting, &mut MaxSpeed)>,
-    time: Res<Time>,
 ) {
     for (entity, mut hyper_sprinting, mut max_speed) in query.iter_mut() {
-        if hyper_sprinting.duration.tick(time.delta()).just_finished() {
+        if hyper_sprinting.duration.tick().is_zero() {
             max_speed.0 /= HYPER_SPRINT_FACTOR;
             commands.entity(entity).remove::<HyperSprinting>();
         }
     }
 }
 
-pub const SHOOT_COOLDOWN: Duration = Duration::from_millis(100);
-const SHOT_DURATION: Duration = Duration::from_secs(2);
+pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(100));
+const SHOT_DURATION: Tick = Tick::new(Duration::from_secs(2));
 const SHOT_SPEED: f32 = 50.0;
 const SHOT_R: f32 = 0.1;
 const SHOT_DAMAGE: f32 = 21.0;
 
 #[derive(Component)]
 pub struct Shot {
-    duration: Timer,
+    duration: Tick,
 }
 
 fn shoot(
@@ -106,8 +96,8 @@ fn shoot(
     transform: &Transform,
     velocity: &Velocity,
 ) -> bool {
-    if cooldowns.shoot.finished() {
-        cooldowns.shoot.reset();
+    if cooldowns.shoot.is_zero() {
+        cooldowns.shoot = SHOOT_COOLDOWN;
 
         let dir = transform.rotation * Vec3::Y;
         let position = transform.translation + dir * (PLAYER_R + SHOT_R);
@@ -133,7 +123,7 @@ fn shoot(
             },
             Sensor,
             Shot {
-                duration: Timer::new(SHOT_DURATION, TimerMode::Once),
+                duration: SHOT_DURATION,
             },
         ));
         true
@@ -142,13 +132,9 @@ fn shoot(
     }
 }
 
-pub fn shot_despawn_system(
-    mut commands: Commands,
-    time: Res<Time>,
-    mut query: Query<(Entity, &mut Shot)>,
-) {
+pub fn shot_despawn_system(mut commands: Commands, mut query: Query<(Entity, &mut Shot)>) {
     for (entity, mut shot) in query.iter_mut() {
-        if shot.duration.tick(time.delta()).finished() {
+        if shot.duration.tick().is_zero() {
             commands.entity(entity).despawn();
         }
     }
