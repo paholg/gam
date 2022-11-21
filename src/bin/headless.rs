@@ -1,12 +1,10 @@
-use std::time::Duration;
+
 
 use bevy::{
     app::{ScheduleRunnerPlugin, ScheduleRunnerSettings},
-    prelude::{default, App, PluginGroup},
-    window::{PresentMode, WindowDescriptor, WindowPlugin},
-    DefaultPlugins, MinimalPlugins,
+    prelude::{App},
 };
-use gam::{time::TIMESTEP, GamClientPlugin, GamPlugin, HeadlessDefaultPlugins};
+use gam::{GamPlugin, HeadlessDefaultPlugins};
 
 fn main() {
     App::new()
