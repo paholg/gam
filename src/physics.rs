@@ -1,4 +1,4 @@
-use bevy::prelude::{default, CoreStage, Plugin, Vec2};
+use bevy::prelude::{default, CoreStage, Plugin, Vec2, Vec3};
 use bevy_rapier2d::prelude::{
     NoUserData, PhysicsStages, RapierConfiguration, RapierPhysicsPlugin, TimestepMode,
 };
