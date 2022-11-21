@@ -9,7 +9,6 @@ use bevy::{
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
 use rand::Rng;
 
-
 use crate::{
     ability::{HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN},
     config::config,
