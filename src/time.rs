@@ -14,7 +14,7 @@ use crate::FixedTimestepSystem;
 #[cfg(feature = "graphics")]
 pub const TIMESTEP: Duration = Duration::from_secs_f32(PHYSICS_TIMESTEP);
 #[cfg(not(feature = "graphics"))]
-pub const TIMESTEP: Duration = Duration::from_nanos(1);
+pub const TIMESTEP: Duration = Duration::from_secs_f32(PHYSICS_TIMESTEP);
 /// The timestep the physics engine sees.
 pub const PHYSICS_INVERSE_TIMESTEP: f32 = 60.0;
 pub const PHYSICS_TIMESTEP: f32 = 1.0 / PHYSICS_INVERSE_TIMESTEP;
@@ -74,11 +74,11 @@ impl TickCounter {
     }
 
     pub fn diagnostic_iter(&self) -> bool {
-        self.tick.val % Self::DIAGNOSTIC_ITERS == 0
+        self.tick.val % Self::DIAGNOSTIC_ITERS == 0 && self.tick.val > 0
     }
 
     pub fn should_save(&self) -> bool {
-        self.tick.val % 100_000 == 0
+        self.tick.val % 10_000 == 0 && self.tick.val > 0
     }
 }
 
