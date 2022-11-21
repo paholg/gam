@@ -17,7 +17,7 @@ pub const PHYSICS_TIMESTEP: f32 = 1.0 / 60.0;
 /// Represents a duration in ticks rather than time.
 #[derive(Default)]
 pub struct Tick {
-    val: u64,
+    val: u32,
 }
 
 impl Tick {
@@ -28,7 +28,7 @@ impl Tick {
 
         // TODO: Account for PHYSICS_TIMESTEP and TIMESTEP being different.
         // Things should have a duration that is sped up as we speed up the game.
-        let ticks = (duration.div_duration_f64(TIMESTEP) + 0.5) as u64;
+        let ticks = (duration.div_duration_f64(TIMESTEP) + 0.5) as u32;
 
         let val = if ticks == 0 { 1 } else { ticks };
 
@@ -45,10 +45,10 @@ impl Tick {
     }
 }
 
-impl Mul<u64> for Tick {
+impl Mul<u32> for Tick {
     type Output = Tick;
 
-    fn mul(self, rhs: u64) -> Self::Output {
+    fn mul(self, rhs: u32) -> Self::Output {
         Self {
             val: self.val * rhs,
         }
