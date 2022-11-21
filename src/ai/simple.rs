@@ -26,10 +26,11 @@ impl Plugin for SimpleAiPlugin {
         app.add_engine_tick_system(add_ai_system)
             .add_engine_tick_system(update_enemy_orientation)
             .add_engine_tick_system(update_ally_orientation)
-            // TODO: These should tick with the engine.
-            .add_plugin(BigBrainPlugin)
-            .add_system_to_stage(BigBrainStage::Actions, shot_action_system)
-            .add_system_to_stage(BigBrainStage::Scorers, shot_scorer_system);
+            .add_engine_tick_system(stupid_shoot_system);
+        // // TODO: These should tick with the engine.
+        // .add_plugin(BigBrainPlugin)
+        // .add_system_to_stage(BigBrainStage::Actions, shot_action_system)
+        // .add_system_to_stage(BigBrainStage::Scorers, shot_scorer_system);
     }
 }
 
@@ -80,13 +81,36 @@ fn shot_scorer_system(mut query: Query<(&Actor, &mut Score), With<ShotScorer>>) 
     }
 }
 
+fn stupid_shoot_system(
+    mut commands: Commands,
+    #[cfg(feature = "graphics")] mut meshes: ResMut<Assets<Mesh>>,
+    #[cfg(feature = "graphics")] mut materials: ResMut<Assets<StandardMaterial>>,
+
+    mut q_ai: Query<(Entity, &mut Cooldowns, &Velocity, &mut MaxSpeed, &Transform), With<Ai>>,
+) {
+    for (entity, mut cooldowns, velocity, mut max_speed, transform) in q_ai.iter_mut() {
+        Ability::Shoot.fire(
+            &mut commands,
+            #[cfg(feature = "graphics")]
+            &mut meshes,
+            #[cfg(feature = "graphics")]
+            &mut materials,
+            entity,
+            &mut cooldowns,
+            &mut max_speed,
+            transform,
+            velocity,
+        );
+    }
+}
+
 #[derive(Debug, Clone, Component)]
 pub struct ShotAction;
 
 fn shot_action_system(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    #[cfg(feature = "graphics")] mut meshes: ResMut<Assets<Mesh>>,
+    #[cfg(feature = "graphics")] mut materials: ResMut<Assets<StandardMaterial>>,
 
     mut query: Query<(&Actor, &mut ActionState), With<ShotAction>>,
     mut q_enemy: Query<(Entity, &mut Cooldowns, &Velocity, &mut MaxSpeed, &Transform), With<Ai>>,
@@ -100,7 +124,9 @@ fn shot_action_system(
                 ActionState::Requested => {
                     if Ability::Shoot.fire(
                         &mut commands,
+                        #[cfg(feature = "graphics")]
                         &mut meshes,
+                        #[cfg(feature = "graphics")]
                         &mut materials,
                         entity,
                         &mut cooldowns,

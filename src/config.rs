@@ -30,12 +30,16 @@ pub enum Error {
     Json(#[from] serde_json::Error),
 }
 
+pub fn project_dirs() -> Result<ProjectDirs, Error> {
+    ProjectDirs::from("", ORG, NAME).ok_or(Error::HomeDirNotFound)
+}
+
 /// Return the path to the config file, if able.
 /// Creates any necessary directories of they do not exist.
 // TODO: The toml crate does not currently support enums. SAD. So we're using
 //  json.
 fn config_file() -> Result<PathBuf, Error> {
-    let proj_dirs = ProjectDirs::from("", ORG, NAME).ok_or(Error::HomeDirNotFound)?;
+    let proj_dirs = project_dirs()?;
     let config_dir = proj_dirs.config_dir();
 
     fs::create_dir_all(config_dir)?;
