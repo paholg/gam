@@ -4,21 +4,15 @@ use std::{
 };
 
 use bevy::prelude::{Plugin, Res, ResMut, Resource};
-use iyes_loopless::prelude::FixedTimesteps;
 use tracing::info;
 
 use crate::FixedTimestepSystem;
 
 /// The timestep at which we run our game.
-/// When running graphically, this should always be the same as PHYSICS_TIMESTEP.
-#[cfg(feature = "graphics")]
+#[cfg(not(feature = "train"))]
 pub const TIMESTEP: Duration = Duration::from_secs_f32(PHYSICS_TIMESTEP);
-// TODO: This seems to work fine until we saturate a CPU, then it chokes and the
-// AI stop doing dmg, and whatever else.
-#[cfg(not(feature = "graphics"))]
-pub const TIMESTEP: Duration = Duration::from_secs_f32(PHYSICS_TIMESTEP / 10.0);
-/// The timestep the physics engine sees.
 pub const PHYSICS_INVERSE_TIMESTEP: f32 = 60.0;
+/// The timestep the physics engine sees.
 pub const PHYSICS_TIMESTEP: f32 = 1.0 / PHYSICS_INVERSE_TIMESTEP;
 
 /// Represents a duration in ticks rather than time.
@@ -61,49 +55,46 @@ impl Mul<u32> for Tick {
 
 #[derive(Resource)]
 pub struct TickCounter {
-    tick: Tick,
+    tick: u64,
     since: Instant,
 }
 
 impl TickCounter {
-    const DIAGNOSTIC_ITERS: u32 = 1000;
+    const DIAGNOSTIC_ITERS: u64 = 1000;
 
     fn new() -> Self {
         Self {
-            tick: Tick { val: 0 },
+            tick: 1,
             since: Instant::now(),
         }
     }
 
     pub fn diagnostic_iter(&self) -> bool {
-        self.tick.val % Self::DIAGNOSTIC_ITERS == 0 && self.tick.val > 0
+        self.tick % Self::DIAGNOSTIC_ITERS == 0
     }
 
-    #[cfg(feature = "graphics")]
+    #[cfg(not(feature = "train"))]
     pub fn should_save(&self) -> bool {
         false
     }
 
-    #[cfg(not(feature = "graphics"))]
+    #[cfg(feature = "train")]
     pub fn should_save(&self) -> bool {
-        self.tick.val % 10_000 == 0 && self.tick.val > 0
+        self.tick % 100_000 == 0
     }
 }
 
-fn debug_tick_system(mut tick_counter: ResMut<TickCounter>, timesteps: Res<FixedTimesteps>) {
-    tick_counter.tick.val += 1;
+fn debug_tick_system(mut tick_counter: ResMut<TickCounter>) {
+    tick_counter.tick += 1;
 
     if tick_counter.diagnostic_iter() {
-        let tick = tick_counter.tick.val;
+        let tick = tick_counter.tick;
 
         let now = Instant::now();
-        let dur = now.duration_since(tick_counter.since) / TickCounter::DIAGNOSTIC_ITERS;
+        let dur = now.duration_since(tick_counter.since) / TickCounter::DIAGNOSTIC_ITERS as u32;
         tick_counter.since = now;
 
-        let info = timesteps.get_current().unwrap();
-        let dur_iyes = info.timestep();
-
-        info!(tick, ?dur, ?dur_iyes, "Tick");
+        info!(tick, ?dur, "Tick");
     }
 }
 

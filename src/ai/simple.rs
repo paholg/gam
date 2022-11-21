@@ -23,9 +23,10 @@ pub struct SimpleAiPlugin;
 
 impl Plugin for SimpleAiPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_engine_tick_system(update_enemy_orientation)
-            .add_engine_tick_system(update_ally_orientation)
-            .add_engine_tick_system(stupid_shoot_system);
+        // fixme: Let's try having the enemies always face up and see if they learn to move down.
+        // app.add_engine_tick_system(update_enemy_orientation)
+        //     .add_engine_tick_system(update_ally_orientation)
+        app.add_engine_tick_system(stupid_shoot_system);
         // // TODO: These should tick with the engine.
         // .add_plugin(BigBrainPlugin)
         // .add_system_to_stage(BigBrainStage::Actions, shot_action_system)

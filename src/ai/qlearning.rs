@@ -1,7 +1,9 @@
 use std::{
     collections::HashMap,
-    fs, io,
+    fs::{self, File},
+    io::{self, BufReader, BufWriter, Read},
     path::{Path, PathBuf},
+    thread::{self, Thread},
 };
 
 use bevy::prelude::{Plugin, Query, Res, ResMut, Resource, Transform, Vec2, With, Without};
@@ -25,8 +27,10 @@ pub struct QLearningPlugin;
 
 impl Plugin for QLearningPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.insert_resource(EnemyAi::default())
-            .insert_resource(AllyAi::default())
+        let enemy_thread = thread::spawn(|| EnemyAi::default());
+        let ally_thread = thread::spawn(|| AllyAi::default());
+        app.insert_resource(enemy_thread.join().unwrap())
+            .insert_resource(ally_thread.join().unwrap())
             .add_engine_tick_system(train_ai_system);
     }
 }
@@ -38,7 +42,7 @@ fn ally_path() -> PathBuf {
     fs::create_dir_all(cache_dir).unwrap();
 
     let mut path = cache_dir.to_owned();
-    path.push("ally_qlearning.ron");
+    path.push("ally_qlearning.bin");
     path
 }
 
@@ -49,7 +53,7 @@ fn enemy_path() -> PathBuf {
     fs::create_dir_all(cache_dir).unwrap();
 
     let mut path = cache_dir.to_owned();
-    path.push("enemy_qlearning.ron");
+    path.push("enemy_qlearning.bin");
     path
 }
 
@@ -144,9 +148,24 @@ impl Agent<AiState> for AiAgent {
 }
 
 fn load_ai_data(path: &Path) -> Result<HashMap<AiState, HashMap<AiAction, f64>>, io::Error> {
-    let contents = fs::read_to_string(path)?;
-    let state = ron::from_str(&contents).map_err(|e| io::Error::other(e))?;
+    let file = File::open(path)?;
+    let reader = BufReader::new(file);
+    info!("Deserializing...");
+    let state = bincode::serde::decode_from_reader(reader, bincode::config::standard())
+        .map_err(|e| io::Error::other(e))?;
     Ok(state)
+}
+
+fn save_ai_data(
+    path: &Path,
+    data: &HashMap<AiState, HashMap<AiAction, f64>>,
+) -> Result<(), io::Error> {
+    let file = File::create(path)?;
+    let mut writer = BufWriter::new(file);
+    info!("Serializing...");
+    bincode::serde::encode_into_std_write(data, &mut writer, bincode::config::standard())
+        .map_err(|e| io::Error::other(e))?;
+    Ok(())
 }
 
 // We wrap the fields in Option so we can mutable borrow them both at the same
@@ -162,6 +181,7 @@ impl Default for EnemyAi {
         info!("Loading enemy data...");
         let mut trainer = AgentTrainer::default();
         if let Ok(state) = load_ai_data(&enemy_path()) {
+            info!("Importing...");
             trainer.import_state(state);
             info!("Done loading");
         } else {
@@ -199,6 +219,7 @@ impl Default for AllyAi {
         info!("Loading ally data...");
         let mut trainer = AgentTrainer::default();
         if let Ok(state) = load_ai_data(&ally_path()) {
+            info!("Importing...");
             trainer.import_state(state);
             info!("Done loading");
         } else {
@@ -283,15 +304,23 @@ fn train_ai_system(
         let ally_dmg = ally_ai.agent.as_ref().unwrap().state.damage_done;
         let enemy_dmg = enemy_ai.agent.as_ref().unwrap().state.damage_done;
         info!(%ally_dmg, %enemy_dmg);
-        info!("Saving ally...");
-        let ally_values = ally_ai.trainer.as_ref().unwrap().export_learned_values();
-        let data = ron::to_string(&ally_values).unwrap();
-        fs::write(ally_path(), data).unwrap();
 
-        info!("Saving enemy...");
-        let enemy_values = enemy_ai.trainer.as_ref().unwrap().export_learned_values();
-        let data = ron::to_string(&enemy_values).unwrap();
-        fs::write(enemy_path(), data).unwrap();
-        info!("Done saving");
+        thread::scope(|scope| {
+            let t1 = scope.spawn(|| {
+                info!("Saving ally...");
+                // TODO: export_learned_values clones needlessly.
+                let ally_values = ally_ai.trainer.as_ref().unwrap().learned_values();
+                save_ai_data(&ally_path(), ally_values).unwrap();
+            });
+
+            let t2 = scope.spawn(|| {
+                info!("Saving enemy...");
+                let enemy_values = enemy_ai.trainer.as_ref().unwrap().learned_values();
+                save_ai_data(&enemy_path(), enemy_values).unwrap();
+            });
+            t1.join().unwrap();
+            t2.join().unwrap();
+            info!("Done saving");
+        });
     }
 }
