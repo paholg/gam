@@ -19,6 +19,8 @@ const NPROCS: i64 = 1; // 16;
 const NSTEPS: i64 = 5;
 const NSTACK: i64 = 4;
 
+const LEARNING_RATE: f64 = 1e-4;
+
 pub const NUMBER: i64 = 84;
 
 type Model = Box<dyn Fn(&Tensor) -> (Tensor, Tensor)>;
@@ -128,7 +130,7 @@ impl Trainer {
         if let Err(error) = vs.load("a2c.ot") {
             warn!(%error, "Error loading AI model");
         }
-        let opt = nn::Adam::default().build(&vs, 1e-4).unwrap();
+        let opt = nn::Adam::default().build(&vs, LEARNING_RATE).unwrap();
 
         let sum_rewards = Tensor::zeros(&[NPROCS], FLOAT_CPU);
         let total_rewards = 0.0;
