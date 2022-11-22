@@ -171,6 +171,8 @@ pub fn shot_hit_system(
     miss_query: Query<Entity, Without<Health>>,
     mut ai_state: ResMut<AiState>,
 ) {
+    ai_state.enemy_dmg_done = 0.0;
+    ai_state.ally_dmg_done = 0.0;
     let mut shots_to_despawn: SmallVec<[Entity; 10]> = smallvec::SmallVec::new();
     for (entity1, entity2, intersecting) in rapier_context.intersection_pairs() {
         if intersecting {

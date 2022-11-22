@@ -1,9 +1,10 @@
 mod env;
 mod model;
 
-use bevy::prelude::{NonSendMut, Plugin, Res};
+use bevy::prelude::{NonSendMut, Plugin, Query, Res, With};
+use bevy_rapier2d::prelude::Velocity;
 
-use crate::FixedTimestepSystem;
+use crate::{Enemy, FixedTimestepSystem};
 
 use self::{env::Team, model::Trainer};
 
@@ -24,6 +25,10 @@ impl Plugin for A2CPlugin {
     }
 }
 
-fn run_enemy(mut trainer: NonSendMut<EnemyTrainer>, ai_state: Res<AiState>) {
-    trainer.trainer.train_one_step(&ai_state).unwrap();
+fn run_enemy(
+    mut trainer: NonSendMut<EnemyTrainer>,
+    ai_state: Res<AiState>,
+    enemies: Query<&mut Velocity, With<Enemy>>,
+) {
+    trainer.trainer.train_one_step(&ai_state, enemies).unwrap();
 }

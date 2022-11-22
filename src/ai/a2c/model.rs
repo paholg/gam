@@ -1,4 +1,5 @@
-use bevy::prelude::{default, Res};
+use bevy::prelude::{default, Query, Res, With};
+use bevy_rapier2d::prelude::Velocity;
 use cpython::PyResult;
 use tch::{
     kind::{FLOAT_CPU, INT64_CPU},
@@ -7,19 +8,16 @@ use tch::{
 };
 use tracing::info;
 
-use crate::ai::{a2c::env::Env, AiState};
+use crate::{
+    ai::{a2c::env::Env, AiState},
+    Enemy,
+};
 
 use super::env::Team;
 
-const ENV_NAME: &str = "GamAi";
 const NPROCS: i64 = 1; // 16;
 const NSTEPS: i64 = 5;
 const NSTACK: i64 = 4;
-const UPDATES: i64 = 1_000_000;
-
-// fixme: This was 84 everywhere. I think it was the screen size for Atari games?
-// Not sure what to do about it.
-const NUMBER: i64 = 4;
 
 type Model = Box<dyn Fn(&Tensor) -> (Tensor, Tensor)>;
 
@@ -56,7 +54,7 @@ struct FrameStack {
 impl FrameStack {
     fn new(nprocs: i64, nstack: i64) -> FrameStack {
         FrameStack {
-            data: Tensor::zeros(&[nprocs, nstack, NUMBER, NUMBER], FLOAT_CPU),
+            data: Tensor::zeros(&[nprocs, nstack, 84, 84], FLOAT_CPU),
             nprocs,
             nstack,
         }
@@ -124,7 +122,9 @@ impl Trainer {
         );
 
         let device = tch::Device::cuda_if_available();
-        let vs = nn::VarStore::new(device);
+        let mut vs = nn::VarStore::new(device);
+        todo!("enter path name");
+        vs.load("").unwrap();
         let model = model(&vs.root(), env.action_space());
         let opt = nn::Adam::default().build(&vs, 1e-4).unwrap();
 
@@ -154,11 +154,17 @@ impl Trainer {
         })
     }
 
-    pub fn train_one_step(&mut self, ai_state: &AiState) -> cpython::PyResult<()> {
+    pub fn train_one_step(
+        &mut self,
+        ai_state: &AiState,
+        enemies: Query<&mut Velocity, With<Enemy>>,
+    ) -> cpython::PyResult<()> {
         let (critic, actor) = tch::no_grad(|| (self.model)(&self.s_states.get(self.step_index)));
         let probs = actor.softmax(-1, Kind::Float);
         let actions = probs.multinomial(1, true).squeeze_dim(-1);
-        let step = self.env.step(Vec::<i64>::from(&actions), &ai_state);
+        let step = self
+            .env
+            .step(Vec::<i64>::from(&actions), &ai_state, enemies);
 
         self.sum_rewards += &step.reward;
         self.total_rewards += f64::from((&self.sum_rewards * &step.is_done).sum(Kind::Float));
@@ -201,8 +207,8 @@ impl Trainer {
             let (critic, actor) = (self.model)(&self.s_states.narrow(0, 0, NSTEPS).view([
                 NSTEPS * NPROCS,
                 NSTACK,
-                NUMBER,
-                NUMBER,
+                84,
+                84,
             ]));
             let critic = critic.view([NSTEPS, NPROCS]);
             let actor = actor.view([NSTEPS, NPROCS, -1]);

@@ -91,10 +91,10 @@ fn debug_tick_system(mut tick_counter: ResMut<TickCounter>) {
         let tick = tick_counter.tick;
 
         let now = Instant::now();
-        let dur = now.duration_since(tick_counter.since) / TickCounter::DIAGNOSTIC_ITERS as u32;
+        let avg_dur = now.duration_since(tick_counter.since) / TickCounter::DIAGNOSTIC_ITERS as u32;
         tick_counter.since = now;
 
-        info!(tick, ?dur, "Tick");
+        info!(tick, ?avg_dur, "Tick");
     }
 }
 

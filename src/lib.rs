@@ -142,7 +142,7 @@ const SPEED: f32 = 15.0;
 
 const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, -50.0, 50.0);
 
-pub const PLANE_SIZE: f32 = 30.0;
+pub const PLANE_SIZE: f32 = 10.0;
 
 #[derive(Resource)]
 pub struct NumAi {
