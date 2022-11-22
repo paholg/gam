@@ -5,6 +5,8 @@ use tracing::info;
 
 use crate::{ai::AiState, Enemy, SPEED};
 
+use super::model::NUMBER;
+
 #[derive(Debug)]
 pub struct Step {
     pub obs: Tensor,
@@ -22,7 +24,7 @@ pub enum Team {
 pub struct Env {
     team: Team,
     action_space: i64,
-    observation_space: Vec<i64>,
+    // observation_space: Vec<i64>,
 }
 
 const ACTIONS: [Vec2; 5] = [
@@ -39,19 +41,19 @@ impl Env {
         let action_space = 5;
 
         // The world???
-        let observation_space = Vec::new();
+        // let observation_space = vec![84];
 
         Self {
             team,
             action_space,
-            observation_space,
+            // observation_space,
         }
     }
 
     /// Reset the state of the world???
     /// And return `obs`, I think, being the world.
     pub fn reset(&self) -> Tensor {
-        Tensor::zeros(&[84], FLOAT_CPU)
+        Tensor::zeros(&[NUMBER], FLOAT_CPU)
     }
 
     // For now, let's always have 1 ally and 1 enemy.
@@ -71,10 +73,8 @@ impl Env {
             enemy.linvel = ACTIONS[action[0] as usize] * SPEED;
         }
 
-        // TODO: We're not actually moving!
-
         // This is bad. Worry about it later.
-        let mut vec = vec![0.0; 84];
+        let mut vec = vec![0.0; NUMBER as usize];
         vec[0] = ai_state.ally_location.x;
         vec[1] = ai_state.ally_location.y;
         vec[2] = ai_state.enemy_location.x;
@@ -82,7 +82,7 @@ impl Env {
         Step {
             obs: Tensor::of_slice(&vec),
             reward: Tensor::from(reward),
-            is_done: Tensor::from(1.0f32),
+            is_done: Tensor::from(0.0f32),
         }
     }
 
@@ -90,7 +90,7 @@ impl Env {
         self.action_space
     }
 
-    pub fn observation_space(&self) -> &[i64] {
-        &self.observation_space
-    }
+    // pub fn observation_space(&self) -> &[i64] {
+    //     &self.observation_space
+    // }
 }

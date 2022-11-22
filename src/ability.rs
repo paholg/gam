@@ -117,7 +117,7 @@ fn shoot(
 
         let dir = transform.rotation * Vec3::Y;
         let position = transform.translation + dir * (PLAYER_R + SHOT_R);
-        let vel = velocity.linvel + dir.truncate() * SHOT_SPEED;
+        let vel = dir.truncate() * SHOT_SPEED; // + velocity.linvel fixme
         commands.spawn((
             Object {
                 #[cfg(feature = "graphics")]

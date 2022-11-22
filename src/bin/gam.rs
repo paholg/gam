@@ -3,7 +3,7 @@ use bevy::{
     window::{PresentMode, WindowDescriptor, WindowPlugin},
     DefaultPlugins,
 };
-use gam::{GamClientPlugin, GamPlugin};
+use gam::{ai::a2c::A2CSamplerPlugin, GamClientPlugin, GamPlugin};
 
 fn main() {
     App::new()
@@ -18,9 +18,11 @@ fn main() {
         }))
         .add_plugin(GamPlugin)
         .add_plugin(GamClientPlugin)
+        .add_plugin(gam::ai::a2c::A2CTrainerPlugin)
+        // .add_plugin(A2CSamplerPlugin)
         .add_plugin(gam::time::TickDebugPlugin)
-        .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
-        .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
+        // .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
+        // .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
         // .add_plugin(bevy_rapier2d::render::RapierDebugRenderPlugin {
         //     enabled: true,
         //     always_on_top: true,

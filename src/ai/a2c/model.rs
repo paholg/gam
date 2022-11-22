@@ -6,7 +6,7 @@ use tch::{
     nn::{self, OptimizerConfig},
     Device, Kind, Tensor,
 };
-use tracing::info;
+use tracing::{info, warn};
 
 use crate::{
     ai::{a2c::env::Env, AiState},
@@ -18,6 +18,8 @@ use super::env::Team;
 const NPROCS: i64 = 1; // 16;
 const NSTEPS: i64 = 5;
 const NSTACK: i64 = 4;
+
+pub const NUMBER: i64 = 84;
 
 type Model = Box<dyn Fn(&Tensor) -> (Tensor, Tensor)>;
 
@@ -54,7 +56,7 @@ struct FrameStack {
 impl FrameStack {
     fn new(nprocs: i64, nstack: i64) -> FrameStack {
         FrameStack {
-            data: Tensor::zeros(&[nprocs, nstack, 84, 84], FLOAT_CPU),
+            data: Tensor::zeros(&[nprocs, nstack, NUMBER, NUMBER], FLOAT_CPU),
             nprocs,
             nstack,
         }
@@ -113,19 +115,19 @@ impl UpdateData {
 }
 
 impl Trainer {
-    pub fn new(team: Team) -> PyResult<Self> {
+    pub fn new(team: Team) -> Self {
         let env = Env::new(team);
         info!(
             action_space = %env.action_space(),
-            observation_space = ?env.observation_space(),
             "Initializing A2C Trainer"
         );
 
         let device = tch::Device::cuda_if_available();
         let mut vs = nn::VarStore::new(device);
-        todo!("enter path name");
-        vs.load("").unwrap();
         let model = model(&vs.root(), env.action_space());
+        if let Err(error) = vs.load("a2c.ot") {
+            warn!(%error, "Error loading AI model");
+        }
         let opt = nn::Adam::default().build(&vs, 1e-4).unwrap();
 
         let sum_rewards = Tensor::zeros(&[NPROCS], FLOAT_CPU);
@@ -134,9 +136,9 @@ impl Trainer {
 
         let mut frame_stack = FrameStack::new(NPROCS, NSTACK);
         let _ = frame_stack.update(&env.reset(), None);
-        let s_states = Tensor::zeros(&[NSTEPS + 1, NPROCS, NSTACK, 84, 84], FLOAT_CPU);
+        let s_states = Tensor::zeros(&[NSTEPS + 1, NPROCS, NSTACK, NUMBER, NUMBER], FLOAT_CPU);
 
-        Ok(Self {
+        Self {
             env,
             device,
             vs,
@@ -151,14 +153,14 @@ impl Trainer {
             step_index: 0,
 
             update_data: UpdateData::new(),
-        })
+        }
     }
 
     pub fn train_one_step(
         &mut self,
         ai_state: &AiState,
         enemies: Query<&mut Velocity, With<Enemy>>,
-    ) -> cpython::PyResult<()> {
+    ) {
         let (critic, actor) = tch::no_grad(|| (self.model)(&self.s_states.get(self.step_index)));
         let probs = actor.softmax(-1, Kind::Float);
         let actions = probs.multinomial(1, true).squeeze_dim(-1);
@@ -207,8 +209,8 @@ impl Trainer {
             let (critic, actor) = (self.model)(&self.s_states.narrow(0, 0, NSTEPS).view([
                 NSTEPS * NPROCS,
                 NSTACK,
-                84,
-                84,
+                NUMBER,
+                NUMBER,
             ]));
             let critic = critic.view([NSTEPS, NPROCS]);
             let actor = actor.view([NSTEPS, NPROCS, -1]);
@@ -231,18 +233,20 @@ impl Trainer {
             let loss = value_loss * 0.5 + action_loss - dist_entropy * 0.01;
             self.opt.backward_step_clip(&loss, 0.5);
             if self.update_index > 0 && self.update_index % 500 == 0 {
-                println!(
-                    "{} {:.0} {}",
-                    self.update_index,
-                    self.total_episodes,
-                    self.total_rewards / self.total_episodes
+                info!(
+                    %self.update_index,
+                    %self.total_rewards,
+
+                    "Ai tick",
                 );
                 self.total_rewards = 0.;
                 self.total_episodes = 0.;
             }
             if self.update_index > 0 && self.update_index % 10000 == 0 {
-                if let Err(err) = self.vs.save(format!("a2c{}.ot", self.update_index)) {
-                    println!("error while saving {}", err)
+                if let Err(error) = self.vs.save("a2c.ot") {
+                    warn!(%error, "Error while saving model data");
+                } else {
+                    info!("Saved model data!");
                 }
             }
 
@@ -254,7 +258,47 @@ impl Trainer {
 
             self.update_index += 1;
         }
+    }
+}
 
-        Ok(())
+pub struct Sampler {
+    env: Env,
+    frame_stack: FrameStack,
+    obs: Tensor,
+    model: Model,
+}
+
+impl Sampler {
+    pub fn new(team: Team) -> Self {
+        let env = Env::new(team);
+        let mut vs = nn::VarStore::new(tch::Device::Cpu);
+        let model = model(&vs.root(), env.action_space());
+        if let Err(error) = vs.load("a2c.ot") {
+            warn!(%error, "Error loading AI model");
+        }
+
+        let mut frame_stack = FrameStack::new(1, NSTACK);
+        // fixme: detach :(
+        let obs = frame_stack.update(&env.reset(), None).detach();
+
+        Self {
+            env,
+            frame_stack,
+            obs,
+            model,
+        }
+    }
+
+    pub fn sample_one_step(
+        &mut self,
+        ai_state: &AiState,
+        enemies: Query<&mut Velocity, With<Enemy>>,
+    ) {
+        let (_critic, actor) = tch::no_grad(|| (self.model)(&self.obs));
+        let probs = actor.softmax(-1, Kind::Float);
+        let actions = probs.multinomial(1, true).squeeze_dim(-1);
+        let step = self.env.step(Vec::<i64>::from(&actions), ai_state, enemies);
+        let masks = Tensor::from(1f32) - step.is_done;
+        self.obs = self.frame_stack.update(&step.obs, Some(&masks)).detach();
     }
 }
