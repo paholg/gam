@@ -24,6 +24,7 @@ pub enum Team {
 pub struct Env {
     team: Team,
     action_space: i64,
+    buf: Vec<f32>,
     // observation_space: Vec<i64>,
 }
 
@@ -46,6 +47,7 @@ impl Env {
         Self {
             team,
             action_space,
+            buf: vec![0.0; NUMBER as usize],
             // observation_space,
         }
     }
@@ -58,7 +60,7 @@ impl Env {
 
     // For now, let's always have 1 ally and 1 enemy.
     pub fn step(
-        &self,
+        &mut self,
         action: Vec<i64>,
         ai_state: &AiState,
         mut enemies: Query<&mut Velocity, With<Enemy>>,
@@ -74,15 +76,14 @@ impl Env {
         }
 
         // This is bad. Worry about it later.
-        let mut vec = vec![0.0; NUMBER as usize];
-        vec[0] = ai_state.ally_location.x;
-        vec[1] = ai_state.ally_location.y;
-        vec[2] = ai_state.enemy_location.x;
-        vec[3] = ai_state.enemy_location.y;
+        self.buf[0] = ai_state.ally_location.x;
+        self.buf[1] = ai_state.ally_location.y;
+        self.buf[2] = ai_state.enemy_location.x;
+        self.buf[3] = ai_state.enemy_location.y;
         Step {
-            obs: Tensor::of_slice(&vec),
+            obs: Tensor::of_slice(&self.buf),
             reward: Tensor::from(reward),
-            is_done: Tensor::from(0.0f32),
+            is_done: Tensor::from(1.0f32),
         }
     }
 
