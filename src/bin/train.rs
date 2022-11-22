@@ -13,7 +13,7 @@ fn main() {
         .add_plugin(ScheduleRunnerPlugin::default())
         .add_plugin(GamPlugin)
         .add_plugin(gam::time::TickDebugPlugin)
-        .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
-        .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
+        // .add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
+        // .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
         .run();
 }
