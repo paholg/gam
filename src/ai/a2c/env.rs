@@ -1,8 +1,9 @@
-use bevy::prelude::Vec2;
+use bevy::prelude::{Query, Vec2, With};
+use bevy_rapier2d::prelude::Velocity;
 use tch::{kind::FLOAT_CPU, Tensor};
 use tracing::info;
 
-use crate::ai::AiState;
+use crate::{ai::AiState, Enemy, SPEED};
 
 #[derive(Debug)]
 pub struct Step {
@@ -50,30 +51,38 @@ impl Env {
     /// Reset the state of the world???
     /// And return `obs`, I think, being the world.
     pub fn reset(&self) -> Tensor {
-        Tensor::zeros(&[4], FLOAT_CPU)
+        Tensor::zeros(&[84], FLOAT_CPU)
     }
 
     // For now, let's always have 1 ally and 1 enemy.
-    pub fn step(&self, action: Vec<i64>, ai_state: &AiState) -> Step {
-        info!(?action, "Step");
-
+    pub fn step(
+        &self,
+        action: Vec<i64>,
+        ai_state: &AiState,
+        mut enemies: Query<&mut Velocity, With<Enemy>>,
+    ) -> Step {
         let reward = if self.team == Team::Ally {
             ai_state.ally_dmg_done - ai_state.enemy_dmg_done
         } else {
             ai_state.enemy_dmg_done - ai_state.ally_dmg_done
         };
 
+        if let Ok(mut enemy) = enemies.get_single_mut() {
+            enemy.linvel = ACTIONS[action[0] as usize] * SPEED;
+        }
+
         // TODO: We're not actually moving!
 
+        // This is bad. Worry about it later.
+        let mut vec = vec![0.0; 84];
+        vec[0] = ai_state.ally_location.x;
+        vec[1] = ai_state.ally_location.y;
+        vec[2] = ai_state.enemy_location.x;
+        vec[3] = ai_state.enemy_location.y;
         Step {
-            obs: Tensor::of_slice(&[
-                ai_state.ally_location.x,
-                ai_state.ally_location.y,
-                ai_state.enemy_location.x,
-                ai_state.enemy_location.y,
-            ]),
+            obs: Tensor::of_slice(&vec),
             reward: Tensor::from(reward),
-            is_done: Tensor::from(0.0f32),
+            is_done: Tensor::from(1.0f32),
         }
     }
 
