@@ -11,7 +11,7 @@ use smallvec::SmallVec;
 use tracing::{info, warn};
 
 use crate::{
-    ai::qlearning::{AllyAi, EnemyAi},
+    ai::AiState,
     time::{Tick, TickCounter},
     Ally, Cooldowns, Enemy, Health, MaxSpeed, Object, PLAYER_R,
 };
@@ -169,9 +169,7 @@ pub fn shot_hit_system(
     mut ally_query: Query<&mut Health, (With<Ally>, Without<Enemy>)>,
     mut enemy_query: Query<&mut Health, (With<Enemy>, Without<Ally>)>,
     miss_query: Query<Entity, Without<Health>>,
-    // TODO: This is a temporary hack for Ai tracking of damage done.
-    mut ally_ai: ResMut<AllyAi>,
-    mut enemy_ai: ResMut<EnemyAi>,
+    mut ai_state: ResMut<AiState>,
 ) {
     let mut shots_to_despawn: SmallVec<[Entity; 10]> = smallvec::SmallVec::new();
     for (entity1, entity2, intersecting) in rapier_context.intersection_pairs() {
@@ -186,14 +184,12 @@ pub fn shot_hit_system(
 
             if let Ok(mut health) = ally_query.get_mut(target_entity) {
                 health.cur -= SHOT_DAMAGE;
-                ally_ai.take_damage(SHOT_DAMAGE);
-                enemy_ai.do_damage(SHOT_DAMAGE);
+                ai_state.enemy_dmg_done += SHOT_DAMAGE;
                 shots_to_despawn.push(shot_entity);
             }
             if let Ok(mut health) = enemy_query.get_mut(target_entity) {
                 health.cur -= SHOT_DAMAGE;
-                ally_ai.do_damage(SHOT_DAMAGE);
-                enemy_ai.take_damage(SHOT_DAMAGE);
+                ai_state.ally_dmg_done += SHOT_DAMAGE;
                 shots_to_despawn.push(shot_entity);
             }
             if miss_query.get(target_entity).is_ok() {
