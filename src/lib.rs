@@ -220,7 +220,6 @@ impl Plugin for GamPlugin {
         .add_engine_tick_system(cooldown_system)
         .add_plugin(ai::AiPlugin)
         .add_plugin(ai::simple::SimpleAiPlugin)
-        .add_plugin(ai::a2c::A2CPlugin)
         // .add_plugin(ai::qlearning::QLearningPlugin)
         .add_plugin(PhysicsPlugin);
     }
