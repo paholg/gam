@@ -25,7 +25,7 @@ pub struct Env {
     team: Team,
     action_space: i64,
     buf: Vec<f32>,
-    // observation_space: Vec<i64>,
+    observation_space: Vec<i64>,
 }
 
 const ACTIONS: [Vec2; 5] = [
@@ -41,21 +41,23 @@ impl Env {
         // Number of possible actions?
         let action_space = 5;
 
-        // The world???
-        // let observation_space = vec![84];
+        // The shape of the world???
+        let observation_space = vec![1, NUMBER];
 
         Self {
             team,
             action_space,
             buf: vec![0.0; NUMBER as usize],
-            // observation_space,
+            observation_space,
         }
     }
 
     /// Reset the state of the world???
     /// And return `obs`, I think, being the world.
     pub fn reset(&self) -> Tensor {
-        Tensor::zeros(&[NUMBER], FLOAT_CPU)
+        Tensor::of_slice(&self.buf)
+            .view_(&self.observation_space)
+            .to_kind(tch::Kind::Float)
     }
 
     // For now, let's always have 1 ally and 1 enemy.
@@ -80,8 +82,12 @@ impl Env {
         self.buf[1] = ai_state.ally_location.y;
         self.buf[2] = ai_state.enemy_location.x;
         self.buf[3] = ai_state.enemy_location.y;
+
+        let obs = Tensor::of_slice(&self.buf)
+            .view_(&self.observation_space)
+            .to_kind(tch::Kind::Float);
         Step {
-            obs: Tensor::of_slice(&self.buf),
+            obs,
             reward: Tensor::from(reward),
             is_done: Tensor::from(1.0f32),
         }
