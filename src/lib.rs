@@ -208,8 +208,8 @@ impl Plugin for GamPlugin {
         #[cfg(not(feature = "train"))]
         app.add_fixed_timestep(time::TIMESTEP, BEFORE_CORESTAGE_UPDATE);
         app.insert_resource(NumAi {
-            enemies: 5,
-            allies: 5,
+            enemies: 1,
+            allies: 1,
         })
         .add_startup_system(setup)
         .add_engine_tick_system(system::die)
@@ -218,8 +218,9 @@ impl Plugin for GamPlugin {
         .add_engine_tick_system(ability::shot_despawn_system)
         .add_engine_tick_system(ability::shot_hit_system)
         .add_engine_tick_system(cooldown_system)
+        .add_plugin(ai::AiPlugin)
         .add_plugin(ai::simple::SimpleAiPlugin)
-        .add_plugin(ai::torch::TorchPlugin)
+        .add_plugin(ai::a2c::A2CPlugin)
         // .add_plugin(ai::qlearning::QLearningPlugin)
         .add_plugin(PhysicsPlugin);
     }

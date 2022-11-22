@@ -14,20 +14,24 @@ bevy_quickmenu = "0.1"
 # For example, do ComplexField::sin(0.4) (where ComplexField is imported by use
 # nalgebra::ComplexField) instead of 0.4.sin()
 bevy_rapier2d = { version = "0.19", features = ["enhanced-determinism"] }
-big-brain = "0.15.0"
 bincode = { version = "2.0.0-rc.2", features = ["serde"] }
 directories = "4"
 iyes_loopless = "0.9"
 rand = "0.8"
-rurel = { version = "0.2", git = "https://github.com/paholg/rurel", branch = "learned_values_ref" }
 serde = "1"
 serde_json = "1"
 smallvec = "1"
-tch = "0.9"
 thiserror = "1"
 # toml = "0.5"
 tracing = "0.1"
 tracing-subscriber = "0.3"
+
+# AI stuff
+big-brain = "0.15.0"
+cpython = "0.2.0"
+rurel = { version = "0.2", git = "https://github.com/paholg/rurel", branch = "learned_values_ref" }
+tch = "0.9"
+tensorflow = { version = "0.19.1", features = ["tensorflow_gpu"] }
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]
