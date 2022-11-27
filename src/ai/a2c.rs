@@ -1,4 +1,3 @@
-mod env;
 mod model;
 
 use bevy::prelude::{NonSendMut, Plugin, Query, Res, With};
@@ -6,12 +5,9 @@ use bevy_rapier2d::prelude::Velocity;
 
 use crate::{Enemy, FixedTimestepSystem};
 
-use self::{
-    env::Team,
-    model::{Sampler, Trainer},
-};
+use self::model::{Sampler, Trainer};
 
-use super::AiState;
+use super::{env::Team, AiState};
 
 pub struct A2CTrainerPlugin;
 pub struct A2CSamplerPlugin;

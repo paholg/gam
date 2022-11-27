@@ -3,9 +3,9 @@ use bevy_rapier2d::prelude::Velocity;
 use tch::{kind::FLOAT_CPU, Tensor};
 use tracing::info;
 
-use crate::{ai::AiState, Enemy, SPEED};
+use crate::{ai::AiState, Enemy, PLANE_SIZE, SPEED};
 
-use super::model::NUMBER;
+use super::{COLS, ROWS};
 
 #[derive(Debug)]
 pub struct Step {
@@ -24,8 +24,7 @@ pub enum Team {
 pub struct Env {
     team: Team,
     action_space: i64,
-    buf: Vec<f32>,
-    observation_space: Vec<i64>,
+    observation_space: Tensor,
 }
 
 const ACTIONS: [Vec2; 5] = [
@@ -42,12 +41,11 @@ impl Env {
         let action_space = 5;
 
         // The shape of the world???
-        let observation_space = vec![1, NUMBER];
+        let observation_space = Tensor::zeros(&[ROWS, COLS], FLOAT_CPU);
 
         Self {
             team,
             action_space,
-            buf: vec![0.0; NUMBER as usize],
             observation_space,
         }
     }
@@ -55,9 +53,7 @@ impl Env {
     /// Reset the state of the world???
     /// And return `obs`, I think, being the world.
     pub fn reset(&self) -> Tensor {
-        Tensor::of_slice(&self.buf)
-            .view_(&self.observation_space)
-            .to_kind(tch::Kind::Float)
+        self.observation_space.detach()
     }
 
     // For now, let's always have 1 ally and 1 enemy.
@@ -77,15 +73,18 @@ impl Env {
             enemy.linvel = ACTIONS[action[0] as usize] * SPEED;
         }
 
-        // This is bad. Worry about it later.
-        self.buf[0] = ai_state.ally_location.x;
-        self.buf[1] = ai_state.ally_location.y;
-        self.buf[2] = ai_state.enemy_location.x;
-        self.buf[3] = ai_state.enemy_location.y;
+        let rows = Tensor::of_slice(&[0i64, 1, 0, 1]);
+        let columns = Tensor::of_slice(&[0i64, 0, 1, 1]);
+        let values = Tensor::of_slice(&[
+            ai_state.ally_location.x,
+            ai_state.ally_location.y,
+            ai_state.enemy_location.x,
+            ai_state.enemy_location.y,
+        ]);
+        let obs = self
+            .observation_space
+            .index_put(&[Some(rows), Some(columns)], &values, false);
 
-        let obs = Tensor::of_slice(&self.buf)
-            .view_(&self.observation_space)
-            .to_kind(tch::Kind::Float);
         Step {
             obs,
             reward: Tensor::from(reward),
@@ -96,8 +95,4 @@ impl Env {
     pub fn action_space(&self) -> i64 {
         self.action_space
     }
-
-    // pub fn observation_space(&self) -> &[i64] {
-    //     &self.observation_space
-    // }
 }

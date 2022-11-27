@@ -1,6 +1,5 @@
-use bevy::prelude::{default, Query, Res, With};
+use bevy::prelude::{default, Query, With};
 use bevy_rapier2d::prelude::Velocity;
-use cpython::PyResult;
 use tch::{
     kind::{FLOAT_CPU, INT64_CPU},
     nn::{self, OptimizerConfig},
@@ -9,19 +8,18 @@ use tch::{
 use tracing::{info, warn};
 
 use crate::{
-    ai::{a2c::env::Env, AiState},
+    ai::{
+        env::{Env, Team},
+        AiState, FrameStack, COLS, ROWS,
+    },
     Enemy,
 };
-
-use super::env::Team;
 
 const NPROCS: i64 = 1; // 16;
 const NSTEPS: i64 = 5;
 const NSTACK: i64 = 4;
 
 const LEARNING_RATE: f64 = 1e-4;
-
-pub const NUMBER: i64 = 84;
 
 type Model = Box<dyn Fn(&Tensor) -> (Tensor, Tensor)>;
 
@@ -48,35 +46,6 @@ pub fn model(p: &nn::Path, n_actions: i64) -> Model {
         (xs.apply(&critic), xs.apply(&actor))
     })
 }
-
-struct FrameStack {
-    data: Tensor,
-    nprocs: i64,
-    nstack: i64,
-}
-
-impl FrameStack {
-    fn new(nprocs: i64, nstack: i64) -> FrameStack {
-        FrameStack {
-            data: Tensor::zeros(&[nprocs, nstack, NUMBER, NUMBER], FLOAT_CPU),
-            nprocs,
-            nstack,
-        }
-    }
-
-    fn update<'a>(&'a mut self, img: &Tensor, masks: Option<&Tensor>) -> &'a Tensor {
-        if let Some(masks) = masks {
-            self.data *= masks.view([self.nprocs, 1, 1, 1])
-        };
-        let slice = |i| self.data.narrow(1, i, 1);
-        for i in 1..self.nstack {
-            slice(i - 1).copy_(&slice(i))
-        }
-        slice(self.nstack - 1).copy_(img);
-        &self.data
-    }
-}
-
 pub struct Trainer {
     env: Env,
     device: Device,
@@ -138,7 +107,8 @@ impl Trainer {
 
         let mut frame_stack = FrameStack::new(NPROCS, NSTACK);
         let _ = frame_stack.update(&env.reset(), None);
-        let s_states = Tensor::zeros(&[NSTEPS + 1, NPROCS, NSTACK, NUMBER, NUMBER], FLOAT_CPU);
+        let s_states = Tensor::zeros(&[NSTEPS + 1, NPROCS, NSTACK, ROWS, COLS], FLOAT_CPU);
+        s_states.get(0).copy_(&s_states.get(-1));
 
         Self {
             env,
@@ -211,8 +181,8 @@ impl Trainer {
             let (critic, actor) = (self.model)(&self.s_states.narrow(0, 0, NSTEPS).view([
                 NSTEPS * NPROCS,
                 NSTACK,
-                NUMBER,
-                NUMBER,
+                ROWS,
+                COLS,
             ]));
             let critic = critic.view([NSTEPS, NPROCS]);
             let actor = actor.view([NSTEPS, NPROCS, -1]);
