@@ -76,10 +76,10 @@ impl Env {
         let rows = Tensor::of_slice(&[0i64, 1, 0, 1]);
         let columns = Tensor::of_slice(&[0i64, 0, 1, 1]);
         let values = Tensor::of_slice(&[
-            ai_state.ally_location.x,
-            ai_state.ally_location.y,
-            ai_state.enemy_location.x,
-            ai_state.enemy_location.y,
+            ai_state.ally_location.x / PLANE_SIZE * 2.0,
+            ai_state.ally_location.y / PLANE_SIZE * 2.0,
+            ai_state.enemy_location.x / PLANE_SIZE * 2.0,
+            ai_state.enemy_location.y / PLANE_SIZE * 2.0,
         ]);
         let obs = self
             .observation_space

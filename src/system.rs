@@ -183,7 +183,7 @@ fn spawn_enemies(
             Enemy,
             Ai,
             Character {
-                health: Health::new(100.0),
+                health: Health::new(2000.0),
                 #[cfg(feature = "graphics")]
                 healthbar: Healthbar::default(),
                 #[cfg(feature = "graphics")]
@@ -233,7 +233,7 @@ fn spawn_allies(
             Ally,
             Ai,
             Character {
-                health: Health::new(100.0),
+                health: Health::new(2000.0),
                 #[cfg(feature = "graphics")]
                 healthbar: Healthbar::default(),
                 #[cfg(feature = "graphics")]
