@@ -41,13 +41,28 @@ use bevy::{
     window::{WindowPlugin, Windows},
     winit::WinitPlugin,
 };
-use bevy_rapier2d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
+use bevy_rapier2d::prelude::{Collider, Damping, ExternalImpulse, LockedAxes, RigidBody, Velocity};
 use healthbar::HealthbarPlugin;
 use iyes_loopless::{fixedtimestep::TimestepName, prelude::AppLooplessFixedTimestepExt};
 use physics::PhysicsPlugin;
-use time::Tick;
+use time::{Tick, TickPlugin};
 
 use crate::healthbar::Healthbar;
+
+const PLAYER_R: f32 = 1.0;
+const SPEED: f32 = 15.0;
+const IMPULSE: f32 = 5.0;
+const DAMPING: Damping = Damping {
+    linear_damping: 5.0,
+    angular_damping: 0.0,
+};
+
+const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, -50.0, 50.0);
+
+#[cfg(feature = "train")]
+pub const PLANE_SIZE: f32 = 10.0;
+#[cfg(not(feature = "train"))]
+pub const PLANE_SIZE: f32 = 10.0;
 
 #[derive(Component)]
 pub struct Health {
@@ -62,7 +77,19 @@ impl Health {
 }
 
 #[derive(Component, Copy, Clone, Debug)]
-pub struct MaxSpeed(f32);
+pub struct MaxSpeed {
+    max_speed: f32,
+    impulse: f32,
+}
+
+impl Default for MaxSpeed {
+    fn default() -> Self {
+        Self {
+            max_speed: SPEED,
+            impulse: IMPULSE,
+        }
+    }
+}
 
 /// Indicate this entity is a player. Currently, we assume one player.
 #[derive(Component)]
@@ -86,13 +113,6 @@ pub struct Ally;
 pub struct Cooldowns {
     hyper_sprint: Tick,
     shoot: Tick,
-}
-
-pub fn cooldown_system(mut cooldowns: Query<&mut Cooldowns>) {
-    for mut cd in cooldowns.iter_mut() {
-        cd.hyper_sprint.tick();
-        cd.shoot.tick();
-    }
 }
 
 #[derive(Bundle)]
@@ -134,15 +154,10 @@ struct Character {
     body: RigidBody,
     max_speed: MaxSpeed,
     velocity: Velocity,
+    damping: Damping,
+    impulse: ExternalImpulse,
     locked_axes: LockedAxes,
 }
-
-const PLAYER_R: f32 = 1.0;
-const SPEED: f32 = 15.0;
-
-const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, -50.0, 50.0);
-
-pub const PLANE_SIZE: f32 = 10.0;
 
 #[derive(Resource)]
 pub struct NumAi {
@@ -211,14 +226,14 @@ impl Plugin for GamPlugin {
             enemies: 1,
             allies: 1,
         })
+        .add_plugin(TickPlugin)
         .add_startup_system(setup)
-        .add_engine_tick_system(system::die)
-        .add_engine_tick_system(system::reset)
         .add_engine_tick_system(ability::hyper_sprint_system)
         .add_engine_tick_system(ability::shot_despawn_system)
         .add_engine_tick_system(ability::shot_hit_system)
-        .add_engine_tick_system(cooldown_system)
         .add_plugin(ai::AiPlugin)
+        .add_engine_tick_system(system::die)
+        .add_engine_tick_system(system::reset)
         .add_plugin(ai::simple::SimpleAiPlugin)
         // .add_plugin(ai::qlearning::QLearningPlugin)
         .add_plugin(PhysicsPlugin);
@@ -231,7 +246,7 @@ pub struct GamClientPlugin;
 impl Plugin for GamClientPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_engine_tick_system(system::player_input)
-            .add_engine_tick_system(system::update_cursor)
+            .add_system(system::update_cursor)
             .add_plugin(HealthbarPlugin);
     }
 }
@@ -245,6 +260,9 @@ pub enum CustomStage {
     PhysicsSyncBackend,
     PhysicsStepSimulation,
     PhysicsWriteback,
+
+    Ai,
+
     PhysicsDetectDespawn,
 }
 
@@ -259,6 +277,9 @@ impl CustomStage {
             CustomStage::PhysicsSyncBackend => AFTER_CORESTAGE_UPDATE,
             CustomStage::PhysicsStepSimulation => AFTER_CORESTAGE_UPDATE,
             CustomStage::PhysicsWriteback => AFTER_CORESTAGE_UPDATE,
+
+            CustomStage::Ai => AFTER_CORESTAGE_UPDATE,
+
             CustomStage::PhysicsDetectDespawn => BEFORE_CORESTAGE_LAST,
         }
     }
@@ -269,6 +290,9 @@ impl CustomStage {
             CustomStage::PhysicsSyncBackend => 0,
             CustomStage::PhysicsStepSimulation => 1,
             CustomStage::PhysicsWriteback => 2,
+
+            CustomStage::Ai => 3,
+
             CustomStage::PhysicsDetectDespawn => 0,
         }
     }

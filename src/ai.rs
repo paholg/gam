@@ -1,19 +1,21 @@
 use bevy::prelude::{Plugin, Query, ResMut, Resource, Transform, Vec2, With, Without};
-use tch::{kind::FLOAT_CPU, Tensor};
+use bevy_learn::{
+    reinforce::{ReinforceConfig, ReinforceTrainer},
+    Env,
+};
+use tch::{kind::FLOAT_CPU, Device, Tensor};
 
 use crate::{Ally, Enemy, FixedTimestepSystem};
 
-pub mod a2c;
-pub mod f32;
-// pub mod qlearning;
-pub mod dqn;
+use self::env::{ai_act, ACTIONS};
+
 pub mod env;
-pub mod ppo;
-pub mod replay_buffer;
 pub mod simple;
 
-pub const ROWS: i64 = 84;
-pub const COLS: i64 = 84;
+pub enum Action {
+    Nothing,
+    Move(Vec2),
+}
 
 #[derive(Resource, Default)]
 pub struct AiState {
@@ -28,7 +30,15 @@ pub struct AiPlugin;
 
 impl Plugin for AiPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
+        let initial_obs = vec![0.0; 6];
+        let trainer = ReinforceTrainer::new(
+            ReinforceConfig::builder().build(),
+            Env::new(ACTIONS.len() as i64, 6, Device::cuda_if_available()),
+            &initial_obs,
+        );
         app.insert_resource(AiState::default())
+            .insert_non_send_resource(trainer)
+            .add_engine_tick_system(ai_act)
             .add_engine_tick_system(ai_state_system);
     }
 }
@@ -56,9 +66,9 @@ pub struct FrameStack {
 }
 
 impl FrameStack {
-    pub fn new(nprocs: i64, nstack: i64) -> FrameStack {
+    pub fn new(nprocs: i64, nstack: i64, rows: i64, cols: i64) -> FrameStack {
         FrameStack {
-            data: Tensor::zeros(&[nprocs, nstack, ROWS, COLS], FLOAT_CPU),
+            data: Tensor::zeros(&[nprocs, nstack, rows, cols], FLOAT_CPU),
             nprocs,
             nstack,
         }

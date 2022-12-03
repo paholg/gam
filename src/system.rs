@@ -1,20 +1,25 @@
 use bevy::{
     prelude::{
         shape, AssetServer, Assets, Camera, Color, Commands, ComputedVisibility,
-        DespawnRecursiveExt, Entity, GlobalTransform, Input, KeyCode, Mesh, MouseButton, Quat,
-        Query, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3, Visibility, With, Without,
+        DespawnRecursiveExt, Entity, GlobalTransform, Input, KeyCode, Mesh, MouseButton,
+        NonSendMut, Quat, Query, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3, Visibility,
+        With, Without,
     },
     window::Windows,
 };
-use bevy_rapier2d::prelude::{Collider, LockedAxes, RigidBody, Velocity};
+use bevy_learn::{reinforce::ReinforceTrainer, Trainer};
+use bevy_rapier2d::prelude::{Collider, ExternalImpulse, LockedAxes, RigidBody, Velocity};
 use rand::Rng;
 
 use crate::{
     ability::{HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN},
+    ai::AiState,
     config::config,
     healthbar::Healthbar,
-    intersect_xy_plane, pointing_angle, ray_from_screenspace, Ai, Ally, Character, Cooldowns,
-    Enemy, Health, MaxSpeed, NumAi, Player, CAMERA_OFFSET, PLANE_SIZE, PLAYER_R, SPEED,
+    intersect_xy_plane, pointing_angle, ray_from_screenspace,
+    time::TickCounter,
+    Ai, Ally, Character, Cooldowns, Enemy, Health, MaxSpeed, Player, CAMERA_OFFSET, DAMPING,
+    PLANE_SIZE, PLAYER_R, SPEED,
 };
 
 pub fn player_input(
@@ -23,12 +28,14 @@ pub fn player_input(
     #[cfg(feature = "graphics")] mut meshes: ResMut<Assets<Mesh>>,
     #[cfg(feature = "graphics")] mut materials: ResMut<Assets<StandardMaterial>>,
     mut commands: Commands,
+    tick_counter: Res<TickCounter>,
     mut query: Query<
         (
             Entity,
             &mut Cooldowns,
             &mut Velocity,
             &mut MaxSpeed,
+            &mut ExternalImpulse,
             &Transform,
         ),
         With<Player>,
@@ -37,7 +44,7 @@ pub fn player_input(
     let config = config();
     let controls = &config.controls;
 
-    let (entity, mut cooldowns, mut velocity, mut max_speed, transform) =
+    let (entity, mut cooldowns, mut velocity, mut max_speed, mut impulse, transform) =
         match query.get_single_mut() {
             Ok(q) => q,
             Err(_) => return,
@@ -49,6 +56,7 @@ pub fn player_input(
         if control.pressed(&keyboard_input, &mouse_input) {
             ability.fire(
                 &mut commands,
+                &tick_counter,
                 #[cfg(feature = "graphics")]
                 &mut meshes,
                 #[cfg(feature = "graphics")]
@@ -63,7 +71,7 @@ pub fn player_input(
     }
 
     // Movement:
-    let mut delta_v = Vec2::new(0.0, 0.0);
+    let mut new_impulse = Vec2::new(0.0, 0.0);
 
     for (control, dir) in [
         (&controls.left, Vec2::new(-1.0, 0.0)),
@@ -72,13 +80,15 @@ pub fn player_input(
         (&controls.down, Vec2::new(0.0, -1.0)),
     ] {
         if control.pressed(&keyboard_input, &mouse_input) {
-            delta_v += dir;
+            new_impulse += dir;
         }
     }
 
-    delta_v = delta_v.clamp_length_max(1.0) * max_speed.0;
+    new_impulse = new_impulse.clamp_length_max(1.0) * max_speed.impulse;
 
-    velocity.linvel = delta_v;
+    impulse.impulse = new_impulse;
+
+    velocity.linvel = velocity.linvel.clamp_length_max(max_speed.max_speed);
 }
 
 /// Moves the camera and orients the player based on the mouse cursor.
@@ -87,7 +97,7 @@ pub fn update_cursor(
     mut camera_query: Query<(&mut Transform, &Camera, &GlobalTransform)>,
     mut player_query: Query<&mut Transform, (With<Player>, Without<Camera>)>,
 ) {
-    let (mut transform, camera, global_transform) = camera_query.single_mut();
+    let (mut camera_transform, camera, global_transform) = camera_query.single_mut();
 
     let cursor = match ray_from_screenspace(&windows, camera, global_transform)
         .as_ref()
@@ -110,10 +120,14 @@ pub fn update_cursor(
         }
     };
 
+    let camera_weight = 0.9;
     const CURSOR_WEIGHT: f32 = 0.33;
     let look_at = cursor * CURSOR_WEIGHT + player_translation * (1.0 - CURSOR_WEIGHT);
+    let look_at = (camera_transform.translation - CAMERA_OFFSET) * camera_weight
+        + look_at * (1.0 - camera_weight);
 
-    *transform = Transform::from_translation(CAMERA_OFFSET + look_at).looking_at(look_at, Vec3::Z);
+    *camera_transform =
+        Transform::from_translation(CAMERA_OFFSET + look_at).looking_at(look_at, Vec3::Z);
 }
 
 pub fn die(mut commands: Commands, query: Query<(Entity, &Health)>) {
@@ -157,8 +171,10 @@ fn spawn_player(
             computed_visibility: ComputedVisibility::default(),
             collider: Collider::ball(1.0),
             body: RigidBody::Dynamic,
-            max_speed: MaxSpeed(SPEED),
+            max_speed: MaxSpeed::default(),
             velocity: Velocity::default(),
+            damping: DAMPING,
+            impulse: ExternalImpulse::default(),
             locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
         },
         Cooldowns {
@@ -173,17 +189,20 @@ fn spawn_enemies(
     #[cfg(feature = "graphics")] meshes: &mut ResMut<Assets<Mesh>>,
     #[cfg(feature = "graphics")] materials: &mut ResMut<Assets<StandardMaterial>>,
     #[cfg(feature = "graphics")] asset_server: &mut Res<AssetServer>,
-    num: u32,
-) {
+    num: usize,
+) -> Vec<Vec2> {
     let mut rng = rand::thread_rng();
+    let mut locs = Vec::with_capacity(num);
     for _ in 0..num {
         let x = rng.gen::<f32>() * (PLANE_SIZE - PLAYER_R) - (PLANE_SIZE - PLAYER_R) * 0.5;
         let y = rng.gen::<f32>() * (PLANE_SIZE - PLAYER_R) - (PLANE_SIZE - PLAYER_R) * 0.5;
+        let loc = Vec2::new(x, y);
+        locs.push(loc);
         commands.spawn((
             Enemy,
             Ai,
             Character {
-                health: Health::new(2000.0),
+                health: Health::new(100.0),
                 #[cfg(feature = "graphics")]
                 healthbar: Healthbar::default(),
                 #[cfg(feature = "graphics")]
@@ -206,16 +225,19 @@ fn spawn_enemies(
                 computed_visibility: ComputedVisibility::default(),
                 collider: Collider::ball(1.0),
                 body: RigidBody::Dynamic,
-                max_speed: MaxSpeed(SPEED),
+                max_speed: MaxSpeed::default(),
                 velocity: Velocity::default(),
+                damping: DAMPING,
+                impulse: ExternalImpulse::default(),
                 locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
             },
             Cooldowns {
                 hyper_sprint: HYPER_SPRINT_COOLDOWN,
-                shoot: SHOOT_COOLDOWN * 10,
+                shoot: SHOOT_COOLDOWN,
             },
         ));
     }
+    locs
 }
 
 fn spawn_allies(
@@ -223,17 +245,20 @@ fn spawn_allies(
     #[cfg(feature = "graphics")] meshes: &mut ResMut<Assets<Mesh>>,
     #[cfg(feature = "graphics")] materials: &mut ResMut<Assets<StandardMaterial>>,
     #[cfg(feature = "graphics")] asset_server: &mut Res<AssetServer>,
-    num: u32,
-) {
+    num: usize,
+) -> Vec<Vec2> {
     let mut rng = rand::thread_rng();
+    let mut locs = Vec::with_capacity(num);
     for _ in 0..num {
         let x = rng.gen::<f32>() * (PLANE_SIZE - PLAYER_R) - (PLANE_SIZE - PLAYER_R) * 0.5;
         let y = rng.gen::<f32>() * (PLANE_SIZE - PLAYER_R) - (PLANE_SIZE - PLAYER_R) * 0.5;
+        let loc = Vec2::new(x, y);
+        locs.push(loc);
         commands.spawn((
             Ally,
             Ai,
             Character {
-                health: Health::new(2000.0),
+                health: Health::new(100.0),
                 #[cfg(feature = "graphics")]
                 healthbar: Healthbar::default(),
                 #[cfg(feature = "graphics")]
@@ -256,22 +281,26 @@ fn spawn_allies(
                 computed_visibility: ComputedVisibility::default(),
                 collider: Collider::ball(1.0),
                 body: RigidBody::Dynamic,
-                max_speed: MaxSpeed(SPEED),
+                max_speed: MaxSpeed::default(),
                 velocity: Velocity::default(),
+                damping: DAMPING,
+                impulse: ExternalImpulse::default(),
                 locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
             },
             // TODO: Refactor cooldowns. This is temporary.
             Cooldowns {
                 hyper_sprint: HYPER_SPRINT_COOLDOWN,
-                shoot: SHOOT_COOLDOWN * 10,
+                shoot: SHOOT_COOLDOWN,
             },
         ));
     }
+    locs
 }
 
 pub fn reset(
     mut commands: Commands,
-    num_ai: Res<NumAi>,
+    mut trainer: NonSendMut<ReinforceTrainer>,
+    mut ai_state: ResMut<AiState>,
     enemy_query: Query<Entity, With<Enemy>>,
     ally_query: Query<Entity, With<Ally>>,
     player_query: Query<Entity, With<Player>>,
@@ -279,9 +308,9 @@ pub fn reset(
     #[cfg(feature = "graphics")] mut materials: ResMut<Assets<StandardMaterial>>,
     #[cfg(feature = "graphics")] mut asset_server: Res<AssetServer>,
 ) {
-    if enemy_query.iter().count() < num_ai.enemies as usize {
-        // num_ai.enemies += 1;
-        spawn_enemies(
+    let mut reset = false;
+    if enemy_query.iter().next().is_none() {
+        let locs = spawn_enemies(
             &mut commands,
             #[cfg(feature = "graphics")]
             &mut meshes,
@@ -291,23 +320,27 @@ pub fn reset(
             &mut asset_server,
             1,
         );
+        ai_state.enemy_location = locs[0];
+        reset = true;
     }
 
-    // if player_query.iter().next().is_none() {
-    //     spawn_player(
-    //         &mut commands,
-    //         #[cfg(feature = "graphics")]
-    //         &mut meshes,
-    //         #[cfg(feature = "graphics")]
-    //         &mut materials,
-    //         #[cfg(feature = "graphics")]
-    //         &mut asset_server,
-    //     );
-    // }
+    #[cfg(not(feature = "train"))]
+    {
+        if player_query.iter().next().is_none() {
+            spawn_player(
+                &mut commands,
+                #[cfg(feature = "graphics")]
+                &mut meshes,
+                #[cfg(feature = "graphics")]
+                &mut materials,
+                #[cfg(feature = "graphics")]
+                &mut asset_server,
+            );
+        }
+    }
 
-    if ally_query.iter().count() < num_ai.allies as usize {
-        // num_ai.allies += 1;
-        spawn_allies(
+    if ally_query.iter().next().is_none() {
+        let locs = spawn_allies(
             &mut commands,
             #[cfg(feature = "graphics")]
             &mut meshes,
@@ -317,5 +350,18 @@ pub fn reset(
             &mut asset_server,
             1,
         );
+        ai_state.ally_location = locs[0];
+        reset = true;
+    }
+
+    if reset {
+        trainer.reset(&[
+            1.0,
+            ai_state.enemy_location.x / PLANE_SIZE,
+            ai_state.enemy_location.y / PLANE_SIZE,
+            1.0,
+            ai_state.ally_location.x / PLANE_SIZE,
+            ai_state.ally_location.y / PLANE_SIZE,
+        ]);
     }
 }

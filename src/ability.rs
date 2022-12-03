@@ -29,6 +29,7 @@ impl Ability {
     pub fn fire(
         &self,
         commands: &mut Commands,
+        tick_counter: &TickCounter,
         #[cfg(feature = "graphics")] meshes: &mut ResMut<Assets<Mesh>>,
         #[cfg(feature = "graphics")] materials: &mut ResMut<Assets<StandardMaterial>>,
         entity: Entity,
@@ -39,10 +40,13 @@ impl Ability {
     ) -> bool {
         match self {
             Ability::None => true,
-            Ability::HyperSprint => hyper_sprint(commands, entity, cooldowns, max_speed),
+            Ability::HyperSprint => {
+                hyper_sprint(commands, tick_counter, entity, cooldowns, max_speed)
+            }
             Ability::Shoot => shoot(
                 commands,
                 cooldowns,
+                tick_counter,
                 #[cfg(feature = "graphics")]
                 meshes,
                 #[cfg(feature = "graphics")]
@@ -59,21 +63,23 @@ pub struct HyperSprinting {
     duration: Tick,
 }
 
-const HYPER_SPRINT_FACTOR: f32 = 5.0;
+const HYPER_SPRINT_FACTOR: f32 = 7.0;
 pub const HYPER_SPRINT_COOLDOWN: Tick = Tick::new(Duration::new(5, 0));
 const HYPER_SPRINT_DURATION: Tick = Tick::new(Duration::from_secs_f32(0.15));
 
 fn hyper_sprint(
     commands: &mut Commands,
+    tick_counter: &TickCounter,
     entity: Entity,
     cooldowns: &mut Cooldowns,
     max_speed: &mut MaxSpeed,
 ) -> bool {
-    if cooldowns.hyper_sprint.is_zero() {
-        cooldowns.hyper_sprint = HYPER_SPRINT_COOLDOWN;
-        max_speed.0 *= HYPER_SPRINT_FACTOR;
+    if cooldowns.hyper_sprint.before_now(tick_counter) {
+        cooldowns.hyper_sprint = tick_counter.at(HYPER_SPRINT_COOLDOWN);
+        max_speed.max_speed *= HYPER_SPRINT_FACTOR;
+        max_speed.impulse *= HYPER_SPRINT_FACTOR;
         commands.entity(entity).insert(HyperSprinting {
-            duration: HYPER_SPRINT_DURATION,
+            duration: tick_counter.at(HYPER_SPRINT_DURATION),
         });
         true
     } else {
@@ -83,11 +89,13 @@ fn hyper_sprint(
 
 pub fn hyper_sprint_system(
     mut commands: Commands,
-    mut query: Query<(Entity, &mut HyperSprinting, &mut MaxSpeed)>,
+    tick_counter: Res<TickCounter>,
+    mut query: Query<(Entity, &HyperSprinting, &mut MaxSpeed)>,
 ) {
-    for (entity, mut hyper_sprinting, mut max_speed) in query.iter_mut() {
-        if hyper_sprinting.duration.tick().is_zero() {
-            max_speed.0 /= HYPER_SPRINT_FACTOR;
+    for (entity, hyper_sprinting, mut max_speed) in query.iter_mut() {
+        if hyper_sprinting.duration.before_now(&tick_counter) {
+            max_speed.max_speed /= HYPER_SPRINT_FACTOR;
+            max_speed.impulse /= HYPER_SPRINT_FACTOR;
             commands.entity(entity).remove::<HyperSprinting>();
         }
     }
@@ -97,7 +105,7 @@ pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(100));
 const SHOT_DURATION: Tick = Tick::new(Duration::from_secs(2));
 const SHOT_SPEED: f32 = 50.0;
 const SHOT_R: f32 = 0.1;
-const SHOT_DAMAGE: f32 = 21.0;
+const SHOT_DAMAGE: f32 = 20.0;
 
 #[derive(Component)]
 pub struct Shot {
@@ -107,13 +115,14 @@ pub struct Shot {
 fn shoot(
     commands: &mut Commands,
     cooldowns: &mut Cooldowns,
+    tick_counter: &TickCounter,
     #[cfg(feature = "graphics")] meshes: &mut ResMut<Assets<Mesh>>,
     #[cfg(feature = "graphics")] materials: &mut ResMut<Assets<StandardMaterial>>,
     transform: &Transform,
     velocity: &Velocity,
 ) -> bool {
-    if cooldowns.shoot.is_zero() {
-        cooldowns.shoot = SHOOT_COOLDOWN;
+    if cooldowns.shoot.before_now(tick_counter) {
+        cooldowns.shoot = tick_counter.at(SHOOT_COOLDOWN);
 
         let dir = transform.rotation * Vec3::Y;
         let position = transform.translation + dir * (PLAYER_R + SHOT_R);
@@ -143,7 +152,7 @@ fn shoot(
             },
             Sensor,
             Shot {
-                duration: SHOT_DURATION,
+                duration: tick_counter.at(SHOT_DURATION),
             },
         ));
         true
@@ -152,9 +161,13 @@ fn shoot(
     }
 }
 
-pub fn shot_despawn_system(mut commands: Commands, mut query: Query<(Entity, &mut Shot)>) {
+pub fn shot_despawn_system(
+    mut commands: Commands,
+    tick_counter: Res<TickCounter>,
+    mut query: Query<(Entity, &mut Shot)>,
+) {
     for (entity, mut shot) in query.iter_mut() {
-        if shot.duration.tick().is_zero() {
+        if shot.duration.before_now(&tick_counter) {
             commands.entity(entity).despawn();
         }
     }
@@ -173,6 +186,7 @@ pub fn shot_hit_system(
 ) {
     ai_state.enemy_dmg_done = 0.0;
     ai_state.ally_dmg_done = 0.0;
+
     let mut shots_to_despawn: SmallVec<[Entity; 10]> = smallvec::SmallVec::new();
     for (entity1, entity2, intersecting) in rapier_context.intersection_pairs() {
         if intersecting {

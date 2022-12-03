@@ -33,13 +33,8 @@ impl Tick {
         Self { val }
     }
 
-    pub fn tick(&mut self) -> &Self {
-        self.val = self.val.saturating_sub(1);
-        self
-    }
-
-    pub fn is_zero(&self) -> bool {
-        self.val == 0
+    pub fn before_now(&self, counter: &TickCounter) -> bool {
+        self.val <= counter.tick
     }
 }
 
@@ -55,12 +50,12 @@ impl Mul<u32> for Tick {
 
 #[derive(Resource)]
 pub struct TickCounter {
-    tick: u64,
+    tick: u32,
     since: Instant,
 }
 
 impl TickCounter {
-    const DIAGNOSTIC_ITERS: u64 = 1000;
+    const DIAGNOSTIC_ITERS: u32 = 10_000;
 
     fn new() -> Self {
         Self {
@@ -71,6 +66,12 @@ impl TickCounter {
 
     pub fn diagnostic_iter(&self) -> bool {
         self.tick % Self::DIAGNOSTIC_ITERS == 0
+    }
+
+    pub fn at(&self, tick: Tick) -> Tick {
+        Tick {
+            val: self.tick + tick.val,
+        }
     }
 
     #[cfg(not(feature = "train"))]
@@ -84,9 +85,11 @@ impl TickCounter {
     }
 }
 
-fn debug_tick_system(mut tick_counter: ResMut<TickCounter>) {
+fn tick_counter(mut tick_counter: ResMut<TickCounter>) {
     tick_counter.tick += 1;
+}
 
+fn debug_tick_system(mut tick_counter: ResMut<TickCounter>) {
     if tick_counter.diagnostic_iter() {
         let tick = tick_counter.tick;
 
@@ -98,11 +101,12 @@ fn debug_tick_system(mut tick_counter: ResMut<TickCounter>) {
     }
 }
 
-pub struct TickDebugPlugin;
+pub struct TickPlugin;
 
-impl Plugin for TickDebugPlugin {
+impl Plugin for TickPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.insert_resource(TickCounter::new())
+            .add_engine_tick_system(tick_counter)
             .add_engine_tick_system(debug_tick_system);
     }
 }
