@@ -3,8 +3,8 @@ use std::cmp::Ordering;
 use bevy::{
     ecs::query::ReadOnlyWorldQuery,
     prelude::{
-        Assets, Commands, Entity, Mesh, Plugin, Quat, Query, ResMut, StandardMaterial, Transform,
-        Vec3, With, Without,
+        Assets, Commands, Entity, Mesh, Plugin, Quat, Query, Res, ResMut, StandardMaterial,
+        Transform, Vec3, With, Without,
     },
 };
 use bevy_rapier2d::prelude::Velocity;
@@ -16,7 +16,8 @@ use bevy_rapier2d::prelude::Velocity;
 // };
 
 use crate::{
-    ability::Ability, pointing_angle, Ai, Ally, Cooldowns, Enemy, FixedTimestepSystem, MaxSpeed,
+    ability::Ability, pointing_angle, time::TickCounter, Ai, Ally, Cooldowns, Enemy,
+    FixedTimestepSystem, MaxSpeed,
 };
 
 pub struct SimpleAiPlugin;
@@ -24,8 +25,8 @@ pub struct SimpleAiPlugin;
 impl Plugin for SimpleAiPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         // fixme: Let's try having the enemies always face up and see if they learn to move down.
-        // app.add_engine_tick_system(update_enemy_orientation)
-        //     .add_engine_tick_system(update_ally_orientation)
+        // app.add_engine_tick_system(update_enemy_orientation);
+        // app.add_engine_tick_system(update_ally_orientation);
         app.add_engine_tick_system(stupid_shoot_system);
         // // TODO: These should tick with the engine.
         // .add_plugin(BigBrainPlugin)
@@ -83,6 +84,7 @@ fn update_ally_orientation(
 
 fn stupid_shoot_system(
     mut commands: Commands,
+    tick_counter: Res<TickCounter>,
     #[cfg(feature = "graphics")] mut meshes: ResMut<Assets<Mesh>>,
     #[cfg(feature = "graphics")] mut materials: ResMut<Assets<StandardMaterial>>,
 
@@ -91,6 +93,7 @@ fn stupid_shoot_system(
     for (entity, mut cooldowns, velocity, mut max_speed, transform) in q_ai.iter_mut() {
         Ability::Shoot.fire(
             &mut commands,
+            &tick_counter,
             #[cfg(feature = "graphics")]
             &mut meshes,
             #[cfg(feature = "graphics")]

@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 bevy = { version = "0.9", features = ["serialize"] }
+bevy_learn = { path = "../bevy_learn" }
 bevy_quickmenu = "0.1"
 # Note on enhanced-determinism:
 # If some of the values used to initialized Rapier structures are computed using
@@ -44,11 +45,4 @@ opt-level = 3
 default = ["graphics"]
 graphics = []
 train = []
-
-[[bin]]
-name = "gam"
-required-features = ["graphics"]
-
-[[bin]]
-name = "train"
-required-features = ["train"]
+debug = []
