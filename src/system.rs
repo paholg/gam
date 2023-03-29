@@ -1,25 +1,22 @@
 use bevy::{
     prelude::{
         shape, AssetServer, Assets, Camera, Color, Commands, ComputedVisibility,
-        DespawnRecursiveExt, Entity, GlobalTransform, Input, KeyCode, Mesh, MouseButton,
-        NonSendMut, Quat, Query, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3, Visibility,
-        With, Without,
+        DespawnRecursiveExt, Entity, GlobalTransform, Input, KeyCode, Mesh, MouseButton, Quat,
+        Query, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3, Visibility, With, Without,
     },
     window::Windows,
 };
-use bevy_learn::{reinforce::ReinforceTrainer, Trainer};
 use bevy_rapier2d::prelude::{Collider, ExternalImpulse, LockedAxes, RigidBody, Velocity};
 use rand::Rng;
 
 use crate::{
     ability::{HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN},
-    ai::AiState,
     config::config,
     healthbar::Healthbar,
     intersect_xy_plane, pointing_angle, ray_from_screenspace,
     time::TickCounter,
     Ai, Ally, Character, Cooldowns, Enemy, Health, MaxSpeed, Player, CAMERA_OFFSET, DAMPING,
-    PLANE_SIZE, PLAYER_R, SPEED,
+    PLANE_SIZE, PLAYER_R,
 };
 
 pub fn player_input(
@@ -287,7 +284,6 @@ fn spawn_allies(
                 impulse: ExternalImpulse::default(),
                 locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
             },
-            // TODO: Refactor cooldowns. This is temporary.
             Cooldowns {
                 hyper_sprint: HYPER_SPRINT_COOLDOWN,
                 shoot: SHOOT_COOLDOWN,
@@ -299,8 +295,6 @@ fn spawn_allies(
 
 pub fn reset(
     mut commands: Commands,
-    mut trainer: NonSendMut<ReinforceTrainer>,
-    mut ai_state: ResMut<AiState>,
     enemy_query: Query<Entity, With<Enemy>>,
     ally_query: Query<Entity, With<Ally>>,
     player_query: Query<Entity, With<Player>>,
@@ -308,9 +302,8 @@ pub fn reset(
     #[cfg(feature = "graphics")] mut materials: ResMut<Assets<StandardMaterial>>,
     #[cfg(feature = "graphics")] mut asset_server: Res<AssetServer>,
 ) {
-    let mut reset = false;
     if enemy_query.iter().next().is_none() {
-        let locs = spawn_enemies(
+        spawn_enemies(
             &mut commands,
             #[cfg(feature = "graphics")]
             &mut meshes,
@@ -320,8 +313,6 @@ pub fn reset(
             &mut asset_server,
             1,
         );
-        ai_state.enemy_location = locs[0];
-        reset = true;
     }
 
     #[cfg(not(feature = "train"))]
@@ -340,7 +331,7 @@ pub fn reset(
     }
 
     if ally_query.iter().next().is_none() {
-        let locs = spawn_allies(
+        spawn_allies(
             &mut commands,
             #[cfg(feature = "graphics")]
             &mut meshes,
@@ -350,18 +341,5 @@ pub fn reset(
             &mut asset_server,
             1,
         );
-        ai_state.ally_location = locs[0];
-        reset = true;
-    }
-
-    if reset {
-        trainer.reset(&[
-            1.0,
-            ai_state.enemy_location.x / PLANE_SIZE,
-            ai_state.enemy_location.y / PLANE_SIZE,
-            1.0,
-            ai_state.ally_location.x / PLANE_SIZE,
-            ai_state.ally_location.y / PLANE_SIZE,
-        ]);
     }
 }

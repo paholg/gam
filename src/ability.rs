@@ -2,16 +2,14 @@ use std::time::Duration;
 
 use bevy::prelude::{
     shape::Icosphere, Assets, Color, Commands, Component, ComputedVisibility, Entity,
-    GlobalTransform, Mesh, Quat, Query, Res, ResMut, StandardMaterial, Transform, Vec3, Visibility,
-    With, Without,
+    GlobalTransform, Mesh, Query, Res, ResMut, StandardMaterial, Transform, Vec3, Visibility, With,
+    Without,
 };
 use bevy_rapier2d::prelude::{Collider, LockedAxes, RapierContext, RigidBody, Sensor, Velocity};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
-use tracing::{info, warn};
 
 use crate::{
-    ai::AiState,
     time::{Tick, TickCounter},
     Ally, Cooldowns, Enemy, Health, MaxSpeed, Object, PLAYER_R,
 };
@@ -166,7 +164,7 @@ pub fn shot_despawn_system(
     tick_counter: Res<TickCounter>,
     mut query: Query<(Entity, &mut Shot)>,
 ) {
-    for (entity, mut shot) in query.iter_mut() {
+    for (entity, shot) in query.iter_mut() {
         if shot.duration.before_now(&tick_counter) {
             commands.entity(entity).despawn();
         }
@@ -182,11 +180,7 @@ pub fn shot_hit_system(
     mut ally_query: Query<&mut Health, (With<Ally>, Without<Enemy>)>,
     mut enemy_query: Query<&mut Health, (With<Enemy>, Without<Ally>)>,
     miss_query: Query<Entity, Without<Health>>,
-    mut ai_state: ResMut<AiState>,
 ) {
-    ai_state.enemy_dmg_done = 0.0;
-    ai_state.ally_dmg_done = 0.0;
-
     let mut shots_to_despawn: SmallVec<[Entity; 10]> = smallvec::SmallVec::new();
     for (entity1, entity2, intersecting) in rapier_context.intersection_pairs() {
         if intersecting {
@@ -200,12 +194,10 @@ pub fn shot_hit_system(
 
             if let Ok(mut health) = ally_query.get_mut(target_entity) {
                 health.cur -= SHOT_DAMAGE;
-                ai_state.enemy_dmg_done += SHOT_DAMAGE;
                 shots_to_despawn.push(shot_entity);
             }
             if let Ok(mut health) = enemy_query.get_mut(target_entity) {
                 health.cur -= SHOT_DAMAGE;
-                ai_state.ally_dmg_done += SHOT_DAMAGE;
                 shots_to_despawn.push(shot_entity);
             }
             if miss_query.get(target_entity).is_ok() {

@@ -27,9 +27,8 @@ use bevy::{
         default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera, Camera3dBundle,
         Color, Commands, Component, ComputedVisibility, CorePlugin, GilrsPlugin, GlobalTransform,
         Handle, HierarchyPlugin, ImagePlugin, IntoSystemDescriptor, Mat4, Mesh,
-        OrthographicProjection, PbrBundle, Plugin, PluginGroup, PointLight, PointLightBundle, Quat,
-        Query, Ray, Res, ResMut, Resource, StandardMaterial, SystemSet, Transform, Vec2, Vec3,
-        Visibility,
+        OrthographicProjection, PbrBundle, Plugin, PluginGroup, PointLight, PointLightBundle, Ray,
+        Res, ResMut, Resource, StandardMaterial, SystemSet, Transform, Vec2, Vec3, Visibility,
     },
     render::{camera::ScalingMode, RenderPlugin},
     scene::{Scene, ScenePlugin},
@@ -59,10 +58,7 @@ const DAMPING: Damping = Damping {
 
 const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, -50.0, 50.0);
 
-#[cfg(feature = "train")]
-pub const PLANE_SIZE: f32 = 10.0;
-#[cfg(not(feature = "train"))]
-pub const PLANE_SIZE: f32 = 10.0;
+pub const PLANE_SIZE: f32 = 25.0;
 
 #[derive(Component)]
 pub struct Health {
@@ -231,11 +227,9 @@ impl Plugin for GamPlugin {
         .add_engine_tick_system(ability::hyper_sprint_system)
         .add_engine_tick_system(ability::shot_despawn_system)
         .add_engine_tick_system(ability::shot_hit_system)
-        .add_plugin(ai::AiPlugin)
+        .add_plugin(ai::simple::SimpleAiPlugin)
         .add_engine_tick_system(system::die)
         .add_engine_tick_system(system::reset)
-        .add_plugin(ai::simple::SimpleAiPlugin)
-        // .add_plugin(ai::qlearning::QLearningPlugin)
         .add_plugin(PhysicsPlugin);
     }
 }
