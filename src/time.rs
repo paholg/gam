@@ -3,7 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use bevy::prelude::{Plugin, Res, ResMut, Resource};
+use bevy::prelude::{Plugin, ResMut, Resource};
 use tracing::info;
 
 use crate::FixedTimestepSystem;
