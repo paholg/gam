@@ -99,10 +99,10 @@ pub fn hyper_sprint_system(
     }
 }
 
-pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(100));
+pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(150));
 const SHOT_DURATION: Tick = Tick::new(Duration::from_secs(2));
-const SHOT_SPEED: f32 = 50.0;
-const SHOT_R: f32 = 0.1;
+const SHOT_SPEED: f32 = 40.0;
+const SHOT_R: f32 = 0.15;
 const SHOT_DAMAGE: f32 = 20.0;
 
 #[derive(Component)]
@@ -130,14 +130,17 @@ fn shoot(
                 #[cfg(feature = "graphics")]
                 material: materials.add(Color::BLUE.into()),
                 #[cfg(feature = "graphics")]
-                mesh: meshes.add(Mesh::from(Icosphere {
-                    radius: SHOT_R,
-                    subdivisions: 5,
-                })),
+                mesh: meshes.add(
+                    Mesh::try_from(Icosphere {
+                        radius: SHOT_R,
+                        subdivisions: 5,
+                    })
+                    .unwrap(),
+                ),
                 transform: Transform::from_translation(position),
                 global_transform: GlobalTransform::default(),
                 #[cfg(feature = "graphics")]
-                visibility: Visibility::VISIBLE,
+                visibility: Visibility::Visible,
                 #[cfg(feature = "graphics")]
                 computed_visibility: ComputedVisibility::default(),
                 collider: Collider::ball(SHOT_R),

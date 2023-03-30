@@ -4,7 +4,7 @@ use bevy::{
         DespawnRecursiveExt, Entity, GlobalTransform, Input, KeyCode, Mesh, MouseButton, Quat,
         Query, Res, ResMut, StandardMaterial, Transform, Vec2, Vec3, Visibility, With, Without,
     },
-    window::Windows,
+    window::{PrimaryWindow, Window},
 };
 use bevy_rapier2d::prelude::{Collider, ExternalImpulse, LockedAxes, RigidBody, Velocity};
 use rand::Rng;
@@ -90,13 +90,13 @@ pub fn player_input(
 
 /// Moves the camera and orients the player based on the mouse cursor.
 pub fn update_cursor(
-    windows: Res<Windows>,
+    primary_window: Query<&Window, With<PrimaryWindow>>,
     mut camera_query: Query<(&mut Transform, &Camera, &GlobalTransform)>,
     mut player_query: Query<&mut Transform, (With<Player>, Without<Camera>)>,
 ) {
     let (mut camera_transform, camera, global_transform) = camera_query.single_mut();
 
-    let cursor = match ray_from_screenspace(&windows, camera, global_transform)
+    let cursor = match ray_from_screenspace(primary_window, camera, global_transform)
         .as_ref()
         .and_then(|ray| intersect_xy_plane(ray, 0.0))
     {
@@ -163,7 +163,7 @@ fn spawn_player(
             transform: Transform::default(),
             global_transform: GlobalTransform::default(),
             #[cfg(feature = "graphics")]
-            visibility: Visibility::VISIBLE,
+            visibility: Visibility::Visible,
             #[cfg(feature = "graphics")]
             computed_visibility: ComputedVisibility::default(),
             collider: Collider::ball(1.0),
@@ -217,7 +217,7 @@ fn spawn_enemies(
                 transform: Transform::from_xyz(x, y, 0.0),
                 global_transform: GlobalTransform::default(),
                 #[cfg(feature = "graphics")]
-                visibility: Visibility::VISIBLE,
+                visibility: Visibility::Visible,
                 #[cfg(feature = "graphics")]
                 computed_visibility: ComputedVisibility::default(),
                 collider: Collider::ball(1.0),
@@ -273,7 +273,7 @@ fn spawn_allies(
                 transform: Transform::from_xyz(x, y, 0.0),
                 global_transform: GlobalTransform::default(),
                 #[cfg(feature = "graphics")]
-                visibility: Visibility::VISIBLE,
+                visibility: Visibility::Visible,
                 #[cfg(feature = "graphics")]
                 computed_visibility: ComputedVisibility::default(),
                 collider: Collider::ball(1.0),
