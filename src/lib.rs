@@ -9,12 +9,14 @@
 
 pub mod ability;
 pub mod ai;
+pub mod asset_handler;
 pub mod config;
 pub mod healthbar;
 pub mod physics;
 pub mod system;
 pub mod time;
 
+use asset_handler::asset_handler_setup;
 use bevy::{
     app::PluginGroupBuilder,
     audio::AudioPlugin,
@@ -105,6 +107,7 @@ pub struct Ally;
 
 // TODO: Do cooldowns better. We don't want every entity to have a giant
 // cooldowns struct.
+// Or maybe we do?????
 #[derive(Component)]
 pub struct Cooldowns {
     hyper_sprint: Tick,
@@ -243,7 +246,8 @@ impl Plugin for GamClientPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_engine_tick_system(system::player_input)
             .add_system(system::update_cursor)
-            .add_plugin(HealthbarPlugin);
+            .add_plugin(HealthbarPlugin)
+            .add_startup_system(asset_handler_setup);
     }
 }
 

@@ -1,8 +1,8 @@
 use std::time::Duration;
 
 use bevy::prelude::{
-    shape::Icosphere, Assets, Color, Commands, Component, ComputedVisibility, Entity,
-    GlobalTransform, Mesh, Query, Res, ResMut, StandardMaterial, Transform, Vec3, Visibility, With,
+    Commands, Component, ComputedVisibility, Entity,
+    GlobalTransform, Query, Res, Transform, Vec3, Visibility, With,
     Without,
 };
 use bevy_rapier2d::prelude::{Collider, LockedAxes, RapierContext, RigidBody, Sensor, Velocity};
@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
 use crate::{
+    asset_handler::AssetHandler,
     time::{Tick, TickCounter},
     Ally, Cooldowns, Enemy, Health, MaxSpeed, Object, PLAYER_R,
 };
@@ -28,8 +29,7 @@ impl Ability {
         &self,
         commands: &mut Commands,
         tick_counter: &TickCounter,
-        #[cfg(feature = "graphics")] meshes: &mut ResMut<Assets<Mesh>>,
-        #[cfg(feature = "graphics")] materials: &mut ResMut<Assets<StandardMaterial>>,
+        #[cfg(feature = "graphics")] assets: &AssetHandler,
         entity: Entity,
         cooldowns: &mut Cooldowns,
         max_speed: &mut MaxSpeed,
@@ -46,9 +46,7 @@ impl Ability {
                 cooldowns,
                 tick_counter,
                 #[cfg(feature = "graphics")]
-                meshes,
-                #[cfg(feature = "graphics")]
-                materials,
+                assets,
                 transform,
                 velocity,
             ),
@@ -102,7 +100,7 @@ pub fn hyper_sprint_system(
 pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(150));
 const SHOT_DURATION: Tick = Tick::new(Duration::from_secs(2));
 const SHOT_SPEED: f32 = 40.0;
-const SHOT_R: f32 = 0.15;
+pub const SHOT_R: f32 = 0.15;
 const SHOT_DAMAGE: f32 = 20.0;
 
 #[derive(Component)]
@@ -114,8 +112,7 @@ fn shoot(
     commands: &mut Commands,
     cooldowns: &mut Cooldowns,
     tick_counter: &TickCounter,
-    #[cfg(feature = "graphics")] meshes: &mut ResMut<Assets<Mesh>>,
-    #[cfg(feature = "graphics")] materials: &mut ResMut<Assets<StandardMaterial>>,
+    #[cfg(feature = "graphics")] assets: &AssetHandler,
     transform: &Transform,
     velocity: &Velocity,
 ) -> bool {
@@ -128,15 +125,9 @@ fn shoot(
         commands.spawn((
             Object {
                 #[cfg(feature = "graphics")]
-                material: materials.add(Color::BLUE.into()),
+                material: assets.shot.material.clone(),
                 #[cfg(feature = "graphics")]
-                mesh: meshes.add(
-                    Mesh::try_from(Icosphere {
-                        radius: SHOT_R,
-                        subdivisions: 5,
-                    })
-                    .unwrap(),
-                ),
+                mesh: assets.shot.mesh.clone(),
                 transform: Transform::from_translation(position),
                 global_transform: GlobalTransform::default(),
                 #[cfg(feature = "graphics")]

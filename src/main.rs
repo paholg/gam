@@ -4,18 +4,22 @@ use gam::GamPlugin;
 fn main() {
     let mut app = App::new();
 
-    app.add_plugin(GamPlugin);
     #[cfg(feature = "graphics")]
     {
         app.add_plugins(bevy::DefaultPlugins.set(bevy::window::WindowPlugin {
             primary_window: Some(bevy::window::Window {
-                present_mode: bevy::window::PresentMode::AutoNoVsync,
+                present_mode: bevy::window::PresentMode::AutoVsync,
                 ..Default::default()
             }),
             ..Default::default()
         }))
         .add_plugin(gam::GamClientPlugin);
     }
+
+    // We load this plugin after the ClientPlugin, as that one loads any assets
+    // we need and creates the AssetHandler resource.
+    app.add_plugin(GamPlugin);
+
     #[cfg(not(feature = "graphics"))]
     {
         app.insert_resource(bevy::app::ScheduleRunnerSettings {

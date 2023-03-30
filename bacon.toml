@@ -1,0 +1,21 @@
+# This is a configuration file for the bacon tool
+#
+# Bacon repository: https://github.com/Canop/bacon
+# Complete help on configuration: https://dystroy.org/bacon/config/
+
+default_job = "check"
+
+[jobs.check]
+command = ["cargo", "check", "--features", "bevy/dynamic_linking", "--color", "always"]
+need_stdout = false
+
+[jobs.clippy]
+command = ["cargo", "clippy", "--features", "bevy/dynamic_linking", "--all-targets", "--color", "always"]
+need_stdout = false
+watch = ["tests", "benches", "examples"]
+
+[jobs.run]
+allow_warnings = true
+command = ["cargo", "run", "--features", "bevy/dynamic_linking", "--color", "always"]
+need_stdout = true
+watch = ["examples"]
