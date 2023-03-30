@@ -5,6 +5,7 @@ version = "0.1.0"
 
 [dependencies]
 bevy = { version = "0.10", features = ["serialize"] }
+bevy_hanabi = { version = "0.6.1", default-features = false, features = ["3d"], optional = true }
 # bevy_quickmenu = "0.1"
 # Note on enhanced-determinism:
 # If some of the values used to initialized Rapier structures are computed using
@@ -41,4 +42,4 @@ codegen-units = 1
 [features]
 debug = []
 default = ["graphics"]
-graphics = []
+graphics = ["bevy_hanabi"]
