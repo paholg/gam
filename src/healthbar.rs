@@ -1,16 +1,15 @@
 use bevy::prelude::{
-    default, shape, Added, Assets, BuildChildren, Bundle, Children, Color, Commands, Component,
-    ComputedVisibility, Entity, GlobalTransform, Mesh, Parent, PbrBundle, Plugin, Query, ResMut,
-    StandardMaterial, Transform, Vec2, Vec3, Visibility, With, Without,
+    default, Added, BuildChildren, Bundle, Children, Commands, Component,
+    ComputedVisibility, Entity, GlobalTransform, Parent, PbrBundle, Plugin, Query, Res, Transform, Vec2, Vec3, Visibility, With, Without,
 };
 use tracing::warn;
 
-use crate::Health;
+use crate::{asset_handler::AssetHandler, Health};
 
 #[derive(Component)]
 pub struct Healthbar {
     displacement: Vec3,
-    size: Vec2,
+    pub size: Vec2,
 }
 
 impl Default for Healthbar {
@@ -39,22 +38,15 @@ struct BarMarker;
 
 fn add_healthbar_system(
     mut commands: Commands,
-    mut materials: ResMut<Assets<StandardMaterial>>,
-    mut meshes: ResMut<Assets<Mesh>>,
+    assets: Res<AssetHandler>,
     healthbars: Query<(Entity, &Healthbar), Added<Healthbar>>,
 ) {
     for (parent, healthbar) in healthbars.iter() {
         let bar = commands
             .spawn((
                 PbrBundle {
-                    material: materials.add(Color::GREEN.into()),
-                    mesh: meshes.add(
-                        shape::Quad {
-                            size: healthbar.size,
-                            ..default()
-                        }
-                        .into(),
-                    ),
+                    material: assets.healthbar.fg_material.clone(),
+                    mesh: assets.healthbar.mesh.clone(),
                     transform: Transform::from_translation(healthbar.displacement),
                     ..default()
                 },
@@ -63,14 +55,8 @@ fn add_healthbar_system(
             .id();
         let background = commands
             .spawn(PbrBundle {
-                material: materials.add(Color::BLACK.into()),
-                mesh: meshes.add(
-                    shape::Quad {
-                        size: healthbar.size,
-                        ..default()
-                    }
-                    .into(),
-                ),
+                material: assets.healthbar.bg_material.clone(),
+                mesh: assets.healthbar.mesh.clone(),
                 transform: Transform::from_translation(
                     healthbar.displacement - Vec3::new(0.0, 0.0, 0.01),
                 ),
