@@ -1,10 +1,10 @@
 use std::time::Duration;
 
 use bevy::prelude::{
-    Commands, Component, ComputedVisibility, Entity,
-    GlobalTransform, Query, Res, Transform, Vec3, Visibility, With,
-    Without,
+    Commands, Component, ComputedVisibility, Entity, GlobalTransform, Query, Res, Transform, Vec3,
+    Visibility, With, Without,
 };
+use bevy_hanabi::{ParticleEffect, ParticleEffectBundle};
 use bevy_rapier2d::prelude::{Collider, LockedAxes, RapierContext, RigidBody, Sensor, Velocity};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
@@ -38,9 +38,16 @@ impl Ability {
     ) -> bool {
         match self {
             Ability::None => true,
-            Ability::HyperSprint => {
-                hyper_sprint(commands, tick_counter, entity, cooldowns, max_speed)
-            }
+            Ability::HyperSprint => hyper_sprint(
+                commands,
+                tick_counter,
+                entity,
+                cooldowns,
+                max_speed,
+                transform,
+                #[cfg(feature = "graphics")]
+                assets,
+            ),
             Ability::Shoot => shoot(
                 commands,
                 cooldowns,
@@ -69,6 +76,8 @@ fn hyper_sprint(
     entity: Entity,
     cooldowns: &mut Cooldowns,
     max_speed: &mut MaxSpeed,
+    transform: &Transform,
+    #[cfg(feature = "graphics")] assets: &AssetHandler,
 ) -> bool {
     if cooldowns.hyper_sprint.before_now(tick_counter) {
         cooldowns.hyper_sprint = tick_counter.at(HYPER_SPRINT_COOLDOWN);
@@ -76,6 +85,12 @@ fn hyper_sprint(
         max_speed.impulse *= HYPER_SPRINT_FACTOR;
         commands.entity(entity).insert(HyperSprinting {
             duration: tick_counter.at(HYPER_SPRINT_DURATION),
+        });
+        #[cfg(feature = "graphics")]
+        commands.spawn(ParticleEffectBundle {
+            effect: ParticleEffect::new(assets.hyper_sprint.effect.clone()),
+            transform: transform.clone(),
+            ..Default::default()
         });
         true
     } else {
@@ -170,39 +185,56 @@ pub fn shot_despawn_system(
 pub fn shot_hit_system(
     rapier_context: Res<RapierContext>,
     mut commands: Commands,
-    shot_query: Query<Entity, With<Shot>>,
+    shot_query: Query<(Entity, &Transform), With<Shot>>,
     mut ally_query: Query<&mut Health, (With<Ally>, Without<Enemy>)>,
     mut enemy_query: Query<&mut Health, (With<Enemy>, Without<Ally>)>,
     miss_query: Query<Entity, Without<Health>>,
+    #[cfg(feature = "graphics")] assets: Res<AssetHandler>,
 ) {
-    let mut shots_to_despawn: SmallVec<[Entity; 10]> = smallvec::SmallVec::new();
+    let mut shots_to_despawn: SmallVec<[(Entity, Transform); 10]> = smallvec::SmallVec::new();
     for (entity1, entity2, intersecting) in rapier_context.intersection_pairs() {
         if intersecting {
-            let (shot_entity, target_entity) = if shot_query.get(entity1).is_ok() {
-                (entity1, entity2)
-            } else if shot_query.get(entity2).is_ok() {
-                (entity2, entity1)
-            } else {
-                continue;
-            };
+            // let (shot_entity, target_entity) = if shot_query.get(entity1).is_ok() {
+            //     (entity1, entity2)
+            // } else if shot_query.get(entity2).is_ok() {
+            //     (entity2, entity1)
+            // } else {
+            //     continue;
+            // };
+            let (shot_entity, shot_transform, target_entity) =
+                if let Ok((e, t)) = shot_query.get(entity1) {
+                    (e, t.to_owned(), entity2)
+                } else if let Ok((e, t)) = shot_query.get(entity2) {
+                    (e, t.to_owned(), entity1)
+                } else {
+                    continue;
+                };
 
             if let Ok(mut health) = ally_query.get_mut(target_entity) {
                 health.cur -= SHOT_DAMAGE;
-                shots_to_despawn.push(shot_entity);
+                shots_to_despawn.push((shot_entity, shot_transform));
             }
             if let Ok(mut health) = enemy_query.get_mut(target_entity) {
                 health.cur -= SHOT_DAMAGE;
-                shots_to_despawn.push(shot_entity);
+                shots_to_despawn.push((shot_entity, shot_transform));
             }
             if miss_query.get(target_entity).is_ok() {
-                shots_to_despawn.push(shot_entity);
+                shots_to_despawn.push((shot_entity, shot_transform));
             }
         }
     }
-    shots_to_despawn.sort();
-    shots_to_despawn.dedup();
+    shots_to_despawn.sort_by_key(|(entity, _transform)| *entity);
+    shots_to_despawn.dedup_by_key(|(entity, _transform)| *entity);
 
-    for shot in shots_to_despawn.into_iter() {
-        commands.entity(shot).despawn();
+    for (entity, transform) in shots_to_despawn.into_iter() {
+        commands.entity(entity).despawn();
+        #[cfg(feature = "graphics")]
+        // TODO: I think we don't want to spawn a new bundle every time, but just have 1 and trigger it????
+        // Also for hyper_sprint.
+        commands.spawn(ParticleEffectBundle {
+            effect: ParticleEffect::new(assets.shot.effect.clone()),
+            transform,
+            ..Default::default()
+        });
     }
 }

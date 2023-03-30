@@ -247,6 +247,7 @@ impl Plugin for GamClientPlugin {
         app.add_engine_tick_system(system::player_input)
             .add_system(system::update_cursor)
             .add_plugin(HealthbarPlugin)
+            .add_plugin(bevy_hanabi::HanabiPlugin)
             .add_startup_system(asset_handler_setup);
     }
 }
