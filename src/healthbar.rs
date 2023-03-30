@@ -1,9 +1,9 @@
 use bevy::prelude::{
     default, shape, Added, Assets, BuildChildren, Bundle, Children, Color, Commands, Component,
-    ComputedVisibility, CoreStage, Entity, GlobalTransform, Mesh, Parent, PbrBundle,
-    Plugin, Query, ResMut, StandardMaterial, Transform, Vec2, Vec3, Visibility, With, Without,
+    ComputedVisibility, Entity, GlobalTransform, Mesh, Parent, PbrBundle, Plugin, Query, ResMut,
+    StandardMaterial, Transform, Vec2, Vec3, Visibility, With, Without,
 };
-use tracing::{warn};
+use tracing::warn;
 
 use crate::Health;
 
@@ -82,7 +82,7 @@ fn add_healthbar_system(
                 marker: HealthbarMarker,
                 transform: Transform::default(),
                 global_transform: GlobalTransform::default(),
-                visibility: Visibility::VISIBLE,
+                visibility: Visibility::Visible,
                 computed_visibility: ComputedVisibility::default(),
             })
             .id();
@@ -125,8 +125,7 @@ pub struct HealthbarPlugin;
 
 impl Plugin for HealthbarPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        // We need to fix the position after bevy changes it.
-        app.add_system_to_stage(CoreStage::PostUpdate, healthbar_update_system)
+        app.add_system(healthbar_update_system)
             .add_system(add_healthbar_system);
     }
 }

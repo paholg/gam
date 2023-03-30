@@ -25,10 +25,11 @@ use bevy::{
     pbr::PbrPlugin,
     prelude::{
         default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera, Camera3dBundle,
-        Color, Commands, Component, ComputedVisibility, CorePlugin, GilrsPlugin, GlobalTransform,
-        Handle, HierarchyPlugin, ImagePlugin, IntoSystemDescriptor, Mat4, Mesh,
-        OrthographicProjection, PbrBundle, Plugin, PluginGroup, PointLight, PointLightBundle, Ray,
-        Res, ResMut, Resource, StandardMaterial, SystemSet, Transform, Vec2, Vec3, Visibility,
+        Color, Commands, Component, ComputedVisibility, CoreSchedule, FixedTime, FrameCountPlugin,
+        GilrsPlugin, GlobalTransform, Handle, HierarchyPlugin, ImagePlugin, IntoSystemAppConfig,
+        Mat4, Mesh, OrthographicProjection, PbrBundle, Plugin, PluginGroup, PointLight,
+        PointLightBundle, Query, Ray, ResMut, Resource, StandardMaterial, TaskPoolPlugin,
+        Transform, TypeRegistrationPlugin, Vec2, Vec3, Visibility, With,
     },
     render::{camera::ScalingMode, RenderPlugin},
     scene::{Scene, ScenePlugin},
@@ -37,14 +38,13 @@ use bevy::{
     time::TimePlugin,
     transform::TransformPlugin,
     ui::UiPlugin,
-    window::{WindowPlugin, Windows},
+    window::{PrimaryWindow, Window, WindowPlugin},
     winit::WinitPlugin,
 };
 use bevy_rapier2d::prelude::{Collider, Damping, ExternalImpulse, LockedAxes, RigidBody, Velocity};
 use healthbar::HealthbarPlugin;
-use iyes_loopless::{fixedtimestep::TimestepName, prelude::AppLooplessFixedTimestepExt};
 use physics::PhysicsPlugin;
-use time::{Tick, TickPlugin};
+use time::{Tick, TickPlugin, TIMESTEP};
 
 use crate::healthbar::Healthbar;
 
@@ -174,7 +174,9 @@ impl PluginGroup for HeadlessDefaultPlugins {
         let mut group = PluginGroupBuilder::start::<Self>();
         group = group
             .add(LogPlugin::default())
-            .add(CorePlugin::default())
+            .add(TaskPoolPlugin::default())
+            .add(TypeRegistrationPlugin::default())
+            .add(FrameCountPlugin::default())
             .add(TimePlugin::default())
             .add(TransformPlugin::default())
             .add(HierarchyPlugin::default())
@@ -217,7 +219,7 @@ pub struct GamPlugin;
 impl Plugin for GamPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         #[cfg(not(feature = "train"))]
-        app.add_fixed_timestep(time::TIMESTEP, BEFORE_CORESTAGE_UPDATE);
+        app.insert_resource(FixedTime::new(TIMESTEP));
         app.insert_resource(NumAi {
             enemies: 1,
             allies: 1,
@@ -245,100 +247,14 @@ impl Plugin for GamClientPlugin {
     }
 }
 
-/// A helper enum to make tracking our custom Fixedtimestep stages a bit more
-/// sane.
-pub enum CustomStage {
-    CoreUpdate,
-    // The Physics stages are added by the PhysicsPlugin, based on the order in
-    // bevy_rapier's RapierPhysicsPlugin::build().
-    PhysicsSyncBackend,
-    PhysicsStepSimulation,
-    PhysicsWriteback,
-
-    Ai,
-
-    PhysicsDetectDespawn,
-}
-
-pub const BEFORE_CORESTAGE_UPDATE: &str = "Before CoreStage::Update";
-pub const AFTER_CORESTAGE_UPDATE: &str = "After CoreStage::Update";
-pub const BEFORE_CORESTAGE_LAST: &str = "Before CoreStage::Last";
-
-impl CustomStage {
-    pub fn timestep_name(&self) -> TimestepName {
-        match self {
-            CustomStage::CoreUpdate => BEFORE_CORESTAGE_UPDATE,
-            CustomStage::PhysicsSyncBackend => AFTER_CORESTAGE_UPDATE,
-            CustomStage::PhysicsStepSimulation => AFTER_CORESTAGE_UPDATE,
-            CustomStage::PhysicsWriteback => AFTER_CORESTAGE_UPDATE,
-
-            CustomStage::Ai => AFTER_CORESTAGE_UPDATE,
-
-            CustomStage::PhysicsDetectDespawn => BEFORE_CORESTAGE_LAST,
-        }
-    }
-
-    pub fn substage(&self) -> usize {
-        match self {
-            CustomStage::CoreUpdate => 0,
-            CustomStage::PhysicsSyncBackend => 0,
-            CustomStage::PhysicsStepSimulation => 1,
-            CustomStage::PhysicsWriteback => 2,
-
-            CustomStage::Ai => 3,
-
-            CustomStage::PhysicsDetectDespawn => 0,
-        }
-    }
-}
-
 trait FixedTimestepSystem {
-    fn add_engine_tick_system<Params>(
-        &mut self,
-        system: impl IntoSystemDescriptor<Params>,
-    ) -> &mut Self;
-
-    #[cfg(not(feature = "train"))]
-    fn add_engine_tick_system_to_stage<Params>(
-        &mut self,
-        stage: CustomStage,
-        system: impl IntoSystemDescriptor<Params>,
-    ) -> &mut Self;
-
-    #[cfg(not(feature = "train"))]
-    fn add_engine_tick_system_set_to_stage(
-        &mut self,
-        stage: CustomStage,
-        system_set: SystemSet,
-    ) -> &mut Self;
+    fn add_engine_tick_system<M>(&mut self, system: impl IntoSystemAppConfig<M>) -> &mut Self;
 }
 
 #[cfg(not(feature = "train"))]
 impl FixedTimestepSystem for App {
-    fn add_engine_tick_system<Params>(
-        &mut self,
-        system: impl IntoSystemDescriptor<Params>,
-    ) -> &mut Self {
-        self.add_fixed_timestep_system(
-            CustomStage::CoreUpdate.timestep_name(),
-            CustomStage::CoreUpdate.substage(),
-            system,
-        )
-    }
-    fn add_engine_tick_system_to_stage<Params>(
-        &mut self,
-        stage: CustomStage,
-        system: impl IntoSystemDescriptor<Params>,
-    ) -> &mut Self {
-        self.add_fixed_timestep_system(stage.timestep_name(), stage.substage(), system)
-    }
-
-    fn add_engine_tick_system_set_to_stage(
-        &mut self,
-        stage: CustomStage,
-        system_set: SystemSet,
-    ) -> &mut Self {
-        self.add_fixed_timestep_system_set(stage.timestep_name(), stage.substage(), system_set)
+    fn add_engine_tick_system<M>(&mut self, system: impl IntoSystemAppConfig<M>) -> &mut Self {
+        self.add_system(system.in_schedule(CoreSchedule::FixedUpdate))
     }
 }
 
@@ -426,12 +342,11 @@ pub fn setup(
 // Logic taken from here:
 // https://github.com/lucaspoffo/renet/blob/c963b65b66325c536d115faab31638f3ad2b5e48/demo_bevy/src/lib.rs#L196-L215
 fn ray_from_screenspace(
-    windows: &Res<Windows>,
+    primary_window: Query<&Window, With<PrimaryWindow>>,
     camera: &Camera,
     camera_transform: &GlobalTransform,
 ) -> Option<Ray> {
-    let window = windows.get_primary().unwrap();
-    let cursor_position = window.cursor_position()?;
+    let cursor_position = primary_window.get_single().ok()?.cursor_position()?;
 
     let view = camera_transform.compute_matrix();
     let screen_size = camera.logical_target_size()?;

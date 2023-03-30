@@ -1,13 +1,9 @@
-use bevy::prelude::{default, CoreStage, Plugin, Vec2};
+use bevy::prelude::{default, CoreSet, IntoSystemConfigs, IntoSystemSetConfigs, Plugin, Vec2};
 use bevy_rapier2d::prelude::{
-    NoUserData, PhysicsStages, RapierConfiguration, RapierPhysicsPlugin, TimestepMode,
+    NoUserData, PhysicsSet, RapierConfiguration, RapierPhysicsPlugin, TimestepMode,
 };
-use iyes_loopless::prelude::AppLooplessFixedTimestepExt;
 
-use crate::{
-    time::{self, PHYSICS_TIMESTEP},
-    CustomStage, FixedTimestepSystem, AFTER_CORESTAGE_UPDATE, BEFORE_CORESTAGE_LAST,
-};
+use crate::time::PHYSICS_TIMESTEP;
 
 type RapierPlugin = RapierPhysicsPlugin<NoUserData>;
 
@@ -32,32 +28,35 @@ impl Plugin for PhysicsPlugin {
         app.insert_resource(rapier_config)
             .add_plugin(RapierPlugin::default());
         #[cfg(not(feature = "train"))]
-        app.insert_resource(rapier_config)
-            .add_plugin(RapierPlugin::default().with_default_system_setup(false))
-            // We add these stages just like RapierPhysicsPlugin::build would
-            // have, but with fixed timesteps.
-            // Analagous to PhysicsStages::SyncBackend:
-            .add_fixed_timestep(time::TIMESTEP, AFTER_CORESTAGE_UPDATE)
-            // Analagous to PhysicsStages::StepSimulation:
-            .add_fixed_timestep_child_stage(AFTER_CORESTAGE_UPDATE)
-            // Analagous to PhysicsStages::Writeback:
-            .add_fixed_timestep_child_stage(AFTER_CORESTAGE_UPDATE)
-            .add_fixed_timestep_before_stage(CoreStage::Last, time::TIMESTEP, BEFORE_CORESTAGE_LAST)
-            .add_engine_tick_system_set_to_stage(
-                CustomStage::PhysicsSyncBackend,
-                RapierPlugin::get_systems(PhysicsStages::SyncBackend),
-            )
-            .add_engine_tick_system_set_to_stage(
-                CustomStage::PhysicsStepSimulation,
-                RapierPlugin::get_systems(PhysicsStages::StepSimulation),
-            )
-            .add_engine_tick_system_set_to_stage(
-                CustomStage::PhysicsWriteback,
-                RapierPlugin::get_systems(PhysicsStages::Writeback),
-            )
-            .add_engine_tick_system_set_to_stage(
-                CustomStage::PhysicsDetectDespawn,
-                RapierPlugin::get_systems(PhysicsStages::DetectDespawn),
+        {
+            app.insert_resource(rapier_config)
+                .add_plugin(RapierPlugin::default().with_default_system_setup(false));
+            app.configure_sets(
+                (
+                    PhysicsSet::SyncBackend,
+                    PhysicsSet::SyncBackendFlush,
+                    PhysicsSet::StepSimulation,
+                    PhysicsSet::Writeback,
+                )
+                    .chain()
+                    .before(CoreSet::FixedUpdate),
             );
+
+            app.add_systems(
+                RapierPlugin::get_systems(PhysicsSet::SyncBackend)
+                    .in_base_set(PhysicsSet::SyncBackend),
+            );
+            app.add_systems(
+                RapierPlugin::get_systems(PhysicsSet::SyncBackendFlush)
+                    .in_base_set(PhysicsSet::SyncBackendFlush),
+            );
+            app.add_systems(
+                RapierPlugin::get_systems(PhysicsSet::StepSimulation)
+                    .in_base_set(PhysicsSet::StepSimulation),
+            );
+            app.add_systems(
+                RapierPlugin::get_systems(PhysicsSet::Writeback).in_base_set(PhysicsSet::Writeback),
+            );
+        }
     }
 }
