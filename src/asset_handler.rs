@@ -2,15 +2,15 @@ use bevy::{
     prelude::{
         default,
         shape::{self, Icosphere},
-        AssetServer, Assets, Color, Commands, Handle, Mesh, ResMut, Resource, StandardMaterial,
-        Vec2, Vec3, Vec4,
+        AssetServer, Assets, Color, Commands, Component, Entity, Handle, Mesh, ResMut, Resource,
+        StandardMaterial, Vec2, Vec3, Vec4,
     },
     scene::Scene,
 };
 use bevy_hanabi::{
     ColorOverLifetimeModifier, EffectAsset, Gradient, InitAgeModifier, InitLifetimeModifier,
     InitPositionCircleModifier, InitPositionSphereModifier, InitVelocityCircleModifier,
-    InitVelocitySphereModifier, LinearDragModifier, ParticleTextureModifier, ShapeDimension,
+    InitVelocitySphereModifier, LinearDragModifier, ParticleEffectBundle, ShapeDimension,
     SizeOverLifetimeModifier, Spawner, Value,
 };
 
@@ -25,11 +25,11 @@ pub struct HealthbarAssets {
 pub struct ShotAssets {
     pub mesh: Handle<Mesh>,
     pub material: Handle<StandardMaterial>,
-    pub effect: Handle<EffectAsset>,
+    pub effect_entity: Entity,
 }
 
 pub struct HyperSprintAssets {
-    pub effect: Handle<EffectAsset>,
+    pub effect_entity: Entity,
 }
 
 pub struct CharacterAssets {
@@ -48,6 +48,12 @@ pub struct AssetHandler {
     pub ally: CharacterAssets,
     pub enemy: CharacterAssets,
 }
+
+#[derive(Component)]
+pub struct ShotEffect;
+
+#[derive(Component)]
+pub struct HyperSprintEffect;
 
 pub fn asset_handler_setup(
     mut commands: Commands,
@@ -68,6 +74,12 @@ pub fn asset_handler_setup(
         bg_material: materials.add(Color::BLACK.into()),
     };
 
+    let effect = effects.add(shot_effect());
+    let effect_entity = commands
+        .spawn(ParticleEffectBundle::new(effect))
+        .insert(ShotEffect)
+        .id();
+
     let shot = ShotAssets {
         mesh: meshes.add(
             Mesh::try_from(Icosphere {
@@ -77,12 +89,16 @@ pub fn asset_handler_setup(
             .unwrap(),
         ),
         material: materials.add(Color::BLUE.into()),
-        effect: effects.add(shot_effect()),
+        effect_entity,
     };
 
-    let hyper_sprint = HyperSprintAssets {
-        effect: effects.add(hyper_sprint_effect()),
-    };
+    let effect = effects.add(hyper_sprint_effect());
+    let effect_entity = commands
+        .spawn(ParticleEffectBundle::new(effect))
+        .insert(HyperSprintEffect)
+        .id();
+
+    let hyper_sprint = HyperSprintAssets { effect_entity };
 
     let spaceship = asset_server.load("models/temp/craft_speederB.glb#Scene0");
 
@@ -145,10 +161,12 @@ fn shot_effect() -> EffectAsset {
     size_gradient1.add_key(0.3, Vec2::splat(0.1));
     size_gradient1.add_key(1.0, Vec2::splat(0.0));
 
+    let spawner = Spawner::once(250.0.into(), false);
+
     EffectAsset {
         name: "ShotParticleEffect".to_string(),
         capacity: 32768,
-        spawner: Spawner::once(250.0.into(), true),
+        spawner,
         ..Default::default()
     }
     .init(InitPositionSphereModifier {
@@ -190,7 +208,7 @@ fn hyper_sprint_effect() -> EffectAsset {
         name: "Gradient".to_string(),
         // TODO: Figure out why no particle spawns if this is 1
         capacity: 32768,
-        spawner: Spawner::once(32.0.into(), true),
+        spawner: Spawner::once(32.0.into(), false),
         ..Default::default()
     }
     .init(InitPositionCircleModifier {
@@ -201,11 +219,11 @@ fn hyper_sprint_effect() -> EffectAsset {
     })
     .init(InitVelocityCircleModifier {
         center: Vec3::ZERO,
-        axis: Vec3::Y,
-        speed: Value::Uniform((1.0, 1.5)),
+        axis: Vec3::Z,
+        speed: Value::Uniform((2.0, 3.0)),
     })
     .init(InitLifetimeModifier {
-        lifetime: 5_f32.into(),
+        lifetime: 0.5_f32.into(),
     })
     .render(ColorOverLifetimeModifier { gradient })
     .render(SizeOverLifetimeModifier {

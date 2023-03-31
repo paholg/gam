@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
 use crate::{
-    asset_handler::AssetHandler,
+    asset_handler::{AssetHandler, HyperSprintEffect, ShotEffect},
     time::{Tick, TickCounter},
     Ally, Cooldowns, Enemy, Health, MaxSpeed, Object, PLAYER_R,
 };
@@ -86,12 +86,6 @@ fn hyper_sprint(
         commands.entity(entity).insert(HyperSprinting {
             duration: tick_counter.at(HYPER_SPRINT_DURATION),
         });
-        #[cfg(feature = "graphics")]
-        commands.spawn(ParticleEffectBundle {
-            effect: ParticleEffect::new(assets.hyper_sprint.effect.clone()),
-            transform: transform.clone(),
-            ..Default::default()
-        });
         true
     } else {
         false
@@ -101,9 +95,21 @@ fn hyper_sprint(
 pub fn hyper_sprint_system(
     mut commands: Commands,
     tick_counter: Res<TickCounter>,
-    mut query: Query<(Entity, &HyperSprinting, &mut MaxSpeed)>,
+    mut query: Query<(Entity, &HyperSprinting, &mut MaxSpeed, &Transform)>,
+    #[cfg(feature = "graphics")] mut effects: Query<
+        (&mut ParticleEffect, &mut Transform),
+        (With<HyperSprintEffect>, Without<HyperSprinting>),
+    >,
+    #[cfg(feature = "graphics")] assets: Res<AssetHandler>,
 ) {
-    for (entity, hyper_sprinting, mut max_speed) in query.iter_mut() {
+    for (entity, hyper_sprinting, mut max_speed, sprinter_transform) in query.iter_mut() {
+        #[cfg(feature = "graphics")]
+        {
+            let (mut effect, mut transform) =
+                effects.get_mut(assets.hyper_sprint.effect_entity).unwrap();
+            *transform = *sprinter_transform;
+            effect.maybe_spawner().unwrap().reset();
+        }
         if hyper_sprinting.duration.before_now(&tick_counter) {
             max_speed.max_speed /= HYPER_SPRINT_FACTOR;
             max_speed.impulse /= HYPER_SPRINT_FACTOR;
@@ -112,9 +118,9 @@ pub fn hyper_sprint_system(
     }
 }
 
-pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(150));
-const SHOT_DURATION: Tick = Tick::new(Duration::from_secs(2));
-const SHOT_SPEED: f32 = 40.0;
+pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(250));
+const SHOT_DURATION: Tick = Tick::new(Duration::from_secs(10));
+const SHOT_SPEED: f32 = 30.0;
 pub const SHOT_R: f32 = 0.15;
 const SHOT_DAMAGE: f32 = 20.0;
 
@@ -190,17 +196,14 @@ pub fn shot_hit_system(
     mut enemy_query: Query<&mut Health, (With<Enemy>, Without<Ally>)>,
     miss_query: Query<Entity, Without<Health>>,
     #[cfg(feature = "graphics")] assets: Res<AssetHandler>,
+    #[cfg(feature = "graphics")] mut effects: Query<
+        (&mut ParticleEffect, &mut Transform),
+        (With<ShotEffect>, Without<Shot>),
+    >,
 ) {
     let mut shots_to_despawn: SmallVec<[(Entity, Transform); 10]> = smallvec::SmallVec::new();
     for (entity1, entity2, intersecting) in rapier_context.intersection_pairs() {
         if intersecting {
-            // let (shot_entity, target_entity) = if shot_query.get(entity1).is_ok() {
-            //     (entity1, entity2)
-            // } else if shot_query.get(entity2).is_ok() {
-            //     (entity2, entity1)
-            // } else {
-            //     continue;
-            // };
             let (shot_entity, shot_transform, target_entity) =
                 if let Ok((e, t)) = shot_query.get(entity1) {
                     (e, t.to_owned(), entity2)
@@ -226,15 +229,13 @@ pub fn shot_hit_system(
     shots_to_despawn.sort_by_key(|(entity, _transform)| *entity);
     shots_to_despawn.dedup_by_key(|(entity, _transform)| *entity);
 
-    for (entity, transform) in shots_to_despawn.into_iter() {
-        commands.entity(entity).despawn();
+    for (shot_entity, shot_transform) in shots_to_despawn.into_iter() {
+        commands.entity(shot_entity).despawn();
         #[cfg(feature = "graphics")]
-        // TODO: I think we don't want to spawn a new bundle every time, but just have 1 and trigger it????
-        // Also for hyper_sprint.
-        commands.spawn(ParticleEffectBundle {
-            effect: ParticleEffect::new(assets.shot.effect.clone()),
-            transform,
-            ..Default::default()
-        });
+        {
+            let (mut effect, mut transform) = effects.get_mut(assets.shot.effect_entity).unwrap();
+            *transform = shot_transform;
+            effect.maybe_spawner().unwrap().reset();
+        }
     }
 }
