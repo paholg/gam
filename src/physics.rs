@@ -1,6 +1,6 @@
-use bevy::prelude::{default, CoreSet, IntoSystemConfigs, IntoSystemSetConfigs, Plugin, Vec2};
+use bevy::prelude::{default, Plugin, Vec2};
 use bevy_rapier2d::prelude::{
-    NoUserData, PhysicsSet, RapierConfiguration, RapierPhysicsPlugin, TimestepMode,
+    NoUserData, RapierConfiguration, RapierPhysicsPlugin, TimestepMode,
 };
 
 use crate::time::PHYSICS_TIMESTEP;
