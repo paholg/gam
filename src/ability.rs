@@ -4,7 +4,7 @@ use bevy::prelude::{
     Commands, Component, ComputedVisibility, Entity, GlobalTransform, Query, Res, Transform, Vec3,
     Visibility, With, Without,
 };
-use bevy_hanabi::{ParticleEffect, ParticleEffectBundle};
+use bevy_hanabi::ParticleEffect;
 use bevy_rapier2d::prelude::{Collider, LockedAxes, RapierContext, RigidBody, Sensor, Velocity};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
@@ -38,16 +38,9 @@ impl Ability {
     ) -> bool {
         match self {
             Ability::None => true,
-            Ability::HyperSprint => hyper_sprint(
-                commands,
-                tick_counter,
-                entity,
-                cooldowns,
-                max_speed,
-                transform,
-                #[cfg(feature = "graphics")]
-                assets,
-            ),
+            Ability::HyperSprint => {
+                hyper_sprint(commands, tick_counter, entity, cooldowns, max_speed)
+            }
             Ability::Shoot => shoot(
                 commands,
                 cooldowns,
@@ -76,8 +69,6 @@ fn hyper_sprint(
     entity: Entity,
     cooldowns: &mut Cooldowns,
     max_speed: &mut MaxSpeed,
-    transform: &Transform,
-    #[cfg(feature = "graphics")] assets: &AssetHandler,
 ) -> bool {
     if cooldowns.hyper_sprint.before_now(tick_counter) {
         cooldowns.hyper_sprint = tick_counter.at(HYPER_SPRINT_COOLDOWN);
