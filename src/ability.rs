@@ -1,18 +1,20 @@
 use std::time::Duration;
 
 use bevy::prelude::{
-    Commands, Component, ComputedVisibility, Entity, GlobalTransform, Query, Res, Transform, Vec3,
-    Visibility, With, Without,
+    Commands, Component, ComputedVisibility, Entity, EventReader, GlobalTransform, Query, Res,
+    Transform, Vec3, Visibility, With, Without,
 };
 use bevy_hanabi::ParticleEffect;
-use bevy_rapier2d::prelude::{Collider, LockedAxes, RapierContext, RigidBody, Sensor, Velocity};
+use bevy_rapier2d::prelude::{
+    ActiveEvents, Ccd, Collider, CollisionEvent, LockedAxes, RigidBody, Sensor, Velocity,
+};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
 use crate::{
     asset_handler::{AssetHandler, HyperSprintEffect, ShotEffect},
     time::{Tick, TickCounter},
-    Ally, Cooldowns, Enemy, Health, MaxSpeed, Object, PLAYER_R,
+    Cooldowns, Health, MaxSpeed, Object, PLAYER_R,
 };
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -113,7 +115,7 @@ pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(250));
 const SHOT_DURATION: Tick = Tick::new(Duration::from_secs(10));
 const SHOT_SPEED: f32 = 30.0;
 pub const SHOT_R: f32 = 0.15;
-const SHOT_DAMAGE: f32 = 20.0;
+const SHOT_DAMAGE: f32 = 1.0;
 
 #[derive(Component)]
 pub struct Shot {
@@ -132,7 +134,7 @@ fn shoot(
         cooldowns.shoot = tick_counter.at(SHOOT_COOLDOWN);
 
         let dir = transform.rotation * Vec3::Y;
-        let position = transform.translation + dir * (PLAYER_R + SHOT_R);
+        let position = transform.translation + dir * (PLAYER_R + SHOT_R + 0.01);
         let vel = dir.truncate() * SHOT_SPEED + velocity.linvel;
         commands.spawn((
             Object {
@@ -158,6 +160,8 @@ fn shoot(
             Shot {
                 duration: tick_counter.at(SHOT_DURATION),
             },
+            Ccd::enabled(),
+            ActiveEvents::COLLISION_EVENTS,
         ));
         true
     } else {
@@ -180,12 +184,11 @@ pub fn shot_despawn_system(
 // Note: This iterates through all intersection_pairs. We should use one system
 // for all such intersections to avoid duplicate work.
 pub fn shot_hit_system(
-    rapier_context: Res<RapierContext>,
+    // rapier_context: Res<RapierContext>,
     mut commands: Commands,
+    mut collision_events: EventReader<CollisionEvent>,
     shot_query: Query<(Entity, &Transform), With<Shot>>,
-    mut ally_query: Query<&mut Health, (With<Ally>, Without<Enemy>)>,
-    mut enemy_query: Query<&mut Health, (With<Enemy>, Without<Ally>)>,
-    miss_query: Query<Entity, Without<Health>>,
+    mut hit_query: Query<&mut Health>,
     #[cfg(feature = "graphics")] assets: Res<AssetHandler>,
     #[cfg(feature = "graphics")] mut effects: Query<
         (&mut ParticleEffect, &mut Transform),
@@ -193,28 +196,19 @@ pub fn shot_hit_system(
     >,
 ) {
     let mut shots_to_despawn: SmallVec<[(Entity, Transform); 10]> = smallvec::SmallVec::new();
-    for (entity1, entity2, intersecting) in rapier_context.intersection_pairs() {
-        if intersecting {
-            let (shot_entity, shot_transform, target_entity) =
-                if let Ok((e, t)) = shot_query.get(entity1) {
-                    (e, t.to_owned(), entity2)
-                } else if let Ok((e, t)) = shot_query.get(entity2) {
-                    (e, t.to_owned(), entity1)
-                } else {
-                    continue;
-                };
+    for collision_event in collision_events.iter() {
+        let CollisionEvent::Started(e1, e2, _flags) = collision_event else { continue; };
+        let (shot_entity, shot_transform, target_entity) = if let Ok((e, t)) = shot_query.get(*e1) {
+            (e, t.to_owned(), e2)
+        } else if let Ok((e, t)) = shot_query.get(*e2) {
+            (e, t.to_owned(), e1)
+        } else {
+            continue;
+        };
 
-            if let Ok(mut health) = ally_query.get_mut(target_entity) {
-                health.cur -= SHOT_DAMAGE;
-                shots_to_despawn.push((shot_entity, shot_transform));
-            }
-            if let Ok(mut health) = enemy_query.get_mut(target_entity) {
-                health.cur -= SHOT_DAMAGE;
-                shots_to_despawn.push((shot_entity, shot_transform));
-            }
-            if miss_query.get(target_entity).is_ok() {
-                shots_to_despawn.push((shot_entity, shot_transform));
-            }
+        shots_to_despawn.push((shot_entity, shot_transform));
+        if let Ok(mut health) = hit_query.get_mut(*target_entity) {
+            health.cur -= SHOT_DAMAGE;
         }
     }
     shots_to_despawn.sort_by_key(|(entity, _transform)| *entity);
