@@ -1,8 +1,7 @@
 use bevy::{
     prelude::{
-        Camera, Commands, ComputedVisibility,
-        DespawnRecursiveExt, Entity, GlobalTransform, Input, KeyCode, MouseButton, Quat,
-        Query, Res, Transform, Vec2, Vec3, Visibility, With, Without,
+        Camera, Commands, DespawnRecursiveExt, Entity, GlobalTransform, Input,
+        KeyCode, MouseButton, Quat, Query, Res, Transform, Vec2, Vec3, With, Without,
     },
     window::{PrimaryWindow, Window},
 };
@@ -11,9 +10,7 @@ use rand::Rng;
 
 use crate::{
     ability::{HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN},
-    asset_handler::AssetHandler,
     config::config,
-    healthbar::Healthbar,
     intersect_xy_plane, pointing_angle, ray_from_screenspace,
     time::TickCounter,
     Ai, Ally, Character, Cooldowns, Enemy, Health, MaxSpeed, Player, CAMERA_OFFSET, DAMPING,
@@ -23,7 +20,6 @@ use crate::{
 pub fn player_input(
     keyboard_input: Res<Input<KeyCode>>,
     mouse_input: Res<Input<MouseButton>>,
-    #[cfg(feature = "graphics")] assets: Res<AssetHandler>,
     mut commands: Commands,
     tick_counter: Res<TickCounter>,
     mut query: Query<
@@ -38,7 +34,6 @@ pub fn player_input(
         With<Player>,
     >,
 ) {
-    let assets = assets.into_inner();
     let config = config();
     let controls = &config.controls;
 
@@ -55,8 +50,6 @@ pub fn player_input(
             ability.fire(
                 &mut commands,
                 &tick_counter,
-                #[cfg(feature = "graphics")]
-                assets,
                 entity,
                 &mut cooldowns,
                 &mut max_speed,
@@ -134,26 +127,14 @@ pub fn die(mut commands: Commands, query: Query<(Entity, &Health)>) {
     }
 }
 
-fn spawn_player(commands: &mut Commands, #[cfg(feature = "graphics")] assets: &AssetHandler) {
+fn spawn_player(commands: &mut Commands) {
     commands.spawn((
         Player,
         Ally,
         Character {
             health: Health::new(100.0),
-            #[cfg(feature = "graphics")]
-            healthbar: Healthbar::default(),
-            #[cfg(feature = "graphics")]
-            scene: assets.player.scene.clone(),
-            #[cfg(feature = "graphics")]
-            outline: assets.player.outline_mesh.clone(),
-            #[cfg(feature = "graphics")]
-            material: assets.player.outline_material.clone(),
             transform: Transform::default(),
             global_transform: GlobalTransform::default(),
-            #[cfg(feature = "graphics")]
-            visibility: Visibility::Visible,
-            #[cfg(feature = "graphics")]
-            computed_visibility: ComputedVisibility::default(),
             collider: Collider::ball(1.0),
             body: RigidBody::Dynamic,
             max_speed: MaxSpeed::default(),
@@ -169,11 +150,7 @@ fn spawn_player(commands: &mut Commands, #[cfg(feature = "graphics")] assets: &A
     ));
 }
 
-fn spawn_enemies(
-    commands: &mut Commands,
-    #[cfg(feature = "graphics")] assets: &AssetHandler,
-    num: usize,
-) -> Vec<Vec2> {
+fn spawn_enemies(commands: &mut Commands, num: usize) -> Vec<Vec2> {
     let mut rng = rand::thread_rng();
     let mut locs = Vec::with_capacity(num);
     for _ in 0..num {
@@ -186,20 +163,8 @@ fn spawn_enemies(
             Ai,
             Character {
                 health: Health::new(100.0),
-                #[cfg(feature = "graphics")]
-                healthbar: Healthbar::default(),
-                #[cfg(feature = "graphics")]
-                scene: assets.enemy.scene.clone(),
-                #[cfg(feature = "graphics")]
-                outline: assets.enemy.outline_mesh.clone(),
-                #[cfg(feature = "graphics")]
-                material: assets.enemy.outline_material.clone(),
                 transform: Transform::from_xyz(x, y, 0.0),
                 global_transform: GlobalTransform::default(),
-                #[cfg(feature = "graphics")]
-                visibility: Visibility::Visible,
-                #[cfg(feature = "graphics")]
-                computed_visibility: ComputedVisibility::default(),
                 collider: Collider::ball(1.0),
                 body: RigidBody::Dynamic,
                 max_speed: MaxSpeed::default(),
@@ -217,11 +182,7 @@ fn spawn_enemies(
     locs
 }
 
-fn spawn_allies(
-    commands: &mut Commands,
-    #[cfg(feature = "graphics")] assets: &AssetHandler,
-    num: usize,
-) -> Vec<Vec2> {
+fn spawn_allies(commands: &mut Commands, num: usize) -> Vec<Vec2> {
     let mut rng = rand::thread_rng();
     let mut locs = Vec::with_capacity(num);
     for _ in 0..num {
@@ -234,20 +195,8 @@ fn spawn_allies(
             Ai,
             Character {
                 health: Health::new(100.0),
-                #[cfg(feature = "graphics")]
-                healthbar: Healthbar::default(),
-                #[cfg(feature = "graphics")]
-                scene: assets.ally.scene.clone(),
-                #[cfg(feature = "graphics")]
-                outline: assets.ally.outline_mesh.clone(),
-                #[cfg(feature = "graphics")]
-                material: assets.ally.outline_material.clone(),
                 transform: Transform::from_xyz(x, y, 0.0),
                 global_transform: GlobalTransform::default(),
-                #[cfg(feature = "graphics")]
-                visibility: Visibility::Visible,
-                #[cfg(feature = "graphics")]
-                computed_visibility: ComputedVisibility::default(),
                 collider: Collider::ball(1.0),
                 body: RigidBody::Dynamic,
                 max_speed: MaxSpeed::default(),
@@ -270,35 +219,19 @@ pub fn reset(
     enemy_query: Query<Entity, With<Enemy>>,
     ally_query: Query<Entity, With<Ally>>,
     player_query: Query<Entity, With<Player>>,
-    #[cfg(feature = "graphics")] assets: Res<AssetHandler>,
 ) {
-    let assets = assets.into_inner();
     if enemy_query.iter().next().is_none() {
-        spawn_enemies(
-            &mut commands,
-            #[cfg(feature = "graphics")]
-            assets,
-            1,
-        );
+        spawn_enemies(&mut commands, 1);
     }
 
     #[cfg(not(feature = "train"))]
     {
         if player_query.iter().next().is_none() {
-            spawn_player(
-                &mut commands,
-                #[cfg(feature = "graphics")]
-                assets,
-            );
+            spawn_player(&mut commands);
         }
     }
 
     if ally_query.iter().next().is_none() {
-        spawn_allies(
-            &mut commands,
-            #[cfg(feature = "graphics")]
-            assets,
-            1,
-        );
+        spawn_allies(&mut commands, 1);
     }
 }
