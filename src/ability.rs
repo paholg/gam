@@ -25,6 +25,7 @@ pub enum Ability {
 }
 
 impl Ability {
+    #[allow(clippy::too_many_arguments)]
     pub fn fire(
         &self,
         commands: &mut Commands,
@@ -92,7 +93,7 @@ pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(250));
 const SHOT_DURATION: Tick = Tick::new(Duration::from_secs(10));
 const SHOT_SPEED: f32 = 30.0;
 pub const SHOT_R: f32 = 0.15;
-const SHOT_DAMAGE: f32 = 1.0;
+const SHOT_DAMAGE: f32 = 10.0;
 
 #[derive(Component)]
 pub struct Shot {

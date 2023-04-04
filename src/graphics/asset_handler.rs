@@ -208,7 +208,6 @@ fn hyper_sprint_effect() -> EffectAsset {
 
     EffectAsset {
         name: "Gradient".to_string(),
-        // TODO: Figure out why no particle spawns if this is 1
         capacity: 32768,
         spawner: Spawner::once(32.0.into(), false),
         ..Default::default()
