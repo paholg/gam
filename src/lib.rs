@@ -9,14 +9,13 @@
 
 pub mod ability;
 pub mod ai;
-pub mod asset_handler;
 pub mod config;
-pub mod healthbar;
+pub mod graphics;
 pub mod physics;
 pub mod system;
 pub mod time;
 
-use asset_handler::asset_handler_setup;
+use ability::ShotHitEvent;
 use bevy::{
     app::PluginGroupBuilder,
     audio::AudioPlugin,
@@ -27,14 +26,14 @@ use bevy::{
     pbr::PbrPlugin,
     prelude::{
         default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera, Camera3dBundle,
-        Color, Commands, Component, ComputedVisibility, CoreSchedule, FixedTime, FrameCountPlugin,
-        GilrsPlugin, GlobalTransform, Handle, HierarchyPlugin, ImagePlugin, IntoSystemAppConfig,
-        Mat4, Mesh, OrthographicProjection, PbrBundle, Plugin, PluginGroup, PointLight,
-        PointLightBundle, Query, Ray, ResMut, Resource, StandardMaterial, TaskPoolPlugin,
-        Transform, TypeRegistrationPlugin, Vec2, Vec3, Visibility, With,
+        Color, Commands, Component, CoreSchedule, FixedTime, FrameCountPlugin, GilrsPlugin,
+        GlobalTransform, HierarchyPlugin, ImagePlugin, IntoSystemAppConfig, Mat4, Mesh,
+        OrthographicProjection, PbrBundle, Plugin, PluginGroup, PointLight, PointLightBundle,
+        Query, Ray, ResMut, Resource, StandardMaterial, TaskPoolPlugin, Transform,
+        TypeRegistrationPlugin, Vec2, Vec3, With,
     },
     render::{camera::ScalingMode, RenderPlugin},
-    scene::{Scene, ScenePlugin},
+    scene::ScenePlugin,
     sprite::SpritePlugin,
     text::TextPlugin,
     time::TimePlugin,
@@ -44,11 +43,9 @@ use bevy::{
     winit::WinitPlugin,
 };
 use bevy_rapier2d::prelude::{Collider, Damping, ExternalImpulse, LockedAxes, RigidBody, Velocity};
-use healthbar::HealthbarPlugin;
+use graphics::GraphicsPlugin;
 use physics::PhysicsPlugin;
 use time::{Tick, TickPlugin, TIMESTEP};
-
-use crate::healthbar::Healthbar;
 
 const PLAYER_R: f32 = 1.0;
 const SPEED: f32 = 15.0;
@@ -116,16 +113,8 @@ pub struct Cooldowns {
 
 #[derive(Bundle)]
 pub struct Object {
-    #[cfg(feature = "graphics")]
-    material: Handle<StandardMaterial>,
-    #[cfg(feature = "graphics")]
-    mesh: Handle<Mesh>,
     transform: Transform,
     global_transform: GlobalTransform,
-    #[cfg(feature = "graphics")]
-    visibility: Visibility,
-    #[cfg(feature = "graphics")]
-    computed_visibility: ComputedVisibility,
     collider: Collider,
     body: RigidBody,
     velocity: Velocity,
@@ -135,20 +124,8 @@ pub struct Object {
 #[derive(Bundle)]
 struct Character {
     health: Health,
-    #[cfg(feature = "graphics")]
-    healthbar: Healthbar,
-    #[cfg(feature = "graphics")]
-    scene: Handle<Scene>,
-    #[cfg(feature = "graphics")]
-    outline: Handle<Mesh>,
-    #[cfg(feature = "graphics")]
-    material: Handle<StandardMaterial>,
     transform: Transform,
     global_transform: GlobalTransform,
-    #[cfg(feature = "graphics")]
-    visibility: Visibility,
-    #[cfg(feature = "graphics")]
-    computed_visibility: ComputedVisibility,
     collider: Collider,
     body: RigidBody,
     max_speed: MaxSpeed,
@@ -231,6 +208,7 @@ impl Plugin for GamPlugin {
         .add_startup_system(setup)
         .add_engine_tick_system(ability::hyper_sprint_system)
         .add_engine_tick_system(ability::shot_despawn_system)
+        .add_event::<ShotHitEvent>()
         .add_engine_tick_system(ability::shot_hit_system)
         .add_plugin(ai::simple::SimpleAiPlugin)
         .add_engine_tick_system(system::die)
@@ -246,9 +224,8 @@ impl Plugin for GamClientPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_engine_tick_system(system::player_input)
             .add_system(system::update_cursor)
-            .add_plugin(HealthbarPlugin)
-            .add_plugin(bevy_hanabi::HanabiPlugin)
-            .add_startup_system(asset_handler_setup);
+            .add_plugin(GraphicsPlugin)
+            .add_plugin(bevy_hanabi::HanabiPlugin);
     }
 }
 

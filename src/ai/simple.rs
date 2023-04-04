@@ -2,10 +2,7 @@ use std::cmp::Ordering;
 
 use bevy::{
     ecs::query::ReadOnlyWorldQuery,
-    prelude::{
-        Commands, Entity, Plugin, Quat, Query, Res,
-        Transform, Vec3, With, Without,
-    },
+    prelude::{Commands, Entity, Plugin, Quat, Query, Res, Transform, Vec3, With, Without},
 };
 use bevy_rapier2d::prelude::Velocity;
 // use big_brain::{
@@ -16,8 +13,8 @@ use bevy_rapier2d::prelude::Velocity;
 // };
 
 use crate::{
-    ability::Ability, asset_handler::AssetHandler, pointing_angle, time::TickCounter, Ai, Ally,
-    Cooldowns, Enemy, FixedTimestepSystem, MaxSpeed,
+    ability::Ability, pointing_angle, time::TickCounter, Ai, Ally, Cooldowns, Enemy,
+    FixedTimestepSystem, MaxSpeed,
 };
 
 pub struct SimpleAiPlugin;
@@ -71,17 +68,13 @@ fn update_ally_orientation(
 fn stupid_shoot_system(
     mut commands: Commands,
     tick_counter: Res<TickCounter>,
-    #[cfg(feature = "graphics")] assets: Res<AssetHandler>,
 
     mut q_ai: Query<(Entity, &mut Cooldowns, &Velocity, &mut MaxSpeed, &Transform), With<Ai>>,
 ) {
-    let assets = assets.into_inner();
     for (entity, mut cooldowns, velocity, mut max_speed, transform) in q_ai.iter_mut() {
         Ability::Shoot.fire(
             &mut commands,
             &tick_counter,
-            #[cfg(feature = "graphics")]
-            assets,
             entity,
             &mut cooldowns,
             &mut max_speed,

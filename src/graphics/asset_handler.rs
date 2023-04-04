@@ -14,7 +14,9 @@ use bevy_hanabi::{
     SizeOverLifetimeModifier, Spawner, Value,
 };
 
-use crate::{ability::SHOT_R, healthbar::Healthbar, PLAYER_R};
+use crate::{ability::SHOT_R, PLAYER_R};
+
+use super::healthbar::Healthbar;
 
 pub struct HealthbarAssets {
     pub mesh: Handle<Mesh>,

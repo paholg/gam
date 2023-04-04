@@ -1,10 +1,13 @@
 use bevy::prelude::{
-    default, Added, BuildChildren, Bundle, Children, Commands, Component,
-    ComputedVisibility, Entity, GlobalTransform, Parent, PbrBundle, Plugin, Query, Res, Transform, Vec2, Vec3, Visibility, With, Without,
+    default, Added, BuildChildren, Bundle, Children, Commands, Component, ComputedVisibility,
+    Entity, GlobalTransform, Parent, PbrBundle, Plugin, Query, Res, Transform, Vec2, Vec3,
+    Visibility, With, Without,
 };
 use tracing::warn;
 
-use crate::{asset_handler::AssetHandler, Health};
+use crate::Health;
+
+use super::asset_handler::AssetHandler;
 
 #[derive(Component)]
 pub struct Healthbar {

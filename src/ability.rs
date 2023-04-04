@@ -1,10 +1,10 @@
 use std::time::Duration;
 
 use bevy::prelude::{
-    Commands, Component, ComputedVisibility, Entity, EventReader, GlobalTransform, Query, Res,
-    Transform, Vec3, Visibility, With, Without,
+    Commands, Component, Entity, EventReader, EventWriter, GlobalTransform, Query, Res, Transform,
+    Vec3, With,
 };
-use bevy_hanabi::ParticleEffect;
+
 use bevy_rapier2d::prelude::{
     ActiveEvents, Ccd, Collider, CollisionEvent, LockedAxes, RigidBody, Sensor, Velocity,
 };
@@ -12,7 +12,6 @@ use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
 use crate::{
-    asset_handler::{AssetHandler, HyperSprintEffect, ShotEffect},
     time::{Tick, TickCounter},
     Cooldowns, Health, MaxSpeed, Object, PLAYER_R,
 };
@@ -26,12 +25,10 @@ pub enum Ability {
 }
 
 impl Ability {
-    #[allow(clippy::too_many_arguments)]
     pub fn fire(
         &self,
         commands: &mut Commands,
         tick_counter: &TickCounter,
-        #[cfg(feature = "graphics")] assets: &AssetHandler,
         entity: Entity,
         cooldowns: &mut Cooldowns,
         max_speed: &mut MaxSpeed,
@@ -43,15 +40,7 @@ impl Ability {
             Ability::HyperSprint => {
                 hyper_sprint(commands, tick_counter, entity, cooldowns, max_speed)
             }
-            Ability::Shoot => shoot(
-                commands,
-                cooldowns,
-                tick_counter,
-                #[cfg(feature = "graphics")]
-                assets,
-                transform,
-                velocity,
-            ),
+            Ability::Shoot => shoot(commands, cooldowns, tick_counter, transform, velocity),
         }
     }
 }
@@ -89,20 +78,8 @@ pub fn hyper_sprint_system(
     mut commands: Commands,
     tick_counter: Res<TickCounter>,
     mut query: Query<(Entity, &HyperSprinting, &mut MaxSpeed, &Transform)>,
-    #[cfg(feature = "graphics")] mut effects: Query<
-        (&mut ParticleEffect, &mut Transform),
-        (With<HyperSprintEffect>, Without<HyperSprinting>),
-    >,
-    #[cfg(feature = "graphics")] assets: Res<AssetHandler>,
 ) {
-    for (entity, hyper_sprinting, mut max_speed, sprinter_transform) in query.iter_mut() {
-        #[cfg(feature = "graphics")]
-        {
-            let (mut effect, mut transform) =
-                effects.get_mut(assets.hyper_sprint.effect_entity).unwrap();
-            *transform = *sprinter_transform;
-            effect.maybe_spawner().unwrap().reset();
-        }
+    for (entity, hyper_sprinting, mut max_speed, _sprinter_transform) in query.iter_mut() {
         if hyper_sprinting.duration.before_now(&tick_counter) {
             max_speed.max_speed /= HYPER_SPRINT_FACTOR;
             max_speed.impulse /= HYPER_SPRINT_FACTOR;
@@ -126,7 +103,6 @@ fn shoot(
     commands: &mut Commands,
     cooldowns: &mut Cooldowns,
     tick_counter: &TickCounter,
-    #[cfg(feature = "graphics")] assets: &AssetHandler,
     transform: &Transform,
     velocity: &Velocity,
 ) -> bool {
@@ -138,16 +114,8 @@ fn shoot(
         let vel = dir.truncate() * SHOT_SPEED + velocity.linvel;
         commands.spawn((
             Object {
-                #[cfg(feature = "graphics")]
-                material: assets.shot.material.clone(),
-                #[cfg(feature = "graphics")]
-                mesh: assets.shot.mesh.clone(),
                 transform: Transform::from_translation(position),
                 global_transform: GlobalTransform::default(),
-                #[cfg(feature = "graphics")]
-                visibility: Visibility::Visible,
-                #[cfg(feature = "graphics")]
-                computed_visibility: ComputedVisibility::default(),
                 collider: Collider::ball(SHOT_R),
                 body: RigidBody::Dynamic,
                 velocity: Velocity {
@@ -181,19 +149,18 @@ pub fn shot_despawn_system(
     }
 }
 
-// Note: This iterates through all intersection_pairs. We should use one system
+pub struct ShotHitEvent {
+    pub transform: Transform,
+}
+
+// Note: This iterates through all collision_events. We should use one system
 // for all such intersections to avoid duplicate work.
 pub fn shot_hit_system(
-    // rapier_context: Res<RapierContext>,
     mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
     shot_query: Query<(Entity, &Transform), With<Shot>>,
     mut hit_query: Query<&mut Health>,
-    #[cfg(feature = "graphics")] assets: Res<AssetHandler>,
-    #[cfg(feature = "graphics")] mut effects: Query<
-        (&mut ParticleEffect, &mut Transform),
-        (With<ShotEffect>, Without<Shot>),
-    >,
+    mut hit_event_writer: EventWriter<ShotHitEvent>,
 ) {
     let mut shots_to_despawn: SmallVec<[(Entity, Transform); 10]> = smallvec::SmallVec::new();
     for collision_event in collision_events.iter() {
@@ -214,13 +181,8 @@ pub fn shot_hit_system(
     shots_to_despawn.sort_by_key(|(entity, _transform)| *entity);
     shots_to_despawn.dedup_by_key(|(entity, _transform)| *entity);
 
-    for (shot_entity, shot_transform) in shots_to_despawn.into_iter() {
-        commands.entity(shot_entity).despawn();
-        #[cfg(feature = "graphics")]
-        {
-            let (mut effect, mut transform) = effects.get_mut(assets.shot.effect_entity).unwrap();
-            *transform = shot_transform;
-            effect.maybe_spawner().unwrap().reset();
-        }
+    for (entity, transform) in shots_to_despawn.into_iter() {
+        commands.entity(entity).despawn();
+        hit_event_writer.send(ShotHitEvent { transform });
     }
 }
