@@ -1,7 +1,7 @@
 use bevy::{
     prelude::{
-        Camera, Commands, DespawnRecursiveExt, Entity, GlobalTransform, Input,
-        KeyCode, MouseButton, Quat, Query, Res, Transform, Vec2, Vec3, With, Without,
+        Camera, Commands, DespawnRecursiveExt, Entity, GlobalTransform, Input, KeyCode,
+        MouseButton, Quat, Query, Res, Transform, Vec2, Vec3, With, Without,
     },
     window::{PrimaryWindow, Window},
 };

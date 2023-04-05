@@ -6,6 +6,7 @@ use bevy::{
     scene::Scene,
 };
 use bevy_hanabi::ParticleEffect;
+use bevy_mod_inverse_kinematics::InverseKinematicsPlugin;
 
 use crate::{
     ability::{HyperSprinting, Shot, ShotHitEvent},
@@ -25,6 +26,7 @@ pub struct GraphicsPlugin;
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_startup_system(asset_handler_setup)
+            .add_plugin(InverseKinematicsPlugin)
             .add_plugin(HealthbarPlugin)
             .add_system(draw_player_system)
             .add_system(draw_enemy_system)

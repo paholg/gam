@@ -64,6 +64,16 @@ pub fn asset_handler_setup(
     mut effects: ResMut<Assets<EffectAsset>>,
     asset_server: ResMut<AssetServer>,
 ) {
+    let fg = StandardMaterial {
+        base_color: Color::GREEN,
+        unlit: true,
+        ..Default::default()
+    };
+    let bg = StandardMaterial {
+        base_color: Color::BLACK,
+        unlit: true,
+        ..Default::default()
+    };
     let healthbar = HealthbarAssets {
         mesh: meshes.add(
             shape::Quad {
@@ -72,8 +82,8 @@ pub fn asset_handler_setup(
             }
             .into(),
         ),
-        fg_material: materials.add(Color::GREEN.into()),
-        bg_material: materials.add(Color::BLACK.into()),
+        fg_material: materials.add(fg),
+        bg_material: materials.add(bg),
     };
 
     let effect = effects.add(shot_effect());
@@ -102,7 +112,7 @@ pub fn asset_handler_setup(
 
     let hyper_sprint = HyperSprintAssets { effect_entity };
 
-    let spaceship = asset_server.load("models/temp/craft_speederB.glb#Scene0");
+    let spaceship = asset_server.load("models/temp/robot1.glb#Scene0");
 
     let player = CharacterAssets {
         scene: spaceship.clone(),

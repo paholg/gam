@@ -650,6 +650,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_mod_inverse_kinematics"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7bd26dea80b3c131d79e065de395cc3d1e24003849fd84b95911b927c0bfc59e"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bevy_pbr"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1607,6 +1616,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_hanabi",
+ "bevy_mod_inverse_kinematics",
  "bevy_rapier2d",
  "directories",
  "rand",
