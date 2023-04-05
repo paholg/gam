@@ -313,10 +313,54 @@ pub fn setup(
     commands.spawn(PointLightBundle {
         point_light: PointLight {
             range: PLANE_SIZE,
-            intensity: 2000.0,
+            intensity: 1000.0,
             ..default()
         },
-        transform: Transform::from_xyz(0.0, 0.0, 5.0),
+        transform: Transform::from_xyz(-0.5 * PLANE_SIZE, -0.5 * PLANE_SIZE, 10.0),
+        ..default()
+    });
+    #[cfg(feature = "graphics")]
+    commands.spawn(PointLightBundle {
+        point_light: PointLight {
+            range: PLANE_SIZE,
+            intensity: 1000.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_xyz(0.5 * PLANE_SIZE, -0.5 * PLANE_SIZE, 10.0),
+        ..default()
+    });
+    #[cfg(feature = "graphics")]
+    commands.spawn(PointLightBundle {
+        point_light: PointLight {
+            range: PLANE_SIZE,
+            intensity: 1000.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_xyz(-0.5 * PLANE_SIZE, 0.5 * PLANE_SIZE, 10.0),
+        ..default()
+    });
+    #[cfg(feature = "graphics")]
+    commands.spawn(PointLightBundle {
+        point_light: PointLight {
+            range: PLANE_SIZE,
+            intensity: 1000.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_xyz(0.5 * PLANE_SIZE, 0.5 * PLANE_SIZE, 10.0),
+        ..default()
+    });
+    #[cfg(feature = "graphics")]
+    commands.spawn(PointLightBundle {
+        point_light: PointLight {
+            range: PLANE_SIZE,
+            intensity: 1000.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_xyz(0.0, 0.0, 10.0),
         ..default()
     });
 }
