@@ -15,6 +15,8 @@ pub mod physics;
 pub mod system;
 pub mod time;
 
+use std::f32::consts::PI;
+
 use ability::ShotHitEvent;
 use bevy::{
     app::PluginGroupBuilder,
@@ -25,24 +27,24 @@ use bevy::{
     log::LogPlugin,
     pbr::PbrPlugin,
     prelude::{
-        default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera, Camera3dBundle,
+        default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera3dBundle,
         Color, Commands, Component, CoreSchedule, FixedTime, FrameCountPlugin, GilrsPlugin,
-        GlobalTransform, HierarchyPlugin, ImagePlugin, IntoSystemAppConfig, Mat4, Mesh,
-        OrthographicProjection, PbrBundle, Plugin, PluginGroup, PointLight, PointLightBundle,
-        Query, Ray, ResMut, Resource, StandardMaterial, TaskPoolPlugin, Transform,
-        TypeRegistrationPlugin, Vec2, Vec3, With,
+        GlobalTransform, HierarchyPlugin, ImagePlugin, IntoSystemAppConfig, Mesh, PbrBundle,
+        PerspectiveProjection, Plugin, PluginGroup, PointLight, PointLightBundle, Quat,
+        ResMut, Resource, StandardMaterial, TaskPoolPlugin, Transform, TypeRegistrationPlugin,
+        Vec2, Vec3,
     },
-    render::{camera::ScalingMode, RenderPlugin},
+    render::RenderPlugin,
     scene::ScenePlugin,
     sprite::SpritePlugin,
     text::TextPlugin,
     time::TimePlugin,
     transform::TransformPlugin,
     ui::UiPlugin,
-    window::{PrimaryWindow, Window, WindowPlugin},
+    window::{WindowPlugin},
     winit::WinitPlugin,
 };
-use bevy_rapier2d::prelude::{Collider, Damping, ExternalImpulse, LockedAxes, RigidBody, Velocity};
+use bevy_rapier3d::prelude::{Collider, Damping, ExternalImpulse, LockedAxes, RigidBody, Velocity};
 use graphics::GraphicsPlugin;
 use physics::PhysicsPlugin;
 use time::{Tick, TickPlugin, TIMESTEP};
@@ -258,24 +260,24 @@ pub fn setup(
     // Ground plane
     let collider = Collider::compound(vec![
         (
-            Vec2::new(PLANE_SIZE * 1.5, 0.0),
-            0.0,
-            Collider::cuboid(PLANE_SIZE, PLANE_SIZE),
+            Vec3::new(PLANE_SIZE * 1.5, 0.0, 0.0),
+            Quat::IDENTITY,
+            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
         ),
         (
-            Vec2::new(-PLANE_SIZE * 1.5, 0.0),
-            0.0,
-            Collider::cuboid(PLANE_SIZE, PLANE_SIZE),
+            Vec3::new(-PLANE_SIZE * 1.5, 0.0, 0.0),
+            Quat::IDENTITY,
+            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
         ),
         (
-            Vec2::new(0.0, PLANE_SIZE * 1.5),
-            0.0,
-            Collider::cuboid(PLANE_SIZE, PLANE_SIZE),
+            Vec3::new(0.0, PLANE_SIZE * 1.5, 0.0),
+            Quat::IDENTITY,
+            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
         ),
         (
-            Vec2::new(0.0, -PLANE_SIZE * 1.5),
-            0.0,
-            Collider::cuboid(PLANE_SIZE, PLANE_SIZE),
+            Vec3::new(0.0, -PLANE_SIZE * 1.5, 0.0),
+            Quat::IDENTITY,
+            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
         ),
     ]);
     let ground_plane = commands
@@ -298,9 +300,8 @@ pub fn setup(
     // Camera
     #[cfg(feature = "graphics")]
     commands.spawn(Camera3dBundle {
-        projection: OrthographicProjection {
-            scale: 10.0,
-            scaling_mode: ScalingMode::FixedVertical(2.0),
+        projection: PerspectiveProjection {
+            fov: PI * 0.125,
             ..default()
         }
         .into(),
@@ -365,55 +366,8 @@ pub fn setup(
     });
 }
 
-// Logic taken from here:
-// https://github.com/lucaspoffo/renet/blob/c963b65b66325c536d115faab31638f3ad2b5e48/demo_bevy/src/lib.rs#L196-L215
-fn ray_from_screenspace(
-    primary_window: Query<&Window, With<PrimaryWindow>>,
-    camera: &Camera,
-    camera_transform: &GlobalTransform,
-) -> Option<Ray> {
-    let cursor_position = primary_window.get_single().ok()?.cursor_position()?;
-
-    let view = camera_transform.compute_matrix();
-    let screen_size = camera.logical_target_size()?;
-    let projection = camera.projection_matrix();
-    let far_ndc = projection.project_point3(Vec3::NEG_Z).z;
-    let near_ndc = projection.project_point3(Vec3::Z).z;
-    let cursor_ndc = (cursor_position / screen_size) * 2.0 - Vec2::ONE;
-    let ndc_to_world: Mat4 = view * projection.inverse();
-    let near = ndc_to_world.project_point3(cursor_ndc.extend(near_ndc));
-    let far = ndc_to_world.project_point3(cursor_ndc.extend(far_ndc));
-    let ray_direction = far - near;
-
-    Some(Ray {
-        origin: near,
-        direction: ray_direction,
-    })
-}
-
-// Logic taken from here:
-// https://github.com/lucaspoffo/renet/blob/c963b65b66325c536d115faab31638f3ad2b5e48/demo_bevy/src/lib.rs#L217-L228
-fn intersect_xy_plane(ray: &Ray, z_offset: f32) -> Option<Vec3> {
-    let plane_normal = Vec3::Z;
-    let plane_origin = Vec3::new(0.0, z_offset, 0.0);
-    let denominator = ray.direction.dot(plane_normal);
-    if denominator.abs() > f32::EPSILON {
-        let point_to_point = plane_origin * z_offset - ray.origin;
-        let intersect_dist = plane_normal.dot(point_to_point) / denominator;
-        let intersect_position = ray.direction * intersect_dist + ray.origin;
-        Some(intersect_position)
-    } else {
-        None
-    }
-}
-
 // Returns an angle of rotation, along the z-axis, so that `from` will be pointing to `to`
 fn pointing_angle(from: Vec3, to: Vec3) -> f32 {
     let dir = to - from;
-    let angle = dir.angle_between(Vec3::Y);
-    if dir.x > 0.0 {
-        angle * -1.0
-    } else {
-        angle
-    }
+    -dir.truncate().angle_between(Vec2::Y)
 }

@@ -4,13 +4,7 @@ use bevy::{
     ecs::query::ReadOnlyWorldQuery,
     prelude::{Commands, Entity, Plugin, Quat, Query, Res, Transform, Vec3, With, Without},
 };
-use bevy_rapier2d::prelude::Velocity;
-// use big_brain::{
-//     prelude::{ActionState, FirstToScore},
-//     scorers::Score,
-//     thinker::{Actor, Thinker},
-//     BigBrainPlugin, BigBrainStage,
-// };
+use bevy_rapier3d::prelude::Velocity;
 
 use crate::{
     ability::Ability, pointing_angle, time::TickCounter, Ai, Ally, Cooldowns, Enemy,

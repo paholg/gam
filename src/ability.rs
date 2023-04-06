@@ -5,7 +5,7 @@ use bevy::prelude::{
     Vec3, With,
 };
 
-use bevy_rapier2d::prelude::{
+use bevy_rapier3d::prelude::{
     ActiveEvents, Ccd, Collider, CollisionEvent, LockedAxes, RigidBody, Sensor, Velocity,
 };
 use serde::{Deserialize, Serialize};
@@ -93,6 +93,7 @@ pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(250));
 const SHOT_DURATION: Tick = Tick::new(Duration::from_secs(10));
 const SHOT_SPEED: f32 = 30.0;
 pub const SHOT_R: f32 = 0.15;
+pub const SHOT_Z: f32 = 0.0;
 const SHOT_DAMAGE: f32 = 1.0;
 
 #[derive(Component)]
@@ -111,8 +112,8 @@ fn shoot(
         cooldowns.shoot = tick_counter.at(SHOOT_COOLDOWN);
 
         let dir = transform.rotation * Vec3::Y;
-        let position = transform.translation + dir * (PLAYER_R + SHOT_R + 0.01);
-        let vel = dir.truncate() * SHOT_SPEED + velocity.linvel;
+        let position = transform.translation + dir * (PLAYER_R + SHOT_R + 0.01) + SHOT_Z * Vec3::Z;
+        let vel = dir * SHOT_SPEED + velocity.linvel;
         commands.spawn((
             Object {
                 transform: Transform::from_translation(position),
@@ -121,7 +122,7 @@ fn shoot(
                 body: RigidBody::Dynamic,
                 velocity: Velocity {
                     linvel: vel,
-                    angvel: 0.0,
+                    angvel: Vec3::ZERO,
                 },
                 locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
             },
