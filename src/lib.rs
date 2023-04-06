@@ -52,7 +52,8 @@ use physics::PhysicsPlugin;
 use time::{Tick, TickPlugin, TIMESTEP};
 
 const PLAYER_R: f32 = 1.0;
-const SPEED: f32 = 15.0;
+// TODO: Remove this. There should be no speed limit.
+const SPEED: f32 = 1500.0;
 const IMPULSE: f32 = 5.0;
 const DAMPING: Damping = Damping {
     linear_damping: 5.0,
@@ -61,7 +62,7 @@ const DAMPING: Damping = Damping {
 
 const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, -50.0, 50.0);
 
-pub const PLANE_SIZE: f32 = 25.0;
+pub const PLANE_SIZE: f32 = 50.0;
 
 #[derive(Component)]
 pub struct Health {

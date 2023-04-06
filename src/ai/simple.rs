@@ -6,7 +6,6 @@ use bevy::{
 };
 use bevy_rapier3d::prelude::{ExternalImpulse, Velocity};
 use rand::random;
-use tracing::info;
 
 use crate::{
     ability::{Ability, SHOT_SPEED},
@@ -49,7 +48,6 @@ fn point_to_closest<T: ReadOnlyWorldQuery, U: ReadOnlyWorldQuery>(
         if let Some((trans, vel, dist)) = closest_target {
             let dt = dist / SHOT_SPEED;
             let lead_translation = trans.translation + vel.linvel * dt;
-            info!(%trans.translation, %lead_translation);
             let angle = pointing_angle(transform.translation, lead_translation);
             if !angle.is_nan() {
                 transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
