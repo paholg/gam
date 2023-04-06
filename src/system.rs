@@ -5,7 +5,9 @@ use bevy::{
     },
     window::{PrimaryWindow, Window},
 };
-use bevy_rapier3d::prelude::{Collider, ExternalImpulse, LockedAxes, RigidBody, Velocity};
+use bevy_rapier3d::prelude::{
+    Collider, ExternalImpulse, LockedAxes, ReadMassProperties, RigidBody, Velocity,
+};
 use rand::Rng;
 
 use crate::{
@@ -144,6 +146,7 @@ fn spawn_player(commands: &mut Commands) {
             damping: DAMPING,
             impulse: ExternalImpulse::default(),
             locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+            mass: ReadMassProperties::default(),
         },
         Cooldowns {
             hyper_sprint: HYPER_SPRINT_COOLDOWN,
@@ -174,6 +177,7 @@ fn spawn_enemies(commands: &mut Commands, num: usize) -> Vec<Vec2> {
                 damping: DAMPING,
                 impulse: ExternalImpulse::default(),
                 locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+                mass: ReadMassProperties::default(),
             },
             Cooldowns {
                 hyper_sprint: HYPER_SPRINT_COOLDOWN,
@@ -206,6 +210,7 @@ fn spawn_allies(commands: &mut Commands, num: usize) -> Vec<Vec2> {
                 damping: DAMPING,
                 impulse: ExternalImpulse::default(),
                 locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+                mass: ReadMassProperties::default(),
             },
             Cooldowns {
                 hyper_sprint: HYPER_SPRINT_COOLDOWN,
@@ -234,6 +239,6 @@ pub fn reset(
     }
 
     if ally_query.iter().next().is_none() {
-        spawn_allies(&mut commands, 1);
+        spawn_allies(&mut commands, 0);
     }
 }
