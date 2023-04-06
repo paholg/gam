@@ -110,10 +110,11 @@ pub struct Ally;
 // TODO: Do cooldowns better. We don't want every entity to have a giant
 // cooldowns struct.
 // Or maybe we do?????
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct Cooldowns {
     hyper_sprint: Tick,
     shoot: Tick,
+    shotgun: Tick,
 }
 
 #[derive(Bundle)]

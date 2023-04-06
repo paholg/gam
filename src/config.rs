@@ -213,7 +213,7 @@ pub struct Player {
 impl Default for Player {
     fn default() -> Self {
         Self {
-            abilities: [Ability::Shoot, Ability::None, Ability::HyperSprint],
+            abilities: [Ability::Shoot, Ability::Shotgun, Ability::HyperSprint],
         }
     }
 }
