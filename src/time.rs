@@ -48,6 +48,12 @@ impl Mul<u32> for Tick {
     }
 }
 
+impl From<u32> for Tick {
+    fn from(val: u32) -> Self {
+        Self { val }
+    }
+}
+
 #[derive(Resource)]
 pub struct TickCounter {
     tick: u32,

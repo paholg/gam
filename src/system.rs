@@ -11,7 +11,7 @@ use bevy_rapier3d::prelude::{
 use rand::Rng;
 
 use crate::{
-    ability::{HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN, SHOT_Z},
+    ability::{ABILITY_Z, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN, SHOTGUN_COOLDOWN},
     config::config,
     pointing_angle,
     time::TickCounter,
@@ -94,7 +94,7 @@ pub fn update_cursor(
 
     let Some(ray) = camera.viewport_to_world(camera_global_transform, cursor_window) else { return; };
 
-    let Some(distance) = ray.intersect_plane(Vec3::new(0.0, 0.0, SHOT_Z), Vec3::Z) else { return; };
+    let Some(distance) = ray.intersect_plane(Vec3::new(0.0, 0.0, ABILITY_Z), Vec3::Z) else { return; };
     let cursor = ray.get_point(distance);
 
     let Ok(mut player_transform) = player_query.get_single_mut() else { return; };
@@ -148,10 +148,7 @@ fn spawn_player(commands: &mut Commands) {
             locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
             mass: ReadMassProperties::default(),
         },
-        Cooldowns {
-            hyper_sprint: HYPER_SPRINT_COOLDOWN,
-            shoot: SHOOT_COOLDOWN,
-        },
+        Cooldowns::default(),
     ));
 }
 
@@ -181,7 +178,9 @@ fn spawn_enemies(commands: &mut Commands, num: usize) -> Vec<Vec2> {
             },
             Cooldowns {
                 hyper_sprint: HYPER_SPRINT_COOLDOWN,
+                // FIXME: Figure out why this can't be zero.
                 shoot: SHOOT_COOLDOWN,
+                shotgun: SHOTGUN_COOLDOWN,
             },
         ));
     }
@@ -212,10 +211,7 @@ fn spawn_allies(commands: &mut Commands, num: usize) -> Vec<Vec2> {
                 locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
                 mass: ReadMassProperties::default(),
             },
-            Cooldowns {
-                hyper_sprint: HYPER_SPRINT_COOLDOWN,
-                shoot: SHOOT_COOLDOWN,
-            },
+            Cooldowns::default(),
         ));
     }
     locs

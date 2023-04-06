@@ -1,8 +1,8 @@
-use std::time::Duration;
+use std::{f32::consts::PI, time::Duration};
 
 use bevy::prelude::{
-    Added, Commands, Component, Entity, EventReader, EventWriter, GlobalTransform, Query, Res,
-    Transform, Vec3, With, Without,
+    Added, Commands, Component, Entity, EventReader, EventWriter, GlobalTransform, Quat, Query,
+    Res, Transform, Vec3, Without,
 };
 
 use bevy_rapier3d::prelude::{
@@ -24,6 +24,7 @@ pub enum Ability {
     None,
     HyperSprint,
     Shoot,
+    Shotgun,
 }
 
 impl Ability {
@@ -44,6 +45,14 @@ impl Ability {
                 hyper_sprint(commands, tick_counter, entity, cooldowns, max_speed)
             }
             Ability::Shoot => shoot(
+                commands,
+                cooldowns,
+                tick_counter,
+                transform,
+                velocity,
+                entity,
+            ),
+            Ability::Shotgun => shotgun(
                 commands,
                 cooldowns,
                 tick_counter,
@@ -102,13 +111,14 @@ pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(250));
 const SHOT_DURATION: Tick = Tick::new(Duration::from_secs(10));
 pub const SHOT_SPEED: f32 = 30.0;
 pub const SHOT_R: f32 = 0.15;
-pub const SHOT_Z: f32 = 0.0;
+pub const ABILITY_Z: f32 = 0.0;
 const SHOT_DAMAGE: f32 = 1.0;
 
 #[derive(Component)]
 pub struct Shot {
     shooter: Entity,
     duration: Tick,
+    damage: f32,
 }
 
 fn shoot(
@@ -123,7 +133,8 @@ fn shoot(
         cooldowns.shoot = tick_counter.at(SHOOT_COOLDOWN);
 
         let dir = transform.rotation * Vec3::Y;
-        let position = transform.translation + dir * (PLAYER_R + SHOT_R + 0.01) + SHOT_Z * Vec3::Z;
+        let position =
+            transform.translation + dir * (PLAYER_R + SHOT_R + 0.01) + ABILITY_Z * Vec3::Z;
         let vel = dir * SHOT_SPEED + velocity.linvel;
         commands.spawn((
             Object {
@@ -143,10 +154,70 @@ fn shoot(
             Shot {
                 duration: tick_counter.at(SHOT_DURATION),
                 shooter,
+                damage: SHOT_DAMAGE,
             },
             Ccd::enabled(),
             ActiveEvents::COLLISION_EVENTS,
         ));
+        true
+    } else {
+        false
+    }
+}
+
+pub const SHOTGUN_COOLDOWN: Tick = Tick::new(Duration::from_millis(750));
+const SHOTGUN_DURATION: Tick = Tick::new(Duration::from_secs(10));
+pub const SHOTGUN_SPEED: f32 = 30.0;
+pub const SHOTGUN_R: f32 = 0.025;
+const SHOTGUN_DAMAGE: f32 = 0.2;
+const N_PELLETS: usize = 8;
+const SPREAD: f32 = PI * 0.125; // Spread angle in radians
+
+fn shotgun(
+    commands: &mut Commands,
+    cooldowns: &mut Cooldowns,
+    tick_counter: &TickCounter,
+    transform: &Transform,
+    velocity: &Velocity,
+    shooter: Entity,
+) -> bool {
+    if cooldowns.shotgun.before_now(tick_counter) {
+        cooldowns.shotgun = tick_counter.at(SHOTGUN_COOLDOWN);
+
+        for i in 0..N_PELLETS {
+            let idx = i as f32;
+            let n_pellets = N_PELLETS as f32;
+            let relative_angle = (n_pellets * 0.5 - idx) / n_pellets * SPREAD;
+            let relative_angle = Quat::from_rotation_z(relative_angle);
+            let dir = (transform.rotation * relative_angle) * Vec3::Y;
+            println!("dir: {dir}");
+            let position =
+                transform.translation + dir * (PLAYER_R + SHOTGUN_R + 0.01) + ABILITY_Z * Vec3::Z;
+            let vel = dir * SHOTGUN_SPEED + velocity.linvel;
+            commands.spawn((
+                Object {
+                    transform: Transform::from_translation(position),
+                    global_transform: GlobalTransform::default(),
+                    collider: Collider::ball(SHOTGUN_R),
+                    mass_props: ColliderMassProperties::Density(5000.0),
+                    body: RigidBody::Dynamic,
+                    velocity: Velocity {
+                        linvel: vel,
+                        angvel: Vec3::ZERO,
+                    },
+                    locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+                    mass: ReadMassProperties::default(),
+                },
+                Sensor,
+                Shot {
+                    duration: tick_counter.at(SHOTGUN_DURATION),
+                    shooter,
+                    damage: SHOTGUN_DAMAGE,
+                },
+                Ccd::enabled(),
+                ActiveEvents::COLLISION_EVENTS,
+            ));
+        }
         true
     } else {
         false
@@ -158,9 +229,7 @@ pub fn shot_kickback_system(
     mut momentum_query: Query<(&mut Velocity, &ReadMassProperties), Without<Shot>>,
 ) {
     for (v, m, shot) in shot_query.iter() {
-        info!("Added shot");
         let Ok((mut shooter_v, shooter_m)) = momentum_query.get_mut(shot.shooter) else { continue ; };
-        info!("Shooter found");
         shooter_v.linvel -= v.linvel * m.0.mass / shooter_m.0.mass;
     }
 }
@@ -186,7 +255,7 @@ pub struct ShotHitEvent {
 pub fn shot_hit_system(
     mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
-    shot_query: Query<(Entity, &Transform, &Velocity, &ReadMassProperties), With<Shot>>,
+    shot_query: Query<(Entity, &Transform, &Velocity, &ReadMassProperties, &Shot)>,
     mut health_query: Query<&mut Health>,
     mut momentum_query: Query<(&mut Velocity, &ReadMassProperties), Without<Shot>>,
     mut hit_event_writer: EventWriter<ShotHitEvent>,
@@ -194,18 +263,18 @@ pub fn shot_hit_system(
     let mut shots_to_despawn: SmallVec<[(Entity, Transform); 10]> = smallvec::SmallVec::new();
     for collision_event in collision_events.iter() {
         let CollisionEvent::Started(e1, e2, _flags) = collision_event else { continue; };
-        let (shot_entity, shot_transform, shot_vel, shot_mass, target_entity) =
-            if let Ok((e, t, v, m)) = shot_query.get(*e1) {
-                (e, t.to_owned(), v, m, e2)
-            } else if let Ok((e, t, v, m)) = shot_query.get(*e2) {
-                (e, t.to_owned(), v, m, e1)
+        let (shot_entity, shot_transform, shot_vel, shot_mass, shot, target_entity) =
+            if let Ok((e, t, v, m, s)) = shot_query.get(*e1) {
+                (e, t.to_owned(), v, m, s, e2)
+            } else if let Ok((e, t, v, m, s)) = shot_query.get(*e2) {
+                (e, t.to_owned(), v, m, s, e1)
             } else {
                 continue;
             };
 
         shots_to_despawn.push((shot_entity, shot_transform));
         if let Ok(mut health) = health_query.get_mut(*target_entity) {
-            health.cur -= SHOT_DAMAGE;
+            health.cur -= shot.damage;
         }
         if let Ok((mut vel, mass)) = momentum_query.get_mut(*target_entity) {
             vel.linvel += shot_vel.linvel * shot_mass.0.mass / mass.0.mass;
