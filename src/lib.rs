@@ -27,12 +27,11 @@ use bevy::{
     log::LogPlugin,
     pbr::PbrPlugin,
     prelude::{
-        default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera3dBundle,
-        Color, Commands, Component, CoreSchedule, FixedTime, FrameCountPlugin, GilrsPlugin,
+        default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera3dBundle, Color,
+        Commands, Component, CoreSchedule, FixedTime, FrameCountPlugin, GilrsPlugin,
         GlobalTransform, HierarchyPlugin, ImagePlugin, IntoSystemAppConfig, Mesh, PbrBundle,
-        PerspectiveProjection, Plugin, PluginGroup, PointLight, PointLightBundle, Quat,
-        ResMut, Resource, StandardMaterial, TaskPoolPlugin, Transform, TypeRegistrationPlugin,
-        Vec2, Vec3,
+        PerspectiveProjection, Plugin, PluginGroup, PointLight, PointLightBundle, Quat, ResMut,
+        Resource, StandardMaterial, TaskPoolPlugin, Transform, TypeRegistrationPlugin, Vec2, Vec3,
     },
     render::RenderPlugin,
     scene::ScenePlugin,
@@ -41,10 +40,13 @@ use bevy::{
     time::TimePlugin,
     transform::TransformPlugin,
     ui::UiPlugin,
-    window::{WindowPlugin},
+    window::WindowPlugin,
     winit::WinitPlugin,
 };
-use bevy_rapier3d::prelude::{Collider, Damping, ExternalImpulse, LockedAxes, RigidBody, Velocity};
+use bevy_rapier3d::prelude::{
+    Collider, ColliderMassProperties, Damping, ExternalImpulse, LockedAxes, ReadMassProperties,
+    RigidBody, Velocity,
+};
 use graphics::GraphicsPlugin;
 use physics::PhysicsPlugin;
 use time::{Tick, TickPlugin, TIMESTEP};
@@ -118,9 +120,11 @@ pub struct Object {
     transform: Transform,
     global_transform: GlobalTransform,
     collider: Collider,
+    mass_props: ColliderMassProperties,
     body: RigidBody,
     velocity: Velocity,
     locked_axes: LockedAxes,
+    mass: ReadMassProperties,
 }
 
 #[derive(Bundle)]
@@ -135,6 +139,7 @@ struct Character {
     damping: Damping,
     impulse: ExternalImpulse,
     locked_axes: LockedAxes,
+    mass: ReadMassProperties,
 }
 
 #[derive(Resource)]
@@ -212,6 +217,7 @@ impl Plugin for GamPlugin {
         .add_engine_tick_system(ability::shot_despawn_system)
         .add_event::<ShotHitEvent>()
         .add_engine_tick_system(ability::shot_hit_system)
+        .add_engine_tick_system(ability::shot_kickback_system)
         .add_plugin(ai::simple::SimpleAiPlugin)
         .add_engine_tick_system(system::die)
         .add_engine_tick_system(system::reset)
