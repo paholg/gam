@@ -4,6 +4,7 @@ use gam::GamPlugin;
 fn main() {
     let mut app = App::new();
 
+    app.add_plugin(GamPlugin);
     #[cfg(feature = "graphics")]
     {
         app.add_plugins(bevy::DefaultPlugins.set(bevy::window::WindowPlugin {
@@ -15,10 +16,6 @@ fn main() {
         }))
         .add_plugin(gam::GamClientPlugin);
     }
-
-    // We load this plugin after the ClientPlugin, as that one loads any assets
-    // we need and creates the AssetHandler resource.
-    app.add_plugin(GamPlugin);
 
     #[cfg(not(feature = "graphics"))]
     {
@@ -32,7 +29,7 @@ fn main() {
     {
         app.add_plugin(bevy::diagnostic::LogDiagnosticsPlugin::default())
             .add_plugin(bevy::diagnostic::FrameTimeDiagnosticsPlugin::default())
-            .add_plugin(bevy_rapier2d::render::RapierDebugRenderPlugin {
+            .add_plugin(bevy_rapier3d::render::RapierDebugRenderPlugin {
                 enabled: true,
                 always_on_top: true,
                 ..Default::default()

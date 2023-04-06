@@ -5,13 +5,13 @@ use bevy::{
     },
     window::{PrimaryWindow, Window},
 };
-use bevy_rapier2d::prelude::{Collider, ExternalImpulse, LockedAxes, RigidBody, Velocity};
+use bevy_rapier3d::prelude::{Collider, ExternalImpulse, LockedAxes, RigidBody, Velocity};
 use rand::Rng;
 
 use crate::{
-    ability::{HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN},
+    ability::{HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN, SHOT_Z},
     config::config,
-    intersect_xy_plane, pointing_angle, ray_from_screenspace,
+    pointing_angle,
     time::TickCounter,
     Ai, Ally, Character, Cooldowns, Enemy, Health, MaxSpeed, Player, CAMERA_OFFSET, DAMPING,
     PLANE_SIZE, PLAYER_R,
@@ -60,13 +60,13 @@ pub fn player_input(
     }
 
     // Movement:
-    let mut new_impulse = Vec2::new(0.0, 0.0);
+    let mut new_impulse = Vec3::new(0.0, 0.0, 0.0);
 
     for (control, dir) in [
-        (&controls.left, Vec2::new(-1.0, 0.0)),
-        (&controls.right, Vec2::new(1.0, 0.0)),
-        (&controls.up, Vec2::new(0.0, 1.0)),
-        (&controls.down, Vec2::new(0.0, -1.0)),
+        (&controls.left, Vec3::new(-1.0, 0.0, 0.0)),
+        (&controls.right, Vec3::new(1.0, 0.0, 0.0)),
+        (&controls.up, Vec3::new(0.0, 1.0, 0.0)),
+        (&controls.down, Vec3::new(0.0, -1.0, 0.0)),
     ] {
         if control.pressed(&keyboard_input, &mouse_input) {
             new_impulse += dir;
@@ -86,32 +86,34 @@ pub fn update_cursor(
     mut camera_query: Query<(&mut Transform, &Camera, &GlobalTransform)>,
     mut player_query: Query<&mut Transform, (With<Player>, Without<Camera>)>,
 ) {
-    let (mut camera_transform, camera, global_transform) = camera_query.single_mut();
+    let (mut camera_transform, camera, camera_global_transform) = camera_query.single_mut();
 
-    let cursor = match ray_from_screenspace(primary_window, camera, global_transform)
-        .as_ref()
-        .and_then(|ray| intersect_xy_plane(ray, 0.0))
-    {
-        Some(ray) => ray,
-        None => return,
-    };
+    let Some(cursor_window) = primary_window.single().cursor_position() else { return; };
 
-    let player_translation = match player_query.get_single_mut() {
-        Ok(mut player_transform) => {
-            let angle = pointing_angle(player_transform.translation, cursor);
-            player_transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
+    let Some(ray) = camera.viewport_to_world(camera_global_transform, cursor_window) else { return; };
 
-            player_transform.translation
-        }
-        Err(_) => {
-            // No player; let's just keep things mostly centered for now.
-            Vec3::default()
-        }
-    };
+    let Some(distance) = ray.intersect_plane(Vec3::new(0.0, 0.0, SHOT_Z), Vec3::Z) else { return; };
+    let cursor = ray.get_point(distance);
+
+    let Ok(mut player_transform) = player_query.get_single_mut() else { return; };
+    let angle = pointing_angle(player_transform.translation, cursor);
+    player_transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
+    // let player_translation = match player_query.get_single_mut() {
+    //     Ok(mut player_transform) => {
+    //         let angle = pointing_angle(player_transform.translation, cursor);
+    //         player_transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
+
+    //         player_transform.translation
+    //     }
+    //     Err(_) => {
+    //         // No player; let's just keep things mostly centered for now.
+    //         Vec3::default()
+    //     }
+    // };
 
     let camera_weight = 0.9;
     const CURSOR_WEIGHT: f32 = 0.33;
-    let look_at = cursor * CURSOR_WEIGHT + player_translation * (1.0 - CURSOR_WEIGHT);
+    let look_at = cursor * CURSOR_WEIGHT + player_transform.translation * (1.0 - CURSOR_WEIGHT);
     let look_at = (camera_transform.translation - CAMERA_OFFSET) * camera_weight
         + look_at * (1.0 - camera_weight);
 
