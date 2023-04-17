@@ -1,5 +1,5 @@
 #![feature(
-    once_cell,
+    lazy_cell,
     duration_consts_float,
     div_duration,
     const_fn_floating_point_arithmetic,
@@ -146,8 +146,8 @@ struct Character {
 
 #[derive(Resource)]
 pub struct NumAi {
-    pub enemies: u32,
-    pub allies: u32,
+    pub enemies: usize,
+    pub allies: usize,
 }
 
 // TODO: For whatever reason, our PluginGroups based on the DefaultPlugins but
@@ -210,8 +210,8 @@ impl Plugin for GamPlugin {
         #[cfg(not(feature = "train"))]
         app.insert_resource(FixedTime::new(TIMESTEP));
         app.insert_resource(NumAi {
-            enemies: 1,
-            allies: 1,
+            enemies: 0,
+            allies: 0,
         })
         .add_plugin(TickPlugin)
         .add_startup_system(setup)

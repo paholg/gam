@@ -27,7 +27,7 @@ impl Plugin for SimpleAiPlugin {
 
 fn just_move_system(mut query: Query<(&mut ExternalImpulse, &Transform, &MaxSpeed), With<Ai>>) {
     for (mut impulse, transform, max_speed) in query.iter_mut() {
-        let target_dir = transform.rotation * Vec3::Y;
+        let target_dir = transform.rotation * Vec3::Y * 0.5;
         let randx = random::<f32>() - 0.5;
         let randy = random::<f32>() - 0.5;
         let new_target = target_dir + Vec3::new(randx, randy, 0.0);
@@ -47,7 +47,8 @@ fn point_to_closest<T: ReadOnlyWorldQuery, U: ReadOnlyWorldQuery>(
             .min_by(|(_, _, d1), (_, _, d2)| d1.partial_cmp(d2).unwrap_or(Ordering::Equal));
         if let Some((trans, vel, dist)) = closest_target {
             let dt = dist / SHOT_SPEED;
-            let lead_translation = trans.translation + vel.linvel * dt;
+            let lead = vel.linvel * dt / 2.0; // Just partially lead for now
+            let lead_translation = trans.translation + lead;
             let angle = pointing_angle(transform.translation, lead_translation);
             if !angle.is_nan() {
                 transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
