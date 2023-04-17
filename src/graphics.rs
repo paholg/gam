@@ -1,9 +1,11 @@
 use bevy::{
     prelude::{
-        Added, Bundle, Commands, ComputedVisibility, Entity, EventReader, Handle, Mesh, Plugin,
-        Query, Res, StandardMaterial, Transform, Visibility, With, Without,
+        Added, Audio, Bundle, Camera, Commands, ComputedVisibility, Entity, EventReader, Handle,
+        Mesh, PlaybackSettings, Plugin, Query, Res, Resource, StandardMaterial, Transform,
+        Visibility, With, Without,
     },
     scene::Scene,
+    window::{PrimaryWindow, Window},
 };
 use bevy_hanabi::ParticleEffect;
 use bevy_mod_inverse_kinematics::InverseKinematicsPlugin;
@@ -20,6 +22,8 @@ use self::{
 
 mod asset_handler;
 mod healthbar;
+mod mesh;
+mod ui;
 
 pub struct GraphicsPlugin;
 
@@ -33,7 +37,8 @@ impl Plugin for GraphicsPlugin {
             .add_system(draw_ally_system)
             .add_system(draw_shot_system)
             .add_system(draw_shot_hit_system)
-            .add_system(draw_hyper_sprint_system);
+            .add_system(draw_hyper_sprint_system)
+            .add_plugin(ui::UiPlugin);
     }
 }
 
@@ -127,13 +132,30 @@ fn draw_ally_system(
 
 fn draw_shot_hit_system(
     assets: Res<AssetHandler>,
+    audio: Res<Audio>,
     mut effects: Query<(&mut ParticleEffect, &mut Transform), With<ShotEffect>>,
     mut event_reader: EventReader<ShotHitEvent>,
+    player: Query<&Transform, (With<Player>, Without<ShotEffect>)>,
 ) {
+    let player = player
+        .get_single()
+        .map(ToOwned::to_owned)
+        .unwrap_or_default();
     for hit in event_reader.iter() {
         let (mut effect, mut transform) = effects.get_mut(assets.shot.effect_entity).unwrap();
         *transform = hit.transform;
         effect.maybe_spawner().unwrap().reset();
+        audio.play_spatial_with_settings(
+            assets.shot.despawn_sound.clone(),
+            PlaybackSettings {
+                repeat: false,
+                volume: 5.0,
+                speed: 1.0,
+            },
+            player,
+            1.0,
+            hit.transform.translation,
+        );
     }
 }
 

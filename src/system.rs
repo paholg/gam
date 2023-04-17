@@ -1,7 +1,7 @@
 use bevy::{
     prelude::{
         Camera, Commands, DespawnRecursiveExt, Entity, GlobalTransform, Input, KeyCode,
-        MouseButton, Quat, Query, Res, Transform, Vec2, Vec3, With, Without,
+        MouseButton, Quat, Query, Res, ResMut, Transform, Vec2, Vec3, With, Without,
     },
     window::{PrimaryWindow, Window},
 };
@@ -15,7 +15,7 @@ use crate::{
     config::config,
     pointing_angle,
     time::TickCounter,
-    Ai, Ally, Character, Cooldowns, Enemy, Health, MaxSpeed, Player, CAMERA_OFFSET, DAMPING,
+    Ai, Ally, Character, Cooldowns, Enemy, Health, MaxSpeed, NumAi, Player, CAMERA_OFFSET, DAMPING,
     PLANE_SIZE, PLAYER_R,
 };
 
@@ -100,18 +100,6 @@ pub fn update_cursor(
     let Ok(mut player_transform) = player_query.get_single_mut() else { return; };
     let angle = pointing_angle(player_transform.translation, cursor);
     player_transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
-    // let player_translation = match player_query.get_single_mut() {
-    //     Ok(mut player_transform) => {
-    //         let angle = pointing_angle(player_transform.translation, cursor);
-    //         player_transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
-
-    //         player_transform.translation
-    //     }
-    //     Err(_) => {
-    //         // No player; let's just keep things mostly centered for now.
-    //         Vec3::default()
-    //     }
-    // };
 
     let camera_weight = 0.9;
     const CURSOR_WEIGHT: f32 = 0.33;
@@ -164,7 +152,7 @@ fn spawn_enemies(commands: &mut Commands, num: usize) -> Vec<Vec2> {
             Enemy,
             Ai,
             Character {
-                health: Health::new(100.0),
+                health: Health::new(10.0),
                 transform: Transform::from_xyz(x, y, 0.0),
                 global_transform: GlobalTransform::default(),
                 collider: Collider::ball(1.0),
@@ -222,19 +210,22 @@ pub fn reset(
     enemy_query: Query<Entity, With<Enemy>>,
     ally_query: Query<Entity, With<Ally>>,
     player_query: Query<Entity, With<Player>>,
+    mut num_ai: ResMut<NumAi>,
 ) {
     if enemy_query.iter().next().is_none() {
-        spawn_enemies(&mut commands, 1);
+        num_ai.enemies += 1;
+        spawn_enemies(&mut commands, num_ai.enemies);
     }
 
     #[cfg(not(feature = "train"))]
     {
         if player_query.iter().next().is_none() {
+            num_ai.enemies = num_ai.enemies.saturating_sub(1);
             spawn_player(&mut commands);
         }
     }
 
     if ally_query.iter().next().is_none() {
-        spawn_allies(&mut commands, 0);
+        spawn_allies(&mut commands, num_ai.allies);
     }
 }

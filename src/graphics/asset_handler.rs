@@ -2,8 +2,8 @@ use bevy::{
     prelude::{
         default,
         shape::{self, Icosphere},
-        AssetServer, Assets, Color, Commands, Component, Entity, Handle, Mesh, ResMut, Resource,
-        StandardMaterial, Vec2, Vec3, Vec4,
+        AssetServer, Assets, AudioSource, Color, Commands, Component, Entity, Handle, Mesh, ResMut,
+        Resource, StandardMaterial, Vec2, Vec3, Vec4,
     },
     scene::Scene,
 };
@@ -28,6 +28,8 @@ pub struct ShotAssets {
     pub mesh: Handle<Mesh>,
     pub material: Handle<StandardMaterial>,
     pub effect_entity: Entity,
+    pub spawn_sound: Handle<AudioSource>,
+    pub despawn_sound: Handle<AudioSource>,
 }
 
 pub struct HyperSprintAssets {
@@ -38,6 +40,7 @@ pub struct CharacterAssets {
     pub scene: Handle<Scene>,
     pub outline_mesh: Handle<Mesh>,
     pub outline_material: Handle<StandardMaterial>,
+    pub despawn_sound: Handle<AudioSource>,
 }
 
 // A collection of HandleIds for assets for spawning.
@@ -95,13 +98,15 @@ pub fn asset_handler_setup(
     let shot = ShotAssets {
         mesh: meshes.add(
             Mesh::try_from(Icosphere {
-                radius: SHOT_R,
+                radius: 1.0,
                 subdivisions: 5,
             })
             .unwrap(),
         ),
         material: materials.add(Color::BLUE.into()),
         effect_entity,
+        spawn_sound: asset_server.load("audio/laserSmall_000.ogg"),
+        despawn_sound: asset_server.load("audio/laserSmall_000.ogg"),
     };
 
     let effect = effects.add(hyper_sprint_effect());
@@ -113,6 +118,7 @@ pub fn asset_handler_setup(
     let hyper_sprint = HyperSprintAssets { effect_entity };
 
     let spaceship = asset_server.load("models/temp/robot1.glb#Scene0");
+    let death_sound = asset_server.load("audio/explosionCrunch_000.ogg");
 
     let player = CharacterAssets {
         scene: spaceship.clone(),
@@ -124,6 +130,7 @@ pub fn asset_handler_setup(
             .into(),
         ),
         outline_material: materials.add(Color::GREEN.into()),
+        despawn_sound: death_sound.clone(),
     };
 
     let ally = CharacterAssets {
@@ -136,6 +143,7 @@ pub fn asset_handler_setup(
             .into(),
         ),
         outline_material: materials.add(Color::CYAN.into()),
+        despawn_sound: death_sound.clone(),
     };
 
     let enemy = CharacterAssets {
@@ -148,6 +156,7 @@ pub fn asset_handler_setup(
             .into(),
         ),
         outline_material: materials.add(Color::RED.into()),
+        despawn_sound: death_sound.clone(),
     };
 
     let asset_handler = AssetHandler {

@@ -11,7 +11,6 @@ use bevy_rapier3d::prelude::{
 };
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
-use tracing::info;
 
 use crate::{
     time::{Tick, TickCounter},
@@ -70,7 +69,7 @@ pub struct HyperSprinting {
 }
 
 const HYPER_SPRINT_FACTOR: f32 = 7.0;
-pub const HYPER_SPRINT_COOLDOWN: Tick = Tick::new(Duration::new(5, 0));
+pub const HYPER_SPRINT_COOLDOWN: Tick = Tick::new(Duration::new(3, 0));
 const HYPER_SPRINT_DURATION: Tick = Tick::new(Duration::from_secs_f32(0.15));
 
 fn hyper_sprint(
@@ -119,6 +118,7 @@ pub struct Shot {
     shooter: Entity,
     duration: Tick,
     damage: f32,
+    radius: f32,
 }
 
 fn shoot(
@@ -138,10 +138,11 @@ fn shoot(
         let vel = dir * SHOT_SPEED + velocity.linvel;
         commands.spawn((
             Object {
-                transform: Transform::from_translation(position),
+                transform: Transform::from_translation(position)
+                    .with_scale(Vec3::new(SHOT_R, SHOT_R, SHOT_R)),
                 global_transform: GlobalTransform::default(),
                 collider: Collider::ball(SHOT_R),
-                mass_props: ColliderMassProperties::Density(50.0),
+                mass_props: ColliderMassProperties::Density(10000.0),
                 body: RigidBody::Dynamic,
                 velocity: Velocity {
                     linvel: vel,
@@ -155,6 +156,7 @@ fn shoot(
                 duration: tick_counter.at(SHOT_DURATION),
                 shooter,
                 damage: SHOT_DAMAGE,
+                radius: SHOT_R,
             },
             Ccd::enabled(),
             ActiveEvents::COLLISION_EVENTS,
@@ -168,7 +170,7 @@ fn shoot(
 pub const SHOTGUN_COOLDOWN: Tick = Tick::new(Duration::from_millis(750));
 const SHOTGUN_DURATION: Tick = Tick::new(Duration::from_secs(10));
 pub const SHOTGUN_SPEED: f32 = 30.0;
-pub const SHOTGUN_R: f32 = 0.025;
+pub const SHOTGUN_R: f32 = 0.1;
 const SHOTGUN_DAMAGE: f32 = 0.2;
 const N_PELLETS: usize = 8;
 const SPREAD: f32 = PI * 0.125; // Spread angle in radians
@@ -190,16 +192,16 @@ fn shotgun(
             let relative_angle = (n_pellets * 0.5 - idx) / n_pellets * SPREAD;
             let relative_angle = Quat::from_rotation_z(relative_angle);
             let dir = (transform.rotation * relative_angle) * Vec3::Y;
-            println!("dir: {dir}");
             let position =
                 transform.translation + dir * (PLAYER_R + SHOTGUN_R + 0.01) + ABILITY_Z * Vec3::Z;
             let vel = dir * SHOTGUN_SPEED + velocity.linvel;
             commands.spawn((
                 Object {
-                    transform: Transform::from_translation(position),
+                    transform: Transform::from_translation(position)
+                        .with_scale(Vec3::new(SHOTGUN_R, SHOTGUN_R, SHOTGUN_R)),
                     global_transform: GlobalTransform::default(),
                     collider: Collider::ball(SHOTGUN_R),
-                    mass_props: ColliderMassProperties::Density(5000.0),
+                    mass_props: ColliderMassProperties::Density(100000.0),
                     body: RigidBody::Dynamic,
                     velocity: Velocity {
                         linvel: vel,
@@ -213,6 +215,7 @@ fn shotgun(
                     duration: tick_counter.at(SHOTGUN_DURATION),
                     shooter,
                     damage: SHOTGUN_DAMAGE,
+                    radius: SHOTGUN_R,
                 },
                 Ccd::enabled(),
                 ActiveEvents::COLLISION_EVENTS,
