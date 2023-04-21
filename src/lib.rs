@@ -9,8 +9,8 @@
 
 pub mod ability;
 pub mod ai;
+pub mod client;
 pub mod config;
-pub mod graphics;
 pub mod physics;
 pub mod system;
 pub mod time;
@@ -47,7 +47,7 @@ use bevy_rapier3d::prelude::{
     Collider, ColliderMassProperties, Damping, ExternalImpulse, LockedAxes, ReadMassProperties,
     RigidBody, Velocity,
 };
-use graphics::GraphicsPlugin;
+use client::GraphicsPlugin;
 use physics::PhysicsPlugin;
 use time::{Tick, TickPlugin, TIMESTEP};
 
@@ -224,18 +224,6 @@ impl Plugin for GamPlugin {
         .add_engine_tick_system(system::die)
         .add_engine_tick_system(system::reset)
         .add_plugin(PhysicsPlugin);
-    }
-}
-
-/// This plugin includes user input and graphics.
-pub struct GamClientPlugin;
-
-impl Plugin for GamClientPlugin {
-    fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_engine_tick_system(system::player_input)
-            .add_system(system::update_cursor)
-            .add_plugin(GraphicsPlugin)
-            .add_plugin(bevy_hanabi::HanabiPlugin);
     }
 }
 

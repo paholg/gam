@@ -25,7 +25,19 @@ mod healthbar;
 mod mesh;
 mod ui;
 
-pub struct GraphicsPlugin;
+/// This plugin includes user input and graphics.
+pub struct GamClientPlugin;
+
+impl Plugin for GamClientPlugin {
+    fn build(&self, app: &mut bevy::prelude::App) {
+        app.add_engine_tick_system(system::player_input)
+            .add_system(system::update_cursor)
+            .add_plugin(GraphicsPlugin)
+            .add_plugin(bevy_hanabi::HanabiPlugin);
+    }
+}
+
+struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
