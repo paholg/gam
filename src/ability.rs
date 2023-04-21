@@ -118,7 +118,6 @@ pub struct Shot {
     shooter: Entity,
     duration: Tick,
     damage: f32,
-    radius: f32,
 }
 
 fn shoot(
@@ -156,7 +155,6 @@ fn shoot(
                 duration: tick_counter.at(SHOT_DURATION),
                 shooter,
                 damage: SHOT_DAMAGE,
-                radius: SHOT_R,
             },
             Ccd::enabled(),
             ActiveEvents::COLLISION_EVENTS,
@@ -215,7 +213,6 @@ fn shotgun(
                     duration: tick_counter.at(SHOTGUN_DURATION),
                     shooter,
                     damage: SHOTGUN_DAMAGE,
-                    radius: SHOTGUN_R,
                 },
                 Ccd::enabled(),
                 ActiveEvents::COLLISION_EVENTS,

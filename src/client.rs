@@ -1,18 +1,17 @@
 use bevy::{
     prelude::{
-        Added, Audio, Bundle, Camera, Commands, ComputedVisibility, Entity, EventReader, Handle,
-        Mesh, PlaybackSettings, Plugin, Query, Res, Resource, StandardMaterial, Transform,
+        Added, Audio, Bundle, Commands, ComputedVisibility, Entity, EventReader, Handle,
+        Mesh, PlaybackSettings, Plugin, Query, Res, StandardMaterial, Transform,
         Visibility, With, Without,
     },
     scene::Scene,
-    window::{PrimaryWindow, Window},
 };
 use bevy_hanabi::ParticleEffect;
 use bevy_mod_inverse_kinematics::InverseKinematicsPlugin;
 
 use crate::{
     ability::{HyperSprinting, Shot, ShotHitEvent},
-    Ally, Enemy, Player,
+    system, Ally, Enemy, FixedTimestepSystem, Player,
 };
 
 use self::{
@@ -24,6 +23,8 @@ mod asset_handler;
 mod healthbar;
 mod mesh;
 mod ui;
+
+const OUTLINE_DEPTH_BIAS: f32 = 0.5;
 
 /// This plugin includes user input and graphics.
 pub struct GamClientPlugin;

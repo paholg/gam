@@ -1,9 +1,11 @@
+
+
 use bevy::{
     prelude::{
         default,
         shape::{self, Icosphere},
-        AssetServer, Assets, AudioSource, Color, Commands, Component, Entity, Handle, Mesh, ResMut,
-        Resource, StandardMaterial, Vec2, Vec3, Vec4,
+        AlphaMode, AssetServer, Assets, AudioSource, Color, Commands, Component, Entity, Handle,
+        Mesh, ResMut, Resource, StandardMaterial, Vec2, Vec3, Vec4,
     },
     scene::Scene,
 };
@@ -16,7 +18,7 @@ use bevy_hanabi::{
 
 use crate::{ability::SHOT_R, PLAYER_R};
 
-use super::healthbar::Healthbar;
+use super::{healthbar::Healthbar, mesh::HollowPolygon, OUTLINE_DEPTH_BIAS};
 
 pub struct HealthbarAssets {
     pub mesh: Handle<Mesh>,
@@ -120,43 +122,52 @@ pub fn asset_handler_setup(
     let spaceship = asset_server.load("models/temp/robot1.glb#Scene0");
     let death_sound = asset_server.load("audio/explosionCrunch_000.ogg");
 
+    let outline = meshes.add(
+        HollowPolygon {
+            radius: 1.0,
+            thickness: 0.15,
+            vertices: 30,
+        }
+        .into(),
+    );
+
+    let outline_material = StandardMaterial {
+        depth_bias: OUTLINE_DEPTH_BIAS,
+        perceptual_roughness: 1.0,
+        metallic: 1.0,
+        fog_enabled: false,
+        alpha_mode: AlphaMode::Blend,
+        ..Default::default()
+    };
+
+    const OUTLINE_ALPHA: f32 = 0.5;
+
+    let mut player_outline = outline_material.clone();
+    player_outline.emissive = Color::GREEN.with_a(OUTLINE_ALPHA);
+    let mut enemy_outline = outline_material.clone();
+    enemy_outline.emissive = Color::RED.with_a(OUTLINE_ALPHA);
+    let mut ally_outline = outline_material;
+    ally_outline.emissive = Color::CYAN.with_a(OUTLINE_ALPHA);
+
     let player = CharacterAssets {
         scene: spaceship.clone(),
-        outline_mesh: meshes.add(
-            shape::Circle {
-                radius: 1.0,
-                vertices: 100,
-            }
-            .into(),
-        ),
-        outline_material: materials.add(Color::GREEN.into()),
+        outline_mesh: outline.clone(),
+        outline_material: materials.add(player_outline),
         despawn_sound: death_sound.clone(),
     };
 
     let ally = CharacterAssets {
         scene: spaceship.clone(),
-        outline_mesh: meshes.add(
-            shape::Circle {
-                radius: 1.0,
-                vertices: 100,
-            }
-            .into(),
-        ),
-        outline_material: materials.add(Color::CYAN.into()),
+        outline_mesh: outline.clone(),
+        outline_material: materials.add(ally_outline),
         despawn_sound: death_sound.clone(),
     };
 
     let enemy = CharacterAssets {
         scene: spaceship,
-        outline_mesh: meshes.add(
-            shape::Circle {
-                radius: 1.0,
-                vertices: 100,
-            }
-            .into(),
-        ),
-        outline_material: materials.add(Color::RED.into()),
-        despawn_sound: death_sound.clone(),
+        outline_mesh: outline,
+        outline_material: materials.add(enemy_outline),
+        despawn_sound: death_sound,
     };
 
     let asset_handler = AssetHandler {

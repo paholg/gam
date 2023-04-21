@@ -1,6 +1,5 @@
 use bevy::{
-    prelude::{Commands, Component, Plugin, Query, Res, TextBundle, With},
-    text::{Text, TextSection, TextStyle},
+    prelude::{Component, Plugin, Res},
 };
 use bevy_debug_text_overlay::{screen_print, OverlayPlugin};
 
