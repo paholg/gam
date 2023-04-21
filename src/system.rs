@@ -16,7 +16,7 @@ use crate::{
     pointing_angle,
     time::TickCounter,
     Ai, Ally, Character, Cooldowns, Enemy, Health, MaxSpeed, NumAi, Player, CAMERA_OFFSET, DAMPING,
-    PLANE_SIZE, PLAYER_R,
+    PLANE, PLAYER_R,
 };
 
 pub fn player_input(
@@ -144,8 +144,8 @@ fn spawn_enemies(commands: &mut Commands, num: usize) -> Vec<Vec2> {
     let mut rng = rand::thread_rng();
     let mut locs = Vec::with_capacity(num);
     for _ in 0..num {
-        let x = rng.gen::<f32>() * (PLANE_SIZE - PLAYER_R) - (PLANE_SIZE - PLAYER_R) * 0.5;
-        let y = rng.gen::<f32>() * (PLANE_SIZE - PLAYER_R) - (PLANE_SIZE - PLAYER_R) * 0.5;
+        let x = rng.gen::<f32>() * (PLANE - PLAYER_R) - (PLANE - PLAYER_R) * 0.5;
+        let y = rng.gen::<f32>() * (PLANE - PLAYER_R) - (PLANE - PLAYER_R) * 0.5;
         let loc = Vec2::new(x, y);
         locs.push(loc);
         commands.spawn((
@@ -179,8 +179,8 @@ fn spawn_allies(commands: &mut Commands, num: usize) -> Vec<Vec2> {
     let mut rng = rand::thread_rng();
     let mut locs = Vec::with_capacity(num);
     for _ in 0..num {
-        let x = rng.gen::<f32>() * (PLANE_SIZE - PLAYER_R) - (PLANE_SIZE - PLAYER_R) * 0.5;
-        let y = rng.gen::<f32>() * (PLANE_SIZE - PLAYER_R) - (PLANE_SIZE - PLAYER_R) * 0.5;
+        let x = rng.gen::<f32>() * (PLANE - PLAYER_R) - (PLANE - PLAYER_R) * 0.5;
+        let y = rng.gen::<f32>() * (PLANE - PLAYER_R) - (PLANE - PLAYER_R) * 0.5;
         let loc = Vec2::new(x, y);
         locs.push(loc);
         commands.spawn((

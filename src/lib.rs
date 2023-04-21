@@ -61,7 +61,7 @@ const DAMPING: Damping = Damping {
 
 const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, -50.0, 50.0);
 
-pub const PLANE_SIZE: f32 = 50.0;
+pub const PLANE: f32 = 30.0;
 
 #[derive(Component)]
 pub struct Health {
@@ -253,26 +253,29 @@ pub fn setup(
     #[cfg(feature = "graphics")] mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     // Ground plane
+    const WALL: f32 = 1.0;
+    const HALF_WALL: f32 = WALL * 0.5;
+    const HALF_PLANE: f32 = PLANE * 0.5;
     let collider = Collider::compound(vec![
         (
-            Vec3::new(PLANE_SIZE * 1.5, 0.0, 0.0),
+            Vec3::new(-HALF_WALL, -HALF_PLANE - HALF_WALL, 0.0),
             Quat::IDENTITY,
-            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
+            Collider::cuboid(HALF_PLANE + HALF_WALL, HALF_WALL, HALF_WALL),
         ),
         (
-            Vec3::new(-PLANE_SIZE * 1.5, 0.0, 0.0),
+            Vec3::new(-HALF_PLANE - HALF_WALL, HALF_WALL, 0.0),
             Quat::IDENTITY,
-            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
+            Collider::cuboid(HALF_WALL, HALF_PLANE + HALF_WALL, HALF_WALL),
         ),
         (
-            Vec3::new(0.0, PLANE_SIZE * 1.5, 0.0),
+            Vec3::new(HALF_WALL, HALF_PLANE + HALF_WALL, 0.0),
             Quat::IDENTITY,
-            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
+            Collider::cuboid(HALF_PLANE + HALF_WALL, HALF_WALL, HALF_WALL),
         ),
         (
-            Vec3::new(0.0, -PLANE_SIZE * 1.5, 0.0),
+            Vec3::new(HALF_PLANE + HALF_WALL, -HALF_WALL, 0.0),
             Quat::IDENTITY,
-            Collider::cuboid(PLANE_SIZE, PLANE_SIZE, PLANE_SIZE),
+            Collider::cuboid(HALF_WALL, HALF_PLANE + HALF_WALL, HALF_WALL),
         ),
     ]);
     let ground_plane = commands
@@ -282,7 +285,7 @@ pub fn setup(
     commands.entity(ground_plane).insert(PbrBundle {
         mesh: meshes.add(
             shape::Quad {
-                size: Vec2::new(PLANE_SIZE, PLANE_SIZE),
+                size: Vec2::new(PLANE, PLANE),
                 ..default()
             }
             .into(),
@@ -308,50 +311,50 @@ pub fn setup(
     #[cfg(feature = "graphics")]
     commands.spawn(PointLightBundle {
         point_light: PointLight {
-            range: PLANE_SIZE,
+            range: PLANE,
             intensity: 1000.0,
             ..default()
         },
-        transform: Transform::from_xyz(-0.5 * PLANE_SIZE, -0.5 * PLANE_SIZE, 10.0),
+        transform: Transform::from_xyz(-0.5 * PLANE, -0.5 * PLANE, 10.0),
         ..default()
     });
     #[cfg(feature = "graphics")]
     commands.spawn(PointLightBundle {
         point_light: PointLight {
-            range: PLANE_SIZE,
-            intensity: 1000.0,
-            shadows_enabled: true,
-            ..default()
-        },
-        transform: Transform::from_xyz(0.5 * PLANE_SIZE, -0.5 * PLANE_SIZE, 10.0),
-        ..default()
-    });
-    #[cfg(feature = "graphics")]
-    commands.spawn(PointLightBundle {
-        point_light: PointLight {
-            range: PLANE_SIZE,
+            range: PLANE,
             intensity: 1000.0,
             shadows_enabled: true,
             ..default()
         },
-        transform: Transform::from_xyz(-0.5 * PLANE_SIZE, 0.5 * PLANE_SIZE, 10.0),
+        transform: Transform::from_xyz(0.5 * PLANE, -0.5 * PLANE, 10.0),
         ..default()
     });
     #[cfg(feature = "graphics")]
     commands.spawn(PointLightBundle {
         point_light: PointLight {
-            range: PLANE_SIZE,
+            range: PLANE,
             intensity: 1000.0,
             shadows_enabled: true,
             ..default()
         },
-        transform: Transform::from_xyz(0.5 * PLANE_SIZE, 0.5 * PLANE_SIZE, 10.0),
+        transform: Transform::from_xyz(-0.5 * PLANE, 0.5 * PLANE, 10.0),
         ..default()
     });
     #[cfg(feature = "graphics")]
     commands.spawn(PointLightBundle {
         point_light: PointLight {
-            range: PLANE_SIZE,
+            range: PLANE,
+            intensity: 1000.0,
+            shadows_enabled: true,
+            ..default()
+        },
+        transform: Transform::from_xyz(0.5 * PLANE, 0.5 * PLANE, 10.0),
+        ..default()
+    });
+    #[cfg(feature = "graphics")]
+    commands.spawn(PointLightBundle {
+        point_light: PointLight {
+            range: PLANE,
             intensity: 1000.0,
             shadows_enabled: true,
             ..default()
