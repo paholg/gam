@@ -14,7 +14,7 @@ fn main() {
             }),
             ..Default::default()
         }))
-        .add_plugin(gam::GamClientPlugin);
+        .add_plugin(gam::client::GamClientPlugin);
     }
 
     #[cfg(not(feature = "graphics"))]
