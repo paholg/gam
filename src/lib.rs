@@ -47,7 +47,6 @@ use bevy_rapier3d::prelude::{
     Collider, ColliderMassProperties, Damping, ExternalImpulse, LockedAxes, ReadMassProperties,
     RigidBody, Velocity,
 };
-use client::GraphicsPlugin;
 use physics::PhysicsPlugin;
 use time::{Tick, TickPlugin, TIMESTEP};
 
