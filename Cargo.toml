@@ -20,6 +20,7 @@ bevy_mod_inverse_kinematics = { version = "0.3.0", optional = true }
 bevy_rapier3d = { version = "0.21", features = ["enhanced-determinism"] }
 # bincode = { version = "2.0.0-rc.2", features = ["serde"] }
 directories = "5"
+nalgebra = "0.32.2"
 rand = "0.8"
 serde = "1"
 serde_json = "1"

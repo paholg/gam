@@ -9,6 +9,7 @@ use bevy_rapier3d::prelude::{
     Collider, ExternalImpulse, LockedAxes, ReadMassProperties, RigidBody, Velocity,
 };
 use rand::Rng;
+use tracing::info;
 
 use crate::{
     ability::{ABILITY_Z, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN, SHOTGUN_COOLDOWN},

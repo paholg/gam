@@ -11,6 +11,7 @@ use bevy_rapier3d::prelude::{
 };
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
+use tracing::info;
 
 use crate::{
     time::{Tick, TickCounter},
@@ -168,8 +169,8 @@ fn shoot(
 pub const SHOTGUN_COOLDOWN: Tick = Tick::new(Duration::from_millis(750));
 const SHOTGUN_DURATION: Tick = Tick::new(Duration::from_secs(10));
 pub const SHOTGUN_SPEED: f32 = 30.0;
-pub const SHOTGUN_R: f32 = 0.1;
-const SHOTGUN_DAMAGE: f32 = 0.2;
+pub const SHOTGUN_R: f32 = 0.15;
+const SHOTGUN_DAMAGE: f32 = 1.0;
 const N_PELLETS: usize = 8;
 const SPREAD: f32 = PI * 0.125; // Spread angle in radians
 
@@ -199,7 +200,7 @@ fn shotgun(
                         .with_scale(Vec3::new(SHOTGUN_R, SHOTGUN_R, SHOTGUN_R)),
                     global_transform: GlobalTransform::default(),
                     collider: Collider::ball(SHOTGUN_R),
-                    mass_props: ColliderMassProperties::Density(100000.0),
+                    mass_props: ColliderMassProperties::Density(10000.0),
                     body: RigidBody::Dynamic,
                     velocity: Velocity {
                         linvel: vel,

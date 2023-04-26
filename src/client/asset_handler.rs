@@ -1,5 +1,3 @@
-
-
 use bevy::{
     prelude::{
         default,
@@ -16,9 +14,9 @@ use bevy_hanabi::{
     SizeOverLifetimeModifier, Spawner, Value,
 };
 
-use crate::{ability::SHOT_R, PLAYER_R};
+use crate::{ability::SHOT_R, shapes::HollowPolygon, PLAYER_R};
 
-use super::{healthbar::Healthbar, mesh::HollowPolygon, OUTLINE_DEPTH_BIAS};
+use super::{healthbar::Healthbar, OUTLINE_DEPTH_BIAS};
 
 pub struct HealthbarAssets {
     pub mesh: Handle<Mesh>,

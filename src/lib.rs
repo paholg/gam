@@ -12,6 +12,7 @@ pub mod ai;
 pub mod client;
 pub mod config;
 pub mod physics;
+pub mod shapes;
 pub mod system;
 pub mod time;
 
@@ -61,7 +62,7 @@ const DAMPING: Damping = Damping {
 
 const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, -50.0, 50.0);
 
-pub const PLANE: f32 = 30.0;
+pub const PLANE: f32 = 50.0;
 
 #[derive(Component)]
 pub struct Health {

@@ -90,7 +90,7 @@ fn healthbar_update_system(
 ) {
     for (parent, children, mut transform) in q_healthbar.iter_mut() {
         let (parent_transform, health, healthbar) = q_parent.get(parent.get()).unwrap();
-        let healthiness = health.cur / health.max;
+        let healthiness = (health.cur / health.max).max(0.0);
         let rotation = parent_transform.rotation.inverse();
         transform.rotation = rotation;
         transform.translation = rotation * healthbar.displacement;

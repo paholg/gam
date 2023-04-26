@@ -1,9 +1,7 @@
 use std::f32::consts::PI;
 
-use bevy::{
-    prelude::{Mesh},
-    render::{render_resource::PrimitiveTopology},
-};
+use bevy::{prelude::Mesh, render::render_resource::PrimitiveTopology};
+use bevy_rapier3d::na::ComplexField;
 
 /// A hollow polygon. Can also act as a hollow circle when vertices is large.
 pub struct HollowPolygon {
@@ -58,7 +56,7 @@ impl Chunk {
         for r in [inner_radius, radius] {
             for i in 0..vertices {
                 let phi = angle / vertices as f32 * i as f32 - angle / 2.0 + PI * 0.5;
-                let coord = [r * phi.cos(), r * phi.sin(), 0.0];
+                let coord = [r * ComplexField::cos(phi), r * ComplexField::sin(phi), 0.0];
                 positions.push(coord);
             }
         }
