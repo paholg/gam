@@ -54,7 +54,7 @@ use time::{Tick, TickPlugin, TIMESTEP};
 const PLAYER_R: f32 = 1.0;
 // TODO: Remove this. There should be no speed limit.
 const SPEED: f32 = 1500.0;
-const IMPULSE: f32 = 5.0;
+const IMPULSE: f32 = 15.0;
 const DAMPING: Damping = Damping {
     linear_damping: 5.0,
     angular_damping: 0.0,
@@ -255,7 +255,7 @@ pub fn setup(
 ) {
     // Ground plane
     const WALL: f32 = 1.0;
-    const HALF_WALL: f32 = WALL * 0.5;
+    const HALF_WALL: f32 = WALL * 2.0;
     const HALF_PLANE: f32 = PLANE * 0.5;
     let collider = Collider::compound(vec![
         (

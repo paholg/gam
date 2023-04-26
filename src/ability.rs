@@ -111,7 +111,7 @@ pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(250));
 const SHOT_DURATION: Tick = Tick::new(Duration::from_secs(10));
 pub const SHOT_SPEED: f32 = 30.0;
 pub const SHOT_R: f32 = 0.15;
-pub const ABILITY_Z: f32 = 0.0;
+pub const ABILITY_Z: f32 = 1.5;
 const SHOT_DAMAGE: f32 = 1.0;
 
 #[derive(Component)]

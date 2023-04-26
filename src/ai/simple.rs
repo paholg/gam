@@ -2,19 +2,40 @@ use std::cmp::Ordering;
 
 use bevy::{
     ecs::query::ReadOnlyWorldQuery,
-    prelude::{Commands, Entity, Plugin, Quat, Query, Res, Transform, Vec3, With, Without},
+    prelude::{
+        Commands, Component, Entity, Plugin, Quat, Query, Res, Transform, Vec3, With, Without,
+    },
 };
 use bevy_rapier3d::prelude::{ExternalImpulse, Velocity};
-use rand::random;
+use rand::{random, Rng};
 
 use crate::{
     ability::{Ability, SHOT_SPEED},
     pointing_angle,
+    system::point_in_plane,
     time::TickCounter,
     Ai, Ally, Cooldowns, Enemy, FixedTimestepSystem, MaxSpeed,
 };
 
 pub struct SimpleAiPlugin;
+
+#[derive(Component)]
+pub enum Attitude {
+    Chase,
+    RunAway,
+    PickPoint(Vec3),
+}
+
+impl Attitude {
+    pub fn rand() -> Self {
+        let mut rng = rand::thread_rng();
+        match rng.gen_range(0..3) {
+            0 => Self::Chase,
+            1 => Self::RunAway,
+            _ => Self::PickPoint(point_in_plane()),
+        }
+    }
+}
 
 impl Plugin for SimpleAiPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
@@ -25,29 +46,36 @@ impl Plugin for SimpleAiPlugin {
     }
 }
 
-fn just_move_system(mut query: Query<(&mut ExternalImpulse, &Transform, &MaxSpeed), With<Ai>>) {
-    for (mut impulse, transform, max_speed) in query.iter_mut() {
-        let target_dir = transform.rotation * Vec3::Y * 0.5;
-        let randx = random::<f32>() - 0.5;
-        let randy = random::<f32>() - 0.5;
-        let new_target = target_dir + Vec3::new(randx, randy, 0.0);
-
-        impulse.impulse = new_target.normalize() * max_speed.impulse;
+fn just_move_system(
+    mut query: Query<(&mut ExternalImpulse, &Transform, &MaxSpeed, &mut Attitude), With<Ai>>,
+) {
+    for (mut impulse, transform, max_speed, mut attitude) in query.iter_mut() {
+        let target_vec = match *attitude {
+            Attitude::Chase => transform.rotation * Vec3::Y,
+            Attitude::RunAway => -(transform.rotation * Vec3::Y),
+            Attitude::PickPoint(ref mut target) => {
+                while transform.translation.distance_squared(*target) < 1.0 {
+                    *target = point_in_plane();
+                }
+                *target - transform.translation
+            }
+        };
+        impulse.impulse = target_vec.normalize() * max_speed.impulse;
     }
 }
 
 fn point_to_closest<T: ReadOnlyWorldQuery, U: ReadOnlyWorldQuery>(
-    mut query: Query<&mut Transform, T>,
+    mut query: Query<(&mut Transform, &Velocity), T>,
     targets: Query<(&Transform, &Velocity), U>,
 ) {
-    for mut transform in query.iter_mut() {
+    for (mut transform, velocity) in query.iter_mut() {
         let closest_target = targets
             .iter()
             .map(|(t, v)| (t, v, transform.translation.distance(t.translation)))
             .min_by(|(_, _, d1), (_, _, d2)| d1.partial_cmp(d2).unwrap_or(Ordering::Equal));
         if let Some((trans, vel, dist)) = closest_target {
             let dt = dist / SHOT_SPEED;
-            let lead = vel.linvel * dt / 2.0; // Just partially lead for now
+            let lead = (vel.linvel - velocity.linvel) * dt * 0.5; // Just partially lead for now
             let lead_translation = trans.translation + lead;
             let angle = pointing_angle(transform.translation, lead_translation);
             if !angle.is_nan() {
@@ -59,14 +87,14 @@ fn point_to_closest<T: ReadOnlyWorldQuery, U: ReadOnlyWorldQuery>(
 
 fn update_enemy_orientation(
     ally_query: Query<(&Transform, &Velocity), (With<Ally>, Without<Enemy>)>,
-    enemy_query: Query<&mut Transform, (With<Enemy>, With<Ai>, Without<Ally>)>,
+    enemy_query: Query<(&mut Transform, &Velocity), (With<Enemy>, With<Ai>, Without<Ally>)>,
 ) {
     point_to_closest(enemy_query, ally_query);
 }
 
 fn update_ally_orientation(
     enemy_query: Query<(&Transform, &Velocity), (With<Enemy>, Without<Ally>)>,
-    ally_query: Query<&mut Transform, (With<Ally>, With<Ai>, Without<Enemy>)>,
+    ally_query: Query<(&mut Transform, &Velocity), (With<Ally>, With<Ai>, Without<Enemy>)>,
 ) {
     point_to_closest(ally_query, enemy_query);
 }
