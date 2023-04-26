@@ -1,8 +1,8 @@
 use bevy::{
     prelude::{
-        Added, Audio, Bundle, Commands, ComputedVisibility, Entity, EventReader, Handle,
-        Mesh, PlaybackSettings, Plugin, Query, Res, StandardMaterial, Transform,
-        Visibility, With, Without,
+        Added, Audio, Bundle, Commands, ComputedVisibility, Entity, EventReader, Handle, Mesh,
+        PlaybackSettings, Plugin, Query, Res, StandardMaterial, Transform, Visibility, With,
+        Without,
     },
     scene::Scene,
 };
@@ -21,7 +21,6 @@ use self::{
 
 mod asset_handler;
 mod healthbar;
-mod mesh;
 mod ui;
 
 const OUTLINE_DEPTH_BIAS: f32 = 0.5;
@@ -158,17 +157,17 @@ fn draw_shot_hit_system(
         let (mut effect, mut transform) = effects.get_mut(assets.shot.effect_entity).unwrap();
         *transform = hit.transform;
         effect.maybe_spawner().unwrap().reset();
-        audio.play_spatial_with_settings(
-            assets.shot.despawn_sound.clone(),
-            PlaybackSettings {
-                repeat: false,
-                volume: 5.0,
-                speed: 1.0,
-            },
-            player,
-            1.0,
-            hit.transform.translation,
-        );
+        // audio.play_spatial_with_settings(
+        //     assets.shot.despawn_sound.clone(),
+        //     PlaybackSettings {
+        //         repeat: false,
+        //         volume: 5.0,
+        //         speed: 1.0,
+        //     },
+        //     player,
+        //     1.0,
+        //     hit.transform.translation,
+        // );
     }
 }
 
