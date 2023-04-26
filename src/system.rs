@@ -13,6 +13,7 @@ use tracing::info;
 
 use crate::{
     ability::{ABILITY_Z, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN, SHOTGUN_COOLDOWN},
+    ai::simple::Attitude,
     config::config,
     pointing_angle,
     time::TickCounter,
@@ -128,7 +129,7 @@ fn spawn_player(commands: &mut Commands) {
             health: Health::new(100.0),
             transform: Transform::default(),
             global_transform: GlobalTransform::default(),
-            collider: Collider::ball(1.0),
+            collider: Collider::capsule(Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 2.0), 1.0),
             body: RigidBody::Dynamic,
             max_speed: MaxSpeed::default(),
             velocity: Velocity::default(),
@@ -141,22 +142,28 @@ fn spawn_player(commands: &mut Commands) {
     ));
 }
 
-fn spawn_enemies(commands: &mut Commands, num: usize) -> Vec<Vec2> {
+pub fn point_in_plane() -> Vec3 {
     let mut rng = rand::thread_rng();
-    let mut locs = Vec::with_capacity(num);
+    let x = rng.gen::<f32>() * (PLANE - PLAYER_R) - (PLANE - PLAYER_R) * 0.5;
+    let y = rng.gen::<f32>() * (PLANE - PLAYER_R) - (PLANE - PLAYER_R) * 0.5;
+    Vec3::new(x, y, 0.0)
+}
+
+fn spawn_enemies(commands: &mut Commands, num: usize) {
     for _ in 0..num {
-        let x = rng.gen::<f32>() * (PLANE - PLAYER_R) - (PLANE - PLAYER_R) * 0.5;
-        let y = rng.gen::<f32>() * (PLANE - PLAYER_R) - (PLANE - PLAYER_R) * 0.5;
-        let loc = Vec2::new(x, y);
-        locs.push(loc);
+        let loc = point_in_plane();
         commands.spawn((
             Enemy,
             Ai,
             Character {
                 health: Health::new(10.0),
-                transform: Transform::from_xyz(x, y, 0.0),
+                transform: Transform::from_translation(loc),
                 global_transform: GlobalTransform::default(),
-                collider: Collider::ball(1.0),
+                collider: Collider::capsule(
+                    Vec3::new(0.0, 0.0, 0.0),
+                    Vec3::new(0.0, 0.0, 2.0),
+                    1.0,
+                ),
                 body: RigidBody::Dynamic,
                 max_speed: MaxSpeed::default(),
                 velocity: Velocity::default(),
@@ -171,27 +178,26 @@ fn spawn_enemies(commands: &mut Commands, num: usize) -> Vec<Vec2> {
                 shoot: SHOOT_COOLDOWN,
                 shotgun: SHOTGUN_COOLDOWN,
             },
+            Attitude::rand(),
         ));
     }
-    locs
 }
 
-fn spawn_allies(commands: &mut Commands, num: usize) -> Vec<Vec2> {
-    let mut rng = rand::thread_rng();
-    let mut locs = Vec::with_capacity(num);
+fn spawn_allies(commands: &mut Commands, num: usize) {
     for _ in 0..num {
-        let x = rng.gen::<f32>() * (PLANE - PLAYER_R) - (PLANE - PLAYER_R) * 0.5;
-        let y = rng.gen::<f32>() * (PLANE - PLAYER_R) - (PLANE - PLAYER_R) * 0.5;
-        let loc = Vec2::new(x, y);
-        locs.push(loc);
+        let loc = point_in_plane();
         commands.spawn((
             Ally,
             Ai,
             Character {
                 health: Health::new(100.0),
-                transform: Transform::from_xyz(x, y, 0.0),
+                transform: Transform::from_translation(loc),
                 global_transform: GlobalTransform::default(),
-                collider: Collider::ball(1.0),
+                collider: Collider::capsule(
+                    Vec3::new(0.0, 0.0, 0.0),
+                    Vec3::new(0.0, 0.0, 2.0),
+                    1.0,
+                ),
                 body: RigidBody::Dynamic,
                 max_speed: MaxSpeed::default(),
                 velocity: Velocity::default(),
@@ -203,7 +209,6 @@ fn spawn_allies(commands: &mut Commands, num: usize) -> Vec<Vec2> {
             Cooldowns::default(),
         ));
     }
-    locs
 }
 
 pub fn reset(

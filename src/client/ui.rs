@@ -1,14 +1,9 @@
-use bevy::{
-    prelude::{Component, Plugin, Res},
-};
+use bevy::prelude::{Component, Plugin, Res};
 use bevy_debug_text_overlay::{screen_print, OverlayPlugin};
 
 use crate::NumAi;
 
 pub struct UiPlugin;
-
-#[derive(Component)]
-struct ScoreText;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {

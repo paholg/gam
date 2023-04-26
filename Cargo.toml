@@ -6,7 +6,7 @@ version = "0.1.0"
 [dependencies]
 bevy = { version = "0.10", features = ["serialize"] }
 bevy-debug-text-overlay = { version = "5.1.0", optional = true }
-bevy_egui = { version = "0.20.2", optional = true }
+bevy_egui = { version = "0.20.3", optional = true }
 bevy_hanabi = { version = "0.6.1", default-features = false, features = ["3d"], optional = true }
 bevy_mod_inverse_kinematics = { version = "0.3.0", optional = true }
 # bevy_quickmenu = "0.1"
