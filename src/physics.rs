@@ -3,7 +3,7 @@ use bevy_rapier3d::prelude::{NoUserData, RapierConfiguration, RapierPhysicsPlugi
 
 use crate::time::PHYSICS_TIMESTEP;
 
-type RapierPlugin = RapierPhysicsPlugin<NoUserData>;
+pub type RapierPlugin = RapierPhysicsPlugin<NoUserData>;
 
 pub struct PhysicsPlugin;
 

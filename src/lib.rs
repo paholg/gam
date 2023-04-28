@@ -30,9 +30,10 @@ use bevy::{
     prelude::{
         default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera3dBundle, Color,
         Commands, Component, CoreSchedule, FixedTime, FrameCountPlugin, GilrsPlugin,
-        GlobalTransform, HierarchyPlugin, ImagePlugin, IntoSystemAppConfig, Mesh, PbrBundle,
-        PerspectiveProjection, Plugin, PluginGroup, PointLight, PointLightBundle, Quat, ResMut,
-        Resource, StandardMaterial, TaskPoolPlugin, Transform, TypeRegistrationPlugin, Vec2, Vec3,
+        GlobalTransform, HierarchyPlugin, ImagePlugin, IntoSystemAppConfig, IntoSystemConfig, Mesh,
+        OnUpdate, PbrBundle, PerspectiveProjection, Plugin, PluginGroup, PointLight,
+        PointLightBundle, Quat, Res, ResMut, Resource, StandardMaterial, State, States,
+        TaskPoolPlugin, Transform, TypeRegistrationPlugin, Vec2, Vec3,
     },
     render::RenderPlugin,
     scene::ScenePlugin,
@@ -50,6 +51,13 @@ use bevy_rapier3d::prelude::{
 };
 use physics::PhysicsPlugin;
 use time::{Tick, TickPlugin, TIMESTEP};
+
+#[derive(States, PartialEq, Eq, Debug, Copy, Clone, Hash, Default)]
+pub enum AppState {
+    #[default]
+    Running,
+    Paused,
+}
 
 const PLAYER_R: f32 = 1.0;
 const IMPULSE: f32 = 15.0;
@@ -207,6 +215,7 @@ impl Plugin for GamPlugin {
             enemies: 0,
             allies: 0,
         })
+        .add_state::<AppState>()
         .add_plugin(TickPlugin)
         .add_startup_system(setup)
         .add_engine_tick_system(ability::hyper_sprint_system)
@@ -225,10 +234,18 @@ trait FixedTimestepSystem {
     fn add_engine_tick_system<M>(&mut self, system: impl IntoSystemAppConfig<M>) -> &mut Self;
 }
 
+pub fn game_running(state: Res<State<AppState>>) -> bool {
+    state.0 == AppState::Running
+}
+
 #[cfg(not(feature = "train"))]
 impl FixedTimestepSystem for App {
     fn add_engine_tick_system<M>(&mut self, system: impl IntoSystemAppConfig<M>) -> &mut Self {
-        self.add_system(system.in_schedule(CoreSchedule::FixedUpdate))
+        self.add_system(
+            system
+                .in_schedule(CoreSchedule::FixedUpdate)
+                .run_if(game_running),
+        )
     }
 }
 
