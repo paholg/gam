@@ -80,8 +80,6 @@ pub fn player_input(
     new_impulse = new_impulse.clamp_length_max(1.0) * max_speed.impulse;
 
     impulse.impulse = new_impulse;
-
-    velocity.linvel = velocity.linvel.clamp_length_max(max_speed.max_speed);
 }
 
 /// Moves the camera and orients the player based on the mouse cursor.

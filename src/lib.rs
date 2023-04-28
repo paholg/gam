@@ -52,8 +52,6 @@ use physics::PhysicsPlugin;
 use time::{Tick, TickPlugin, TIMESTEP};
 
 const PLAYER_R: f32 = 1.0;
-// TODO: Remove this. There should be no speed limit.
-const SPEED: f32 = 1500.0;
 const IMPULSE: f32 = 15.0;
 const DAMPING: Damping = Damping {
     linear_damping: 5.0,
@@ -78,16 +76,12 @@ impl Health {
 
 #[derive(Component, Copy, Clone, Debug)]
 pub struct MaxSpeed {
-    max_speed: f32,
     impulse: f32,
 }
 
 impl Default for MaxSpeed {
     fn default() -> Self {
-        Self {
-            max_speed: SPEED,
-            impulse: IMPULSE,
-        }
+        Self { impulse: IMPULSE }
     }
 }
 
