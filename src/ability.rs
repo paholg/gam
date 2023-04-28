@@ -82,7 +82,6 @@ fn hyper_sprint(
 ) -> bool {
     if cooldowns.hyper_sprint.before_now(tick_counter) {
         cooldowns.hyper_sprint = tick_counter.at(HYPER_SPRINT_COOLDOWN);
-        max_speed.max_speed *= HYPER_SPRINT_FACTOR;
         max_speed.impulse *= HYPER_SPRINT_FACTOR;
         commands.entity(entity).insert(HyperSprinting {
             duration: tick_counter.at(HYPER_SPRINT_DURATION),
@@ -100,7 +99,6 @@ pub fn hyper_sprint_system(
 ) {
     for (entity, hyper_sprinting, mut max_speed, _sprinter_transform) in query.iter_mut() {
         if hyper_sprinting.duration.before_now(&tick_counter) {
-            max_speed.max_speed /= HYPER_SPRINT_FACTOR;
             max_speed.impulse /= HYPER_SPRINT_FACTOR;
             commands.entity(entity).remove::<HyperSprinting>();
         }
