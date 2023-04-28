@@ -1,12 +1,14 @@
 use bevy::{
     prelude::{
         Camera, Commands, DespawnRecursiveExt, Entity, GlobalTransform, Input, KeyCode,
-        MouseButton, Quat, Query, Res, ResMut, Transform, Vec2, Vec3, With, Without,
+        MouseButton, NextState, Quat, Query, Res, ResMut, State, Transform, Vec2, Vec3, With,
+        Without,
     },
     window::{PrimaryWindow, Window},
 };
 use bevy_rapier3d::prelude::{
-    Collider, ExternalImpulse, LockedAxes, ReadMassProperties, RigidBody, Velocity,
+    Collider, ExternalImpulse, LockedAxes, RapierConfiguration, ReadMassProperties, RigidBody,
+    Velocity,
 };
 use rand::Rng;
 use tracing::info;
@@ -15,11 +17,37 @@ use crate::{
     ability::{ABILITY_Z, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN, SHOTGUN_COOLDOWN},
     ai::simple::Attitude,
     config::config,
+    physics::RapierPlugin,
     pointing_angle,
     time::TickCounter,
-    Ai, Ally, Character, Cooldowns, Enemy, Health, MaxSpeed, NumAi, Player, CAMERA_OFFSET, DAMPING,
-    PLANE, PLAYER_R,
+    Ai, Ally, AppState, Character, Cooldowns, Enemy, Health, MaxSpeed, NumAi, Player,
+    CAMERA_OFFSET, DAMPING, PLANE, PLAYER_R,
 };
+
+/// Player input that does not affect the game state, like menu toggle.
+pub fn player_out_of_game_input(
+    keyboard_input: Res<Input<KeyCode>>,
+    mouse_input: Res<Input<MouseButton>>,
+    state: Res<State<AppState>>,
+    mut next_state: ResMut<NextState<AppState>>,
+    mut physics_config: ResMut<RapierConfiguration>,
+) {
+    let config = config();
+    let controls = &config.controls;
+
+    if controls.menu.just_pressed(&keyboard_input, &mouse_input) {
+        match state.0 {
+            AppState::Running => {
+                physics_config.physics_pipeline_active = false;
+                next_state.set(AppState::Paused);
+            }
+            AppState::Paused => {
+                physics_config.physics_pipeline_active = true;
+                next_state.set(AppState::Running);
+            }
+        }
+    }
+}
 
 pub fn player_input(
     keyboard_input: Res<Input<KeyCode>>,

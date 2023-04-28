@@ -31,6 +31,7 @@ pub struct GamClientPlugin;
 impl Plugin for GamClientPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_engine_tick_system(system::player_input)
+            .add_system(system::player_out_of_game_input)
             .add_system(system::update_cursor)
             .add_plugin(GraphicsPlugin)
             .add_plugin(bevy_hanabi::HanabiPlugin);
