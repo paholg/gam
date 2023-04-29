@@ -71,7 +71,7 @@ pub struct HyperSprinting {
 
 const HYPER_SPRINT_FACTOR: f32 = 7.0;
 pub const HYPER_SPRINT_COOLDOWN: Tick = Tick::new(Duration::new(3, 0));
-const HYPER_SPRINT_DURATION: Tick = Tick::new(Duration::from_secs_f32(0.15));
+const HYPER_SPRINT_DURATION: Tick = Tick(9);
 
 fn hyper_sprint(
     commands: &mut Commands,
