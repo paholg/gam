@@ -200,7 +200,7 @@ impl PluginGroup for ClientDefaultPlugins {
             .add(UiPlugin::default())
             .add(PbrPlugin::default())
             .add(GltfPlugin::default())
-            .add(AudioPlugin::default())
+            // .add(AudioPlugin::default())
             .add(GilrsPlugin::default())
             .add(AnimationPlugin::default());
         group
