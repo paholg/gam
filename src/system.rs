@@ -16,8 +16,7 @@ use tracing::info;
 use crate::{
     ability::{ABILITY_Z, HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN, SHOTGUN_COOLDOWN},
     ai::simple::Attitude,
-    config::config,
-    physics::RapierPlugin,
+    config::Config,
     pointing_angle,
     time::TickCounter,
     Ai, Ally, AppState, Character, Cooldowns, DeathEvent, Enemy, Health, MaxSpeed, NumAi, Player,
@@ -26,13 +25,13 @@ use crate::{
 
 /// Player input that does not affect the game state, like menu toggle.
 pub fn player_out_of_game_input(
+    config: Res<Config>,
     keyboard_input: Res<Input<KeyCode>>,
     mouse_input: Res<Input<MouseButton>>,
     state: Res<State<AppState>>,
     mut next_state: ResMut<NextState<AppState>>,
     mut physics_config: ResMut<RapierConfiguration>,
 ) {
-    let config = config();
     let controls = &config.controls;
 
     if controls.menu.just_pressed(&keyboard_input, &mouse_input) {
@@ -50,6 +49,7 @@ pub fn player_out_of_game_input(
 }
 
 pub fn player_input(
+    config: Res<Config>,
     keyboard_input: Res<Input<KeyCode>>,
     mouse_input: Res<Input<MouseButton>>,
     mut commands: Commands,
@@ -66,7 +66,6 @@ pub fn player_input(
         With<Player>,
     >,
 ) {
-    let config = config();
     let controls = &config.controls;
 
     let (entity, mut cooldowns, mut velocity, mut max_speed, mut impulse, transform) =

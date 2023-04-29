@@ -1,5 +1,4 @@
 #![feature(
-    lazy_cell,
     duration_consts_float,
     div_duration,
     const_fn_floating_point_arithmetic,
