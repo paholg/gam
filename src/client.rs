@@ -1,8 +1,8 @@
 use bevy::{
     prelude::{
-        Added, Assets, Bundle, Commands, Component, ComputedVisibility, Entity, EventReader,
-        Handle, Mesh, PbrBundle, Plugin, Query, Res, ResMut, Resource, StandardMaterial, Transform,
-        Visibility, With, Without,
+        Added, Assets, BuildChildren, Bundle, Commands, Component, ComputedVisibility, Entity,
+        EventReader, Handle, Mesh, PbrBundle, Plugin, Query, Res, ResMut, Resource,
+        StandardMaterial, Transform, Visibility, With, Without,
     },
     scene::Scene,
 };
@@ -291,24 +291,30 @@ fn draw_target_system(
     asset_handler: Res<AssetHandler>,
 ) {
     for (entity, player) in &query {
-        commands.spawn((
-            PbrBundle {
-                material: asset_handler.target.material.clone(),
-                mesh: asset_handler.target.mesh.clone(),
-                transform: Transform::from_translation(player.target.extend(0.0)),
-                ..Default::default()
-            },
-            Target { owner: entity },
-        ));
+        let target_entity = commands
+            .spawn((
+                PbrBundle {
+                    material: asset_handler.target.material.clone(),
+                    mesh: asset_handler.target.mesh.clone(),
+                    transform: Transform::from_translation(player.target.extend(0.0)),
+                    ..Default::default()
+                },
+                Target { owner: entity },
+            ))
+            .id();
+        commands.entity(entity).push_children(&[target_entity]);
     }
 }
 fn update_target_system(
-    player_query: Query<&Player>,
-    mut target_query: Query<(&mut Transform, &Target)>,
+    player_query: Query<(&Player, &Transform)>,
+    mut target_query: Query<(&mut Transform, &Target), Without<Player>>,
 ) {
     for (mut transform, target) in &mut target_query {
-        if let Ok(player) = player_query.get(target.owner) {
-            transform.translation = player.target.extend(0.0);
+        if let Ok((player, player_transform)) = player_query.get(target.owner) {
+            let rotation = player_transform.rotation.inverse();
+            transform.rotation = rotation;
+            transform.translation =
+                rotation * (player.target.extend(0.0) - player_transform.translation);
         }
     }
 }
