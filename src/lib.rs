@@ -21,14 +21,15 @@ use ability::ShotHitEvent;
 use bevy::{
     app::PluginGroupBuilder,
     audio::AudioPlugin,
+    core_pipeline::bloom::BloomSettings,
     diagnostic::DiagnosticsPlugin,
     gltf::GltfPlugin,
     input::InputPlugin,
     log::LogPlugin,
     pbr::PbrPlugin,
     prelude::{
-        default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera3dBundle, Color,
-        Commands, Component, CoreSchedule, FixedTime, FrameCountPlugin, GilrsPlugin,
+        default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera, Camera3dBundle,
+        Color, Commands, Component, CoreSchedule, FixedTime, FrameCountPlugin, GilrsPlugin,
         GlobalTransform, HierarchyPlugin, ImagePlugin, IntoSystemAppConfig, IntoSystemConfig, Mesh,
         OnUpdate, PbrBundle, PerspectiveProjection, Plugin, PluginGroup, PointLight,
         PointLightBundle, Quat, Res, ResMut, Resource, StandardMaterial, State, States,
@@ -313,15 +314,22 @@ pub fn setup(
 
     // Camera
     #[cfg(feature = "graphics")]
-    commands.spawn(Camera3dBundle {
-        projection: PerspectiveProjection {
-            fov: PI * 0.125,
+    commands.spawn((
+        Camera3dBundle {
+            camera: Camera {
+                hdr: true,
+                ..default()
+            },
+            projection: PerspectiveProjection {
+                fov: PI * 0.125,
+                ..default()
+            }
+            .into(),
+            transform: Transform::from_translation(CAMERA_OFFSET).looking_at(Vec3::ZERO, Vec3::Z),
             ..default()
-        }
-        .into(),
-        transform: Transform::from_translation(CAMERA_OFFSET).looking_at(Vec3::ZERO, Vec3::Z),
-        ..default()
-    });
+        },
+        BloomSettings::default(),
+    ));
 
     // Light
     #[cfg(feature = "graphics")]

@@ -99,6 +99,11 @@ pub fn asset_handler_setup(
         .insert(ShotEffect)
         .id();
 
+    let mut shot_material = StandardMaterial {
+        emissive: Color::rgb_linear(0.0, 20.0, 20.0),
+        ..Default::default()
+    };
+
     let shot = ShotAssets {
         mesh: meshes.add(
             Mesh::try_from(Icosphere {
@@ -107,7 +112,7 @@ pub fn asset_handler_setup(
             })
             .unwrap(),
         ),
-        material: materials.add(Color::BLUE.into()),
+        material: materials.add(shot_material),
         effect_entity,
         spawn_sound: asset_server.load("audio/laserSmall_000.ogg"),
         despawn_sound: asset_server.load("audio/laserSmall_000.ogg"),
