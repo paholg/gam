@@ -12,8 +12,11 @@ use leafwing_input_manager::prelude::ActionState;
 use tracing::info;
 
 use crate::{
-    ability::ABILITY_Z, pointing_angle, time::TickCounter, AppState, Cooldowns,
-    FixedTimestepSystem, MaxSpeed, Player, CAMERA_OFFSET,
+    ability::{ABILITY_Z, HYPER_SPRINT_FACTOR},
+    pointing_angle,
+    status_effect::{StatusEffect, StatusEffects},
+    time::TickCounter,
+    AppState, Cooldowns, Energy, FixedTimestepSystem, MaxSpeed, Player, CAMERA_OFFSET,
 };
 
 use super::config::{Action, Config, ABILITY_COUNT};
@@ -72,15 +75,16 @@ fn player_ability(
         (
             Entity,
             &ActionState<Action>,
+            &mut Energy,
             &mut Cooldowns,
             &mut Velocity,
-            &mut MaxSpeed,
+            &mut StatusEffects,
             &Transform,
         ),
         With<Player>,
     >,
 ) {
-    let (entity, action_state, mut cooldowns, velocity, mut max_speed, transform) =
+    let (entity, action_state, mut energy, mut cooldowns, velocity, mut status_effects, transform) =
         match query.get_single_mut() {
             Ok(q) => q,
             Err(_) => return,
@@ -88,35 +92,63 @@ fn player_ability(
 
     // Abilities:
     for pressed in &action_state.get_pressed() {
+        let just_pressed = action_state.just_pressed(*pressed);
         let pressed_usize = *pressed as usize;
         if pressed_usize < ABILITY_COUNT {
             let ability = &config.player.abilities[pressed_usize];
             ability.fire(
+                just_pressed,
                 &mut commands,
                 &tick_counter,
                 entity,
+                &mut energy,
                 &mut cooldowns,
-                &mut max_speed,
                 transform,
                 &velocity,
+                &mut status_effects,
             );
+        }
+    }
+
+    for released in &action_state.get_just_released() {
+        let released_usize = *released as usize;
+        if released_usize < ABILITY_COUNT {
+            let ability = &config.player.abilities[released_usize];
+            ability.unfire(&mut commands, entity, &mut status_effects);
         }
     }
 }
 
 fn player_movement(
-    mut query: Query<(&ActionState<Action>, &mut ExternalImpulse, &MaxSpeed), With<Player>>,
+    mut query: Query<
+        (
+            &ActionState<Action>,
+            &mut ExternalImpulse,
+            &MaxSpeed,
+            &StatusEffects,
+        ),
+        With<Player>,
+    >,
 ) {
-    let (action_state, mut impulse, max_speed) = if let Ok(q) = query.get_single_mut() {
-        q
-    } else {
-        return;
-    };
+    let (action_state, mut impulse, max_speed, status_effects) =
+        if let Ok(q) = query.get_single_mut() {
+            q
+        } else {
+            return;
+        };
 
     if action_state.pressed(Action::Move) {
         let axis_pair = action_state.clamped_axis_pair(Action::Move).unwrap();
         let dir = axis_pair.xy().extend(0.0);
-        impulse.impulse = dir * max_speed.impulse;
+        let mut max_impulse = max_speed.impulse;
+        if status_effects
+            .effects
+            .contains(&StatusEffect::HyperSprinting)
+        {
+            max_impulse *= HYPER_SPRINT_FACTOR;
+        }
+
+        impulse.impulse = dir * max_impulse;
     }
 }
 

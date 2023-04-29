@@ -2,7 +2,7 @@ use std::{f32::consts::PI, time::Duration};
 
 use bevy::prelude::{
     Added, Commands, Component, Entity, EventReader, EventWriter, GlobalTransform, Quat, Query,
-    Res, Transform, Vec3, Without,
+    Res, Transform, Vec3, With, Without,
 };
 
 use bevy_rapier3d::prelude::{
@@ -12,10 +12,10 @@ use bevy_rapier3d::prelude::{
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
-
 use crate::{
+    status_effect::{StatusEffect, StatusEffects},
     time::{Tick, TickCounter},
-    Cooldowns, Health, MaxSpeed, Object, PLAYER_R,
+    Cooldowns, Energy, Health, Object, PLAYER_R,
 };
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -31,22 +31,29 @@ impl Ability {
     #[allow(clippy::too_many_arguments)]
     pub fn fire(
         &self,
+        just_pressed: bool,
         commands: &mut Commands,
         tick_counter: &TickCounter,
         entity: Entity,
+        energy: &mut Energy,
         cooldowns: &mut Cooldowns,
-        max_speed: &mut MaxSpeed,
         transform: &Transform,
         velocity: &Velocity,
+        status_effects: &mut StatusEffects,
     ) -> bool {
         match self {
             Ability::None => true,
             Ability::HyperSprint => {
-                hyper_sprint(commands, tick_counter, entity, cooldowns, max_speed)
+                if just_pressed {
+                    hyper_sprint(commands, entity, energy, status_effects)
+                } else {
+                    false
+                }
             }
             Ability::Shoot => shoot(
                 commands,
                 cooldowns,
+                energy,
                 tick_counter,
                 transform,
                 velocity,
@@ -55,6 +62,7 @@ impl Ability {
             Ability::Shotgun => shotgun(
                 commands,
                 cooldowns,
+                energy,
                 tick_counter,
                 transform,
                 velocity,
@@ -62,30 +70,38 @@ impl Ability {
             ),
         }
     }
+
+    pub fn unfire(
+        &self,
+        commands: &mut Commands,
+        entity: Entity,
+        status_effects: &mut StatusEffects,
+    ) {
+        match self {
+            Ability::None => (),
+            Ability::HyperSprint => {
+                hyper_sprint_disable(commands, entity, status_effects);
+            }
+            Ability::Shoot => (),
+            Ability::Shotgun => (),
+        }
+    }
 }
 
-#[derive(Component)]
-pub struct HyperSprinting {
-    duration: Tick,
-}
-
-const HYPER_SPRINT_FACTOR: f32 = 7.0;
-pub const HYPER_SPRINT_COOLDOWN: Tick = Tick::new(Duration::new(3, 0));
-const HYPER_SPRINT_DURATION: Tick = Tick(9);
+#[derive(Component, Hash)]
+pub struct HyperSprinting;
+pub const HYPER_SPRINT_FACTOR: f32 = 7.0;
+const HYPER_SPRINT_COST: f32 = 2.0;
 
 fn hyper_sprint(
     commands: &mut Commands,
-    tick_counter: &TickCounter,
     entity: Entity,
-    cooldowns: &mut Cooldowns,
-    max_speed: &mut MaxSpeed,
+    energy: &Energy,
+    status_effects: &mut StatusEffects,
 ) -> bool {
-    if cooldowns.hyper_sprint.before_now(tick_counter) {
-        cooldowns.hyper_sprint = tick_counter.at(HYPER_SPRINT_COOLDOWN);
-        max_speed.impulse *= HYPER_SPRINT_FACTOR;
-        commands.entity(entity).insert(HyperSprinting {
-            duration: tick_counter.at(HYPER_SPRINT_DURATION),
-        });
+    if energy.cur >= HYPER_SPRINT_COST {
+        commands.entity(entity).insert(HyperSprinting);
+        status_effects.effects.insert(StatusEffect::HyperSprinting);
         true
     } else {
         false
@@ -94,15 +110,24 @@ fn hyper_sprint(
 
 pub fn hyper_sprint_system(
     mut commands: Commands,
-    tick_counter: Res<TickCounter>,
-    mut query: Query<(Entity, &HyperSprinting, &mut MaxSpeed, &Transform)>,
+    mut query: Query<(&mut Energy, Entity, &mut StatusEffects), With<HyperSprinting>>,
 ) {
-    for (entity, hyper_sprinting, mut max_speed, _sprinter_transform) in query.iter_mut() {
-        if hyper_sprinting.duration.before_now(&tick_counter) {
-            max_speed.impulse /= HYPER_SPRINT_FACTOR;
-            commands.entity(entity).remove::<HyperSprinting>();
+    for (mut energy, entity, mut status_effects) in &mut query {
+        if energy.cur >= HYPER_SPRINT_COST {
+            energy.cur -= HYPER_SPRINT_COST;
+        } else {
+            hyper_sprint_disable(&mut commands, entity, &mut status_effects);
         }
     }
+}
+
+fn hyper_sprint_disable(
+    commands: &mut Commands,
+    entity: Entity,
+    status_effects: &mut StatusEffects,
+) {
+    status_effects.effects.remove(&StatusEffect::HyperSprinting);
+    commands.entity(entity).remove::<HyperSprinting>();
 }
 
 pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(250));
@@ -111,6 +136,8 @@ pub const SHOT_SPEED: f32 = 30.0;
 pub const SHOT_R: f32 = 0.15;
 pub const ABILITY_Z: f32 = 1.5;
 const SHOT_DAMAGE: f32 = 1.0;
+
+const SHOT_ENERGY: f32 = 5.0;
 
 #[derive(Component)]
 pub struct Shot {
@@ -122,12 +149,14 @@ pub struct Shot {
 fn shoot(
     commands: &mut Commands,
     cooldowns: &mut Cooldowns,
+    energy: &mut Energy,
     tick_counter: &TickCounter,
     transform: &Transform,
     velocity: &Velocity,
     shooter: Entity,
 ) -> bool {
-    if cooldowns.shoot.before_now(tick_counter) {
+    if cooldowns.shoot.before_now(tick_counter) && energy.cur >= SHOT_ENERGY {
+        energy.cur -= SHOT_ENERGY;
         cooldowns.shoot = tick_counter.at(SHOOT_COOLDOWN);
 
         let dir = transform.rotation * Vec3::Y;
@@ -164,24 +193,27 @@ fn shoot(
     }
 }
 
-pub const SHOTGUN_COOLDOWN: Tick = Tick::new(Duration::from_millis(750));
+pub const SHOTGUN_COOLDOWN: Tick = Tick::new(Duration::from_millis(250));
 const SHOTGUN_DURATION: Tick = Tick::new(Duration::from_secs(10));
 pub const SHOTGUN_SPEED: f32 = 30.0;
 pub const SHOTGUN_R: f32 = 0.15;
 const SHOTGUN_DAMAGE: f32 = 1.0;
 const N_PELLETS: usize = 8;
 const SPREAD: f32 = PI * 0.125; // Spread angle in radians
+const SHOTGUN_ENERGY: f32 = 30.0;
 
 fn shotgun(
     commands: &mut Commands,
     cooldowns: &mut Cooldowns,
+    energy: &mut Energy,
     tick_counter: &TickCounter,
     transform: &Transform,
     velocity: &Velocity,
     shooter: Entity,
 ) -> bool {
-    if cooldowns.shotgun.before_now(tick_counter) {
+    if cooldowns.shotgun.before_now(tick_counter) && energy.cur >= SHOTGUN_ENERGY {
         cooldowns.shotgun = tick_counter.at(SHOTGUN_COOLDOWN);
+        energy.cur -= SHOTGUN_ENERGY;
 
         for i in 0..N_PELLETS {
             let idx = i as f32;
