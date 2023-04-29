@@ -23,6 +23,8 @@ jobs:
         with:
           toolchain: nightly
           target: ${{ matrix.config.target }}
+      - name: Setup Cache
+        uses: Swatinum/rust-cache@v2
       - name: Build
         run: cargo build --release --locked --target ${{ matrix.config.target }}
       - name: Prepare
