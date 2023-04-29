@@ -8,10 +8,10 @@ use bevy::{
 };
 use bevy_hanabi::ParticleEffect;
 use bevy_mod_inverse_kinematics::InverseKinematicsPlugin;
-use tracing::info;
 
 use crate::{
     ability::{HyperSprinting, Shot, ShotHitEvent, ABILITY_Z},
+    config::Config,
     system, Ally, DeathEvent, Enemy, FixedTimestepSystem, Player,
 };
 
@@ -33,7 +33,8 @@ pub struct GamClientPlugin;
 
 impl Plugin for GamClientPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_engine_tick_system(system::player_input)
+        app.insert_resource(Config::new())
+            .add_engine_tick_system(system::player_input)
             .add_system(system::player_out_of_game_input)
             .add_system(system::update_cursor)
             .add_plugin(GraphicsPlugin)

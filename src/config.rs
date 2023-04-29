@@ -1,8 +1,8 @@
-use std::{fs, io, path::PathBuf, sync::LazyLock};
+use std::{fs, io, path::PathBuf};
 
 use bevy::{
     core_pipeline::fxaa,
-    prelude::{GamepadButton, Input, KeyCode, MouseButton, Res},
+    prelude::{GamepadButton, Input, KeyCode, MouseButton, Res, Resource},
 };
 use directories::ProjectDirs;
 use serde::{Deserialize, Serialize};
@@ -56,39 +56,31 @@ fn load_config() -> Result<Config, Error> {
     Ok(config)
 }
 
-pub fn save_config(config: &Config) -> Result<(), Error> {
+fn save_config(config: &Config) -> Result<(), Error> {
     let config = serde_json::to_string_pretty(config)?;
     fs::write(config_file()?, config)?;
 
     Ok(())
 }
 
-static CONFIG: LazyLock<Config> = LazyLock::new(|| {
-    let config = match load_config() {
-        Ok(config) => config,
-        Err(error) => {
-            error!(%error, "Error loading config");
-            Config::default()
-        }
-    };
-    // TODO: For now, we always save config on load to pickup changes. Stop
-    // doing this once we can edit the config in-game.
-    if let Err(error) = save_config(&config) {
-        error!(?error, "Error saving config");
-    }
-    config
-});
-
-pub fn config() -> &'static Config {
-    LazyLock::force(&CONFIG)
-}
-
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize, Resource)]
 #[serde(default)]
 pub struct Config {
     pub controls: Controls,
     pub graphics: Graphics,
     pub player: Player,
+}
+
+impl Config {
+    pub fn new() -> Config {
+        match load_config() {
+            Ok(config) => config,
+            Err(error) => {
+                error!(?error, "Couldn't load config; using default");
+                Config::default()
+            }
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
