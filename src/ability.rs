@@ -178,7 +178,7 @@ fn shoot(
         let dir = transform.rotation * Vec3::Y;
         let position =
             transform.translation + dir * (PLAYER_R + SHOT_R + 0.01) + ABILITY_Z * Vec3::Z;
-        let vel = dir * SHOT_SPEED + velocity.linvel;
+        let vel = dir * SHOT_SPEED;
         commands.spawn((
             Object {
                 transform: Transform::from_translation(position)
@@ -239,7 +239,7 @@ fn shotgun(
             let dir = (transform.rotation * relative_angle) * Vec3::Y;
             let position =
                 transform.translation + dir * (PLAYER_R + SHOTGUN_R + 0.01) + ABILITY_Z * Vec3::Z;
-            let vel = dir * SHOTGUN_SPEED + velocity.linvel;
+            let vel = dir * SHOTGUN_SPEED;
             commands.spawn((
                 Object {
                     transform: Transform::from_translation(position)
