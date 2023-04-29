@@ -52,7 +52,9 @@ use time::{Tick, TickPlugin, TIMESTEP};
 
 #[derive(States, PartialEq, Eq, Debug, Copy, Clone, Hash, Default)]
 pub enum AppState {
-    #[default]
+    #[cfg_attr(feature = "graphics", default)]
+    Loading,
+    #[cfg_attr(not(feature = "graphics"), default)]
     Running,
     Paused,
 }
@@ -213,23 +215,23 @@ impl Plugin for GamPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         #[cfg(not(feature = "train"))]
         app.insert_resource(FixedTime::new(Duration::from_secs_f32(TIMESTEP)));
-        app.insert_resource(NumAi {
-            enemies: 0,
-            allies: 0,
-        })
-        .add_state::<AppState>()
-        .add_plugin(TickPlugin)
-        .add_startup_system(setup)
-        .add_engine_tick_system(ability::hyper_sprint_system)
-        .add_engine_tick_system(ability::shot_despawn_system)
-        .add_event::<ShotHitEvent>()
-        .add_event::<DeathEvent>()
-        .add_engine_tick_system(ability::shot_hit_system)
-        .add_engine_tick_system(ability::shot_kickback_system)
-        .add_plugin(ai::simple::SimpleAiPlugin)
-        .add_engine_tick_system(system::die)
-        .add_engine_tick_system(system::reset)
-        .add_plugin(PhysicsPlugin);
+        app.add_state::<AppState>()
+            .insert_resource(NumAi {
+                enemies: 0,
+                allies: 0,
+            })
+            .add_plugin(TickPlugin)
+            .add_startup_system(setup)
+            .add_engine_tick_system(ability::hyper_sprint_system)
+            .add_engine_tick_system(ability::shot_despawn_system)
+            .add_event::<ShotHitEvent>()
+            .add_event::<DeathEvent>()
+            .add_engine_tick_system(ability::shot_hit_system)
+            .add_engine_tick_system(ability::shot_kickback_system)
+            .add_plugin(ai::simple::SimpleAiPlugin)
+            .add_engine_tick_system(system::die)
+            .add_engine_tick_system(system::reset)
+            .add_plugin(PhysicsPlugin);
     }
 }
 

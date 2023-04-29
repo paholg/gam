@@ -1,7 +1,8 @@
 use bevy::{
     prelude::{
-        Added, Assets, Bundle, Commands, ComputedVisibility, Entity, EventReader, Handle, Mesh, Plugin, Query, Res, ResMut, Resource, StandardMaterial, Transform,
-        Visibility, With, Without,
+        Added, Assets, Bundle, Commands, ComputedVisibility, Entity, EventReader, Handle, Mesh,
+        Plugin, Query, Res, ResMut, Resource, StandardMaterial, Transform, Visibility, With,
+        Without,
     },
     scene::Scene,
 };
@@ -10,12 +11,13 @@ use bevy_kira_audio::{
     prelude::Volume, Audio, AudioControl, AudioInstance, AudioPlugin, PlaybackState,
 };
 use bevy_mod_inverse_kinematics::InverseKinematicsPlugin;
+use iyes_progress::ProgressPlugin;
 use rand::Rng;
 use tracing::info;
 
 use crate::{
     ability::{HyperSprinting, Shot, ShotHitEvent, ABILITY_Z},
-    Ally, DeathEvent, Enemy, Player,
+    Ally, AppState, DeathEvent, Enemy, Player,
 };
 
 use self::{
@@ -25,12 +27,14 @@ use self::{
     config::{Config, ConfigPlugin},
     controls::ControlPlugin,
     healthbar::{Healthbar, HealthbarPlugin},
+    splash::SplashPlugin,
 };
 
 mod asset_handler;
 mod config;
 mod controls;
 mod healthbar;
+mod splash;
 mod ui;
 
 const OUTLINE_DEPTH_BIAS: f32 = 0.5;
@@ -40,7 +44,13 @@ pub struct GamClientPlugin;
 
 impl Plugin for GamClientPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_plugin(AudioPlugin)
+        app.add_plugin(SplashPlugin)
+            .add_plugin(
+                ProgressPlugin::new(AppState::Loading)
+                    .continue_to(AppState::Running)
+                    .track_assets(),
+            )
+            .add_plugin(AudioPlugin)
             .add_plugin(ConfigPlugin)
             .add_plugin(ControlPlugin)
             .add_plugin(GraphicsPlugin)
