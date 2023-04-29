@@ -1,21 +1,24 @@
 use bevy::{
     prelude::{
         Added, Audio, Bundle, Commands, ComputedVisibility, Entity, EventReader, Handle, Mesh,
-        PlaybackSettings, Plugin, Query, Res, StandardMaterial, Transform, Visibility, With,
+        PlaybackSettings, Plugin, Query, Res, StandardMaterial, Transform, Vec3, Visibility, With,
         Without,
     },
     scene::Scene,
 };
 use bevy_hanabi::ParticleEffect;
 use bevy_mod_inverse_kinematics::InverseKinematicsPlugin;
+use tracing::info;
 
 use crate::{
-    ability::{HyperSprinting, Shot, ShotHitEvent},
-    system, Ally, Enemy, FixedTimestepSystem, Player,
+    ability::{HyperSprinting, Shot, ShotHitEvent, ABILITY_Z},
+    system, Ally, DeathEvent, Enemy, FixedTimestepSystem, Player,
 };
 
 use self::{
-    asset_handler::{asset_handler_setup, AssetHandler, HyperSprintEffect, ShotEffect},
+    asset_handler::{
+        asset_handler_setup, AssetHandler, DeathEffect, HyperSprintEffect, ShotEffect,
+    },
     healthbar::{Healthbar, HealthbarPlugin},
 };
 
@@ -50,6 +53,7 @@ impl Plugin for GraphicsPlugin {
             .add_system(draw_ally_system)
             .add_system(draw_shot_system)
             .add_system(draw_shot_hit_system)
+            .add_system(draw_death_system)
             .add_system(draw_hyper_sprint_system)
             .add_plugin(ui::UiPlugin);
     }
@@ -169,6 +173,21 @@ fn draw_shot_hit_system(
         //     1.0,
         //     hit.transform.translation,
         // );
+    }
+}
+
+fn draw_death_system(
+    assets: Res<AssetHandler>,
+    audio: Res<Audio>,
+    mut effects: Query<(&mut ParticleEffect, &mut Transform), With<DeathEffect>>,
+    mut event_reader: EventReader<DeathEvent>,
+    player: Query<&Transform, (With<Player>, Without<DeathEffect>)>,
+) {
+    for death in event_reader.iter() {
+        let (mut effect, mut transform) = effects.get_mut(assets.player.despawn_effect).unwrap();
+        *transform = death.transform;
+        transform.translation.z += ABILITY_Z;
+        effect.maybe_spawner().unwrap().reset();
     }
 }
 

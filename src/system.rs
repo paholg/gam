@@ -1,8 +1,8 @@
 use bevy::{
     prelude::{
-        Camera, Commands, DespawnRecursiveExt, Entity, GlobalTransform, Input, KeyCode,
-        MouseButton, NextState, Quat, Query, Res, ResMut, State, Transform, Vec2, Vec3, With,
-        Without,
+        Camera, Commands, DespawnRecursiveExt, Entity, EventWriter, GlobalTransform, Input,
+        KeyCode, MouseButton, NextState, Quat, Query, Res, ResMut, State, Transform, Vec2, Vec3,
+        With, Without,
     },
     window::{PrimaryWindow, Window},
 };
@@ -20,7 +20,7 @@ use crate::{
     physics::RapierPlugin,
     pointing_angle,
     time::TickCounter,
-    Ai, Ally, AppState, Character, Cooldowns, Enemy, Health, MaxSpeed, NumAi, Player,
+    Ai, Ally, AppState, Character, Cooldowns, DeathEvent, Enemy, Health, MaxSpeed, NumAi, Player,
     CAMERA_OFFSET, DAMPING, PLANE, PLAYER_R,
 };
 
@@ -139,9 +139,14 @@ pub fn update_cursor(
         Transform::from_translation(CAMERA_OFFSET + look_at).looking_at(look_at, Vec3::Z);
 }
 
-pub fn die(mut commands: Commands, query: Query<(Entity, &Health)>) {
-    for (entity, health) in query.iter() {
+pub fn die(
+    mut commands: Commands,
+    query: Query<(Entity, &Health, &Transform)>,
+    mut event_writer: EventWriter<DeathEvent>,
+) {
+    for (entity, health, &transform) in query.iter() {
         if health.cur <= 0.0 {
+            event_writer.send(DeathEvent { transform });
             commands.entity(entity).despawn_recursive();
         }
     }

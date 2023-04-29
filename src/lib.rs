@@ -59,6 +59,10 @@ pub enum AppState {
     Paused,
 }
 
+pub struct DeathEvent {
+    pub transform: Transform,
+}
+
 const PLAYER_R: f32 = 1.0;
 const IMPULSE: f32 = 15.0;
 const DAMPING: Damping = Damping {
@@ -221,6 +225,7 @@ impl Plugin for GamPlugin {
         .add_engine_tick_system(ability::hyper_sprint_system)
         .add_engine_tick_system(ability::shot_despawn_system)
         .add_event::<ShotHitEvent>()
+        .add_event::<DeathEvent>()
         .add_engine_tick_system(ability::shot_hit_system)
         .add_engine_tick_system(ability::shot_kickback_system)
         .add_plugin(ai::simple::SimpleAiPlugin)
