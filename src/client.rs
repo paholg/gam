@@ -1,13 +1,18 @@
 use bevy::{
     prelude::{
-        Added, Audio, Bundle, Commands, ComputedVisibility, Entity, EventReader, Handle, Mesh,
-        PlaybackSettings, Plugin, Query, Res, StandardMaterial, Transform, Visibility, With,
-        Without,
+        Added, Assets, Bundle, Commands, ComputedVisibility, Entity, EventReader, Handle, Mesh,
+        PlaybackSettings, Plugin, Query, Res, ResMut, Resource, StandardMaterial, Transform,
+        Visibility, With, Without,
     },
     scene::Scene,
 };
 use bevy_hanabi::ParticleEffect;
+use bevy_kira_audio::{
+    prelude::Volume, Audio, AudioControl, AudioInstance, AudioPlugin, AudioSource, PlaybackState,
+};
 use bevy_mod_inverse_kinematics::InverseKinematicsPlugin;
+use rand::Rng;
+use tracing::info;
 
 use crate::{
     ability::{HyperSprinting, Shot, ShotHitEvent, ABILITY_Z},
@@ -36,9 +41,12 @@ pub struct GamClientPlugin;
 
 impl Plugin for GamClientPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_plugin(ConfigPlugin)
+        app.add_plugin(AudioPlugin)
+            .add_plugin(ConfigPlugin)
             .add_plugin(ControlPlugin)
             .add_plugin(GraphicsPlugin)
+            .insert_resource(BackgroundMusic::default())
+            .add_system(background_music_system)
             .add_plugin(bevy_hanabi::HanabiPlugin);
     }
 }
@@ -155,32 +163,14 @@ fn draw_shot_hit_system(
     config: Res<Config>,
     mut effects: Query<(&mut ParticleEffect, &mut Transform), With<ShotEffect>>,
     mut event_reader: EventReader<ShotHitEvent>,
-    player: Query<&Transform, (With<Player>, Without<ShotEffect>)>,
 ) {
-    let player = player
-        .get_single()
-        .map(ToOwned::to_owned)
-        .unwrap_or_default();
     for hit in event_reader.iter() {
         let (mut effect, mut transform) = effects.get_mut(assets.shot.effect_entity).unwrap();
         *transform = hit.transform;
         effect.maybe_spawner().unwrap().reset();
-        audio.play_spatial_with_settings(
-            assets.shot.despawn_sound.clone(),
-            PlaybackSettings {
-                repeat: false,
-                volume: config.sound.effects_volume * 0.5,
-                speed: 1.0,
-            },
-            player,
-            1.0,
-            hit.transform.translation,
-        );
-
-        // FIXME: There is currently a bug where killing the last enemy with
-        // multiple shots causes the new enemies to spawn and then teleport to
-        // NaN. To prevent this, we only play one shot hit sound per frame.
-        break;
+        audio
+            .play(assets.shot.despawn_sound.clone())
+            .with_volume(Volume::Decibels(config.sound.effects_volume));
     }
 }
 
@@ -190,29 +180,16 @@ fn draw_death_system(
     config: Res<Config>,
     mut effects: Query<(&mut ParticleEffect, &mut Transform), With<DeathEffect>>,
     mut event_reader: EventReader<DeathEvent>,
-    player: Query<&Transform, (With<Player>, Without<DeathEffect>)>,
 ) {
-    let player = player
-        .get_single()
-        .map(ToOwned::to_owned)
-        .unwrap_or_default();
     for death in event_reader.iter() {
         let (mut effect, mut transform) = effects.get_mut(assets.player.despawn_effect).unwrap();
         *transform = death.transform;
         transform.translation.z += ABILITY_Z;
         effect.maybe_spawner().unwrap().reset();
 
-        audio.play_spatial_with_settings(
-            assets.player.despawn_sound.clone(),
-            PlaybackSettings {
-                repeat: false,
-                volume: config.sound.effects_volume,
-                speed: 1.0,
-            },
-            player,
-            1.0,
-            death.transform.translation,
-        );
+        audio
+            .play(assets.player.despawn_sound.clone())
+            .with_volume(Volume::Decibels(config.sound.effects_volume));
     }
 }
 
@@ -229,4 +206,44 @@ fn draw_hyper_sprint_system(
     }
 }
 
-fn background_music_system() {}
+#[derive(Resource, Default)]
+struct BackgroundMusic {
+    name: Option<String>,
+    handle: Option<Handle<AudioInstance>>,
+}
+
+fn background_music_system(
+    asset_handler: ResMut<AssetHandler>,
+    audio: Res<Audio>,
+    config: Res<Config>,
+    mut bg_music: ResMut<BackgroundMusic>,
+    assets: Res<Assets<AudioInstance>>,
+) {
+    let should_play = match &bg_music.handle {
+        None => true,
+        Some(handle) => match assets.get(handle) {
+            Some(asset) => {
+                if asset.state() == PlaybackState::Stopped {
+                    true
+                } else {
+                    false
+                }
+            }
+            None => false,
+        },
+    };
+
+    if should_play {
+        let mut rng = rand::thread_rng();
+        let idx = rng.gen_range(0..asset_handler.music.len());
+        let (name, song) = asset_handler.music[idx].clone();
+        info!(%name, "Playing");
+        let handle = audio
+            .play(song)
+            .with_volume(Volume::Decibels(config.sound.music_volume))
+            .handle();
+
+        bg_music.name = Some(name);
+        bg_music.handle = Some(handle);
+    }
+}

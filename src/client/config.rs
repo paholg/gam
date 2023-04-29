@@ -191,17 +191,17 @@ impl From<Sensitivity> for fxaa::Sensitivity {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Sound {
-    pub effects_volume: f32,
-    pub music_volume: f32,
-    pub speech_volume: f32,
+    pub effects_volume: f64,
+    pub music_volume: f64,
+    pub speech_volume: f64,
 }
 
 impl Default for Sound {
     fn default() -> Self {
         Self {
-            effects_volume: 4.0,
-            music_volume: 2.0,
-            speech_volume: 4.0,
+            effects_volume: -20.0,
+            music_volume: -20.0,
+            speech_volume: -20.0,
         }
     }
 }

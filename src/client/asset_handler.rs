@@ -1,9 +1,9 @@
 use bevy::{
     prelude::{
-        default,
+        default, info,
         shape::{self, Icosphere},
-        AlphaMode, AssetServer, Assets, AudioSource, Color, Commands, Component, Entity, Handle,
-        Mesh, ResMut, Resource, StandardMaterial, Vec2, Vec3, Vec4,
+        AlphaMode, AssetServer, Assets, Color, Commands, Component, Entity, Handle, Mesh, ResMut,
+        Resource, StandardMaterial, Vec2, Vec3, Vec4,
     },
     scene::Scene,
 };
@@ -13,6 +13,7 @@ use bevy_hanabi::{
     InitVelocitySphereModifier, LinearDragModifier, ParticleEffectBundle, ShapeDimension,
     SizeOverLifetimeModifier, Spawner, Value,
 };
+use bevy_kira_audio::AudioSource;
 
 use crate::{ability::SHOT_R, shapes::HollowPolygon, PLAYER_R};
 
@@ -53,6 +54,7 @@ pub struct AssetHandler {
     pub player: CharacterAssets,
     pub ally: CharacterAssets,
     pub enemy: CharacterAssets,
+    pub music: Vec<(String, Handle<AudioSource>)>,
 }
 
 #[derive(Component)]
@@ -193,6 +195,7 @@ pub fn asset_handler_setup(
     };
 
     let asset_handler = AssetHandler {
+        music: load_music(&asset_server),
         healthbar,
         shot,
         hyper_sprint,
@@ -201,6 +204,18 @@ pub fn asset_handler_setup(
         enemy,
     };
     commands.insert_resource(asset_handler);
+}
+
+fn load_music(asset_server: &AssetServer) -> Vec<(String, Handle<AudioSource>)> {
+    let mut res = Vec::new();
+    for entry in glob::glob("assets/audio/Galacti-Chrons Weird Music Pack/*.mp3").unwrap() {
+        if let Ok(path) = entry {
+            let fname = path.file_name().unwrap().to_string_lossy().into_owned();
+            let rel_path = format!("audio/Galacti-Chrons Weird Music Pack/{}", fname);
+            res.push((fname, asset_server.load(rel_path)));
+        }
+    }
+    res
 }
 
 fn shot_effect() -> EffectAsset {
