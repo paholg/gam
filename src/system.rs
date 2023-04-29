@@ -1,6 +1,6 @@
 use bevy::prelude::{
     Commands, DespawnRecursiveExt, Entity, EventWriter, GlobalTransform, Query, ResMut, Transform,
-    Vec3, With,
+    Vec2, Vec3, With,
 };
 use bevy_rapier3d::prelude::{
     Collider, ExternalImpulse, LockedAxes, ReadMassProperties, RigidBody, Velocity,
@@ -8,10 +8,8 @@ use bevy_rapier3d::prelude::{
 use rand::Rng;
 
 use crate::{
-    ai::simple::Attitude,
-    status_effect::StatusEffects,
-    Ai, Ally, Character, Cooldowns, DeathEvent, Enemy, Energy, Health, MaxSpeed, NumAi, Player,
-    DAMPING, PLANE, PLAYER_R,
+    ai::simple::Attitude, status_effect::StatusEffects, Ai, Ally, Character, Cooldowns, DeathEvent,
+    Enemy, Energy, Health, MaxSpeed, NumAi, Player, DAMPING, PLANE, PLAYER_R,
 };
 
 pub fn die(
@@ -27,11 +25,11 @@ pub fn die(
     }
 }
 
-const ENERGY_REGEN: f32 = 0.3;
+const ENERGY_REGEN: f32 = 0.5;
 
 fn spawn_player(commands: &mut Commands) {
     commands.spawn((
-        Player,
+        Player { target: Vec2::ZERO },
         Ally,
         Character {
             health: Health::new(100.0),
@@ -67,7 +65,7 @@ fn spawn_enemies(commands: &mut Commands, num: usize) {
             Ai,
             Character {
                 health: Health::new(10.0),
-                energy: Energy::new(100.0, ENERGY_REGEN),
+                energy: Energy::new(5.0, 0.2),
                 transform: Transform::from_translation(loc),
                 global_transform: GlobalTransform::default(),
                 collider: Collider::capsule(

@@ -1,7 +1,7 @@
 use bevy::{
     prelude::{
         default,
-        shape::{self, Icosphere},
+        shape::{self, Circle, Icosphere},
         AssetServer, Assets, Color, Commands, Component, Entity, Handle, Mesh, ResMut, Resource,
         StandardMaterial, Vec2, Vec3, Vec4,
     },
@@ -37,6 +37,16 @@ pub struct ShotAssets {
     pub despawn_sound: Handle<AudioSource>,
 }
 
+pub struct GrenadeAssets {
+    pub mesh: Handle<Mesh>,
+    pub material: Handle<StandardMaterial>,
+}
+
+pub struct Target {
+    pub mesh: Handle<Mesh>,
+    pub material: Handle<StandardMaterial>,
+}
+
 pub struct HyperSprintAssets {
     pub effect_entity: Entity,
 }
@@ -55,11 +65,13 @@ pub struct AssetHandler {
     pub healthbar: BarAssets,
     pub energybar: BarAssets,
     pub shot: ShotAssets,
+    pub frag_grenade: GrenadeAssets,
     pub hyper_sprint: HyperSprintAssets,
     pub player: CharacterAssets,
     pub ally: CharacterAssets,
     pub enemy: CharacterAssets,
     pub music: Vec<(String, Handle<AudioSource>)>,
+    pub target: Target,
 }
 
 #[derive(Component)]
@@ -150,6 +162,22 @@ pub fn asset_handler_setup(
     loading.add(&shot.spawn_sound);
     loading.add(&shot.despawn_sound);
 
+    let frag_grenade_material = StandardMaterial {
+        emissive: Color::rgb_linear(10.0, 0.0, 0.1),
+        ..Default::default()
+    };
+
+    let frag_grenade = GrenadeAssets {
+        mesh: meshes.add(
+            Mesh::try_from(Icosphere {
+                radius: 1.0,
+                subdivisions: 5,
+            })
+            .unwrap(),
+        ),
+        material: materials.add(frag_grenade_material),
+    };
+
     let effect = effects.add(hyper_sprint_effect());
     let effect_entity = commands
         .spawn(ParticleEffectBundle::new(effect))
@@ -193,7 +221,7 @@ pub fn asset_handler_setup(
     let mut enemy_outline = outline_material.clone();
     enemy_outline.base_color = Color::RED.with_a(OUTLINE_ALPHA);
     enemy_outline.emissive = Color::RED.with_a(OUTLINE_ALPHA);
-    let mut ally_outline = outline_material;
+    let mut ally_outline = outline_material.clone();
     ally_outline.base_color = Color::CYAN.with_a(OUTLINE_ALPHA);
     ally_outline.emissive = Color::CYAN.with_a(OUTLINE_ALPHA);
 
@@ -227,15 +255,25 @@ pub fn asset_handler_setup(
         despawn_effect: death_effect_entity,
     };
 
+    let mut target_material = outline_material;
+    target_material.base_color = Color::CRIMSON;
+    target_material.emissive = Color::CRIMSON;
+    let target = Target {
+        mesh: meshes.add(Circle::new(0.2).into()),
+        material: materials.add(target_material),
+    };
+
     let asset_handler = AssetHandler {
         music: load_music(&asset_server, &mut loading),
         healthbar,
         energybar,
         shot,
+        frag_grenade,
         hyper_sprint,
         player,
         ally,
         enemy,
+        target,
     };
     commands.insert_resource(asset_handler);
 }
