@@ -16,7 +16,7 @@ pub mod shapes;
 pub mod system;
 pub mod time;
 
-use std::f32::consts::PI;
+use std::{f32::consts::PI, time::Duration};
 
 use ability::ShotHitEvent;
 use bevy::{
@@ -214,7 +214,7 @@ pub struct GamPlugin;
 impl Plugin for GamPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         #[cfg(not(feature = "train"))]
-        app.insert_resource(FixedTime::new(TIMESTEP));
+        app.insert_resource(FixedTime::new(Duration::from_secs_f32(TIMESTEP)));
         app.insert_resource(NumAi {
             enemies: 0,
             allies: 0,
