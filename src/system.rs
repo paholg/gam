@@ -111,7 +111,6 @@ fn spawn_allies(commands: &mut Commands, num: usize) {
 pub fn reset(
     mut commands: Commands,
     enemy_query: Query<Entity, With<Enemy>>,
-    ally_query: Query<Entity, With<Ally>>,
     player_query: Query<Entity, With<Player>>,
     mut score: ResMut<Score>,
     tick_counter: Res<TickCounter>,
@@ -120,6 +119,10 @@ pub fn reset(
     if player_query.iter().next().is_none() {
         spawn_player(&mut commands);
         score.0 = 0;
+        *spawn_period = SpawnPeriod::new();
+        for entity in &enemy_query {
+            commands.entity(entity).despawn_recursive();
+        }
     }
 
     if spawn_period.next.before_now(&tick_counter) {

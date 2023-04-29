@@ -195,9 +195,16 @@ pub struct SpawnPeriod {
 }
 
 impl SpawnPeriod {
+    pub fn new() -> Self {
+        Self {
+            period: Tick(300),
+            next: Tick(0),
+        }
+    }
+
     pub fn decrease(&mut self) {
-        if self.period.0 >= 11 {
-            self.period.0 -= 10;
+        if self.period.0 >= 30 {
+            self.period.0 -= 5;
         }
     }
 }
@@ -263,10 +270,7 @@ impl Plugin for GamPlugin {
         app.insert_resource(FixedTime::new(Duration::from_secs_f32(TIMESTEP)));
         app.add_state::<AppState>()
             .insert_resource(Score(0))
-            .insert_resource(SpawnPeriod {
-                period: Tick(300),
-                next: Tick(0),
-            })
+            .insert_resource(SpawnPeriod::new())
             .add_plugin(TickPlugin)
             .add_startup_system(setup)
             .add_engine_tick_system(ability::hyper_sprint_system)
