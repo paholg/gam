@@ -129,7 +129,9 @@ impl Config {
             Ok(config) => config,
             Err(error) => {
                 error!(?error, "Couldn't load config; using default");
-                Config::default()
+                let config = Config::default();
+                let _ = save_config(&config);
+                config
             }
         }
     }

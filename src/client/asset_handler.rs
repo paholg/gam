@@ -150,10 +150,13 @@ pub fn asset_handler_setup(
     const OUTLINE_ALPHA: f32 = 0.5;
 
     let mut player_outline = outline_material.clone();
+    player_outline.base_color = Color::GREEN.with_a(OUTLINE_ALPHA);
     player_outline.emissive = Color::GREEN.with_a(OUTLINE_ALPHA);
     let mut enemy_outline = outline_material.clone();
+    enemy_outline.base_color = Color::RED.with_a(OUTLINE_ALPHA);
     enemy_outline.emissive = Color::RED.with_a(OUTLINE_ALPHA);
     let mut ally_outline = outline_material;
+    ally_outline.base_color = Color::CYAN.with_a(OUTLINE_ALPHA);
     ally_outline.emissive = Color::CYAN.with_a(OUTLINE_ALPHA);
 
     let death_effect = effects.add(death_effect());
