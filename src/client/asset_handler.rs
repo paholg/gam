@@ -1,8 +1,7 @@
 use bevy::{
     prelude::{
         default,
-        shape::{self, Icosphere},
-        AlphaMode, AssetServer, Assets, AudioSource, Color, Commands, Component, Entity, Handle,
+        shape::{self, Icosphere}, AssetServer, Assets, AudioSource, Color, Commands, Component, Entity, Handle,
         Mesh, ResMut, Resource, StandardMaterial, Vec2, Vec3, Vec4,
     },
     scene::Scene,
@@ -16,7 +15,7 @@ use bevy_hanabi::{
 
 use crate::{ability::SHOT_R, shapes::HollowPolygon, PLAYER_R};
 
-use super::{healthbar::Healthbar, OUTLINE_DEPTH_BIAS};
+use super::{healthbar::Healthbar};
 
 pub struct HealthbarAssets {
     pub mesh: Handle<Mesh>,
@@ -204,10 +203,10 @@ pub fn asset_handler_setup(
 
 fn shot_effect() -> EffectAsset {
     let mut color_gradient1 = Gradient::new();
-    color_gradient1.add_key(0.0, Vec4::new(4.0, 4.0, 4.0, 1.0));
-    color_gradient1.add_key(0.1, Vec4::new(4.0, 4.0, 0.0, 1.0));
-    color_gradient1.add_key(0.9, Vec4::new(4.0, 0.0, 0.0, 1.0));
-    color_gradient1.add_key(1.0, Vec4::new(4.0, 0.0, 0.0, 0.0));
+    color_gradient1.add_key(0.0, Vec4::new(0.0, 4.0, 4.0, 1.0));
+    color_gradient1.add_key(0.5, Vec4::new(2.0, 2.0, 4.0, 1.0));
+    color_gradient1.add_key(0.9, Vec4::new(4.0, 0.0, 4.0, 1.0));
+    color_gradient1.add_key(1.0, Vec4::new(4.0, 0.0, 4.0, 0.0));
 
     let mut size_gradient1 = Gradient::new();
     size_gradient1.add_key(0.0, Vec2::splat(0.1));
