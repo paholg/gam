@@ -76,7 +76,7 @@ fn point_to_closest<T: ReadOnlyWorldQuery, U: ReadOnlyWorldQuery>(
             .min_by(|(_, _, d1), (_, _, d2)| d1.partial_cmp(d2).unwrap_or(Ordering::Equal));
         if let Some((trans, vel, dist)) = closest_target {
             let dt = dist / SHOT_SPEED;
-            let lead = (vel.linvel) * dt * 0.5; // Just partially lead for now
+            let lead = (vel.linvel - velocity.linvel) * dt * 0.5; // Just partially lead for now
             let lead_translation = trans.translation + lead;
             let angle = pointing_angle(transform.translation, lead_translation);
             if !angle.is_nan() {
