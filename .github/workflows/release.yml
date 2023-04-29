@@ -1,0 +1,47 @@
+on:
+  push:
+    branches:
+      - main
+
+name: Release
+
+jobs:
+  release:
+    name: Build and Publish Release
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      matrix:
+        config:
+          - { os: windows-latest, target: "x86_64-pc-windows-msvc" }
+    outputs:
+      release_version: ${{ env.RELEASE_VERSION }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set version
+        run: echo "VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          target: ${{ matrix.config.target }}
+      - name: Build
+        run: cargo build --release --locked --target ${{ matrix.config.target }}
+      - name: Prepare
+        run: |
+          dir="gam-${{ env.VERSION }}"
+          target="gam-${{ env.VERSION}}-${{ matrix.config.target }}.zip"
+          echo "TARGET=$target" >> $GITHUB_ENV
+          mkdir $dir
+          cp target/${{ matrix.config.target }}/release/gam $dir/
+          cp -r assets/ $dir/
+          7z a -tzip $target $dir/
+      - name: Publish
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ${{ env.TARGET }}
+          asset_name: gam-${{ matrix.config.target }}
+          tag: ${{ env.VERSION }}
+          overwrite: true
+          body: "New release of gam!"
