@@ -309,7 +309,6 @@ fn update_target_system(
     for (mut transform, target) in &mut target_query {
         if let Ok(player) = player_query.get(target.owner) {
             transform.translation = player.target.extend(0.0);
-            info!(target = %transform.translation);
         }
     }
 }
