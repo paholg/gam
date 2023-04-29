@@ -19,7 +19,6 @@ use std::{f32::consts::PI, time::Duration};
 use ability::ShotHitEvent;
 use bevy::{
     app::PluginGroupBuilder,
-    audio::AudioPlugin,
     core_pipeline::bloom::BloomSettings,
     diagnostic::DiagnosticsPlugin,
     gltf::GltfPlugin,
