@@ -1,8 +1,7 @@
 use bevy::{
     prelude::{
         Added, Audio, Bundle, Commands, ComputedVisibility, Entity, EventReader, Handle, Mesh,
-        PlaybackSettings, Plugin, Query, Res, StandardMaterial, Transform, Vec3, Visibility, With,
-        Without,
+        Plugin, Query, Res, StandardMaterial, Transform, Visibility, With, Without,
     },
     scene::Scene,
 };
@@ -11,18 +10,21 @@ use bevy_mod_inverse_kinematics::InverseKinematicsPlugin;
 
 use crate::{
     ability::{HyperSprinting, Shot, ShotHitEvent, ABILITY_Z},
-    config::Config,
-    system, Ally, DeathEvent, Enemy, FixedTimestepSystem, Player,
+    Ally, DeathEvent, Enemy, Player,
 };
 
 use self::{
     asset_handler::{
         asset_handler_setup, AssetHandler, DeathEffect, HyperSprintEffect, ShotEffect,
     },
+    config::ConfigPlugin,
+    controls::ControlPlugin,
     healthbar::{Healthbar, HealthbarPlugin},
 };
 
 mod asset_handler;
+mod config;
+mod controls;
 mod healthbar;
 mod ui;
 
@@ -33,10 +35,8 @@ pub struct GamClientPlugin;
 
 impl Plugin for GamClientPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.insert_resource(Config::new())
-            .add_engine_tick_system(system::player_input)
-            .add_system(system::player_out_of_game_input)
-            .add_system(system::update_cursor)
+        app.add_plugin(ConfigPlugin)
+            .add_plugin(ControlPlugin)
             .add_plugin(GraphicsPlugin)
             .add_plugin(bevy_hanabi::HanabiPlugin);
     }
@@ -150,12 +150,12 @@ fn draw_ally_system(
 
 fn draw_shot_hit_system(
     assets: Res<AssetHandler>,
-    audio: Res<Audio>,
+    _audio: Res<Audio>,
     mut effects: Query<(&mut ParticleEffect, &mut Transform), With<ShotEffect>>,
     mut event_reader: EventReader<ShotHitEvent>,
     player: Query<&Transform, (With<Player>, Without<ShotEffect>)>,
 ) {
-    let player = player
+    let _player = player
         .get_single()
         .map(ToOwned::to_owned)
         .unwrap_or_default();
@@ -179,10 +179,10 @@ fn draw_shot_hit_system(
 
 fn draw_death_system(
     assets: Res<AssetHandler>,
-    audio: Res<Audio>,
+    _audio: Res<Audio>,
     mut effects: Query<(&mut ParticleEffect, &mut Transform), With<DeathEffect>>,
     mut event_reader: EventReader<DeathEvent>,
-    player: Query<&Transform, (With<Player>, Without<DeathEffect>)>,
+    _player: Query<&Transform, (With<Player>, Without<DeathEffect>)>,
 ) {
     for death in event_reader.iter() {
         let (mut effect, mut transform) = effects.get_mut(assets.player.despawn_effect).unwrap();

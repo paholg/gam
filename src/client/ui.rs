@@ -1,4 +1,4 @@
-use bevy::prelude::{Component, Plugin, Res};
+use bevy::prelude::{Plugin, Res};
 use bevy_debug_text_overlay::{screen_print, OverlayPlugin};
 
 use crate::NumAi;
