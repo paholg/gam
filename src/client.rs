@@ -1,14 +1,13 @@
 use bevy::{
     prelude::{
-        Added, Assets, Bundle, Commands, ComputedVisibility, Entity, EventReader, Handle, Mesh,
-        PlaybackSettings, Plugin, Query, Res, ResMut, Resource, StandardMaterial, Transform,
+        Added, Assets, Bundle, Commands, ComputedVisibility, Entity, EventReader, Handle, Mesh, Plugin, Query, Res, ResMut, Resource, StandardMaterial, Transform,
         Visibility, With, Without,
     },
     scene::Scene,
 };
 use bevy_hanabi::ParticleEffect;
 use bevy_kira_audio::{
-    prelude::Volume, Audio, AudioControl, AudioInstance, AudioPlugin, AudioSource, PlaybackState,
+    prelude::Volume, Audio, AudioControl, AudioInstance, AudioPlugin, PlaybackState,
 };
 use bevy_mod_inverse_kinematics::InverseKinematicsPlugin;
 use rand::Rng;

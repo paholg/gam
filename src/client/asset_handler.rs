@@ -1,8 +1,7 @@
 use bevy::{
     prelude::{
-        default, info,
-        shape::{self, Icosphere},
-        AlphaMode, AssetServer, Assets, Color, Commands, Component, Entity, Handle, Mesh, ResMut,
+        default,
+        shape::{self, Icosphere}, AssetServer, Assets, Color, Commands, Component, Entity, Handle, Mesh, ResMut,
         Resource, StandardMaterial, Vec2, Vec3, Vec4,
     },
     scene::Scene,
@@ -17,7 +16,7 @@ use bevy_kira_audio::AudioSource;
 
 use crate::{ability::SHOT_R, shapes::HollowPolygon, PLAYER_R};
 
-use super::{healthbar::Healthbar, OUTLINE_DEPTH_BIAS};
+use super::{healthbar::Healthbar};
 
 pub struct HealthbarAssets {
     pub mesh: Handle<Mesh>,
