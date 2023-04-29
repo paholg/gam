@@ -16,7 +16,7 @@ pub const PHYSICS_INVERSE_TIMESTEP: f32 = 60.0;
 pub const PHYSICS_TIMESTEP: f32 = 1.0 / PHYSICS_INVERSE_TIMESTEP;
 
 /// Represents a duration in ticks rather than time.
-#[derive(Default)]
+#[derive(Default, Copy, Clone, Debug)]
 pub struct Tick(pub u32);
 
 impl Tick {
