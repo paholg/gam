@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use bevy::{
     prelude::{
         Camera, Commands, Entity, EventReader, GlobalTransform, NextState, Plugin, Quat, Query,
-        Res, ResMut, State, Transform, Vec3, With, Without,
+        Res, ResMut, Resource, State, Transform, Vec3, With, Without,
     },
     window::{CursorMoved, PrimaryWindow, Window},
 };
@@ -25,9 +25,16 @@ impl Plugin for ControlPlugin {
         app.add_system(menu)
             .add_engine_tick_system(player_ability)
             .add_engine_tick_system(player_movement)
+            .insert_resource(CameraFollowMode::Mouse)
             .add_system(player_aim)
             .add_system(update_cursor);
     }
+}
+
+#[derive(Resource, PartialEq, Eq, Debug, Clone, Copy)]
+enum CameraFollowMode {
+    Mouse,
+    Controller,
 }
 
 fn menu(
@@ -56,7 +63,7 @@ fn menu(
     }
 }
 
-pub fn player_ability(
+fn player_ability(
     config: Res<Config>,
     mut commands: Commands,
     tick_counter: Res<TickCounter>,
@@ -96,7 +103,7 @@ pub fn player_ability(
     }
 }
 
-pub fn player_movement(
+fn player_movement(
     mut query: Query<(&ActionState<Action>, &mut ExternalImpulse, &MaxSpeed), With<Player>>,
 ) {
     let (action_state, mut impulse, max_speed) = if let Ok(q) = query.get_single_mut() {
@@ -112,12 +119,13 @@ pub fn player_movement(
     }
 }
 
-pub fn player_aim(
+fn player_aim(
     mut player_query: Query<
         (&ActionState<Action>, &mut Transform),
         (With<Player>, Without<Camera>),
     >,
     mut camera_query: Query<&mut Transform, With<Camera>>,
+    mut camera_mode: ResMut<CameraFollowMode>,
 ) {
     let (action_state, mut transform) = if let Ok(query) = player_query.get_single_mut() {
         query
@@ -131,7 +139,10 @@ pub fn player_aim(
         let rotation = axis_pair.rotation().unwrap().into_radians() - PI * 0.5;
         transform.rotation = Quat::from_axis_angle(Vec3::Z, rotation);
 
-        // TODO: The camera should just follow the player until they use the mouse again.
+        *camera_mode = CameraFollowMode::Controller;
+    }
+
+    if *camera_mode == CameraFollowMode::Controller {
         let mut camera_transform = if let Ok(query) = camera_query.get_single_mut() {
             query
         } else {
@@ -144,17 +155,18 @@ pub fn player_aim(
 }
 
 /// Moves the camera and orients the player based on the mouse cursor.
-pub fn update_cursor(
+fn update_cursor(
     primary_window: Query<&Window, With<PrimaryWindow>>,
     mut camera_query: Query<(&mut Transform, &Camera, &GlobalTransform)>,
     mut player_query: Query<&mut Transform, (With<Player>, Without<Camera>)>,
     cursor_events: EventReader<CursorMoved>,
+    mut camera_mode: ResMut<CameraFollowMode>,
 ) {
-    // We want to be sure to only run this logic if the cursor moves; otherwise
-    // we can mess with rotation for controller users.
-    if cursor_events.is_empty() {
+    if cursor_events.is_empty() && *camera_mode == CameraFollowMode::Controller {
         return;
     }
+
+    *camera_mode = CameraFollowMode::Mouse;
 
     let (mut camera_transform, camera, camera_global_transform) = camera_query.single_mut();
 
