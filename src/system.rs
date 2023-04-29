@@ -68,7 +68,7 @@ pub fn player_input(
 ) {
     let controls = &config.controls;
 
-    let (entity, mut cooldowns, mut velocity, mut max_speed, mut impulse, transform) =
+    let (entity, mut cooldowns, velocity, mut max_speed, mut impulse, transform) =
         match query.get_single_mut() {
             Ok(q) => q,
             Err(_) => return,
