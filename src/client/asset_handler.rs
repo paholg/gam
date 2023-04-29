@@ -17,7 +17,10 @@ use bevy_kira_audio::AudioSource;
 use iyes_progress::prelude::AssetsLoading;
 
 use crate::{
-    ability::SHOT_R,
+    ability::{
+        grenade::{FRAG_GRENADE_EXP_RADIUS, HEAL_GRENADE_EXP_RADIUS},
+        SHOT_R,
+    },
     client::bar::{Energybar, Healthbar},
     shapes::HollowPolygon,
     PLAYER_R,
@@ -40,6 +43,7 @@ pub struct ShotAssets {
 pub struct GrenadeAssets {
     pub mesh: Handle<Mesh>,
     pub material: Handle<StandardMaterial>,
+    pub effect_entity: Entity,
 }
 
 pub struct Target {
@@ -66,6 +70,7 @@ pub struct AssetHandler {
     pub energybar: BarAssets,
     pub shot: ShotAssets,
     pub frag_grenade: GrenadeAssets,
+    pub heal_grenade: GrenadeAssets,
     pub hyper_sprint: HyperSprintAssets,
     pub player: CharacterAssets,
     pub ally: CharacterAssets,
@@ -82,6 +87,9 @@ pub struct HyperSprintEffect;
 
 #[derive(Component)]
 pub struct DeathEffect;
+
+#[derive(Component)]
+pub struct FragGrenadeEffect;
 
 pub fn asset_handler_setup(
     mut commands: Commands,
@@ -167,6 +175,12 @@ pub fn asset_handler_setup(
         ..Default::default()
     };
 
+    let frag_grenade_effect = effects.add(frag_grenade_effect());
+    let frag_effect_entity = commands
+        .spawn(ParticleEffectBundle::new(frag_grenade_effect))
+        .insert(FragGrenadeEffect)
+        .id();
+
     let frag_grenade = GrenadeAssets {
         mesh: meshes.add(
             Mesh::try_from(Icosphere {
@@ -176,6 +190,30 @@ pub fn asset_handler_setup(
             .unwrap(),
         ),
         material: materials.add(frag_grenade_material),
+        effect_entity: frag_effect_entity,
+    };
+
+    let heal_grenade_material = StandardMaterial {
+        emissive: Color::rgb_linear(0.0, 10.0, 0.1),
+        ..Default::default()
+    };
+
+    let heal_grenade_effect = effects.add(heal_grenade_effect());
+    let heal_effect_entity = commands
+        .spawn(ParticleEffectBundle::new(heal_grenade_effect))
+        .insert(FragGrenadeEffect)
+        .id();
+
+    let heal_grenade = GrenadeAssets {
+        mesh: meshes.add(
+            Mesh::try_from(Icosphere {
+                radius: 1.0,
+                subdivisions: 5,
+            })
+            .unwrap(),
+        ),
+        material: materials.add(heal_grenade_material),
+        effect_entity: heal_effect_entity,
     };
 
     let effect = effects.add(hyper_sprint_effect());
@@ -269,6 +307,7 @@ pub fn asset_handler_setup(
         energybar,
         shot,
         frag_grenade,
+        heal_grenade,
         hyper_sprint,
         player,
         ally,
@@ -349,9 +388,9 @@ fn shot_effect() -> EffectAsset {
 fn death_effect() -> EffectAsset {
     let mut color_gradient1 = Gradient::new();
     color_gradient1.add_key(0.0, Vec4::new(4.0, 4.0, 4.0, 1.0));
-    color_gradient1.add_key(0.1, Vec4::new(4.0, 0.0, 0.0, 1.0));
-    color_gradient1.add_key(0.9, Vec4::new(4.0, 0.0, 0.0, 1.0));
-    color_gradient1.add_key(1.0, Vec4::new(4.0, 0.0, 0.0, 0.0));
+    color_gradient1.add_key(0.1, Vec4::new(4.0, 4.0, 0.0, 1.0));
+    color_gradient1.add_key(0.9, Vec4::new(4.0, 4.0, 0.0, 1.0));
+    color_gradient1.add_key(1.0, Vec4::new(4.0, 4.0, 0.0, 0.0));
 
     let mut size_gradient1 = Gradient::new();
     size_gradient1.add_key(0.0, Vec2::splat(0.2));
@@ -369,6 +408,105 @@ fn death_effect() -> EffectAsset {
     .init(InitPositionSphereModifier {
         center: Vec3::ZERO,
         radius: PLAYER_R,
+        dimension: ShapeDimension::Volume,
+    })
+    .init(InitVelocitySphereModifier {
+        center: Vec3::ZERO,
+        // Give a bit of variation by randomizing the initial speed
+        speed: Value::Uniform((6., 7.)),
+    })
+    .init(InitLifetimeModifier {
+        // Give a bit of variation by randomizing the lifetime per particle
+        lifetime: Value::Uniform((0.4, 0.6)),
+    })
+    .init(InitAgeModifier {
+        // Give a bit of variation by randomizing the age per particle. This will control the
+        // starting color and starting size of particles.
+        age: Value::Uniform((0.0, 0.2)),
+    })
+    .update(LinearDragModifier { drag: 5. })
+    // .update(AccelModifier::constant(Vec3::new(0., -8., 0.)))
+    .render(ColorOverLifetimeModifier {
+        gradient: color_gradient1,
+    })
+    .render(SizeOverLifetimeModifier {
+        gradient: size_gradient1,
+    })
+}
+
+fn frag_grenade_effect() -> EffectAsset {
+    let mut color_gradient1 = Gradient::new();
+    color_gradient1.add_key(0.0, Vec4::new(4.0, 4.0, 4.0, 1.0));
+    color_gradient1.add_key(0.1, Vec4::new(4.0, 0.0, 0.0, 1.0));
+    color_gradient1.add_key(0.6, Vec4::new(2.0, 1.0, 0.0, 1.0));
+    color_gradient1.add_key(0.8, Vec4::new(0.0, 0.0, 0.0, 1.0));
+    color_gradient1.add_key(1.0, Vec4::new(0.0, 0.0, 0.0, 0.0));
+
+    let mut size_gradient1 = Gradient::new();
+    size_gradient1.add_key(0.0, Vec2::splat(0.2));
+    size_gradient1.add_key(0.3, Vec2::splat(0.3));
+    size_gradient1.add_key(1.0, Vec2::splat(0.0));
+
+    let spawner = Spawner::once(500.0.into(), false);
+
+    EffectAsset {
+        name: "ShotParticleEffect".to_string(),
+        capacity: 32768,
+        spawner,
+        ..Default::default()
+    }
+    .init(InitPositionSphereModifier {
+        center: Vec3::ZERO,
+        radius: FRAG_GRENADE_EXP_RADIUS,
+        dimension: ShapeDimension::Volume,
+    })
+    .init(InitVelocitySphereModifier {
+        center: Vec3::ZERO,
+        // Give a bit of variation by randomizing the initial speed
+        speed: Value::Uniform((6., 7.)),
+    })
+    .init(InitLifetimeModifier {
+        // Give a bit of variation by randomizing the lifetime per particle
+        lifetime: Value::Uniform((0.4, 0.6)),
+    })
+    .init(InitAgeModifier {
+        // Give a bit of variation by randomizing the age per particle. This will control the
+        // starting color and starting size of particles.
+        age: Value::Uniform((0.0, 0.2)),
+    })
+    .update(LinearDragModifier { drag: 5. })
+    // .update(AccelModifier::constant(Vec3::new(0., -8., 0.)))
+    .render(ColorOverLifetimeModifier {
+        gradient: color_gradient1,
+    })
+    .render(SizeOverLifetimeModifier {
+        gradient: size_gradient1,
+    })
+}
+
+fn heal_grenade_effect() -> EffectAsset {
+    let mut color_gradient1 = Gradient::new();
+    color_gradient1.add_key(0.0, Vec4::new(4.0, 4.0, 4.0, 1.0));
+    color_gradient1.add_key(0.1, Vec4::new(0.0, 4.0, 0.0, 1.0));
+    color_gradient1.add_key(0.8, Vec4::new(0.0, 0.0, 0.0, 1.0));
+    color_gradient1.add_key(1.0, Vec4::new(0.0, 0.0, 0.0, 0.0));
+
+    let mut size_gradient1 = Gradient::new();
+    size_gradient1.add_key(0.0, Vec2::splat(0.2));
+    size_gradient1.add_key(0.3, Vec2::splat(0.3));
+    size_gradient1.add_key(1.0, Vec2::splat(0.0));
+
+    let spawner = Spawner::once(500.0.into(), false);
+
+    EffectAsset {
+        name: "ShotParticleEffect".to_string(),
+        capacity: 32768,
+        spawner,
+        ..Default::default()
+    }
+    .init(InitPositionSphereModifier {
+        center: Vec3::ZERO,
+        radius: HEAL_GRENADE_EXP_RADIUS,
         dimension: ShapeDimension::Volume,
     })
     .init(InitVelocitySphereModifier {

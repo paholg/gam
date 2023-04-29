@@ -76,7 +76,7 @@ const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, -50.0, 50.0);
 
 pub const PLANE: f32 = 50.0;
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct Health {
     cur: f32,
     max: f32,
@@ -86,9 +86,15 @@ impl Health {
     pub fn new(max: f32) -> Self {
         Self { cur: max, max }
     }
+
+    pub fn take(&mut self, dmg: f32) {
+        self.cur -= dmg;
+        self.cur = 0.0f32.max(self.cur);
+        self.cur = self.max.min(self.cur);
+    }
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct Energy {
     cur: f32,
     max: f32,
@@ -134,6 +140,10 @@ pub struct Enemy;
 #[derive(Component)]
 pub struct Ally;
 
+/// Indicates that this entity can be hit by shots; think characters and walls.
+#[derive(Component, Default)]
+pub struct Shootable;
+
 // TODO: Do cooldowns better. We don't want every entity to have a giant
 // cooldowns struct.
 // Or maybe we do?????
@@ -142,9 +152,10 @@ pub struct Cooldowns {
     shoot: Tick,
     shotgun: Tick,
     frag_grenade: Tick,
+    heal_grenade: Tick,
 }
 
-#[derive(Bundle)]
+#[derive(Bundle, Default)]
 pub struct Object {
     transform: Transform,
     global_transform: GlobalTransform,
@@ -156,7 +167,7 @@ pub struct Object {
     mass: ReadMassProperties,
 }
 
-#[derive(Bundle)]
+#[derive(Bundle, Default)]
 struct Character {
     health: Health,
     energy: Energy,
@@ -171,6 +182,7 @@ struct Character {
     locked_axes: LockedAxes,
     mass: ReadMassProperties,
     status_effects: StatusEffects,
+    shootable: Shootable,
 }
 
 #[derive(Resource)]
@@ -248,6 +260,8 @@ impl Plugin for GamPlugin {
             .add_engine_tick_system(ability::hyper_sprint_system)
             .add_engine_tick_system(ability::shot_despawn_system)
             .add_engine_tick_system(ability::grenade::grenade_land_system)
+            .add_engine_tick_system(ability::grenade::grenade_explode_system)
+            .add_engine_tick_system(ability::grenade::explosion_despawn_system)
             .add_event::<ShotHitEvent>()
             .add_event::<DeathEvent>()
             .add_engine_tick_system(ability::shot_hit_system)

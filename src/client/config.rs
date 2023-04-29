@@ -221,7 +221,7 @@ impl Default for PlayerAbilities {
                 Ability::Shoot,
                 Ability::Shotgun,
                 Ability::HyperSprint,
-                Ability::FragGrenade,
+                Ability::HealGrenade,
                 Ability::FragGrenade,
             ],
         }

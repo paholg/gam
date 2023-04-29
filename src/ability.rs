@@ -15,10 +15,10 @@ use smallvec::SmallVec;
 use crate::{
     status_effect::{StatusEffect, StatusEffects},
     time::{Tick, TickCounter},
-    Cooldowns, Energy, Health, Object, PLAYER_R,
+    Cooldowns, Energy, Health, Object, Shootable, PLAYER_R,
 };
 
-use self::grenade::frag_grenade;
+use self::grenade::{frag_grenade, heal_grenade, Explosion};
 
 pub mod grenade;
 
@@ -30,6 +30,7 @@ pub enum Ability {
     Shoot,
     Shotgun,
     FragGrenade,
+    HealGrenade,
 }
 
 impl Ability {
@@ -83,6 +84,15 @@ impl Ability {
                 entity,
                 target,
             ),
+            Ability::HealGrenade => heal_grenade(
+                commands,
+                cooldowns,
+                energy,
+                tick_counter,
+                transform,
+                entity,
+                target,
+            ),
         }
     }
 
@@ -100,6 +110,7 @@ impl Ability {
             Ability::Shoot => (),
             Ability::Shotgun => (),
             Ability::FragGrenade => (),
+            Ability::HealGrenade => (),
         }
     }
 }
@@ -303,27 +314,34 @@ pub fn shot_hit_system(
     mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
     shot_query: Query<(Entity, &Transform, &Velocity, &ReadMassProperties, &Shot)>,
+    // explosion_query: Query<&Explosion>,
     mut health_query: Query<&mut Health>,
-    mut momentum_query: Query<(&mut Velocity, &ReadMassProperties), Without<Shot>>,
+    mut momentum_query: Query<
+        (&mut Velocity, &ReadMassProperties),
+        (With<Shootable>, Without<Shot>),
+    >,
     mut hit_event_writer: EventWriter<ShotHitEvent>,
 ) {
     let mut shots_to_despawn: SmallVec<[(Entity, Transform); 10]> = smallvec::SmallVec::new();
     for collision_event in collision_events.iter() {
         let CollisionEvent::Started(e1, e2, _flags) = collision_event else { continue; };
+        let e1 = *e1;
+        let e2 = *e2;
+
         let (shot_entity, shot_transform, shot_vel, shot_mass, shot, target_entity) =
-            if let Ok((e, t, v, m, s)) = shot_query.get(*e1) {
+            if let Ok((e, t, v, m, s)) = shot_query.get(e1) {
                 (e, t.to_owned(), v, m, s, e2)
-            } else if let Ok((e, t, v, m, s)) = shot_query.get(*e2) {
+            } else if let Ok((e, t, v, m, s)) = shot_query.get(e2) {
                 (e, t.to_owned(), v, m, s, e1)
             } else {
                 continue;
             };
 
         shots_to_despawn.push((shot_entity, shot_transform));
-        if let Ok(mut health) = health_query.get_mut(*target_entity) {
-            health.cur -= shot.damage;
+        if let Ok(mut health) = health_query.get_mut(target_entity) {
+            health.take(shot.damage);
         }
-        if let Ok((mut vel, mass)) = momentum_query.get_mut(*target_entity) {
+        if let Ok((mut vel, mass)) = momentum_query.get_mut(target_entity) {
             vel.linvel += shot_vel.linvel * shot_mass.0.mass / mass.0.mass;
         }
     }

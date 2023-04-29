@@ -16,7 +16,10 @@ use rand::Rng;
 use tracing::info;
 
 use crate::{
-    ability::{grenade::FragGrenade, HyperSprinting, Shot, ShotHitEvent, ABILITY_Z},
+    ability::{
+        grenade::{Explosion, Grenade, GrenadeKind},
+        HyperSprinting, Shot, ShotHitEvent, ABILITY_Z,
+    },
     Ally, AppState, DeathEvent, Enemy, Player,
 };
 
@@ -71,9 +74,10 @@ impl Plugin for GraphicsPlugin {
             .add_system(draw_enemy_system)
             .add_system(draw_ally_system)
             .add_system(draw_shot_system)
-            .add_system(draw_frag_grenade_system)
+            .add_system(draw_grenade_system)
             .add_system(draw_shot_hit_system)
             .add_system(draw_death_system)
+            .add_system(draw_explosion_system)
             .add_system(draw_hyper_sprint_system)
             .add_system(draw_target_system)
             .add_system(update_target_system)
@@ -116,16 +120,26 @@ fn draw_shot_system(
     }
 }
 
-fn draw_frag_grenade_system(
+fn draw_grenade_system(
     mut commands: Commands,
     assets: Res<AssetHandler>,
-    query: Query<Entity, Added<FragGrenade>>,
+    query: Query<(Entity, &Grenade), Added<Grenade>>,
 ) {
-    for entity in query.iter() {
+    for (entity, grenade) in query.iter() {
         let Some(mut ecmds) = commands.get_entity(entity) else { continue };
+        let (mesh, material) = match grenade.kind {
+            GrenadeKind::Frag => (
+                assets.frag_grenade.mesh.clone(),
+                assets.frag_grenade.material.clone(),
+            ),
+            GrenadeKind::Heal => (
+                assets.heal_grenade.mesh.clone(),
+                assets.heal_grenade.material.clone(),
+            ),
+        };
         ecmds.insert(ObjectGraphics {
-            material: assets.frag_grenade.material.clone(),
-            mesh: assets.frag_grenade.mesh.clone(),
+            material,
+            mesh,
             visibility: Visibility::Visible,
             computed_visibility: ComputedVisibility::default(),
         });
@@ -225,6 +239,28 @@ fn draw_death_system(
     }
 }
 
+fn draw_explosion_system(
+    assets: Res<AssetHandler>,
+    audio: Res<Audio>,
+    config: Res<Config>,
+    mut effects: Query<(&mut ParticleEffect, &mut Transform), Without<Explosion>>,
+    query: Query<(&Transform, &Explosion), Added<Explosion>>,
+) {
+    for (explosion_transform, explosion) in &query {
+        let effect_entity = match explosion.kind {
+            GrenadeKind::Frag => assets.frag_grenade.effect_entity,
+            GrenadeKind::Heal => assets.heal_grenade.effect_entity,
+        };
+        let (mut effect, mut transform) = effects.get_mut(effect_entity).unwrap();
+        *transform = *explosion_transform;
+        effect.maybe_spawner().unwrap().reset();
+
+        audio
+            .play(assets.player.despawn_sound.clone())
+            .with_volume(Volume::Decibels(config.sound.effects_volume));
+    }
+}
+
 fn draw_hyper_sprint_system(
     assets: Res<AssetHandler>,
     mut effects: Query<(&mut ParticleEffect, &mut Transform), With<HyperSprintEffect>>,
@@ -305,6 +341,7 @@ fn draw_target_system(
         commands.entity(entity).push_children(&[target_entity]);
     }
 }
+
 fn update_target_system(
     player_query: Query<(&Player, &Transform)>,
     mut target_query: Query<(&mut Transform, &Target), Without<Player>>,
