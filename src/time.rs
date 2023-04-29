@@ -52,7 +52,7 @@ impl From<u32> for Tick {
 
 #[derive(Resource)]
 pub struct TickCounter {
-    tick: u32,
+    pub tick: u32,
     since: Instant,
 }
 
