@@ -1,8 +1,9 @@
 use bevy::{
     prelude::{
         default,
-        shape::{self, Icosphere}, AssetServer, Assets, Color, Commands, Component, Entity, Handle, Mesh, ResMut,
-        Resource, StandardMaterial, Vec2, Vec3, Vec4,
+        shape::{self, Icosphere},
+        AssetServer, Assets, Color, Commands, Component, Entity, Handle, Mesh,
+        ResMut, Resource, StandardMaterial, Vec2, Vec3, Vec4,
     },
     scene::Scene,
 };
@@ -13,10 +14,11 @@ use bevy_hanabi::{
     SizeOverLifetimeModifier, Spawner, Value,
 };
 use bevy_kira_audio::AudioSource;
+use iyes_progress::prelude::AssetsLoading;
 
 use crate::{ability::SHOT_R, shapes::HollowPolygon, PLAYER_R};
 
-use super::{healthbar::Healthbar};
+use super::healthbar::Healthbar;
 
 pub struct HealthbarAssets {
     pub mesh: Handle<Mesh>,
@@ -71,6 +73,7 @@ pub fn asset_handler_setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut effects: ResMut<Assets<EffectAsset>>,
     asset_server: ResMut<AssetServer>,
+    mut loading: ResMut<AssetsLoading>,
 ) {
     let fg = StandardMaterial {
         base_color: Color::GREEN,
@@ -118,6 +121,8 @@ pub fn asset_handler_setup(
         spawn_sound: asset_server.load("audio/laserSmall_000.ogg"),
         despawn_sound: asset_server.load("audio/laserSmall_000.ogg"),
     };
+    loading.add(&shot.spawn_sound);
+    loading.add(&shot.despawn_sound);
 
     let effect = effects.add(hyper_sprint_effect());
     let effect_entity = commands
@@ -128,8 +133,11 @@ pub fn asset_handler_setup(
     let hyper_sprint = HyperSprintAssets { effect_entity };
 
     let robot = asset_server.load("models/temp/robot1.glb#Scene0");
+    loading.add(&robot);
     let snowman = asset_server.load("models/temp/snowman.glb#Scene0");
+    loading.add(&snowman);
     let death_sound = asset_server.load("audio/explosionCrunch_000.ogg");
+    loading.add(&death_sound);
 
     let outline = meshes.add(
         HollowPolygon {
@@ -194,7 +202,7 @@ pub fn asset_handler_setup(
     };
 
     let asset_handler = AssetHandler {
-        music: load_music(&asset_server),
+        music: load_music(&asset_server, &mut loading),
         healthbar,
         shot,
         hyper_sprint,
@@ -205,13 +213,20 @@ pub fn asset_handler_setup(
     commands.insert_resource(asset_handler);
 }
 
-fn load_music(asset_server: &AssetServer) -> Vec<(String, Handle<AudioSource>)> {
+fn load_music(
+    asset_server: &AssetServer,
+    loading: &mut AssetsLoading,
+) -> Vec<(String, Handle<AudioSource>)> {
+    // Load all assets in parallel first
+    let _music = asset_server.load_folder("audio/Galacti-Chrons Weird Music Pack");
     let mut res = Vec::new();
-    for entry in glob::glob("assets/audio/Galacti-Chrons Weird Music Pack/*.mp3").unwrap() {
+    for entry in glob::glob("assets/audio/Galacti-Chrons Weird Music Pack/*.ogg").unwrap() {
         if let Ok(path) = entry {
             let fname = path.file_name().unwrap().to_string_lossy().into_owned();
             let rel_path = format!("audio/Galacti-Chrons Weird Music Pack/{}", fname);
-            res.push((fname, asset_server.load(rel_path)));
+            let handle = asset_server.get_handle(rel_path);
+            loading.add(&handle);
+            res.push((fname, handle));
         }
     }
     res

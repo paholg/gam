@@ -51,6 +51,7 @@ fn menu(
 
     if action_state.just_pressed(Action::Menu) {
         match state.0 {
+            AppState::Loading => (),
             AppState::Running => {
                 physics_config.physics_pipeline_active = false;
                 next_state.set(AppState::Paused);
