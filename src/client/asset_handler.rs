@@ -1,7 +1,8 @@
 use bevy::{
     prelude::{
         default,
-        shape::{self, Icosphere}, AssetServer, Assets, AudioSource, Color, Commands, Component, Entity, Handle,
+        shape::{self, Icosphere},
+        AlphaMode, AssetServer, Assets, AudioSource, Color, Commands, Component, Entity, Handle,
         Mesh, ResMut, Resource, StandardMaterial, Vec2, Vec3, Vec4,
     },
     scene::Scene,
@@ -15,7 +16,7 @@ use bevy_hanabi::{
 
 use crate::{ability::SHOT_R, shapes::HollowPolygon, PLAYER_R};
 
-use super::{healthbar::Healthbar};
+use super::{healthbar::Healthbar, OUTLINE_DEPTH_BIAS};
 
 pub struct HealthbarAssets {
     pub mesh: Handle<Mesh>,
@@ -125,7 +126,8 @@ pub fn asset_handler_setup(
 
     let hyper_sprint = HyperSprintAssets { effect_entity };
 
-    let spaceship = asset_server.load("models/temp/robot1.glb#Scene0");
+    let robot = asset_server.load("models/temp/robot1.glb#Scene0");
+    let snowman = asset_server.load("models/temp/snowman.glb#Scene0");
     let death_sound = asset_server.load("audio/explosionCrunch_000.ogg");
 
     let outline = meshes.add(
@@ -167,7 +169,7 @@ pub fn asset_handler_setup(
         .id();
 
     let player = CharacterAssets {
-        scene: spaceship.clone(),
+        scene: robot.clone(),
         outline_mesh: outline.clone(),
         outline_material: materials.add(player_outline),
         despawn_sound: death_sound.clone(),
@@ -175,7 +177,7 @@ pub fn asset_handler_setup(
     };
 
     let ally = CharacterAssets {
-        scene: spaceship.clone(),
+        scene: robot,
         outline_mesh: outline.clone(),
         outline_material: materials.add(ally_outline),
         despawn_sound: death_sound.clone(),
@@ -183,7 +185,7 @@ pub fn asset_handler_setup(
     };
 
     let enemy = CharacterAssets {
-        scene: spaceship,
+        scene: snowman,
         outline_mesh: outline,
         outline_material: materials.add(enemy_outline),
         despawn_sound: death_sound,
