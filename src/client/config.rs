@@ -115,9 +115,9 @@ fn default_controls() -> InputMap<Action> {
         // .insert(DualAxis::mouse_motion(), Action::Aim)
         .insert(DualAxis::right_stick(), Action::Aim)
         .insert(MouseButton::Left, Action::Ability0)
-        .insert(GamepadButtonType::RightTrigger, Action::Ability0)
+        .insert(GamepadButtonType::RightTrigger2, Action::Ability0)
         .insert(MouseButton::Right, Action::Ability1)
-        .insert(GamepadButtonType::LeftTrigger, Action::Ability1)
+        .insert(GamepadButtonType::LeftTrigger2, Action::Ability1)
         .insert(KeyCode::Space, Action::Ability2)
         .insert(GamepadButtonType::South, Action::Ability2);
     map
