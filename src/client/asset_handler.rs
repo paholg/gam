@@ -139,11 +139,13 @@ pub fn asset_handler_setup(
     );
 
     let outline_material = StandardMaterial {
-        depth_bias: OUTLINE_DEPTH_BIAS,
-        perceptual_roughness: 1.0,
-        metallic: 1.0,
-        fog_enabled: false,
-        alpha_mode: AlphaMode::Blend,
+        // FIXME: broken on windows with these settings
+        // depth_bias: OUTLINE_DEPTH_BIAS,
+        // perceptual_roughness: 1.0,
+        // metallic: 1.0,
+        // fog_enabled: false,
+        // alpha_mode: AlphaMode::Blend,
+        unlit: true,
         ..Default::default()
     };
 
