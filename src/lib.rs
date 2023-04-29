@@ -29,9 +29,10 @@ use bevy::{
     prelude::{
         default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera, Camera3dBundle,
         Color, Commands, Component, CoreSchedule, FixedTime, FrameCountPlugin, GilrsPlugin,
-        GlobalTransform, HierarchyPlugin, ImagePlugin, IntoSystemAppConfig, IntoSystemConfig, Mesh, PbrBundle, PerspectiveProjection, Plugin, PluginGroup, PointLight,
-        PointLightBundle, Quat, Res, ResMut, Resource, StandardMaterial, State, States,
-        TaskPoolPlugin, Transform, TypeRegistrationPlugin, Vec2, Vec3,
+        GlobalTransform, HierarchyPlugin, ImagePlugin, IntoSystemAppConfig, IntoSystemConfig, Mesh,
+        PbrBundle, PerspectiveProjection, Plugin, PluginGroup, PointLight, PointLightBundle, Quat,
+        Res, ResMut, Resource, StandardMaterial, State, States, TaskPoolPlugin, Transform,
+        TypeRegistrationPlugin, Vec2, Vec3,
     },
     render::RenderPlugin,
     scene::ScenePlugin,
