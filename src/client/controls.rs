@@ -110,8 +110,14 @@ pub fn player_movement(
     }
 }
 
-pub fn player_aim(mut query: Query<(&ActionState<Action>, &mut Transform), With<Player>>) {
-    let (action_state, mut transform) = if let Ok(query) = query.get_single_mut() {
+pub fn player_aim(
+    mut player_query: Query<
+        (&ActionState<Action>, &mut Transform),
+        (With<Player>, Without<Camera>),
+    >,
+    mut camera_query: Query<&mut Transform, With<Camera>>,
+) {
+    let (action_state, mut transform) = if let Ok(query) = player_query.get_single_mut() {
         query
     } else {
         return;
@@ -122,6 +128,15 @@ pub fn player_aim(mut query: Query<(&ActionState<Action>, &mut Transform), With<
         info!(?axis_pair);
         let rotation = axis_pair.rotation().unwrap().into_radians();
         transform.rotation = Quat::from_axis_angle(Vec3::Z, rotation);
+
+        let mut camera_transform = if let Ok(query) = camera_query.get_single_mut() {
+            query
+        } else {
+            return;
+        };
+        let look_at = transform.translation;
+        *camera_transform =
+            Transform::from_translation(CAMERA_OFFSET + look_at).looking_at(look_at, Vec3::Z);
     }
 }
 
