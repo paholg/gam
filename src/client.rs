@@ -1,7 +1,8 @@
 use bevy::{
     prelude::{
         Added, Audio, Bundle, Commands, ComputedVisibility, Entity, EventReader, Handle, Mesh,
-        Plugin, Query, Res, StandardMaterial, Transform, Visibility, With, Without,
+        PlaybackSettings, Plugin, Query, Res, StandardMaterial, Transform, Visibility, With,
+        Without,
     },
     scene::Scene,
 };
@@ -17,7 +18,7 @@ use self::{
     asset_handler::{
         asset_handler_setup, AssetHandler, DeathEffect, HyperSprintEffect, ShotEffect,
     },
-    config::ConfigPlugin,
+    config::{Config, ConfigPlugin},
     controls::ControlPlugin,
     healthbar::{Healthbar, HealthbarPlugin},
 };
@@ -150,12 +151,13 @@ fn draw_ally_system(
 
 fn draw_shot_hit_system(
     assets: Res<AssetHandler>,
-    _audio: Res<Audio>,
+    audio: Res<Audio>,
+    config: Res<Config>,
     mut effects: Query<(&mut ParticleEffect, &mut Transform), With<ShotEffect>>,
     mut event_reader: EventReader<ShotHitEvent>,
     player: Query<&Transform, (With<Player>, Without<ShotEffect>)>,
 ) {
-    let _player = player
+    let player = player
         .get_single()
         .map(ToOwned::to_owned)
         .unwrap_or_default();
@@ -163,32 +165,54 @@ fn draw_shot_hit_system(
         let (mut effect, mut transform) = effects.get_mut(assets.shot.effect_entity).unwrap();
         *transform = hit.transform;
         effect.maybe_spawner().unwrap().reset();
-        // audio.play_spatial_with_settings(
-        //     assets.shot.despawn_sound.clone(),
-        //     PlaybackSettings {
-        //         repeat: false,
-        //         volume: 5.0,
-        //         speed: 1.0,
-        //     },
-        //     player,
-        //     1.0,
-        //     hit.transform.translation,
-        // );
+        audio.play_spatial_with_settings(
+            assets.shot.despawn_sound.clone(),
+            PlaybackSettings {
+                repeat: false,
+                volume: config.sound.effects_volume * 0.5,
+                speed: 1.0,
+            },
+            player,
+            1.0,
+            hit.transform.translation,
+        );
+
+        // FIXME: There is currently a bug where killing the last enemy with
+        // multiple shots causes the new enemies to spawn and then teleport to
+        // NaN. To prevent this, we only play one shot hit sound per frame.
+        break;
     }
 }
 
 fn draw_death_system(
     assets: Res<AssetHandler>,
-    _audio: Res<Audio>,
+    audio: Res<Audio>,
+    config: Res<Config>,
     mut effects: Query<(&mut ParticleEffect, &mut Transform), With<DeathEffect>>,
     mut event_reader: EventReader<DeathEvent>,
-    _player: Query<&Transform, (With<Player>, Without<DeathEffect>)>,
+    player: Query<&Transform, (With<Player>, Without<DeathEffect>)>,
 ) {
+    let player = player
+        .get_single()
+        .map(ToOwned::to_owned)
+        .unwrap_or_default();
     for death in event_reader.iter() {
         let (mut effect, mut transform) = effects.get_mut(assets.player.despawn_effect).unwrap();
         *transform = death.transform;
         transform.translation.z += ABILITY_Z;
         effect.maybe_spawner().unwrap().reset();
+
+        audio.play_spatial_with_settings(
+            assets.player.despawn_sound.clone(),
+            PlaybackSettings {
+                repeat: false,
+                volume: config.sound.effects_volume,
+                speed: 1.0,
+            },
+            player,
+            1.0,
+            death.transform.translation,
+        );
     }
 }
 
@@ -204,3 +228,5 @@ fn draw_hyper_sprint_system(
         effect.maybe_spawner().unwrap().reset();
     }
 }
+
+fn background_music_system() {}

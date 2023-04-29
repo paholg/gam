@@ -3,8 +3,8 @@ use std::{fs, io, path::PathBuf};
 use bevy::{
     core_pipeline::fxaa,
     prelude::{
-        Added, Commands, Entity, GamepadButtonType, KeyCode, MouseButton, Plugin,
-        Query, Res, Resource,
+        Added, Commands, Entity, GamepadButtonType, KeyCode, MouseButton, Plugin, Query, Res,
+        Resource,
     },
 };
 use directories::ProjectDirs;
@@ -85,6 +85,7 @@ fn save_config(config: &Config) -> Result<(), Error> {
 pub struct Config {
     pub controls: InputMap<Action>,
     pub graphics: Graphics,
+    pub sound: Sound,
     pub player: PlayerAbilities,
 }
 
@@ -93,6 +94,7 @@ impl Default for Config {
         Self {
             controls: default_controls(),
             graphics: Default::default(),
+            sound: Default::default(),
             player: Default::default(),
         }
     }
@@ -183,6 +185,23 @@ impl From<Sensitivity> for fxaa::Sensitivity {
             Sensitivity::High => Self::High,
             Sensitivity::Ultra => Self::Ultra,
             Sensitivity::Extreme => Self::Extreme,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Sound {
+    pub effects_volume: f32,
+    pub music_volume: f32,
+    pub speech_volume: f32,
+}
+
+impl Default for Sound {
+    fn default() -> Self {
+        Self {
+            effects_volume: 4.0,
+            music_volume: 2.0,
+            speech_volume: 4.0,
         }
     }
 }
