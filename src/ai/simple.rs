@@ -3,7 +3,7 @@ use std::cmp::Ordering;
 use bevy::{
     ecs::query::ReadOnlyWorldQuery,
     prelude::{
-        Commands, Component, Entity, Plugin, Quat, Query, Res, Transform, Vec3, With, Without,
+        Commands, Component, Entity, Plugin, Quat, Query, Res, Transform, Vec2, Vec3, With, Without,
     },
 };
 use bevy_rapier3d::prelude::{ExternalImpulse, Velocity};
@@ -129,6 +129,7 @@ fn stupid_shoot_system(
             transform,
             velocity,
             &mut status_effects,
+            Vec2::ZERO,
         );
     }
 }

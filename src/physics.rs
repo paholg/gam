@@ -7,10 +7,12 @@ pub type RapierPlugin = RapierPhysicsPlugin<NoUserData>;
 
 pub struct PhysicsPlugin;
 
+pub const G: f32 = 9.81;
+
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         let rapier_config = RapierConfiguration {
-            gravity: Vec3::ZERO,
+            gravity: Vec3::Z * (-G),
             timestep_mode: TimestepMode::Fixed {
                 dt: PHYSICS_TIMESTEP,
                 substeps: 1,

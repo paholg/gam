@@ -1,7 +1,7 @@
 use bevy::{
     prelude::{
-        Added, Assets, Bundle, Commands, ComputedVisibility, Entity, EventReader,
-        Handle, Mesh, Plugin, Query, Res, ResMut, Resource, StandardMaterial, Transform,
+        Added, Assets, Bundle, Commands, Component, ComputedVisibility, Entity, EventReader,
+        Handle, Mesh, PbrBundle, Plugin, Query, Res, ResMut, Resource, StandardMaterial, Transform,
         Visibility, With, Without,
     },
     scene::Scene,
@@ -16,7 +16,7 @@ use rand::Rng;
 use tracing::info;
 
 use crate::{
-    ability::{HyperSprinting, Shot, ShotHitEvent, ABILITY_Z},
+    ability::{grenade::FragGrenade, HyperSprinting, Shot, ShotHitEvent, ABILITY_Z},
     Ally, AppState, DeathEvent, Enemy, Player,
 };
 
@@ -71,14 +71,17 @@ impl Plugin for GraphicsPlugin {
             .add_system(draw_enemy_system)
             .add_system(draw_ally_system)
             .add_system(draw_shot_system)
+            .add_system(draw_frag_grenade_system)
             .add_system(draw_shot_hit_system)
             .add_system(draw_death_system)
             .add_system(draw_hyper_sprint_system)
+            .add_system(draw_target_system)
+            .add_system(update_target_system)
             .add_plugin(ui::UiPlugin);
     }
 }
 
-#[derive(Bundle)]
+#[derive(Bundle, Default)]
 struct ObjectGraphics {
     material: Handle<StandardMaterial>,
     mesh: Handle<Mesh>,
@@ -107,6 +110,22 @@ fn draw_shot_system(
         ecmds.insert(ObjectGraphics {
             material: assets.shot.material.clone(),
             mesh: assets.shot.mesh.clone(),
+            visibility: Visibility::Visible,
+            computed_visibility: ComputedVisibility::default(),
+        });
+    }
+}
+
+fn draw_frag_grenade_system(
+    mut commands: Commands,
+    assets: Res<AssetHandler>,
+    query: Query<Entity, Added<FragGrenade>>,
+) {
+    for entity in query.iter() {
+        let Some(mut ecmds) = commands.get_entity(entity) else { continue };
+        ecmds.insert(ObjectGraphics {
+            material: assets.frag_grenade.material.clone(),
+            mesh: assets.frag_grenade.mesh.clone(),
             visibility: Visibility::Visible,
             computed_visibility: ComputedVisibility::default(),
         });
@@ -226,7 +245,7 @@ struct BackgroundMusic {
 }
 
 fn background_music_system(
-    asset_handler: ResMut<AssetHandler>,
+    asset_handler: Res<AssetHandler>,
     audio: Res<Audio>,
     config: Res<Config>,
     mut bg_music: ResMut<BackgroundMusic>,
@@ -258,5 +277,39 @@ fn background_music_system(
 
         bg_music.name = Some(name);
         bg_music.handle = Some(handle);
+    }
+}
+
+#[derive(Component)]
+struct Target {
+    owner: Entity,
+}
+
+fn draw_target_system(
+    mut commands: Commands,
+    query: Query<(Entity, &Player), Added<Player>>,
+    asset_handler: Res<AssetHandler>,
+) {
+    for (entity, player) in &query {
+        commands.spawn((
+            PbrBundle {
+                material: asset_handler.target.material.clone(),
+                mesh: asset_handler.target.mesh.clone(),
+                transform: Transform::from_translation(player.target.extend(0.0)),
+                ..Default::default()
+            },
+            Target { owner: entity },
+        ));
+    }
+}
+fn update_target_system(
+    player_query: Query<&Player>,
+    mut target_query: Query<(&mut Transform, &Target)>,
+) {
+    for (mut transform, target) in &mut target_query {
+        if let Ok(player) = player_query.get(target.owner) {
+            transform.translation = player.target.extend(0.0);
+            info!(target = %transform.translation);
+        }
     }
 }

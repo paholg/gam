@@ -21,7 +21,7 @@ use crate::{ability::Ability, Player};
 const ORG: &str = "Paho Corp";
 const NAME: &str = "Gam";
 
-pub const ABILITY_COUNT: usize = 3;
+pub const ABILITY_COUNT: usize = 5;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -121,7 +121,11 @@ fn default_controls() -> InputMap<Action> {
         .insert(MouseButton::Right, Action::Ability1)
         .insert(GamepadButtonType::LeftTrigger2, Action::Ability1)
         .insert(KeyCode::Space, Action::Ability2)
-        .insert(GamepadButtonType::South, Action::Ability2);
+        .insert(GamepadButtonType::South, Action::Ability2)
+        .insert(KeyCode::E, Action::Ability3)
+        .insert(GamepadButtonType::RightTrigger, Action::Ability3)
+        .insert(KeyCode::Q, Action::Ability4)
+        .insert(GamepadButtonType::LeftTrigger2, Action::Ability4);
     map
 }
 
@@ -214,7 +218,13 @@ pub struct PlayerAbilities {
 impl Default for PlayerAbilities {
     fn default() -> Self {
         Self {
-            abilities: [Ability::Shoot, Ability::Shotgun, Ability::HyperSprint],
+            abilities: [
+                Ability::Shoot,
+                Ability::Shotgun,
+                Ability::HyperSprint,
+                Ability::FragGrenade,
+                Ability::FragGrenade,
+            ],
         }
     }
 }
@@ -226,6 +236,8 @@ pub enum Action {
     Ability0 = 0,
     Ability1 = 1,
     Ability2 = 2,
+    Ability3 = 3,
+    Ability4 = 4,
     Move,
     Aim,
     Menu,

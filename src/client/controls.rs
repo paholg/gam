@@ -71,24 +71,30 @@ fn player_ability(
     config: Res<Config>,
     mut commands: Commands,
     tick_counter: Res<TickCounter>,
-    mut query: Query<
-        (
-            Entity,
-            &ActionState<Action>,
-            &mut Energy,
-            &mut Cooldowns,
-            &mut Velocity,
-            &mut StatusEffects,
-            &Transform,
-        ),
-        With<Player>,
-    >,
+    mut query: Query<(
+        Entity,
+        &ActionState<Action>,
+        &mut Energy,
+        &mut Cooldowns,
+        &mut Velocity,
+        &mut StatusEffects,
+        &Transform,
+        &Player,
+    )>,
 ) {
-    let (entity, action_state, mut energy, mut cooldowns, velocity, mut status_effects, transform) =
-        match query.get_single_mut() {
-            Ok(q) => q,
-            Err(_) => return,
-        };
+    let (
+        entity,
+        action_state,
+        mut energy,
+        mut cooldowns,
+        velocity,
+        mut status_effects,
+        transform,
+        player,
+    ) = match query.get_single_mut() {
+        Ok(q) => q,
+        Err(_) => return,
+    };
 
     // Abilities:
     for pressed in &action_state.get_pressed() {
@@ -106,6 +112,7 @@ fn player_ability(
                 transform,
                 &velocity,
                 &mut status_effects,
+                player.target,
             );
         }
     }
@@ -152,15 +159,15 @@ fn player_movement(
     }
 }
 
+const MAX_RANGE: f32 = 20.0;
+
 fn player_aim(
-    mut player_query: Query<
-        (&ActionState<Action>, &mut Transform),
-        (With<Player>, Without<Camera>),
-    >,
+    mut player_query: Query<(&ActionState<Action>, &mut Transform, &mut Player), Without<Camera>>,
     mut camera_query: Query<&mut Transform, With<Camera>>,
     mut camera_mode: ResMut<CameraFollowMode>,
 ) {
-    let (action_state, mut transform) = if let Ok(query) = player_query.get_single_mut() {
+    let (action_state, mut transform, mut player) = if let Ok(query) = player_query.get_single_mut()
+    {
         query
     } else {
         return;
@@ -168,9 +175,10 @@ fn player_aim(
 
     if action_state.pressed(Action::Aim) {
         let axis_pair = action_state.clamped_axis_pair(Action::Aim).unwrap();
-        info!(?axis_pair);
         let rotation = axis_pair.rotation().unwrap().into_radians() - PI * 0.5;
         transform.rotation = Quat::from_axis_angle(Vec3::Z, rotation);
+
+        player.target = transform.translation.truncate() + axis_pair.xy() * MAX_RANGE;
 
         *camera_mode = CameraFollowMode::Controller;
     }
@@ -191,7 +199,7 @@ fn player_aim(
 fn update_cursor(
     primary_window: Query<&Window, With<PrimaryWindow>>,
     mut camera_query: Query<(&mut Transform, &Camera, &GlobalTransform)>,
-    mut player_query: Query<&mut Transform, (With<Player>, Without<Camera>)>,
+    mut player_query: Query<(&mut Transform, &mut Player), Without<Camera>>,
     cursor_events: EventReader<CursorMoved>,
     mut camera_mode: ResMut<CameraFollowMode>,
 ) {
@@ -202,15 +210,18 @@ fn update_cursor(
     *camera_mode = CameraFollowMode::Mouse;
 
     let (mut camera_transform, camera, camera_global_transform) = camera_query.single_mut();
+    let Ok((mut player_transform, mut player)) = player_query.get_single_mut() else { return; };
 
     let Some(cursor_window) = primary_window.single().cursor_position() else { return; };
 
     let Some(ray) = camera.viewport_to_world(camera_global_transform, cursor_window) else { return; };
 
+    let Some(ground_distance) = ray.intersect_plane(Vec3::new(0.0, 0.0, 0.0), Vec3::Z) else { return; };
+    player.target = ray.get_point(ground_distance).truncate();
+
     let Some(distance) = ray.intersect_plane(Vec3::new(0.0, 0.0, ABILITY_Z), Vec3::Z) else { return; };
     let cursor = ray.get_point(distance);
 
-    let Ok(mut player_transform) = player_query.get_single_mut() else { return; };
     let angle = pointing_angle(player_transform.translation, cursor);
     player_transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
 

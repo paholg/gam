@@ -49,7 +49,7 @@ use bevy_rapier3d::prelude::{
     RigidBody, Velocity,
 };
 use physics::PhysicsPlugin;
-use status_effect::{StatusEffects};
+use status_effect::StatusEffects;
 use time::{Tick, TickPlugin, TIMESTEP};
 
 #[derive(States, PartialEq, Eq, Debug, Copy, Clone, Hash, Default)]
@@ -118,7 +118,9 @@ impl Default for MaxSpeed {
 
 /// Indicate this entity is a player. Currently, we assume one player.
 #[derive(Component)]
-pub struct Player;
+pub struct Player {
+    target: Vec2,
+}
 
 /// Indicate this entity is controlled by AI.
 #[derive(Component)]
@@ -139,6 +141,7 @@ pub struct Ally;
 pub struct Cooldowns {
     shoot: Tick,
     shotgun: Tick,
+    frag_grenade: Tick,
 }
 
 #[derive(Bundle)]
@@ -244,6 +247,7 @@ impl Plugin for GamPlugin {
             .add_startup_system(setup)
             .add_engine_tick_system(ability::hyper_sprint_system)
             .add_engine_tick_system(ability::shot_despawn_system)
+            .add_engine_tick_system(ability::grenade::grenade_land_system)
             .add_event::<ShotHitEvent>()
             .add_event::<DeathEvent>()
             .add_engine_tick_system(ability::shot_hit_system)

@@ -2,7 +2,7 @@ use std::{f32::consts::PI, time::Duration};
 
 use bevy::prelude::{
     Added, Commands, Component, Entity, EventReader, EventWriter, GlobalTransform, Quat, Query,
-    Res, Transform, Vec3, With, Without,
+    Res, Transform, Vec2, Vec3, With, Without,
 };
 
 use bevy_rapier3d::prelude::{
@@ -18,6 +18,10 @@ use crate::{
     Cooldowns, Energy, Health, Object, PLAYER_R,
 };
 
+use self::grenade::frag_grenade;
+
+pub mod grenade;
+
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub enum Ability {
     #[default]
@@ -25,6 +29,7 @@ pub enum Ability {
     HyperSprint,
     Shoot,
     Shotgun,
+    FragGrenade,
 }
 
 impl Ability {
@@ -40,6 +45,7 @@ impl Ability {
         transform: &Transform,
         velocity: &Velocity,
         status_effects: &mut StatusEffects,
+        target: Vec2,
     ) -> bool {
         match self {
             Ability::None => true,
@@ -68,6 +74,15 @@ impl Ability {
                 velocity,
                 entity,
             ),
+            Ability::FragGrenade => frag_grenade(
+                commands,
+                cooldowns,
+                energy,
+                tick_counter,
+                transform,
+                entity,
+                target,
+            ),
         }
     }
 
@@ -84,6 +99,7 @@ impl Ability {
             }
             Ability::Shoot => (),
             Ability::Shotgun => (),
+            Ability::FragGrenade => (),
         }
     }
 }
@@ -130,7 +146,7 @@ fn hyper_sprint_disable(
     commands.entity(entity).remove::<HyperSprinting>();
 }
 
-pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(250));
+pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(150));
 const SHOT_DURATION: Tick = Tick::new(Duration::from_secs(10));
 pub const SHOT_SPEED: f32 = 30.0;
 pub const SHOT_R: f32 = 0.15;
@@ -193,14 +209,14 @@ fn shoot(
     }
 }
 
-pub const SHOTGUN_COOLDOWN: Tick = Tick::new(Duration::from_millis(250));
+pub const SHOTGUN_COOLDOWN: Tick = Tick::new(Duration::from_millis(150));
 const SHOTGUN_DURATION: Tick = Tick::new(Duration::from_secs(10));
 pub const SHOTGUN_SPEED: f32 = 30.0;
 pub const SHOTGUN_R: f32 = 0.15;
 const SHOTGUN_DAMAGE: f32 = 1.0;
 const N_PELLETS: usize = 8;
 const SPREAD: f32 = PI * 0.125; // Spread angle in radians
-const SHOTGUN_ENERGY: f32 = 30.0;
+const SHOTGUN_ENERGY: f32 = 25.0;
 
 fn shotgun(
     commands: &mut Commands,
