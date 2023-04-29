@@ -36,7 +36,7 @@ jobs:
       - name: Prepare
         run: |
           dir="gam-${{ env.VERSION }}"
-          target="gam-${{ env.VERSION}}-${{ matrix.config.target }}.zip"
+          target="gam-${{ matrix.config.target }}.zip"
           echo "TARGET=$target" >> $GITHUB_ENV
           mkdir $dir
           cp target/${{ matrix.config.target }}/release/gam $dir/
