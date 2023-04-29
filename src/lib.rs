@@ -11,6 +11,7 @@ pub mod ai;
 pub mod client;
 pub mod physics;
 pub mod shapes;
+pub mod status_effect;
 pub mod system;
 pub mod time;
 
@@ -48,6 +49,7 @@ use bevy_rapier3d::prelude::{
     RigidBody, Velocity,
 };
 use physics::PhysicsPlugin;
+use status_effect::{StatusEffects};
 use time::{Tick, TickPlugin, TIMESTEP};
 
 #[derive(States, PartialEq, Eq, Debug, Copy, Clone, Hash, Default)]
@@ -86,6 +88,23 @@ impl Health {
     }
 }
 
+#[derive(Component)]
+pub struct Energy {
+    cur: f32,
+    max: f32,
+    regen: f32,
+}
+
+impl Energy {
+    pub fn new(max: f32, regen: f32) -> Self {
+        Self {
+            cur: max,
+            max,
+            regen,
+        }
+    }
+}
+
 #[derive(Component, Copy, Clone, Debug)]
 pub struct MaxSpeed {
     impulse: f32,
@@ -118,7 +137,6 @@ pub struct Ally;
 // Or maybe we do?????
 #[derive(Component, Default)]
 pub struct Cooldowns {
-    hyper_sprint: Tick,
     shoot: Tick,
     shotgun: Tick,
 }
@@ -138,6 +156,7 @@ pub struct Object {
 #[derive(Bundle)]
 struct Character {
     health: Health,
+    energy: Energy,
     transform: Transform,
     global_transform: GlobalTransform,
     collider: Collider,
@@ -148,6 +167,7 @@ struct Character {
     impulse: ExternalImpulse,
     locked_axes: LockedAxes,
     mass: ReadMassProperties,
+    status_effects: StatusEffects,
 }
 
 #[derive(Resource)]
@@ -230,6 +250,7 @@ impl Plugin for GamPlugin {
             .add_engine_tick_system(ability::shot_kickback_system)
             .add_plugin(ai::simple::SimpleAiPlugin)
             .add_engine_tick_system(system::die)
+            .add_engine_tick_system(system::energy_regen)
             .add_engine_tick_system(system::reset)
             .add_plugin(PhysicsPlugin);
     }

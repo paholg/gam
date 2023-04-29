@@ -2,8 +2,8 @@ use bevy::{
     prelude::{
         default,
         shape::{self, Icosphere},
-        AssetServer, Assets, Color, Commands, Component, Entity, Handle, Mesh,
-        ResMut, Resource, StandardMaterial, Vec2, Vec3, Vec4,
+        AssetServer, Assets, Color, Commands, Component, Entity, Handle, Mesh, ResMut, Resource,
+        StandardMaterial, Vec2, Vec3, Vec4,
     },
     scene::Scene,
 };
@@ -16,11 +16,14 @@ use bevy_hanabi::{
 use bevy_kira_audio::AudioSource;
 use iyes_progress::prelude::AssetsLoading;
 
-use crate::{ability::SHOT_R, shapes::HollowPolygon, PLAYER_R};
+use crate::{
+    ability::SHOT_R,
+    client::bar::{Energybar, Healthbar},
+    shapes::HollowPolygon,
+    PLAYER_R,
+};
 
-use super::healthbar::Healthbar;
-
-pub struct HealthbarAssets {
+pub struct BarAssets {
     pub mesh: Handle<Mesh>,
     pub fg_material: Handle<StandardMaterial>,
     pub bg_material: Handle<StandardMaterial>,
@@ -49,7 +52,8 @@ pub struct CharacterAssets {
 // A collection of HandleIds for assets for spawning.
 #[derive(Resource)]
 pub struct AssetHandler {
-    pub healthbar: HealthbarAssets,
+    pub healthbar: BarAssets,
+    pub energybar: BarAssets,
     pub shot: ShotAssets,
     pub hyper_sprint: HyperSprintAssets,
     pub player: CharacterAssets,
@@ -85,10 +89,32 @@ pub fn asset_handler_setup(
         unlit: true,
         ..Default::default()
     };
-    let healthbar = HealthbarAssets {
+    let healthbar = BarAssets {
         mesh: meshes.add(
             shape::Quad {
                 size: Healthbar::default().size,
+                ..default()
+            }
+            .into(),
+        ),
+        fg_material: materials.add(fg),
+        bg_material: materials.add(bg.clone()),
+    };
+
+    let fg = StandardMaterial {
+        base_color: Color::RgbaLinear {
+            red: 0.0,
+            green: 0.2,
+            blue: 0.8,
+            alpha: 1.0,
+        },
+        unlit: true,
+        ..Default::default()
+    };
+    let energybar = BarAssets {
+        mesh: meshes.add(
+            shape::Quad {
+                size: Energybar::default().size,
                 ..default()
             }
             .into(),
@@ -204,6 +230,7 @@ pub fn asset_handler_setup(
     let asset_handler = AssetHandler {
         music: load_music(&asset_server, &mut loading),
         healthbar,
+        energybar,
         shot,
         hyper_sprint,
         player,

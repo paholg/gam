@@ -1,13 +1,13 @@
 use bevy::prelude::{
     default, Added, BuildChildren, Bundle, Children, Commands, Component, ComputedVisibility,
-    Entity, GlobalTransform, Parent, PbrBundle, Plugin, Query, Res, Transform, Vec2, Vec3,
+    Entity, GlobalTransform, Parent, PbrBundle, Query, Res, Transform, Vec2, Vec3,
     Visibility, With, Without,
 };
 use tracing::warn;
 
-use crate::Health;
+use crate::{client::asset_handler::AssetHandler, Health};
 
-use super::asset_handler::AssetHandler;
+use super::BarMarker;
 
 #[derive(Component)]
 pub struct Healthbar {
@@ -25,7 +25,7 @@ impl Default for Healthbar {
 }
 
 #[derive(Component)]
-struct HealthbarMarker;
+pub struct HealthbarMarker;
 
 #[derive(Bundle)]
 struct HealthbarBundle {
@@ -36,10 +36,7 @@ struct HealthbarBundle {
     marker: HealthbarMarker,
 }
 
-#[derive(Component)]
-struct BarMarker;
-
-fn add_healthbar_system(
+pub fn add_healthbar_system(
     mut commands: Commands,
     assets: Res<AssetHandler>,
     healthbars: Query<(Entity, &Healthbar), Added<Healthbar>>,
@@ -80,7 +77,7 @@ fn add_healthbar_system(
     }
 }
 
-fn healthbar_update_system(
+pub fn healthbar_update_system(
     mut q_healthbar: Query<(&Parent, &Children, &mut Transform), With<HealthbarMarker>>,
     q_parent: Query<(&Transform, &Health, &Healthbar), Without<HealthbarMarker>>,
     mut q_child: Query<
@@ -107,14 +104,5 @@ fn healthbar_update_system(
         } else {
             warn!("HealthbarMarker does not have a child");
         }
-    }
-}
-
-pub struct HealthbarPlugin;
-
-impl Plugin for HealthbarPlugin {
-    fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_system(healthbar_update_system)
-            .add_system(add_healthbar_system);
     }
 }

@@ -7,14 +7,15 @@ use bevy::{
     },
 };
 use bevy_rapier3d::prelude::{ExternalImpulse, Velocity};
-use rand::{Rng};
+use rand::Rng;
 
 use crate::{
     ability::{Ability, SHOT_SPEED},
     pointing_angle,
+    status_effect::StatusEffects,
     system::point_in_plane,
     time::TickCounter,
-    Ai, Ally, Cooldowns, Enemy, FixedTimestepSystem, MaxSpeed,
+    Ai, Ally, Cooldowns, Enemy, Energy, FixedTimestepSystem, MaxSpeed,
 };
 
 pub struct SimpleAiPlugin;
@@ -103,17 +104,31 @@ fn stupid_shoot_system(
     mut commands: Commands,
     tick_counter: Res<TickCounter>,
 
-    mut q_ai: Query<(Entity, &mut Cooldowns, &Velocity, &mut MaxSpeed, &Transform), With<Ai>>,
+    mut q_ai: Query<
+        (
+            Entity,
+            &mut Cooldowns,
+            &mut Energy,
+            &Velocity,
+            &Transform,
+            &mut StatusEffects,
+        ),
+        With<Ai>,
+    >,
 ) {
-    for (entity, mut cooldowns, velocity, mut max_speed, transform) in q_ai.iter_mut() {
+    for (entity, mut cooldowns, mut energy, velocity, transform, mut status_effects) in
+        q_ai.iter_mut()
+    {
         Ability::Shoot.fire(
+            false,
             &mut commands,
             &tick_counter,
             entity,
+            &mut energy,
             &mut cooldowns,
-            &mut max_speed,
             transform,
             velocity,
+            &mut status_effects,
         );
     }
 }

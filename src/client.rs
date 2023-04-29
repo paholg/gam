@@ -1,8 +1,8 @@
 use bevy::{
     prelude::{
-        Added, Assets, Bundle, Commands, ComputedVisibility, Entity, EventReader, Handle, Mesh,
-        Plugin, Query, Res, ResMut, Resource, StandardMaterial, Transform, Visibility, With,
-        Without,
+        Added, Assets, Bundle, Commands, ComputedVisibility, Entity, EventReader,
+        Handle, Mesh, Plugin, Query, Res, ResMut, Resource, StandardMaterial, Transform,
+        Visibility, With, Without,
     },
     scene::Scene,
 };
@@ -24,16 +24,16 @@ use self::{
     asset_handler::{
         asset_handler_setup, AssetHandler, DeathEffect, HyperSprintEffect, ShotEffect,
     },
+    bar::{BarPlugin, Energybar, Healthbar},
     config::{Config, ConfigPlugin},
     controls::ControlPlugin,
-    healthbar::{Healthbar, HealthbarPlugin},
     splash::SplashPlugin,
 };
 
 mod asset_handler;
+mod bar;
 mod config;
 mod controls;
-mod healthbar;
 mod splash;
 mod ui;
 
@@ -66,7 +66,7 @@ impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_startup_system(asset_handler_setup)
             .add_plugin(InverseKinematicsPlugin)
-            .add_plugin(HealthbarPlugin)
+            .add_plugin(BarPlugin)
             .add_system(draw_player_system)
             .add_system(draw_enemy_system)
             .add_system(draw_ally_system)
@@ -89,6 +89,7 @@ struct ObjectGraphics {
 #[derive(Bundle)]
 struct CharacterGraphics {
     healthbar: Healthbar,
+    energybar: Energybar,
     scene: Handle<Scene>,
     outline: Handle<Mesh>,
     material: Handle<StandardMaterial>,
@@ -121,6 +122,7 @@ fn draw_player_system(
         let Some(mut ecmds) = commands.get_entity(entity) else { continue };
         ecmds.insert(CharacterGraphics {
             healthbar: Healthbar::default(),
+            energybar: Energybar::default(),
             scene: assets.player.scene.clone(),
             outline: assets.player.outline_mesh.clone(),
             material: assets.player.outline_material.clone(),
@@ -139,6 +141,7 @@ fn draw_enemy_system(
         let Some(mut ecmds) = commands.get_entity(entity) else { continue };
         ecmds.insert(CharacterGraphics {
             healthbar: Healthbar::default(),
+            energybar: Energybar::default(),
             scene: assets.enemy.scene.clone(),
             outline: assets.enemy.outline_mesh.clone(),
             material: assets.enemy.outline_material.clone(),
@@ -157,6 +160,7 @@ fn draw_ally_system(
         let Some(mut ecmds) = commands.get_entity(entity) else { continue };
         ecmds.insert(CharacterGraphics {
             healthbar: Healthbar::default(),
+            energybar: Energybar::default(),
             scene: assets.ally.scene.clone(),
             outline: assets.ally.outline_mesh.clone(),
             material: assets.ally.outline_material.clone(),

@@ -8,10 +8,10 @@ use bevy_rapier3d::prelude::{
 use rand::Rng;
 
 use crate::{
-    ability::{HYPER_SPRINT_COOLDOWN, SHOOT_COOLDOWN, SHOTGUN_COOLDOWN},
     ai::simple::Attitude,
-    Ai, Ally, Character, Cooldowns, DeathEvent, Enemy, Health, MaxSpeed, NumAi, Player, DAMPING,
-    PLANE, PLAYER_R,
+    status_effect::StatusEffects,
+    Ai, Ally, Character, Cooldowns, DeathEvent, Enemy, Energy, Health, MaxSpeed, NumAi, Player,
+    DAMPING, PLANE, PLAYER_R,
 };
 
 pub fn die(
@@ -27,12 +27,15 @@ pub fn die(
     }
 }
 
+const ENERGY_REGEN: f32 = 0.3;
+
 fn spawn_player(commands: &mut Commands) {
     commands.spawn((
         Player,
         Ally,
         Character {
             health: Health::new(100.0),
+            energy: Energy::new(100.0, ENERGY_REGEN),
             transform: Transform::default(),
             global_transform: GlobalTransform::default(),
             collider: Collider::capsule(Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 2.0), 1.0),
@@ -43,6 +46,7 @@ fn spawn_player(commands: &mut Commands) {
             impulse: ExternalImpulse::default(),
             locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
             mass: ReadMassProperties::default(),
+            status_effects: StatusEffects::default(),
         },
         Cooldowns::default(),
     ));
@@ -63,6 +67,7 @@ fn spawn_enemies(commands: &mut Commands, num: usize) {
             Ai,
             Character {
                 health: Health::new(10.0),
+                energy: Energy::new(100.0, ENERGY_REGEN),
                 transform: Transform::from_translation(loc),
                 global_transform: GlobalTransform::default(),
                 collider: Collider::capsule(
@@ -77,13 +82,9 @@ fn spawn_enemies(commands: &mut Commands, num: usize) {
                 impulse: ExternalImpulse::default(),
                 locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
                 mass: ReadMassProperties::default(),
+                status_effects: StatusEffects::default(),
             },
-            Cooldowns {
-                hyper_sprint: HYPER_SPRINT_COOLDOWN,
-                // FIXME: Figure out why this can't be zero.
-                shoot: SHOOT_COOLDOWN,
-                shotgun: SHOTGUN_COOLDOWN,
-            },
+            Cooldowns::default(),
             Attitude::rand(),
         ));
     }
@@ -97,6 +98,7 @@ fn spawn_allies(commands: &mut Commands, num: usize) {
             Ai,
             Character {
                 health: Health::new(100.0),
+                energy: Energy::new(100.0, ENERGY_REGEN),
                 transform: Transform::from_translation(loc),
                 global_transform: GlobalTransform::default(),
                 collider: Collider::capsule(
@@ -111,6 +113,7 @@ fn spawn_allies(commands: &mut Commands, num: usize) {
                 impulse: ExternalImpulse::default(),
                 locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
                 mass: ReadMassProperties::default(),
+                status_effects: StatusEffects::default(),
             },
             Cooldowns::default(),
         ));
@@ -139,5 +142,12 @@ pub fn reset(
 
     if ally_query.iter().next().is_none() {
         spawn_allies(&mut commands, num_ai.allies);
+    }
+}
+
+pub fn energy_regen(mut query: Query<&mut Energy>) {
+    for mut energy in &mut query {
+        energy.cur += energy.regen;
+        energy.cur = energy.cur.min(energy.max);
     }
 }
