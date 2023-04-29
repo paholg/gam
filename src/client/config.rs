@@ -3,7 +3,7 @@ use std::{fs, io, path::PathBuf};
 use bevy::{
     core_pipeline::fxaa,
     prelude::{
-        Added, BuildChildren, Commands, Entity, GamepadButtonType, KeyCode, MouseButton, Plugin,
+        Added, Commands, Entity, GamepadButtonType, KeyCode, MouseButton, Plugin,
         Query, Res, Resource,
     },
 };
