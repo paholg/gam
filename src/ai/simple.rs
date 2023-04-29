@@ -7,7 +7,7 @@ use bevy::{
     },
 };
 use bevy_rapier3d::prelude::{ExternalImpulse, Velocity};
-use rand::{random, Rng};
+use rand::{Rng};
 
 use crate::{
     ability::{Ability, SHOT_SPEED},

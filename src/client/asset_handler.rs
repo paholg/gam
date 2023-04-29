@@ -99,7 +99,7 @@ pub fn asset_handler_setup(
         .insert(ShotEffect)
         .id();
 
-    let mut shot_material = StandardMaterial {
+    let shot_material = StandardMaterial {
         emissive: Color::rgb_linear(0.0, 20.0, 20.0),
         ..Default::default()
     };

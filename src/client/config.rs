@@ -2,19 +2,26 @@ use std::{fs, io, path::PathBuf};
 
 use bevy::{
     core_pipeline::fxaa,
-    prelude::{GamepadButton, Input, KeyCode, MouseButton, Res, Resource},
+    prelude::{
+        Added, BuildChildren, Commands, Entity, GamepadButtonType, KeyCode, MouseButton, Plugin,
+        Query, Res, Resource,
+    },
 };
 use directories::ProjectDirs;
+use leafwing_input_manager::{
+    prelude::{DualAxis, InputManagerPlugin, InputMap, VirtualDPad},
+    Actionlike, InputManagerBundle,
+};
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 
-use crate::ability::Ability;
+use crate::{ability::Ability, Player};
 
 // TODO: NAME THESE THINGS
 const ORG: &str = "Paho Corp";
 const NAME: &str = "Gam";
 
-const ABILITY_COUNT: usize = 3;
+pub const ABILITY_COUNT: usize = 3;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -28,6 +35,16 @@ pub enum Error {
     // TomlSer(#[from] toml::ser::Error),
     #[error("Config parse/serialize error: {0}")]
     Json(#[from] serde_json::Error),
+}
+
+pub struct ConfigPlugin;
+
+impl Plugin for ConfigPlugin {
+    fn build(&self, app: &mut bevy::prelude::App) {
+        app.insert_resource(Config::new())
+            .add_plugin(InputManagerPlugin::<Action>::default())
+            .add_system(spawn_input_manager);
+    }
 }
 
 pub fn project_dirs() -> Result<ProjectDirs, Error> {
@@ -63,12 +80,47 @@ fn save_config(config: &Config) -> Result<(), Error> {
     Ok(())
 }
 
-#[derive(Debug, Default, Serialize, Deserialize, Resource)]
+#[derive(Debug, Serialize, Deserialize, Resource)]
 #[serde(default)]
 pub struct Config {
-    pub controls: Controls,
+    pub controls: InputMap<Action>,
     pub graphics: Graphics,
-    pub player: Player,
+    pub player: PlayerAbilities,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            controls: default_controls(),
+            graphics: Default::default(),
+            player: Default::default(),
+        }
+    }
+}
+
+fn default_controls() -> InputMap<Action> {
+    let mut map = InputMap::default();
+    map.insert(KeyCode::Escape, Action::Menu)
+        .insert(GamepadButtonType::Start, Action::Menu)
+        .insert(DualAxis::left_stick(), Action::Move)
+        .insert(
+            VirtualDPad {
+                up: KeyCode::W.into(),
+                down: KeyCode::S.into(),
+                left: KeyCode::A.into(),
+                right: KeyCode::D.into(),
+            },
+            Action::Move,
+        )
+        // .insert(DualAxis::mouse_motion(), Action::Aim)
+        .insert(DualAxis::right_stick(), Action::Aim)
+        .insert(MouseButton::Left, Action::Ability0)
+        .insert(GamepadButtonType::RightTrigger, Action::Ability0)
+        .insert(MouseButton::Right, Action::Ability1)
+        .insert(GamepadButtonType::LeftTrigger, Action::Ability1)
+        .insert(KeyCode::Space, Action::Ability2)
+        .insert(GamepadButtonType::South, Action::Ability2);
+    map
 }
 
 impl Config {
@@ -83,75 +135,11 @@ impl Config {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub enum Button {
-    Keyboard(KeyCode),
-    Mouse(MouseButton),
-    Controller(GamepadButton),
-}
-
-impl Button {
-    pub fn pressed(
-        &self,
-        keyboard_input: &Res<Input<KeyCode>>,
-        mouse_input: &Res<Input<MouseButton>>,
-    ) -> bool {
-        match self {
-            Button::Keyboard(button) => keyboard_input.pressed(*button),
-            Button::Mouse(button) => mouse_input.pressed(*button),
-            Button::Controller(_) => todo!(),
-        }
-    }
-
-    pub fn just_pressed(
-        &self,
-        keyboard_input: &Res<Input<KeyCode>>,
-        mouse_input: &Res<Input<MouseButton>>,
-    ) -> bool {
-        match self {
-            Button::Keyboard(button) => keyboard_input.just_pressed(*button),
-            Button::Mouse(button) => mouse_input.just_pressed(*button),
-            Button::Controller(_) => todo!(),
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(default)]
-pub struct Controls {
-    pub left: Button,
-    pub right: Button,
-    pub up: Button,
-    pub down: Button,
-
-    pub abilities: [Button; ABILITY_COUNT],
-
-    pub menu: Button,
-}
-
-impl Default for Controls {
-    fn default() -> Self {
-        Self {
-            left: Button::Keyboard(KeyCode::A),
-            right: Button::Keyboard(KeyCode::D),
-            up: Button::Keyboard(KeyCode::W),
-            down: Button::Keyboard(KeyCode::S),
-
-            abilities: [
-                Button::Mouse(MouseButton::Left),
-                Button::Mouse(MouseButton::Right),
-                Button::Keyboard(KeyCode::Space),
-            ],
-
-            menu: Button::Keyboard(KeyCode::Escape),
-        }
-    }
-}
-
 #[derive(Debug, Default, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Graphics {
     pub anti_aliasing: AntiAliasing,
+    pub bloom: bool,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -198,14 +186,41 @@ impl From<Sensitivity> for fxaa::Sensitivity {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Player {
+pub struct PlayerAbilities {
     pub abilities: [Ability; ABILITY_COUNT],
 }
 
-impl Default for Player {
+impl Default for PlayerAbilities {
     fn default() -> Self {
         Self {
             abilities: [Ability::Shoot, Ability::Shotgun, Ability::HyperSprint],
         }
+    }
+}
+
+#[derive(
+    Actionlike, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, Debug, Serialize, Deserialize,
+)]
+pub enum Action {
+    Ability0 = 0,
+    Ability1 = 1,
+    Ability2 = 2,
+    Move,
+    Aim,
+    Menu,
+}
+
+fn spawn_input_manager(
+    mut commands: Commands,
+    query: Query<Entity, Added<Player>>,
+    config: Res<Config>,
+) {
+    for entity in query.iter() {
+        commands
+            .entity(entity)
+            .insert(InputManagerBundle::<Action> {
+                input_map: config.controls.clone(),
+                ..Default::default()
+            });
     }
 }

@@ -11,7 +11,7 @@ use bevy_rapier3d::prelude::{
 };
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
-use tracing::info;
+
 
 use crate::{
     time::{Tick, TickCounter},
