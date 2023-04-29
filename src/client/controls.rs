@@ -128,8 +128,8 @@ pub fn player_aim(
     if action_state.pressed(Action::Aim) {
         let axis_pair = action_state.clamped_axis_pair(Action::Aim).unwrap();
         info!(?axis_pair);
-        let rotation = axis_pair.rotation().unwrap().into_radians();
-        transform.rotation = Quat::from_axis_angle(Vec3::Z, rotation - PI);
+        let rotation = axis_pair.rotation().unwrap().into_radians() - PI * 0.5;
+        transform.rotation = Quat::from_axis_angle(Vec3::Z, rotation);
 
         // TODO: The camera should just follow the player until they use the mouse again.
         let mut camera_transform = if let Ok(query) = camera_query.get_single_mut() {
