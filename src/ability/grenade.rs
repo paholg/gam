@@ -110,10 +110,10 @@ pub fn frag_grenade(
     }
 }
 
-const HEAL_GRENADE_ENERGY: f32 = 20.0;
+const HEAL_GRENADE_ENERGY: f32 = 50.0;
 const HEAL_GRENADE_COOLDOWN: Tick = Tick(30);
 const HEAL_GRENADE_DELAY: Tick = Tick(120);
-const HEAL_GRENADE_DAMAGE: f32 = -8.0;
+const HEAL_GRENADE_DAMAGE: f32 = -20.0;
 pub const HEAL_GRENADE_EXP_RADIUS: f32 = 5.0;
 const HEAL_GRENADE_R: f32 = 0.20;
 
