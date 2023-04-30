@@ -2,7 +2,7 @@ use bevy::prelude::{Plugin, Res};
 
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 
-use crate::Score;
+use crate::NumAi;
 
 use super::BackgroundMusic;
 
@@ -19,9 +19,9 @@ impl Plugin for UiPlugin {
     }
 }
 
-fn score_system(mut contexts: EguiContexts, score: Res<Score>, bg_music: Res<BackgroundMusic>) {
+fn score_system(mut contexts: EguiContexts, num_ai: Res<NumAi>, bg_music: Res<BackgroundMusic>) {
     egui::Window::new("Gam").show(contexts.ctx_mut(), |ui| {
-        ui.heading(format!("Score: {}", score.0));
+        ui.heading(format!("Score: {}", num_ai.enemies));
         if let Some(name) = &bg_music.name {
             ui.heading(format!("Track: {}", name));
         }

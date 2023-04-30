@@ -1,30 +1,26 @@
 use bevy::prelude::{
-    Commands, DespawnRecursiveExt, Entity, EventWriter, GlobalTransform, Query, Res, ResMut,
-    Transform, Vec2, Vec3, With,
+    Commands, DespawnRecursiveExt, Entity, EventWriter, GlobalTransform, Query, ResMut, Transform,
+    Vec2, Vec3, With,
 };
 use bevy_rapier3d::prelude::{
     Collider, ExternalImpulse, LockedAxes, ReadMassProperties, RigidBody, Velocity,
 };
 use rand::Rng;
-use tracing::info;
 
 use crate::{
-    ai::simple::Attitude, status_effect::StatusEffects, time::TickCounter, Ai, Ally, Character,
-    Cooldowns, DeathEvent, Enemy, Energy, Health, MaxSpeed, Player, Score, SpawnPeriod, DAMPING,
-    PLANE, PLAYER_R,
+    ai::simple::Attitude, status_effect::StatusEffects, Ai, Ally, Character, Cooldowns, DeathEvent,
+    Enemy, Energy, Health, MaxSpeed, NumAi, Player, DAMPING, PLANE, PLAYER_R,
 };
 
 pub fn die(
     mut commands: Commands,
     query: Query<(Entity, &Health, &Transform)>,
     mut event_writer: EventWriter<DeathEvent>,
-    mut score: ResMut<Score>,
 ) {
     for (entity, health, &transform) in query.iter() {
         if health.cur <= 0.0 {
             event_writer.send(DeathEvent { transform });
             commands.entity(entity).despawn_recursive();
-            score.0 += 1;
         }
     }
 }
@@ -111,25 +107,25 @@ fn spawn_allies(commands: &mut Commands, num: usize) {
 pub fn reset(
     mut commands: Commands,
     enemy_query: Query<Entity, With<Enemy>>,
+    ally_query: Query<Entity, With<Ally>>,
     player_query: Query<Entity, With<Player>>,
-    mut score: ResMut<Score>,
-    tick_counter: Res<TickCounter>,
-    mut spawn_period: ResMut<SpawnPeriod>,
+    mut num_ai: ResMut<NumAi>,
 ) {
-    if player_query.iter().next().is_none() {
-        spawn_player(&mut commands);
-        score.0 = 0;
-        *spawn_period = SpawnPeriod::new();
-        for entity in &enemy_query {
-            commands.entity(entity).despawn_recursive();
+    if enemy_query.iter().next().is_none() {
+        num_ai.enemies += 1;
+        spawn_enemies(&mut commands, num_ai.enemies);
+    }
+
+    #[cfg(not(feature = "train"))]
+    {
+        if player_query.iter().next().is_none() {
+            num_ai.enemies = num_ai.enemies.saturating_sub(1);
+            spawn_player(&mut commands);
         }
     }
 
-    if spawn_period.next.before_now(&tick_counter) {
-        info!(next = ?spawn_period.next, "Spawning");
-        spawn_enemies(&mut commands, 1);
-        spawn_period.decrease();
-        spawn_period.next = tick_counter.at(spawn_period.period);
+    if ally_query.iter().next().is_none() {
+        spawn_allies(&mut commands, num_ai.allies);
     }
 }
 
