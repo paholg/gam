@@ -186,27 +186,9 @@ struct Character {
 }
 
 #[derive(Resource)]
-pub struct Score(usize);
-
-#[derive(Resource)]
-pub struct SpawnPeriod {
-    pub period: Tick,
-    pub next: Tick,
-}
-
-impl SpawnPeriod {
-    pub fn new() -> Self {
-        Self {
-            period: Tick(300),
-            next: Tick(0),
-        }
-    }
-
-    pub fn decrease(&mut self) {
-        if self.period.0 >= 30 {
-            self.period.0 -= 5;
-        }
-    }
+pub struct NumAi {
+    pub enemies: usize,
+    pub allies: usize,
 }
 
 // TODO: For whatever reason, our PluginGroups based on the DefaultPlugins but
@@ -269,8 +251,10 @@ impl Plugin for GamPlugin {
         #[cfg(not(feature = "train"))]
         app.insert_resource(FixedTime::new(Duration::from_secs_f32(TIMESTEP)));
         app.add_state::<AppState>()
-            .insert_resource(Score(0))
-            .insert_resource(SpawnPeriod::new())
+            .insert_resource(NumAi {
+                enemies: 0,
+                allies: 0,
+            })
             .add_plugin(TickPlugin)
             .add_startup_system(setup)
             .add_engine_tick_system(ability::hyper_sprint_system)
