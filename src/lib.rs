@@ -17,7 +17,7 @@ pub mod time;
 
 use std::{f32::consts::PI, time::Duration};
 
-use ability::ShotHitEvent;
+use ability::{grenade::GrenadeLandEvent, ShotHitEvent};
 use bevy::{
     app::PluginGroupBuilder,
     core_pipeline::bloom::BloomSettings,
@@ -260,6 +260,7 @@ impl Plugin for GamPlugin {
             .add_engine_tick_system(ability::hyper_sprint_system)
             .add_engine_tick_system(ability::shot_despawn_system)
             .add_engine_tick_system(ability::grenade::grenade_land_system)
+            .add_event::<GrenadeLandEvent>()
             .add_engine_tick_system(ability::grenade::grenade_explode_system)
             .add_engine_tick_system(ability::grenade::explosion_despawn_system)
             .add_event::<ShotHitEvent>()

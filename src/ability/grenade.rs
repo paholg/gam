@@ -1,8 +1,8 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::{
-    Commands, Component, DespawnRecursiveExt, Entity, GlobalTransform, Query, Res, Transform, Vec2,
-    Vec3, With,
+    Commands, Component, DespawnRecursiveExt, Entity, EventWriter, GlobalTransform, Query, Res,
+    Transform, Vec2, Vec3, With,
 };
 use bevy_rapier3d::prelude::{
     Ccd, Collider, ColliderMassProperties, LockedAxes, RapierContext, ReadMassProperties, Sensor,
@@ -59,8 +59,8 @@ const FRAG_GRENADE_ENERGY: f32 = 20.0;
 const FRAG_GRENADE_COOLDOWN: Tick = Tick(30);
 const FRAG_GRENADE_DELAY: Tick = Tick(120);
 const FRAG_GRENADE_DAMAGE: f32 = 8.0;
-pub const FRAG_GRENADE_EXP_RADIUS: f32 = 10.0;
-const FRAG_GRENADE_R: f32 = 0.30;
+pub const FRAG_GRENADE_EXP_RADIUS: f32 = 7.0;
+pub const FRAG_GRENADE_R: f32 = 0.30;
 
 pub fn frag_grenade(
     commands: &mut Commands,
@@ -81,11 +81,7 @@ pub fn frag_grenade(
 
         commands.spawn((
             Object {
-                transform: Transform::from_translation(position).with_scale(Vec3::new(
-                    FRAG_GRENADE_R,
-                    FRAG_GRENADE_R,
-                    FRAG_GRENADE_R,
-                )),
+                transform: Transform::from_translation(position),
                 global_transform: GlobalTransform::default(),
                 collider: Collider::ball(FRAG_GRENADE_R),
                 mass_props: ColliderMassProperties::Density(1.0),
@@ -114,8 +110,8 @@ const HEAL_GRENADE_ENERGY: f32 = 50.0;
 const HEAL_GRENADE_COOLDOWN: Tick = Tick(30);
 const HEAL_GRENADE_DELAY: Tick = Tick(120);
 const HEAL_GRENADE_DAMAGE: f32 = -20.0;
-pub const HEAL_GRENADE_EXP_RADIUS: f32 = 5.0;
-const HEAL_GRENADE_R: f32 = 0.20;
+pub const HEAL_GRENADE_EXP_RADIUS: f32 = 4.0;
+pub const HEAL_GRENADE_R: f32 = 0.20;
 
 pub fn heal_grenade(
     commands: &mut Commands,
@@ -136,11 +132,7 @@ pub fn heal_grenade(
 
         commands.spawn((
             Object {
-                transform: Transform::from_translation(position).with_scale(Vec3::new(
-                    HEAL_GRENADE_R,
-                    HEAL_GRENADE_R,
-                    HEAL_GRENADE_R,
-                )),
+                transform: Transform::from_translation(position),
                 global_transform: GlobalTransform::default(),
                 collider: Collider::ball(HEAL_GRENADE_R),
                 mass_props: ColliderMassProperties::Density(1.0),
@@ -165,14 +157,26 @@ pub fn heal_grenade(
     }
 }
 
+pub struct GrenadeLandEvent {
+    pub entity: Entity,
+}
+
 pub fn grenade_land_system(
-    mut query: Query<(&Grenade, &mut LockedAxes, &mut Transform, &mut Velocity)>,
+    mut query: Query<(
+        Entity,
+        &Grenade,
+        &mut LockedAxes,
+        &mut Transform,
+        &mut Velocity,
+    )>,
+    mut event_writer: EventWriter<GrenadeLandEvent>,
 ) {
-    for (grenade, mut axes, mut transform, mut velocity) in &mut query {
+    for (entity, grenade, mut axes, mut transform, mut velocity) in &mut query {
         if transform.translation.z < grenade.radius && velocity.linvel.z < 0.0 {
             transform.translation.z = grenade.radius;
             *axes |= LockedAxes::TRANSLATION_LOCKED_Z;
             velocity.linvel = Vec3::ZERO;
+            event_writer.send(GrenadeLandEvent { entity });
         }
     }
 }

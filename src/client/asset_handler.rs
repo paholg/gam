@@ -18,7 +18,9 @@ use iyes_progress::prelude::AssetsLoading;
 
 use crate::{
     ability::{
-        grenade::{FRAG_GRENADE_EXP_RADIUS, HEAL_GRENADE_EXP_RADIUS},
+        grenade::{
+            FRAG_GRENADE_EXP_RADIUS, FRAG_GRENADE_R, HEAL_GRENADE_EXP_RADIUS, HEAL_GRENADE_R,
+        },
         SHOT_R,
     },
     client::bar::{Energybar, Healthbar},
@@ -44,6 +46,8 @@ pub struct GrenadeAssets {
     pub mesh: Handle<Mesh>,
     pub material: Handle<StandardMaterial>,
     pub effect_entity: Entity,
+    pub outline_mesh: Handle<Mesh>,
+    pub outline_material: Handle<StandardMaterial>,
 }
 
 pub struct Target {
@@ -184,12 +188,21 @@ pub fn asset_handler_setup(
     let frag_grenade = GrenadeAssets {
         mesh: meshes.add(
             Mesh::try_from(Icosphere {
-                radius: 1.0,
+                radius: FRAG_GRENADE_R,
                 subdivisions: 5,
             })
             .unwrap(),
         ),
-        material: materials.add(frag_grenade_material),
+        material: materials.add(frag_grenade_material.clone()),
+        outline_mesh: meshes.add(
+            HollowPolygon {
+                radius: FRAG_GRENADE_EXP_RADIUS,
+                thickness: 0.25,
+                vertices: 60,
+            }
+            .into(),
+        ),
+        outline_material: materials.add(frag_grenade_material),
         effect_entity: frag_effect_entity,
     };
 
@@ -207,12 +220,21 @@ pub fn asset_handler_setup(
     let heal_grenade = GrenadeAssets {
         mesh: meshes.add(
             Mesh::try_from(Icosphere {
-                radius: 1.0,
+                radius: HEAL_GRENADE_R,
                 subdivisions: 5,
             })
             .unwrap(),
         ),
-        material: materials.add(heal_grenade_material),
+        outline_mesh: meshes.add(
+            HollowPolygon {
+                radius: HEAL_GRENADE_EXP_RADIUS,
+                thickness: 0.25,
+                vertices: 60,
+            }
+            .into(),
+        ),
+        material: materials.add(heal_grenade_material.clone()),
+        outline_material: materials.add(heal_grenade_material),
         effect_entity: heal_effect_entity,
     };
 

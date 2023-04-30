@@ -17,7 +17,7 @@ use tracing::info;
 
 use crate::{
     ability::{
-        grenade::{Explosion, Grenade, GrenadeKind},
+        grenade::{Explosion, Grenade, GrenadeKind, GrenadeLandEvent},
         HyperSprinting, Shot, ShotHitEvent, ABILITY_Z,
     },
     Ally, AppState, DeathEvent, Enemy, Player,
@@ -75,6 +75,7 @@ impl Plugin for GraphicsPlugin {
             .add_system(draw_ally_system)
             .add_system(draw_shot_system)
             .add_system(draw_grenade_system)
+            .add_system(draw_grenade_outline_system)
             .add_system(draw_shot_hit_system)
             .add_system(draw_death_system)
             .add_system(draw_explosion_system)
@@ -143,6 +144,36 @@ fn draw_grenade_system(
             visibility: Visibility::Visible,
             computed_visibility: ComputedVisibility::default(),
         });
+    }
+}
+
+fn draw_grenade_outline_system(
+    mut commands: Commands,
+    assets: Res<AssetHandler>,
+    query: Query<&Grenade>,
+    mut event_reader: EventReader<GrenadeLandEvent>,
+) {
+    for event in event_reader.iter() {
+        let entity = event.entity;
+        let grenade = query.get(entity).unwrap();
+        let (mesh, material) = match grenade.kind {
+            GrenadeKind::Frag => (
+                assets.frag_grenade.outline_mesh.clone(),
+                assets.frag_grenade.outline_material.clone(),
+            ),
+            GrenadeKind::Heal => (
+                assets.heal_grenade.outline_mesh.clone(),
+                assets.heal_grenade.outline_material.clone(),
+            ),
+        };
+        let outline_entity = commands
+            .spawn(PbrBundle {
+                mesh,
+                material,
+                ..Default::default()
+            })
+            .id();
+        commands.entity(entity).push_children(&[outline_entity]);
     }
 }
 
