@@ -106,7 +106,6 @@ pub struct TickPlugin;
 impl Plugin for TickPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.insert_resource(TickCounter::new())
-            .add_engine_tick_system(tick_counter)
-            .add_engine_tick_system(debug_tick_system);
+            .add_engine_tick_systems((tick_counter, debug_tick_system));
     }
 }

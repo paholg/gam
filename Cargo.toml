@@ -4,7 +4,7 @@ name = "gam"
 version = "0.1.0"
 
 [dependencies]
-bevy = { version = "0.10", default-features = false, features = [
+bevy = { version = "0.11", default-features = false, features = [
   "animation",
   "bevy_asset",
   # "bevy_audio",
@@ -31,11 +31,11 @@ bevy = { version = "0.10", default-features = false, features = [
   # "default_font",
   "serialize",
 ] }
-bevy-debug-text-overlay = { version = "5.1.0", optional = true }
-bevy_egui = { version = "0.20.3", optional = true }
-bevy_hanabi = { version = "0.6.1", default-features = false, features = ["3d"], optional = true }
-bevy_kira_audio = { version = "0.15.0", features = ["mp3"] }
-bevy_mod_inverse_kinematics = { version = "0.3.0", optional = true }
+bevy-debug-text-overlay = { version = "6.0.0", optional = true }
+bevy_egui = { version = "0.21.0", optional = true }
+bevy_hanabi = { version = "0.7.0", default-features = false, features = ["3d"], optional = true }
+bevy_kira_audio = { version = "0.16.0", features = ["mp3"] }
+bevy_mod_inverse_kinematics = { version = "0.4.0", optional = true }
 # bevy_quickmenu = "0.1"
 # Note on enhanced-determinism:
 # If some of the values used to initialized Rapier structures are computed using
@@ -44,13 +44,13 @@ bevy_mod_inverse_kinematics = { version = "0.3.0", optional = true }
 # being used originate from the ComplexField or RealField traits from nalgebra.
 # For example, do ComplexField::sin(0.4) (where ComplexField is imported by use
 # nalgebra::ComplexField) instead of 0.4.sin()
-bevy_rapier3d = { version = "0.21", features = ["enhanced-determinism"] }
+bevy_rapier3d = { version = "0.22", features = ["enhanced-determinism"] }
 # bincode = { version = "2.0.0-rc.2", features = ["serde"] }
 directories = "5"
 glob = "0.3.1"
-iyes_progress = { version = "0.8.0", features = ["assets"] }
-leafwing-input-manager = { version = "0.9.2" }
-nalgebra = "0.32.2"
+iyes_progress = { version = "0.9.1", features = ["assets"] }
+leafwing-input-manager = { version = "0.10.0" }
+nalgebra = "0.32.3"
 rand = "0.8"
 serde = "1"
 serde_json = "1"

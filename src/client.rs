@@ -2,11 +2,11 @@ use bevy::{
     prelude::{
         Added, Assets, BuildChildren, Bundle, Commands, Component, ComputedVisibility, Entity,
         EventReader, Handle, Mesh, PbrBundle, Plugin, Query, Res, ResMut, Resource,
-        StandardMaterial, Transform, Visibility, With, Without,
+        StandardMaterial, Startup, Transform, Update, Visibility, With, Without,
     },
     scene::Scene,
 };
-use bevy_hanabi::ParticleEffect;
+use bevy_hanabi::EffectSpawner;
 use bevy_kira_audio::{
     prelude::Volume, Audio, AudioControl, AudioInstance, AudioPlugin, PlaybackState,
 };
@@ -40,26 +40,24 @@ mod controls;
 mod splash;
 mod ui;
 
-const OUTLINE_DEPTH_BIAS: f32 = 0.5;
-
 /// This plugin includes user input and graphics.
 pub struct GamClientPlugin;
 
 impl Plugin for GamClientPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_plugin(SplashPlugin)
-            .add_plugin(
-                ProgressPlugin::new(AppState::Loading)
-                    .continue_to(AppState::Running)
-                    .track_assets(),
-            )
-            .add_plugin(AudioPlugin)
-            .add_plugin(ConfigPlugin)
-            .add_plugin(ControlPlugin)
-            .add_plugin(GraphicsPlugin)
-            .insert_resource(BackgroundMusic::default())
-            .add_system(background_music_system)
-            .add_plugin(bevy_hanabi::HanabiPlugin);
+        app.add_plugins((
+            SplashPlugin,
+            ProgressPlugin::new(AppState::Loading)
+                .continue_to(AppState::Running)
+                .track_assets(),
+            AudioPlugin,
+            ConfigPlugin,
+            ControlPlugin,
+            GraphicsPlugin,
+            bevy_hanabi::HanabiPlugin,
+        ))
+        .insert_resource(BackgroundMusic::default())
+        .add_systems(Update, background_music_system);
     }
 }
 
@@ -67,22 +65,25 @@ struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_startup_system(asset_handler_setup)
-            .add_plugin(InverseKinematicsPlugin)
-            .add_plugin(BarPlugin)
-            .add_system(draw_player_system)
-            .add_system(draw_enemy_system)
-            .add_system(draw_ally_system)
-            .add_system(draw_shot_system)
-            .add_system(draw_grenade_system)
-            .add_system(draw_grenade_outline_system)
-            .add_system(draw_shot_hit_system)
-            .add_system(draw_death_system)
-            .add_system(draw_explosion_system)
-            .add_system(draw_hyper_sprint_system)
-            .add_system(draw_target_system)
-            .add_system(update_target_system)
-            .add_plugin(ui::UiPlugin);
+        app.add_systems(Startup, asset_handler_setup)
+            .add_plugins((InverseKinematicsPlugin, BarPlugin, ui::UiPlugin))
+            .add_systems(
+                Update,
+                (
+                    draw_player_system,
+                    draw_enemy_system,
+                    draw_ally_system,
+                    draw_shot_system,
+                    draw_grenade_system,
+                    draw_grenade_outline_system,
+                    draw_shot_hit_system,
+                    draw_death_system,
+                    draw_explosion_system,
+                    draw_hyper_sprint_system,
+                    draw_target_system,
+                    update_target_system,
+                ),
+            );
     }
 }
 
@@ -238,13 +239,14 @@ fn draw_shot_hit_system(
     assets: Res<AssetHandler>,
     audio: Res<Audio>,
     config: Res<Config>,
-    mut effects: Query<(&mut ParticleEffect, &mut Transform), With<ShotEffect>>,
+    mut effects: Query<(&mut Transform, &mut EffectSpawner), With<ShotEffect>>,
     mut event_reader: EventReader<ShotHitEvent>,
 ) {
     for hit in event_reader.iter() {
-        let (mut effect, mut transform) = effects.get_mut(assets.shot.effect_entity).unwrap();
+        let (mut transform, mut effect_spawner) =
+            effects.get_mut(assets.shot.effect_entity).unwrap();
         *transform = hit.transform;
-        effect.maybe_spawner().unwrap().reset();
+        effect_spawner.reset();
         audio
             .play(assets.shot.despawn_sound.clone())
             .with_volume(Volume::Decibels(config.sound.effects_volume));
@@ -255,14 +257,15 @@ fn draw_death_system(
     assets: Res<AssetHandler>,
     audio: Res<Audio>,
     config: Res<Config>,
-    mut effects: Query<(&mut ParticleEffect, &mut Transform), With<DeathEffect>>,
+    mut effects: Query<(&mut Transform, &mut EffectSpawner), With<DeathEffect>>,
     mut event_reader: EventReader<DeathEvent>,
 ) {
     for death in event_reader.iter() {
-        let (mut effect, mut transform) = effects.get_mut(assets.player.despawn_effect).unwrap();
+        let (mut transform, mut effect_spawner) =
+            effects.get_mut(assets.player.despawn_effect).unwrap();
         *transform = death.transform;
         transform.translation.z += ABILITY_Z;
-        effect.maybe_spawner().unwrap().reset();
+        effect_spawner.reset();
 
         audio
             .play(assets.player.despawn_sound.clone())
@@ -274,7 +277,7 @@ fn draw_explosion_system(
     assets: Res<AssetHandler>,
     audio: Res<Audio>,
     config: Res<Config>,
-    mut effects: Query<(&mut ParticleEffect, &mut Transform), Without<Explosion>>,
+    mut effects: Query<(&mut Transform, &mut EffectSpawner), Without<Explosion>>,
     query: Query<(&Transform, &Explosion), Added<Explosion>>,
 ) {
     for (explosion_transform, explosion) in &query {
@@ -282,9 +285,9 @@ fn draw_explosion_system(
             GrenadeKind::Frag => assets.frag_grenade.effect_entity,
             GrenadeKind::Heal => assets.heal_grenade.effect_entity,
         };
-        let (mut effect, mut transform) = effects.get_mut(effect_entity).unwrap();
+        let (mut transform, mut effect_spawner) = effects.get_mut(effect_entity).unwrap();
         *transform = *explosion_transform;
-        effect.maybe_spawner().unwrap().reset();
+        effect_spawner.reset();
 
         audio
             .play(assets.player.despawn_sound.clone())
@@ -294,14 +297,14 @@ fn draw_explosion_system(
 
 fn draw_hyper_sprint_system(
     assets: Res<AssetHandler>,
-    mut effects: Query<(&mut ParticleEffect, &mut Transform), With<HyperSprintEffect>>,
+    mut effects: Query<(&mut Transform, &mut EffectSpawner), With<HyperSprintEffect>>,
     query: Query<&Transform, (With<HyperSprinting>, Without<HyperSprintEffect>)>,
 ) {
     for sprint_transform in query.iter() {
-        let (mut effect, mut transform) =
+        let (mut transform, mut effect_spawner) =
             effects.get_mut(assets.hyper_sprint.effect_entity).unwrap();
         *transform = *sprint_transform;
-        effect.maybe_spawner().unwrap().reset();
+        effect_spawner.reset();
     }
 }
 

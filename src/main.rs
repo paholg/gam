@@ -4,17 +4,19 @@ use gam::GamPlugin;
 fn main() {
     let mut app = App::new();
 
-    app.add_plugin(GamPlugin);
+    app.add_plugins(GamPlugin);
     #[cfg(feature = "graphics")]
     {
-        app.add_plugins(bevy::DefaultPlugins.set(bevy::window::WindowPlugin {
-            primary_window: Some(bevy::window::Window {
-                present_mode: bevy::window::PresentMode::AutoVsync,
+        app.add_plugins((
+            bevy::DefaultPlugins.set(bevy::window::WindowPlugin {
+                primary_window: Some(bevy::window::Window {
+                    present_mode: bevy::window::PresentMode::AutoVsync,
+                    ..Default::default()
+                }),
                 ..Default::default()
             }),
-            ..Default::default()
-        }))
-        .add_plugin(gam::client::GamClientPlugin);
+            gam::client::GamClientPlugin,
+        ));
     }
 
     #[cfg(not(feature = "graphics"))]

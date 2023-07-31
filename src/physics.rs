@@ -26,7 +26,7 @@ impl Plugin for PhysicsPlugin {
         // default system setup
         // #[cfg(feature = "train")]
         app.insert_resource(rapier_config)
-            .add_plugin(RapierPlugin::default());
+            .add_plugins(RapierPlugin::default());
         // #[cfg(not(feature = "train"))]
         // {
         //     app.insert_resource(rapier_config)

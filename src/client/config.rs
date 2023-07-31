@@ -4,8 +4,9 @@ use bevy::{
     core_pipeline::fxaa,
     prelude::{
         Added, Commands, Entity, GamepadButtonType, KeyCode, MouseButton, Plugin, Query, Res,
-        Resource,
+        Resource, Update,
     },
+    reflect::TypePath,
 };
 use directories::ProjectDirs;
 use leafwing_input_manager::{
@@ -42,8 +43,8 @@ pub struct ConfigPlugin;
 impl Plugin for ConfigPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.insert_resource(Config::new())
-            .add_plugin(InputManagerPlugin::<Action>::default())
-            .add_system(spawn_input_manager);
+            .add_plugins(InputManagerPlugin::<Action>::default())
+            .add_systems(Update, spawn_input_manager);
     }
 }
 
@@ -231,7 +232,18 @@ impl Default for PlayerAbilities {
 }
 
 #[derive(
-    Actionlike, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash, Debug, Serialize, Deserialize,
+    Actionlike,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+    Clone,
+    Copy,
+    Hash,
+    Debug,
+    Serialize,
+    Deserialize,
+    TypePath,
 )]
 pub enum Action {
     Ability0 = 0,

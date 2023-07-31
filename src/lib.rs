@@ -28,10 +28,10 @@ use bevy::{
     pbr::PbrPlugin,
     prelude::{
         default, shape, AnimationPlugin, App, AssetPlugin, Assets, Bundle, Camera, Camera3dBundle,
-        Color, Commands, Component, CoreSchedule, FixedTime, FrameCountPlugin, GilrsPlugin,
-        GlobalTransform, HierarchyPlugin, ImagePlugin, IntoSystemAppConfig, IntoSystemConfig, Mesh,
-        PbrBundle, PerspectiveProjection, Plugin, PluginGroup, PointLight, PointLightBundle, Quat,
-        Res, ResMut, Resource, StandardMaterial, State, States, TaskPoolPlugin, Transform,
+        Color, Commands, Component, Event, FixedTime, FixedUpdate, FrameCountPlugin, GilrsPlugin,
+        GlobalTransform, HierarchyPlugin, ImagePlugin, IntoSystemConfigs, Mesh, PbrBundle,
+        PerspectiveProjection, Plugin, PluginGroup, PointLight, PointLightBundle, Quat, Res,
+        ResMut, Resource, StandardMaterial, Startup, State, States, TaskPoolPlugin, Transform,
         TypeRegistrationPlugin, Vec2, Vec3,
     },
     render::RenderPlugin,
@@ -61,6 +61,7 @@ pub enum AppState {
     Paused,
 }
 
+#[derive(Event)]
 pub struct DeathEvent {
     pub transform: Transform,
 }
@@ -250,57 +251,52 @@ impl Plugin for GamPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         #[cfg(not(feature = "train"))]
         app.insert_resource(FixedTime::new(Duration::from_secs_f32(TIMESTEP)));
+
         app.add_state::<AppState>()
             .insert_resource(NumAi {
                 enemies: 0,
                 allies: 0,
             })
-            .add_plugin(TickPlugin)
-            .add_startup_system(setup)
-            .add_engine_tick_system(ability::hyper_sprint_system)
-            .add_engine_tick_system(ability::shot_despawn_system)
-            .add_engine_tick_system(ability::grenade::grenade_land_system)
+            .add_plugins(TickPlugin)
+            .add_systems(Startup, setup)
+            .add_engine_tick_systems((
+                ability::hyper_sprint_system,
+                ability::shot_despawn_system,
+                ability::grenade::grenade_land_system,
+            ))
             .add_event::<GrenadeLandEvent>()
-            .add_engine_tick_system(ability::grenade::grenade_explode_system)
-            .add_engine_tick_system(ability::grenade::explosion_despawn_system)
+            .add_engine_tick_systems((
+                ability::grenade::grenade_explode_system,
+                ability::grenade::explosion_despawn_system,
+            ))
             .add_event::<ShotHitEvent>()
             .add_event::<DeathEvent>()
-            .add_engine_tick_system(ability::shot_hit_system)
-            .add_engine_tick_system(ability::shot_kickback_system)
-            .add_plugin(ai::simple::SimpleAiPlugin)
-            .add_engine_tick_system(system::die)
-            .add_engine_tick_system(system::energy_regen)
-            .add_engine_tick_system(system::reset)
-            .add_plugin(PhysicsPlugin);
+            .add_engine_tick_systems((ability::shot_hit_system, ability::shot_kickback_system))
+            .add_plugins(ai::simple::SimpleAiPlugin)
+            .add_engine_tick_systems((system::die, system::energy_regen, system::reset))
+            .add_plugins(PhysicsPlugin);
     }
 }
 
 trait FixedTimestepSystem {
-    fn add_engine_tick_system<M>(&mut self, system: impl IntoSystemAppConfig<M>) -> &mut Self;
+    fn add_engine_tick_systems<M>(&mut self, systems: impl IntoSystemConfigs<M>) -> &mut Self;
 }
 
 pub fn game_running(state: Res<State<AppState>>) -> bool {
-    state.0 == AppState::Running
+    state.get() == &AppState::Running
 }
 
 #[cfg(not(feature = "train"))]
 impl FixedTimestepSystem for App {
-    fn add_engine_tick_system<M>(&mut self, system: impl IntoSystemAppConfig<M>) -> &mut Self {
-        self.add_system(
-            system
-                .in_schedule(CoreSchedule::FixedUpdate)
-                .run_if(game_running),
-        )
+    fn add_engine_tick_systems<M>(&mut self, systems: impl IntoSystemConfigs<M>) -> &mut Self {
+        self.add_systems(FixedUpdate, systems.run_if(game_running))
     }
 }
 
 #[cfg(feature = "train")]
 impl FixedTimestepSystem for App {
-    fn add_engine_tick_system<Params>(
-        &mut self,
-        system: impl IntoSystemDescriptor<Params>,
-    ) -> &mut Self {
-        self.add_system(system)
+    fn add_engine_tick_systems<M>(&mut self, systems: impl IntoSystemConfigs<M>) -> &mut Self {
+        self.add_systems(systems)
     }
 }
 
