@@ -8,10 +8,10 @@ use bevy::{
     scene::Scene,
 };
 use bevy_hanabi::{
-    ColorOverLifetimeModifier, EffectAsset, Gradient, InitAgeModifier, InitLifetimeModifier,
-    InitPositionCircleModifier, InitPositionSphereModifier, InitVelocityCircleModifier,
-    InitVelocitySphereModifier, LinearDragModifier, ParticleEffectBundle, ShapeDimension,
-    SizeOverLifetimeModifier, Spawner, Value,
+    Attribute, ColorOverLifetimeModifier, EffectAsset, ExprWriter, Gradient, LinearDragModifier,
+    ParticleEffectBundle, SetAttributeModifier, SetPositionCircleModifier,
+    SetPositionSphereModifier, SetVelocityCircleModifier, SetVelocitySphereModifier,
+    ShapeDimension, SizeOverLifetimeModifier, Spawner,
 };
 use bevy_kira_audio::AudioSource;
 use iyes_progress::prelude::AssetsLoading;
@@ -371,40 +371,47 @@ fn shot_effect() -> EffectAsset {
     size_gradient1.add_key(1.0, Vec2::splat(0.0));
 
     let spawner = Spawner::once(250.0.into(), false);
+    let writer = ExprWriter::new();
 
-    EffectAsset {
-        name: "ShotParticleEffect".to_string(),
-        capacity: 32768,
-        spawner,
-        ..Default::default()
-    }
-    .init(InitPositionSphereModifier {
-        center: Vec3::ZERO,
-        radius: SHOT_R,
+    let pos = SetPositionSphereModifier {
+        center: writer.lit(Vec3::ZERO).expr(),
+        radius: writer.lit(SHOT_R).expr(),
         dimension: ShapeDimension::Volume,
-    })
-    .init(InitVelocitySphereModifier {
-        center: Vec3::ZERO,
-        // Give a bit of variation by randomizing the initial speed
-        speed: Value::Uniform((6., 7.)),
-    })
-    .init(InitLifetimeModifier {
-        // Give a bit of variation by randomizing the lifetime per particle
-        lifetime: Value::Uniform((0.2, 0.4)),
-    })
-    .init(InitAgeModifier {
-        // Give a bit of variation by randomizing the age per particle. This will control the
-        // starting color and starting size of particles.
-        age: Value::Uniform((0.0, 0.2)),
-    })
-    .update(LinearDragModifier { drag: 5. })
-    // .update(AccelModifier::constant(Vec3::new(0., -8., 0.)))
-    .render(ColorOverLifetimeModifier {
-        gradient: color_gradient1,
-    })
-    .render(SizeOverLifetimeModifier {
-        gradient: size_gradient1,
-    })
+    };
+
+    let vel = SetVelocitySphereModifier {
+        center: writer.lit(Vec3::ZERO).expr(),
+        speed: writer.lit(6.0).uniform(writer.lit(7.0)).expr(),
+    };
+
+    let lifetime = SetAttributeModifier {
+        attribute: Attribute::LIFETIME,
+        value: writer.lit(0.2).uniform(writer.lit(0.4)).expr(),
+    };
+
+    let age = SetAttributeModifier {
+        attribute: Attribute::AGE,
+        value: writer.lit(0.0).uniform(writer.lit(0.2)).expr(),
+    };
+
+    let drag = LinearDragModifier {
+        drag: writer.lit(5.0).expr(),
+    };
+
+    EffectAsset::new(32768, spawner, writer.finish())
+        .with_name("shot_particle_effect")
+        .init(pos)
+        .init(vel)
+        .init(lifetime)
+        .init(age)
+        .update(drag)
+        .render(ColorOverLifetimeModifier {
+            gradient: color_gradient1,
+        })
+        .render(SizeOverLifetimeModifier {
+            gradient: size_gradient1,
+            screen_space_size: false,
+        })
 }
 
 fn death_effect() -> EffectAsset {
@@ -420,40 +427,47 @@ fn death_effect() -> EffectAsset {
     size_gradient1.add_key(1.0, Vec2::splat(0.0));
 
     let spawner = Spawner::once(500.0.into(), false);
+    let writer = ExprWriter::new();
 
-    EffectAsset {
-        name: "ShotParticleEffect".to_string(),
-        capacity: 32768,
-        spawner,
-        ..Default::default()
-    }
-    .init(InitPositionSphereModifier {
-        center: Vec3::ZERO,
-        radius: PLAYER_R,
+    let pos = SetPositionSphereModifier {
+        center: writer.lit(Vec3::ZERO).expr(),
+        radius: writer.lit(PLAYER_R).expr(),
         dimension: ShapeDimension::Volume,
-    })
-    .init(InitVelocitySphereModifier {
-        center: Vec3::ZERO,
-        // Give a bit of variation by randomizing the initial speed
-        speed: Value::Uniform((6., 7.)),
-    })
-    .init(InitLifetimeModifier {
-        // Give a bit of variation by randomizing the lifetime per particle
-        lifetime: Value::Uniform((0.4, 0.6)),
-    })
-    .init(InitAgeModifier {
-        // Give a bit of variation by randomizing the age per particle. This will control the
-        // starting color and starting size of particles.
-        age: Value::Uniform((0.0, 0.2)),
-    })
-    .update(LinearDragModifier { drag: 5. })
-    // .update(AccelModifier::constant(Vec3::new(0., -8., 0.)))
-    .render(ColorOverLifetimeModifier {
-        gradient: color_gradient1,
-    })
-    .render(SizeOverLifetimeModifier {
-        gradient: size_gradient1,
-    })
+    };
+
+    let vel = SetVelocitySphereModifier {
+        center: writer.lit(Vec3::ZERO).expr(),
+        speed: writer.lit(6.0).uniform(writer.lit(7.0)).expr(),
+    };
+
+    let lifetime = SetAttributeModifier {
+        attribute: Attribute::LIFETIME,
+        value: writer.lit(0.4).uniform(writer.lit(0.6)).expr(),
+    };
+
+    let age = SetAttributeModifier {
+        attribute: Attribute::AGE,
+        value: writer.lit(0.0).uniform(writer.lit(0.2)).expr(),
+    };
+
+    let drag = LinearDragModifier {
+        drag: writer.lit(5.0).expr(),
+    };
+
+    EffectAsset::new(32768, spawner, writer.finish())
+        .with_name("death_effect")
+        .init(pos)
+        .init(vel)
+        .init(lifetime)
+        .init(age)
+        .update(drag)
+        .render(ColorOverLifetimeModifier {
+            gradient: color_gradient1,
+        })
+        .render(SizeOverLifetimeModifier {
+            gradient: size_gradient1,
+            screen_space_size: false,
+        })
 }
 
 fn frag_grenade_effect() -> EffectAsset {
@@ -470,40 +484,47 @@ fn frag_grenade_effect() -> EffectAsset {
     size_gradient1.add_key(1.0, Vec2::splat(0.0));
 
     let spawner = Spawner::once(500.0.into(), false);
+    let writer = ExprWriter::new();
 
-    EffectAsset {
-        name: "ShotParticleEffect".to_string(),
-        capacity: 32768,
-        spawner,
-        ..Default::default()
-    }
-    .init(InitPositionSphereModifier {
-        center: Vec3::ZERO,
-        radius: FRAG_GRENADE_EXP_RADIUS,
+    let pos = SetPositionSphereModifier {
+        center: writer.lit(Vec3::ZERO).expr(),
+        radius: writer.lit(FRAG_GRENADE_EXP_RADIUS).expr(),
         dimension: ShapeDimension::Volume,
-    })
-    .init(InitVelocitySphereModifier {
-        center: Vec3::ZERO,
-        // Give a bit of variation by randomizing the initial speed
-        speed: Value::Uniform((6., 7.)),
-    })
-    .init(InitLifetimeModifier {
-        // Give a bit of variation by randomizing the lifetime per particle
-        lifetime: Value::Uniform((0.4, 0.6)),
-    })
-    .init(InitAgeModifier {
-        // Give a bit of variation by randomizing the age per particle. This will control the
-        // starting color and starting size of particles.
-        age: Value::Uniform((0.0, 0.2)),
-    })
-    .update(LinearDragModifier { drag: 5. })
-    // .update(AccelModifier::constant(Vec3::new(0., -8., 0.)))
-    .render(ColorOverLifetimeModifier {
-        gradient: color_gradient1,
-    })
-    .render(SizeOverLifetimeModifier {
-        gradient: size_gradient1,
-    })
+    };
+
+    let vel = SetVelocitySphereModifier {
+        center: writer.lit(Vec3::ZERO).expr(),
+        speed: writer.lit(6.0).uniform(writer.lit(7.0)).expr(),
+    };
+
+    let lifetime = SetAttributeModifier {
+        attribute: Attribute::LIFETIME,
+        value: writer.lit(0.4).uniform(writer.lit(0.6)).expr(),
+    };
+
+    let age = SetAttributeModifier {
+        attribute: Attribute::AGE,
+        value: writer.lit(0.0).uniform(writer.lit(0.2)).expr(),
+    };
+
+    let drag = LinearDragModifier {
+        drag: writer.lit(5.0).expr(),
+    };
+
+    EffectAsset::new(32768, spawner, writer.finish())
+        .with_name("frag_grenade_effect")
+        .init(pos)
+        .init(vel)
+        .init(lifetime)
+        .init(age)
+        .update(drag)
+        .render(ColorOverLifetimeModifier {
+            gradient: color_gradient1,
+        })
+        .render(SizeOverLifetimeModifier {
+            gradient: size_gradient1,
+            screen_space_size: false,
+        })
 }
 
 fn heal_grenade_effect() -> EffectAsset {
@@ -519,40 +540,47 @@ fn heal_grenade_effect() -> EffectAsset {
     size_gradient1.add_key(1.0, Vec2::splat(0.0));
 
     let spawner = Spawner::once(500.0.into(), false);
+    let writer = ExprWriter::new();
 
-    EffectAsset {
-        name: "ShotParticleEffect".to_string(),
-        capacity: 32768,
-        spawner,
-        ..Default::default()
-    }
-    .init(InitPositionSphereModifier {
-        center: Vec3::ZERO,
-        radius: HEAL_GRENADE_EXP_RADIUS,
+    let pos = SetPositionSphereModifier {
+        center: writer.lit(Vec3::ZERO).expr(),
+        radius: writer.lit(HEAL_GRENADE_EXP_RADIUS).expr(),
         dimension: ShapeDimension::Volume,
-    })
-    .init(InitVelocitySphereModifier {
-        center: Vec3::ZERO,
-        // Give a bit of variation by randomizing the initial speed
-        speed: Value::Uniform((6., 7.)),
-    })
-    .init(InitLifetimeModifier {
-        // Give a bit of variation by randomizing the lifetime per particle
-        lifetime: Value::Uniform((0.4, 0.6)),
-    })
-    .init(InitAgeModifier {
-        // Give a bit of variation by randomizing the age per particle. This will control the
-        // starting color and starting size of particles.
-        age: Value::Uniform((0.0, 0.2)),
-    })
-    .update(LinearDragModifier { drag: 5. })
-    // .update(AccelModifier::constant(Vec3::new(0., -8., 0.)))
-    .render(ColorOverLifetimeModifier {
-        gradient: color_gradient1,
-    })
-    .render(SizeOverLifetimeModifier {
-        gradient: size_gradient1,
-    })
+    };
+
+    let vel = SetVelocitySphereModifier {
+        center: writer.lit(Vec3::ZERO).expr(),
+        speed: writer.lit(6.0).uniform(writer.lit(7.0)).expr(),
+    };
+
+    let lifetime = SetAttributeModifier {
+        attribute: Attribute::LIFETIME,
+        value: writer.lit(0.4).uniform(writer.lit(0.6)).expr(),
+    };
+
+    let age = SetAttributeModifier {
+        attribute: Attribute::AGE,
+        value: writer.lit(0.0).uniform(writer.lit(0.2)).expr(),
+    };
+
+    let drag = LinearDragModifier {
+        drag: writer.lit(5.0).expr(),
+    };
+
+    EffectAsset::new(32768, spawner, writer.finish())
+        .with_name("heal_grenade_effect")
+        .init(pos)
+        .init(vel)
+        .init(lifetime)
+        .init(age)
+        .update(drag)
+        .render(ColorOverLifetimeModifier {
+            gradient: color_gradient1,
+        })
+        .render(SizeOverLifetimeModifier {
+            gradient: size_gradient1,
+            screen_space_size: false,
+        })
 }
 
 fn hyper_sprint_effect() -> EffectAsset {
@@ -561,28 +589,35 @@ fn hyper_sprint_effect() -> EffectAsset {
     gradient.add_key(0.5, Vec4::splat(1.0));
     gradient.add_key(1.0, Vec4::new(1.0, 1.0, 1.0, 0.0));
 
-    EffectAsset {
-        name: "Gradient".to_string(),
-        capacity: 32768,
-        spawner: Spawner::once(32.0.into(), false),
-        ..Default::default()
-    }
-    .init(InitPositionCircleModifier {
-        center: Vec3::Z * 0.1,
-        axis: Vec3::Z,
-        radius: PLAYER_R,
+    let spawner = Spawner::once(32.0.into(), false);
+    let writer = ExprWriter::new();
+
+    let pos = SetPositionCircleModifier {
+        center: writer.lit(Vec3::Z * 0.1).expr(),
+        axis: writer.lit(Vec3::Z).expr(),
+        radius: writer.lit(PLAYER_R).expr(),
         dimension: ShapeDimension::Surface,
-    })
-    .init(InitVelocityCircleModifier {
-        center: Vec3::ZERO,
-        axis: Vec3::Z,
-        speed: Value::Uniform((2.0, 3.0)),
-    })
-    .init(InitLifetimeModifier {
-        lifetime: 0.5_f32.into(),
-    })
-    .render(ColorOverLifetimeModifier { gradient })
-    .render(SizeOverLifetimeModifier {
-        gradient: Gradient::constant([0.2; 2].into()),
-    })
+    };
+
+    let vel = SetVelocityCircleModifier {
+        center: writer.lit(Vec3::ZERO).expr(),
+        axis: writer.lit(Vec3::Z).expr(),
+        speed: writer.lit(2.0).uniform(writer.lit(3.0)).expr(),
+    };
+
+    let lifetime = SetAttributeModifier {
+        attribute: Attribute::LIFETIME,
+        value: writer.lit(0.5).expr(),
+    };
+
+    EffectAsset::new(32768, spawner, writer.finish())
+        .with_name("hyper_sprint_effect")
+        .init(pos)
+        .init(vel)
+        .init(lifetime)
+        .render(ColorOverLifetimeModifier { gradient })
+        .render(SizeOverLifetimeModifier {
+            gradient: Gradient::constant([0.2; 2].into()),
+            screen_space_size: false,
+        })
 }

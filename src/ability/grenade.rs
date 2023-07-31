@@ -1,15 +1,14 @@
 use std::f32::consts::PI;
 
 use bevy::prelude::{
-    Commands, Component, DespawnRecursiveExt, Entity, EventWriter, GlobalTransform, Query, Res,
-    Transform, Vec2, Vec3, With,
+    Commands, Component, DespawnRecursiveExt, Entity, Event, EventWriter, GlobalTransform, Query,
+    Res, Transform, Vec2, Vec3,
 };
 use bevy_rapier3d::prelude::{
     Ccd, Collider, ColliderMassProperties, LockedAxes, RapierContext, ReadMassProperties, Sensor,
     Velocity,
 };
 use nalgebra::ComplexField;
-use tracing::info;
 
 use crate::{
     physics::G,
@@ -157,6 +156,7 @@ pub fn heal_grenade(
     }
 }
 
+#[derive(Event)]
 pub struct GrenadeLandEvent {
     pub entity: Entity,
 }

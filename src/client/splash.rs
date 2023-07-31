@@ -1,9 +1,9 @@
 use bevy::{
     prelude::{
-        Color, Commands, Component, DespawnRecursiveExt, Entity,
-        IntoSystemAppConfig, NodeBundle, OnEnter, OnExit, Plugin, Query, With,
+        Color, Commands, Component, DespawnRecursiveExt, Entity, NodeBundle, OnEnter, OnExit,
+        Plugin, Query, With,
     },
-    ui::{BackgroundColor, Size, Style, Val},
+    ui::{BackgroundColor, Style},
 };
 
 use crate::AppState;
@@ -12,8 +12,8 @@ pub struct SplashPlugin;
 
 impl Plugin for SplashPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_system(splash_setup.in_schedule(OnEnter(AppState::Loading)))
-            .add_system(splash_despawn.in_schedule(OnExit(AppState::Loading)));
+        app.add_systems(OnEnter(AppState::Loading), splash_setup);
+        app.add_systems(OnExit(AppState::Loading), splash_despawn);
     }
 }
 
@@ -26,7 +26,6 @@ fn splash_setup(mut commands: Commands) {
             style: Style {
                 align_items: bevy::ui::AlignItems::Center,
                 justify_content: bevy::ui::JustifyContent::Center,
-                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
                 ..Default::default()
             },
             background_color: BackgroundColor(Color::BLACK),

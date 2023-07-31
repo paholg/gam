@@ -3,13 +3,13 @@ use bevy::prelude::{
     Vec2, Vec3, With,
 };
 use bevy_rapier3d::prelude::{
-    Collider, ExternalImpulse, LockedAxes, ReadMassProperties, RigidBody, Velocity,
+    Collider, LockedAxes, RigidBody,
 };
 use rand::Rng;
 
 use crate::{
-    ai::simple::Attitude, status_effect::StatusEffects, Ai, Ally, Character, Cooldowns, DeathEvent,
-    Enemy, Energy, Health, MaxSpeed, NumAi, Player, DAMPING, PLANE, PLAYER_R,
+    ai::simple::Attitude, Ai, Ally, Character, Cooldowns, DeathEvent,
+    Enemy, Energy, Health, NumAi, Player, DAMPING, PLANE, PLAYER_R,
 };
 
 pub fn die(

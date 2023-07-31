@@ -3,13 +3,12 @@ use std::f32::consts::PI;
 use bevy::{
     prelude::{
         Camera, Commands, Entity, EventReader, GlobalTransform, NextState, Plugin, Quat, Query,
-        Res, ResMut, Resource, State, Transform, Vec3, With, Without,
+        Res, ResMut, Resource, State, Transform, Update, Vec3, With, Without,
     },
     window::{CursorMoved, PrimaryWindow, Window},
 };
 use bevy_rapier3d::prelude::{ExternalImpulse, RapierConfiguration, Velocity};
 use leafwing_input_manager::prelude::ActionState;
-
 
 use crate::{
     ability::{ABILITY_Z, HYPER_SPRINT_FACTOR},
@@ -25,12 +24,9 @@ pub struct ControlPlugin;
 
 impl Plugin for ControlPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_system(menu)
-            .add_engine_tick_system(player_ability)
-            .add_engine_tick_system(player_movement)
-            .insert_resource(CameraFollowMode::Mouse)
-            .add_system(player_aim)
-            .add_system(update_cursor);
+        app.add_systems(Update, (menu, player_aim, update_cursor))
+            .add_engine_tick_systems((player_ability, player_movement))
+            .insert_resource(CameraFollowMode::Mouse);
     }
 }
 
@@ -53,7 +49,7 @@ fn menu(
     };
 
     if action_state.just_pressed(Action::Menu) {
-        match state.0 {
+        match state.get() {
             AppState::Loading => (),
             AppState::Running => {
                 physics_config.physics_pipeline_active = false;

@@ -1,8 +1,8 @@
 use std::{f32::consts::PI, time::Duration};
 
 use bevy::prelude::{
-    Added, Commands, Component, Entity, EventReader, EventWriter, GlobalTransform, Quat, Query,
-    Res, Transform, Vec2, Vec3, With, Without,
+    Added, Commands, Component, Entity, Event, EventReader, EventWriter, GlobalTransform, Quat,
+    Query, Res, Transform, Vec2, Vec3, With, Without,
 };
 
 use bevy_rapier3d::prelude::{
@@ -18,7 +18,7 @@ use crate::{
     Cooldowns, Energy, Health, Object, Shootable, PLAYER_R,
 };
 
-use self::grenade::{frag_grenade, heal_grenade, Explosion};
+use self::grenade::{frag_grenade, heal_grenade};
 
 pub mod grenade;
 
@@ -196,7 +196,7 @@ fn shoot(
                     .with_scale(Vec3::new(SHOT_R, SHOT_R, SHOT_R)),
                 global_transform: GlobalTransform::default(),
                 collider: Collider::ball(SHOT_R),
-                mass_props: ColliderMassProperties::Density(10000.0),
+                mass_props: ColliderMassProperties::Density(100.0),
                 body: RigidBody::Dynamic,
                 velocity: Velocity {
                     linvel: vel,
@@ -257,7 +257,7 @@ fn shotgun(
                         .with_scale(Vec3::new(SHOTGUN_R, SHOTGUN_R, SHOTGUN_R)),
                     global_transform: GlobalTransform::default(),
                     collider: Collider::ball(SHOTGUN_R),
-                    mass_props: ColliderMassProperties::Density(10000.0),
+                    mass_props: ColliderMassProperties::Density(100.0),
                     body: RigidBody::Dynamic,
                     velocity: Velocity {
                         linvel: vel,
@@ -304,6 +304,7 @@ pub fn shot_despawn_system(
     }
 }
 
+#[derive(Event)]
 pub struct ShotHitEvent {
     pub transform: Transform,
 }

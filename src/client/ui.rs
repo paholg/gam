@@ -1,4 +1,4 @@
-use bevy::prelude::{Plugin, Res};
+use bevy::prelude::{Plugin, Res, Update};
 
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 
@@ -15,7 +15,8 @@ impl Plugin for UiPlugin {
         //     ..Default::default()
         // })
         // .add_system(text_update_system);
-        app.add_plugin(EguiPlugin).add_system(score_system);
+        app.add_plugins(EguiPlugin)
+            .add_systems(Update, score_system);
     }
 }
 

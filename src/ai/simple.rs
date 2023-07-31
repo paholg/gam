@@ -40,10 +40,12 @@ impl Attitude {
 
 impl Plugin for SimpleAiPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_engine_tick_system(update_enemy_orientation);
-        app.add_engine_tick_system(update_ally_orientation);
-        app.add_engine_tick_system(stupid_shoot_system);
-        app.add_engine_tick_system(just_move_system);
+        app.add_engine_tick_systems((
+            update_enemy_orientation,
+            update_ally_orientation,
+            stupid_shoot_system,
+            just_move_system,
+        ));
     }
 }
 
