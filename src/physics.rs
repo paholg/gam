@@ -1,5 +1,10 @@
-use bevy::prelude::{default, Plugin, Vec3};
-use bevy_rapier3d::prelude::{NoUserData, RapierConfiguration, RapierPhysicsPlugin, TimestepMode};
+use bevy::{
+    prelude::{default, FixedUpdate, IntoSystemConfigs, IntoSystemSetConfigs, Plugin, Vec3},
+    transform::TransformSystem,
+};
+use bevy_rapier3d::prelude::{
+    NoUserData, PhysicsSet, RapierConfiguration, RapierPhysicsPlugin, TimestepMode,
+};
 
 use crate::time::PHYSICS_TIMESTEP;
 
@@ -24,39 +29,37 @@ impl Plugin for PhysicsPlugin {
         // TIMESTEP tick rate instead of synced with framerate.
         // In `train` mode, we run as fast as possible, so we can use the
         // default system setup
-        // #[cfg(feature = "train")]
+        #[cfg(feature = "train")]
         app.insert_resource(rapier_config)
             .add_plugins(RapierPlugin::default());
-        // #[cfg(not(feature = "train"))]
-        // {
-        //     app.insert_resource(rapier_config)
-        //         .add_plugin(RapierPlugin::default().with_default_system_setup(false));
-        //     app.configure_sets(
-        //         (
-        //             PhysicsSet::SyncBackend,
-        //             PhysicsSet::SyncBackendFlush,
-        //             PhysicsSet::StepSimulation,
-        //             PhysicsSet::Writeback,
-        //         )
-        //             .chain()
-        //             .before(CoreSet::FixedUpdate),
-        //     );
+        #[cfg(not(feature = "train"))]
+        {
+            app.insert_resource(rapier_config)
+                .add_plugins(RapierPlugin::default().with_default_system_setup(false));
+            app.configure_sets(
+                FixedUpdate,
+                (
+                    PhysicsSet::SyncBackend,
+                    PhysicsSet::SyncBackendFlush,
+                    PhysicsSet::StepSimulation,
+                    PhysicsSet::Writeback,
+                )
+                    .chain()
+                    .before(TransformSystem::TransformPropagate),
+            );
 
-        //     app.add_systems(
-        //         RapierPlugin::get_systems(PhysicsSet::SyncBackend)
-        //             .in_base_set(PhysicsSet::SyncBackend),
-        //     );
-        //     app.add_systems(
-        //         RapierPlugin::get_systems(PhysicsSet::SyncBackendFlush)
-        //             .in_base_set(PhysicsSet::SyncBackendFlush),
-        //     );
-        //     app.add_systems(
-        //         RapierPlugin::get_systems(PhysicsSet::StepSimulation)
-        //             .in_base_set(PhysicsSet::StepSimulation),
-        //     );
-        //     app.add_systems(
-        //         RapierPlugin::get_systems(PhysicsSet::Writeback).in_base_set(PhysicsSet::Writeback),
-        //     );
-        // }
+            app.add_systems(
+                FixedUpdate,
+                (
+                    RapierPlugin::get_systems(PhysicsSet::SyncBackend)
+                        .in_set(PhysicsSet::SyncBackend),
+                    RapierPlugin::get_systems(PhysicsSet::SyncBackendFlush)
+                        .in_set(PhysicsSet::SyncBackendFlush),
+                    RapierPlugin::get_systems(PhysicsSet::StepSimulation)
+                        .in_set(PhysicsSet::StepSimulation),
+                    RapierPlugin::get_systems(PhysicsSet::Writeback).in_set(PhysicsSet::Writeback),
+                ),
+            );
+        }
     }
 }

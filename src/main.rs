@@ -10,7 +10,7 @@ fn main() {
         app.add_plugins((
             bevy::DefaultPlugins.set(bevy::window::WindowPlugin {
                 primary_window: Some(bevy::window::Window {
-                    present_mode: bevy::window::PresentMode::AutoVsync,
+                    present_mode: bevy::window::PresentMode::AutoNoVsync,
                     ..Default::default()
                 }),
                 ..Default::default()
