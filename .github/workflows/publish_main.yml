@@ -49,4 +49,4 @@ jobs:
           automatic_release_tag: latest
           prerelease: true
           files: |
-            $ {{ env.TARGET }}
+            ${{ env.TARGET }}
