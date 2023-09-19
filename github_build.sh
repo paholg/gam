@@ -8,7 +8,7 @@ target=$2
 dir="gam-$version"
 out_file="gam-$version-$target.zip"
 
-echo "TARGET=$target" >> "$GITHUB_ENV"
+echo "TARGET=$out_file" >> "$GITHUB_ENV"
 
 mkdir "$dir"
 cp "target/$target/release/gam" "$dir/"
