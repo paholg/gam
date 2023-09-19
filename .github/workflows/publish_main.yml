@@ -41,7 +41,7 @@ jobs:
         run: cargo build --release --locked --target ${{ matrix.config.target }}
       - name: Prepare
         run: |
-          ./build_artifact.sh $(git rev-parse --short HEAD) ${{ matrix.config.target }}
+          ./github_build.sh $(git rev-parse --short HEAD) ${{ matrix.config.target }}
       - name: Publish
         uses: marvinpinto/action-automatic-releases@latest
         with:
