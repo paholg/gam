@@ -1,0 +1,47 @@
+on:
+  push:
+    tags:
+      - 'v*'
+
+name: Publish new version
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  release:
+    name: Release
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      matrix:
+        config:
+          - { os: windows-latest, target: "x86_64-pc-windows-msvc" }
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+      - name: Checkout LFS objects
+        run: git lfs pull
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+          target: ${{ matrix.config.target }}
+      - name: Setup Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: "true"
+      - name: Build
+        run: cargo build --release --locked --target ${{ matrix.config.target }}
+      - name: Prepare
+        run: |
+          ./build_artifact.sh ${{ github.ref_name }} ${{ matrix.config.target }}
+      - name: Publish
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: false
+          files: |
+            $ {{ env.TARGET }}

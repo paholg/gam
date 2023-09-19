@@ -3,7 +3,7 @@ on:
     branches:
       - main
 
-name: Release
+name: Publish main
 
 defaults:
   run:
@@ -11,7 +11,7 @@ defaults:
 
 jobs:
   release:
-    name: Release
+    name: Pre-Release
     runs-on: ${{ matrix.config.os }}
     strategy:
       matrix:
@@ -24,8 +24,6 @@ jobs:
           lfs: true
       - name: Checkout LFS objects
         run: git lfs pull
-      - name: Set version
-        run: echo "VERSION=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
       - name: Install Rust Toolchain
         uses: dtolnay/rust-toolchain@master
         with:
@@ -39,19 +37,12 @@ jobs:
         run: cargo build --release --locked --target ${{ matrix.config.target }}
       - name: Prepare
         run: |
-          dir="gam-${{ env.VERSION }}"
-          target="gam-${{ env.VERSION}}-${{ matrix.config.target }}.zip"
-          echo "TARGET=$target" >> $GITHUB_ENV
-          mkdir $dir
-          cp target/${{ matrix.config.target }}/release/gam $dir/
-          cp -r assets/ $dir/
-          7z a -tzip $target $dir/
+          ./build_artifact.sh $(git rev-parse --short HEAD) ${{ matrix.config.target }}
       - name: Publish
-        uses: svenstaro/upload-release-action@v2
+        uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ${{ env.TARGET }}
-          asset_name: ${{ env.TARGET }}
-          tag: ${{ env.VERSION }}
-          overwrite: true
-          body: "New release of gam!"
+          automatic_release_tag: latest
+          prerelease: true
+          files: |
+            $ {{ env.TARGET }}
