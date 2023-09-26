@@ -1,8 +1,7 @@
 #![feature(
     duration_consts_float,
     div_duration,
-    const_fn_floating_point_arithmetic,
-    io_error_other
+    const_fn_floating_point_arithmetic
 )]
 #![allow(clippy::type_complexity)]
 
