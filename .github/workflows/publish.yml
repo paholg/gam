@@ -24,11 +24,6 @@ jobs:
           lfs: true
       - name: Checkout LFS objects
         run: git lfs pull
-      - name: Install Rust Toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: nightly
-          target: ${{ matrix.config.target }}
       - name: Setup Cache
         uses: Swatinem/rust-cache@v2
         with:
