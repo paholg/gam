@@ -1,8 +1,7 @@
 use bevy::prelude::{Plugin, Res, Update};
 
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
-
-use crate::NumAi;
+use engine::NumAi;
 
 use super::BackgroundMusic;
 

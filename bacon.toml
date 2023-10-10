@@ -16,6 +16,6 @@ watch = ["tests", "benches", "examples"]
 
 [jobs.run]
 allow_warnings = true
-command = ["cargo", "run", "--features", "bevy/dynamic_linking", "--color", "always"]
+command = ["cargo", "run", "--features", "bevy/dynamic_linking", "--color", "always", "--bin", "client"]
 need_stdout = true
 watch = ["examples"]

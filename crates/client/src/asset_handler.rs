@@ -16,16 +16,19 @@ use bevy_hanabi::{
 use bevy_kira_audio::AudioSource;
 use iyes_progress::prelude::AssetsLoading;
 
-use crate::{
+use engine::{
     ability::{
         grenade::{
             FRAG_GRENADE_EXP_RADIUS, FRAG_GRENADE_R, HEAL_GRENADE_EXP_RADIUS, HEAL_GRENADE_R,
         },
         SHOT_R,
     },
-    client::bar::{Energybar, Healthbar},
-    shapes::HollowPolygon,
     PLAYER_R,
+};
+
+use crate::{
+    bar::{Energybar, Healthbar},
+    shapes::HollowPolygon,
 };
 
 pub struct BarAssets {
@@ -344,7 +347,9 @@ fn load_music(
     loading: &mut AssetsLoading,
 ) -> Vec<(String, Handle<AudioSource>)> {
     // Load all assets in parallel first
-    let _music = asset_server.load_folder("audio/Galacti-Chrons Weird Music Pack");
+    asset_server
+        .load_folder("audio/Galacti-Chrons Weird Music Pack")
+        .unwrap();
     let mut res = Vec::new();
     for entry in glob::glob("assets/audio/Galacti-Chrons Weird Music Pack/*.ogg").unwrap() {
         if let Ok(path) = entry {

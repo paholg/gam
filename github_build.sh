@@ -11,6 +11,6 @@ out_file="gam-$version-$target.zip"
 echo "TARGET=$out_file" >> "$GITHUB_ENV"
 
 mkdir "$dir"
-cp "target/$target/release/gam" "$dir/"
+cp "target/$target/release/client" "$dir/"
 cp -r assets/ "$dir/"
 7z a -tzip "$out_file" "$dir/"

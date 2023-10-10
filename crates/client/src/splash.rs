@@ -5,8 +5,7 @@ use bevy::{
     },
     ui::{BackgroundColor, Style},
 };
-
-use crate::AppState;
+use engine::AppState;
 
 pub struct SplashPlugin;
 

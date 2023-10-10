@@ -1,11 +1,12 @@
 use bevy::prelude::{
     default, Added, BuildChildren, Bundle, Children, Commands, Component, ComputedVisibility,
-    Entity, GlobalTransform, Parent, PbrBundle, Query, Res, Transform, Vec2, Vec3,
-    Visibility, With, Without,
+    Entity, GlobalTransform, Parent, PbrBundle, Query, Res, Transform, Vec2, Vec3, Visibility,
+    With, Without,
 };
+use engine::Health;
 use tracing::warn;
 
-use crate::{client::asset_handler::AssetHandler, Health};
+use crate::asset_handler::AssetHandler;
 
 use super::BarMarker;
 
