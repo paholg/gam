@@ -10,13 +10,15 @@ use bevy::{
 use bevy_rapier3d::prelude::{ExternalImpulse, RapierConfiguration, Velocity};
 use leafwing_input_manager::prelude::ActionState;
 
-use crate::{
+use engine::{
     ability::{ABILITY_Z, HYPER_SPRINT_FACTOR},
     pointing_angle,
     status_effect::{StatusEffect, StatusEffects},
     time::TickCounter,
-    AppState, Cooldowns, Energy, FixedTimestepSystem, MaxSpeed, Player, CAMERA_OFFSET,
+    AppState, Cooldowns, Energy, FixedTimestepSystem, MaxSpeed, Player,
 };
+
+use crate::CAMERA_OFFSET;
 
 use super::config::{Action, Config, ABILITY_COUNT};
 
@@ -206,16 +208,26 @@ fn update_cursor(
     *camera_mode = CameraFollowMode::Mouse;
 
     let (mut camera_transform, camera, camera_global_transform) = camera_query.single_mut();
-    let Ok((mut player_transform, mut player)) = player_query.get_single_mut() else { return; };
+    let Ok((mut player_transform, mut player)) = player_query.get_single_mut() else {
+        return;
+    };
 
-    let Some(cursor_window) = primary_window.single().cursor_position() else { return; };
+    let Some(cursor_window) = primary_window.single().cursor_position() else {
+        return;
+    };
 
-    let Some(ray) = camera.viewport_to_world(camera_global_transform, cursor_window) else { return; };
+    let Some(ray) = camera.viewport_to_world(camera_global_transform, cursor_window) else {
+        return;
+    };
 
-    let Some(ground_distance) = ray.intersect_plane(Vec3::new(0.0, 0.0, 0.0), Vec3::Z) else { return; };
+    let Some(ground_distance) = ray.intersect_plane(Vec3::new(0.0, 0.0, 0.0), Vec3::Z) else {
+        return;
+    };
     player.target = ray.get_point(ground_distance).truncate();
 
-    let Some(distance) = ray.intersect_plane(Vec3::new(0.0, 0.0, ABILITY_Z), Vec3::Z) else { return; };
+    let Some(distance) = ray.intersect_plane(Vec3::new(0.0, 0.0, ABILITY_Z), Vec3::Z) else {
+        return;
+    };
     let cursor = ray.get_point(distance);
 
     let angle = pointing_angle(player_transform.translation, cursor);

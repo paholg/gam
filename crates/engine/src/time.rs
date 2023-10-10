@@ -3,13 +3,13 @@ use std::{
     time::{Duration, Instant},
 };
 
-use bevy::prelude::{Plugin, ResMut, Resource};
+use bevy_app::{App, Plugin};
+use bevy_ecs::system::{ResMut, Resource};
 use tracing::info;
 
 use crate::FixedTimestepSystem;
 
 /// The timestep at which we run our game.
-#[cfg(not(feature = "train"))]
 pub const TIMESTEP: f32 = PHYSICS_TIMESTEP;
 pub const PHYSICS_INVERSE_TIMESTEP: f32 = 60.0;
 /// The timestep the physics engine sees.
@@ -73,16 +73,6 @@ impl TickCounter {
     pub fn at(&self, tick: Tick) -> Tick {
         Tick(self.tick + tick.0)
     }
-
-    #[cfg(not(feature = "train"))]
-    pub fn should_save(&self) -> bool {
-        false
-    }
-
-    #[cfg(feature = "train")]
-    pub fn should_save(&self) -> bool {
-        self.tick % 100_000 == 0
-    }
 }
 
 fn tick_counter(mut tick_counter: ResMut<TickCounter>) {
@@ -104,7 +94,7 @@ fn debug_tick_system(mut tick_counter: ResMut<TickCounter>) {
 pub struct TickPlugin;
 
 impl Plugin for TickPlugin {
-    fn build(&self, app: &mut bevy::prelude::App) {
+    fn build(&self, app: &mut App) {
         app.insert_resource(TickCounter::new())
             .add_engine_tick_systems((tick_counter, debug_tick_system));
     }

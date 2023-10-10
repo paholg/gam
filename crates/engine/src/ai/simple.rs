@@ -1,12 +1,15 @@
 use std::cmp::Ordering;
 
-use bevy::{
-    ecs::query::ReadOnlyWorldQuery,
-    prelude::{
-        Commands, Component, Entity, Plugin, Quat, Query, Res, Transform, Vec2, Vec3, With, Without,
-    },
+use bevy_app::{App, Plugin};
+use bevy_ecs::{
+    component::Component,
+    entity::Entity,
+    query::{ReadOnlyWorldQuery, With, Without},
+    system::{Commands, Query, Res},
 };
+use bevy_math::{Quat, Vec2, Vec3};
 use bevy_rapier3d::prelude::{ExternalImpulse, Velocity};
+use bevy_transform::components::Transform;
 use rand::Rng;
 
 use crate::{
@@ -39,7 +42,7 @@ impl Attitude {
 }
 
 impl Plugin for SimpleAiPlugin {
-    fn build(&self, app: &mut bevy::prelude::App) {
+    fn build(&self, app: &mut App) {
         app.add_engine_tick_systems((
             update_enemy_orientation,
             update_ally_orientation,

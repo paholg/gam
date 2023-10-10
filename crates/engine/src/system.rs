@@ -1,15 +1,20 @@
-use bevy::prelude::{
-    Commands, DespawnRecursiveExt, Entity, EventWriter, GlobalTransform, Query, ResMut, Transform,
-    Vec2, Vec3, With,
+use std::sync::atomic::AtomicBool;
+
+use bevy_ecs::{
+    entity::Entity,
+    event::EventWriter,
+    query::With,
+    system::{Commands, Query, ResMut},
 };
-use bevy_rapier3d::prelude::{
-    Collider, LockedAxes, RigidBody,
-};
+use bevy_hierarchy::DespawnRecursiveExt;
+use bevy_math::{Vec2, Vec3};
+use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody};
+use bevy_transform::components::{GlobalTransform, Transform};
 use rand::Rng;
 
 use crate::{
-    ai::simple::Attitude, Ai, Ally, Character, Cooldowns, DeathEvent,
-    Enemy, Energy, Health, NumAi, Player, DAMPING, PLANE, PLAYER_R,
+    ai::simple::Attitude, Ai, Ally, Character, Cooldowns, DeathEvent, Enemy, Energy, Health, NumAi,
+    Player, DAMPING, PLANE, PLAYER_R,
 };
 
 pub fn die(
@@ -116,12 +121,9 @@ pub fn reset(
         spawn_enemies(&mut commands, num_ai.enemies);
     }
 
-    #[cfg(not(feature = "train"))]
-    {
-        if player_query.iter().next().is_none() {
-            num_ai.enemies = num_ai.enemies.saturating_sub(1);
-            spawn_player(&mut commands);
-        }
+    if player_query.iter().next().is_none() {
+        num_ai.enemies = num_ai.enemies.saturating_sub(1);
+        spawn_player(&mut commands);
     }
 
     if ally_query.iter().next().is_none() {

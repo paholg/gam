@@ -3,14 +3,11 @@
 set -euo pipefail
 
 case $1 in
-  gam)
-    cargo run --features bevy/dynamic_linking "${@:2}"
+  client)
+    BEVY_ASSET_ROOT="./" cargo run --features bevy/dynamic_linking --bin client
   ;;
   debug)
-    RUST_BACKTRACE=1 cargo run --features bevy/dynamic_linking --features debug "${@:2}"
-  ;;
-  train)
-    cargo run --no-default-features --features bevy/dynamic_linking --features train --release "${@:2}"
+    BEVY_ASSET_ROOT="./" RUST_BACKTRACE=1 cargo run --features bevy/dynamic_linking --bin client --features debug
   ;;
   *)
     echo "Invalid argument"

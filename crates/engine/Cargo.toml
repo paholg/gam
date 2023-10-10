@@ -1,0 +1,27 @@
+[package]
+edition = "2021"
+name = "engine"
+version = "0.1.0"
+
+[dependencies]
+# Bevy crates
+# We use individual bevy crates to make sure we don't accidentally include
+# client-facing features of bevy in this crate.
+bevy_app.workspace = true
+bevy_core.workspace = true
+bevy_diagnostic.workspace = true
+bevy_ecs.workspace = true
+bevy_hierarchy.workspace = true
+bevy_log.workspace = true
+bevy_math.workspace = true
+bevy_time.workspace = true
+bevy_transform.workspace = true
+
+bevy_rapier3d.workspace = true
+# bincode = { version = "2.0.0-rc.2", features = ["serde"] }
+nalgebra = "0.32.3"
+rand = "0.8"
+serde = "1"
+smallvec = "1"
+tracing.workspace = true
+# typed-builder = "0.11"

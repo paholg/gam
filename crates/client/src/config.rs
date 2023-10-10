@@ -9,14 +9,13 @@ use bevy::{
     reflect::TypePath,
 };
 use directories::ProjectDirs;
+use engine::{ability::Ability, Player};
 use leafwing_input_manager::{
     prelude::{DualAxis, InputManagerPlugin, InputMap, VirtualDPad},
     Actionlike, InputManagerBundle,
 };
 use serde::{Deserialize, Serialize};
-use tracing::{error, info};
-
-use crate::{ability::Ability, Player};
+use tracing::{error, info, warn};
 
 // TODO: NAME THESE THINGS
 const ORG: &str = "Paho Corp";
@@ -30,10 +29,6 @@ pub enum Error {
     HomeDirNotFound,
     #[error("IO error: {0}")]
     Io(#[from] io::Error),
-    // #[error("Config parse error: {0}")]
-    // TomlDe(#[from] toml::de::Error),
-    // #[error("Config save error: {0}")]
-    // TomlSer(#[from] toml::ser::Error),
     #[error("Config parse/serialize error: {0}")]
     Json(#[from] serde_json::Error),
 }
@@ -54,8 +49,6 @@ pub fn project_dirs() -> Result<ProjectDirs, Error> {
 
 /// Return the path to the config file, if able.
 /// Creates any necessary directories of they do not exist.
-// TODO: The toml crate does not currently support enums. SAD. So we're using
-//  json.
 fn config_file() -> Result<PathBuf, Error> {
     let proj_dirs = project_dirs()?;
     let config_dir = proj_dirs.config_dir();
@@ -65,20 +58,6 @@ fn config_file() -> Result<PathBuf, Error> {
     let mut path = config_dir.to_owned();
     path.push("config.json");
     Ok(path)
-}
-
-fn load_config() -> Result<Config, Error> {
-    let contents = fs::read_to_string(config_file()?)?;
-    let config = serde_json::from_str(&contents)?;
-    info!("Config loaded: {:#?}", config);
-    Ok(config)
-}
-
-fn save_config(config: &Config) -> Result<(), Error> {
-    let config = serde_json::to_string_pretty(config)?;
-    fs::write(config_file()?, config)?;
-
-    Ok(())
 }
 
 #[derive(Debug, Serialize, Deserialize, Resource)]
@@ -115,7 +94,6 @@ fn default_controls() -> InputMap<Action> {
             },
             Action::Move,
         )
-        // .insert(DualAxis::mouse_motion(), Action::Aim)
         .insert(DualAxis::right_stick(), Action::Aim)
         .insert(MouseButton::Left, Action::Ability0)
         .insert(GamepadButtonType::RightTrigger2, Action::Ability0)
@@ -133,12 +111,29 @@ fn default_controls() -> InputMap<Action> {
 }
 
 impl Config {
+    fn load() -> Result<Self, Error> {
+        let contents = fs::read_to_string(config_file()?)?;
+        let config = serde_json::from_str(&contents)?;
+        info!("Config loaded: {:#?}", config);
+        Ok(config)
+    }
+
+    fn save(&self) -> Result<(), Error> {
+        let config = serde_json::to_string_pretty(self)?;
+        fs::write(config_file()?, config)?;
+
+        Ok(())
+    }
+
     pub fn new() -> Config {
-        match load_config() {
+        match Self::load() {
             Ok(config) => config,
             Err(error) => {
-                error!(?error, "Couldn't load config; using default");
+                warn!(?error, "Couldn't load config; using default");
                 let config = Config::default();
+                if let Err(error) = config.save() {
+                    warn!(?error, "Couldn't save new config!");
+                }
                 config
             }
         }

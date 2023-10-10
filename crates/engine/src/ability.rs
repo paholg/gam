@@ -1,14 +1,18 @@
 use std::{f32::consts::PI, time::Duration};
 
-use bevy::prelude::{
-    Added, Commands, Component, Entity, Event, EventReader, EventWriter, GlobalTransform, Quat,
-    Query, Res, Transform, Vec2, Vec3, With, Without,
+use bevy_ecs::{
+    component::Component,
+    entity::Entity,
+    event::{Event, EventReader, EventWriter},
+    query::{Added, With, Without},
+    system::{Commands, Query, Res},
 };
-
+use bevy_math::{Quat, Vec2, Vec3};
 use bevy_rapier3d::prelude::{
     ActiveEvents, Ccd, Collider, ColliderMassProperties, CollisionEvent, LockedAxes,
     ReadMassProperties, RigidBody, Sensor, Velocity,
 };
+use bevy_transform::components::{GlobalTransform, Transform};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
 
@@ -287,8 +291,10 @@ pub fn shot_kickback_system(
     mut momentum_query: Query<(&mut Velocity, &ReadMassProperties), Without<Shot>>,
 ) {
     for (v, m, shot) in shot_query.iter() {
-        let Ok((mut shooter_v, shooter_m)) = momentum_query.get_mut(shot.shooter) else { continue ; };
-        shooter_v.linvel -= v.linvel * m.0.mass / shooter_m.0.mass;
+        let Ok((mut shooter_v, shooter_m)) = momentum_query.get_mut(shot.shooter) else {
+            continue;
+        };
+        shooter_v.linvel -= v.linvel * m.get().mass / shooter_m.get().mass;
     }
 }
 
@@ -325,7 +331,9 @@ pub fn shot_hit_system(
 ) {
     let mut shots_to_despawn: SmallVec<[(Entity, Transform); 10]> = smallvec::SmallVec::new();
     for collision_event in collision_events.iter() {
-        let CollisionEvent::Started(e1, e2, _flags) = collision_event else { continue; };
+        let CollisionEvent::Started(e1, e2, _flags) = collision_event else {
+            continue;
+        };
         let e1 = *e1;
         let e2 = *e2;
 
@@ -343,7 +351,7 @@ pub fn shot_hit_system(
             health.take(shot.damage);
         }
         if let Ok((mut vel, mass)) = momentum_query.get_mut(target_entity) {
-            vel.linvel += shot_vel.linvel * shot_mass.0.mass / mass.0.mass;
+            vel.linvel += shot_vel.linvel * shot_mass.get().mass / mass.get().mass;
         }
     }
     shots_to_despawn.sort_by_key(|(entity, _transform)| *entity);

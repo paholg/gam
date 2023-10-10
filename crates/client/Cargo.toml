@@ -1,0 +1,54 @@
+[package]
+edition = "2021"
+name = "client"
+version = "0.1.0"
+
+[dependencies]
+engine.path = "../engine/"
+
+bevy = { workspace = true, default-features = false, features = [
+  "animation",
+  "bevy_asset",
+  # "bevy_audio",
+  "bevy_gilrs",
+  "bevy_scene",
+  "bevy_winit",
+  "bevy_core_pipeline",
+  "bevy_pbr",
+  "bevy_gltf",
+  "bevy_render",
+  "bevy_sprite",
+  "bevy_text",
+  "bevy_ui",
+  "multi-threaded",
+  "png",
+  "hdr",
+  "ktx2",
+  "zstd",
+  # "vorbis",
+  "x11",
+  # "bevy_gizmos",
+  "android_shared_stdcxx",
+  "tonemapping_luts",
+  "default_font",
+  "webgl2",
+] }
+# bevy-debug-text-overlay = "6.0.0"
+bevy_egui = "0.22"
+bevy_hanabi = { version = "0.7.0", default-features = false, features = ["3d"] }
+bevy_kira_audio = "0.17.0"
+bevy_mod_inverse_kinematics = "0.4.0"
+# bevy_quickmenu = "0.1"
+bevy_rapier3d.workspace = true
+directories = "5"
+glob = "0.3.1"
+iyes_progress = { version = "0.9.1", features = ["assets"] }
+leafwing-input-manager = "0.10.0"
+rand = "0.8"
+serde = "1"
+serde_json = "1"
+thiserror = "1"
+tracing.workspace = true
+
+[features]
+debug = []

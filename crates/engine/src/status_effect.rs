@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use bevy::prelude::Component;
+use bevy_ecs::component::Component;
 
 #[derive(Component, Default)]
 pub struct StatusEffects {

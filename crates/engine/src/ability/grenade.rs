@@ -1,13 +1,18 @@
 use std::f32::consts::PI;
 
-use bevy::prelude::{
-    Commands, Component, DespawnRecursiveExt, Entity, Event, EventWriter, GlobalTransform, Query,
-    Res, Transform, Vec2, Vec3,
+use bevy_ecs::{
+    component::Component,
+    entity::Entity,
+    event::{Event, EventWriter},
+    system::{Commands, Query, Res},
 };
+use bevy_hierarchy::DespawnRecursiveExt;
+use bevy_math::{Vec2, Vec3};
 use bevy_rapier3d::prelude::{
     Ccd, Collider, ColliderMassProperties, LockedAxes, RapierContext, ReadMassProperties, Sensor,
     Velocity,
 };
+use bevy_transform::components::{GlobalTransform, Transform};
 use nalgebra::ComplexField;
 
 use crate::{
@@ -46,6 +51,8 @@ pub enum GrenadeKind {
 
 #[derive(Component)]
 pub struct Grenade {
+    // TODO: Use this field
+    #[allow(dead_code)]
     shooter: Entity,
     expiration: Tick,
     damage: f32,

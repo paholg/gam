@@ -2,7 +2,7 @@ use bevy::{
     prelude::{
         Added, Assets, BuildChildren, Bundle, Commands, Component, ComputedVisibility, Entity,
         EventReader, Handle, Mesh, PbrBundle, Plugin, Query, Res, ResMut, Resource,
-        StandardMaterial, Startup, Transform, Update, Visibility, With, Without,
+        StandardMaterial, Startup, Transform, Update, Vec3, Visibility, With, Without,
     },
     scene::Scene,
 };
@@ -15,7 +15,7 @@ use iyes_progress::ProgressPlugin;
 use rand::Rng;
 use tracing::info;
 
-use crate::{
+use engine::{
     ability::{
         grenade::{Explosion, Grenade, GrenadeKind, GrenadeLandEvent},
         HyperSprinting, Shot, ShotHitEvent, ABILITY_Z,
@@ -37,8 +37,12 @@ mod asset_handler;
 mod bar;
 mod config;
 mod controls;
+mod shapes;
 mod splash;
 mod ui;
+mod world;
+
+const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, -50.0, 50.0);
 
 /// This plugin includes user input and graphics.
 pub struct GamClientPlugin;
@@ -57,7 +61,8 @@ impl Plugin for GamClientPlugin {
             bevy_hanabi::HanabiPlugin,
         ))
         .insert_resource(BackgroundMusic::default())
-        .add_systems(Update, background_music_system);
+        .add_systems(Update, background_music_system)
+        .add_systems(Startup, world::setup);
     }
 }
 
@@ -112,7 +117,9 @@ fn draw_shot_system(
     query: Query<Entity, Added<Shot>>,
 ) {
     for entity in query.iter() {
-        let Some(mut ecmds) = commands.get_entity(entity) else { continue };
+        let Some(mut ecmds) = commands.get_entity(entity) else {
+            continue;
+        };
         ecmds.insert(ObjectGraphics {
             material: assets.shot.material.clone(),
             mesh: assets.shot.mesh.clone(),
@@ -128,7 +135,9 @@ fn draw_grenade_system(
     query: Query<(Entity, &Grenade), Added<Grenade>>,
 ) {
     for (entity, grenade) in query.iter() {
-        let Some(mut ecmds) = commands.get_entity(entity) else { continue };
+        let Some(mut ecmds) = commands.get_entity(entity) else {
+            continue;
+        };
         let (mesh, material) = match grenade.kind {
             GrenadeKind::Frag => (
                 assets.frag_grenade.mesh.clone(),
@@ -184,7 +193,9 @@ fn draw_player_system(
     query: Query<Entity, Added<Player>>,
 ) {
     for entity in query.iter() {
-        let Some(mut ecmds) = commands.get_entity(entity) else { continue };
+        let Some(mut ecmds) = commands.get_entity(entity) else {
+            continue;
+        };
         ecmds.insert(CharacterGraphics {
             healthbar: Healthbar::default(),
             energybar: Energybar::default(),
@@ -203,7 +214,9 @@ fn draw_enemy_system(
     query: Query<Entity, Added<Enemy>>,
 ) {
     for entity in query.iter() {
-        let Some(mut ecmds) = commands.get_entity(entity) else { continue };
+        let Some(mut ecmds) = commands.get_entity(entity) else {
+            continue;
+        };
         ecmds.insert(CharacterGraphics {
             healthbar: Healthbar::default(),
             energybar: Energybar::default(),
@@ -222,7 +235,9 @@ fn draw_ally_system(
     query: Query<Entity, (Added<Ally>, Without<Player>)>,
 ) {
     for entity in query.iter() {
-        let Some(mut ecmds) = commands.get_entity(entity) else { continue };
+        let Some(mut ecmds) = commands.get_entity(entity) else {
+            continue;
+        };
         ecmds.insert(CharacterGraphics {
             healthbar: Healthbar::default(),
             energybar: Energybar::default(),
