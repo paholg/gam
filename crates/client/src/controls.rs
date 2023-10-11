@@ -11,7 +11,7 @@ use bevy_rapier3d::prelude::{ExternalImpulse, RapierConfiguration, Velocity};
 use leafwing_input_manager::prelude::ActionState;
 
 use engine::{
-    ability::{ABILITY_Z, HYPER_SPRINT_FACTOR},
+    ability::{properties::AbilityProps, ABILITY_Z},
     pointing_angle,
     status_effect::{StatusEffect, StatusEffects},
     time::TickCounter,
@@ -69,6 +69,7 @@ fn player_ability(
     config: Res<Config>,
     mut commands: Commands,
     tick_counter: Res<TickCounter>,
+    props: Res<AbilityProps>,
     mut query: Query<(
         Entity,
         &ActionState<Action>,
@@ -104,6 +105,7 @@ fn player_ability(
                 just_pressed,
                 &mut commands,
                 &tick_counter,
+                &props,
                 entity,
                 &mut energy,
                 &mut cooldowns,
@@ -124,6 +126,7 @@ fn player_ability(
     }
 }
 
+// TODO: Some of this needs to go into engine.
 fn player_movement(
     mut query: Query<
         (
@@ -134,6 +137,7 @@ fn player_movement(
         ),
         With<Player>,
     >,
+    props: Res<AbilityProps>,
 ) {
     let (action_state, mut impulse, max_speed, status_effects) =
         if let Ok(q) = query.get_single_mut() {
@@ -150,7 +154,7 @@ fn player_movement(
             .effects
             .contains(&StatusEffect::HyperSprinting)
         {
-            max_impulse *= HYPER_SPRINT_FACTOR;
+            max_impulse *= props.hyper_sprint.factor;
         }
 
         impulse.impulse = dir * max_impulse;

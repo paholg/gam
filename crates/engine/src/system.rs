@@ -1,5 +1,3 @@
-use std::sync::atomic::AtomicBool;
-
 use bevy_ecs::{
     entity::Entity,
     event::EventWriter,
@@ -13,8 +11,8 @@ use bevy_transform::components::{GlobalTransform, Transform};
 use rand::Rng;
 
 use crate::{
-    ai::simple::Attitude, Ai, Ally, Character, Cooldowns, DeathEvent, Enemy, Energy, Health, NumAi,
-    Player, DAMPING, PLANE, PLAYER_R,
+    ability::Ability, ai::simple::Attitude, player::PlayerSpawner, Ai, Ally, Character, Cooldowns,
+    DeathEvent, Enemy, Energy, Health, NumAi, Object, Player, Shootable, DAMPING, PLANE, PLAYER_R,
 };
 
 pub fn die(
@@ -32,21 +30,30 @@ pub fn die(
 
 const ENERGY_REGEN: f32 = 0.5;
 
-fn spawn_player(commands: &mut Commands) {
+fn spawn_player(commands: &mut Commands, abilities: &[Ability]) {
     commands.spawn((
         Player { target: Vec2::ZERO },
         Ally,
         Character {
             health: Health::new(100.0),
             energy: Energy::new(100.0, ENERGY_REGEN),
-            global_transform: GlobalTransform::default(),
-            collider: Collider::capsule(Vec3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, 2.0), 1.0),
-            body: RigidBody::Dynamic,
             damping: DAMPING,
-            locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
-            ..Default::default()
+            object: Object {
+                collider: Collider::capsule(
+                    Vec3::new(0.0, 0.0, 0.0),
+                    Vec3::new(0.0, 0.0, 2.0),
+                    1.0,
+                ),
+                body: RigidBody::Dynamic,
+                locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+                ..Default::default()
+            },
+            max_speed: Default::default(),
+            impulse: Default::default(),
+            status_effects: Default::default(),
+            shootable: Shootable,
+            cooldowns: Cooldowns::with_abilities(abilities.iter().copied()),
         },
-        Cooldowns::default(),
     ));
 }
 
@@ -60,25 +67,32 @@ pub fn point_in_plane() -> Vec3 {
 fn spawn_enemies(commands: &mut Commands, num: usize) {
     for _ in 0..num {
         let loc = point_in_plane();
+
         commands.spawn((
             Enemy,
             Ai,
             Character {
                 health: Health::new(10.0),
                 energy: Energy::new(5.0, 0.2),
-                transform: Transform::from_translation(loc),
-                global_transform: GlobalTransform::default(),
-                collider: Collider::capsule(
-                    Vec3::new(0.0, 0.0, 0.0),
-                    Vec3::new(0.0, 0.0, 2.0),
-                    1.0,
-                ),
-                body: RigidBody::Dynamic,
                 damping: DAMPING,
-                locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
-                ..Default::default()
+                object: Object {
+                    transform: Transform::from_translation(loc),
+                    global_transform: GlobalTransform::default(),
+                    collider: Collider::capsule(
+                        Vec3::new(0.0, 0.0, 0.0),
+                        Vec3::new(0.0, 0.0, 2.0),
+                        1.0,
+                    ),
+                    body: RigidBody::Dynamic,
+                    locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+                    ..Default::default()
+                },
+                max_speed: Default::default(),
+                impulse: Default::default(),
+                status_effects: Default::default(),
+                shootable: Shootable,
+                cooldowns: Cooldowns::with_abilities([Ability::Shoot]),
             },
-            Cooldowns::default(),
             Attitude::rand(),
         ));
     }
@@ -93,18 +107,24 @@ fn spawn_allies(commands: &mut Commands, num: usize) {
             Character {
                 health: Health::new(100.0),
                 energy: Energy::new(100.0, ENERGY_REGEN),
-                transform: Transform::from_translation(loc),
-                collider: Collider::capsule(
-                    Vec3::new(0.0, 0.0, 0.0),
-                    Vec3::new(0.0, 0.0, 2.0),
-                    1.0,
-                ),
-                body: RigidBody::Dynamic,
                 damping: DAMPING,
-                locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
-                ..Default::default()
+                object: Object {
+                    transform: Transform::from_translation(loc),
+                    collider: Collider::capsule(
+                        Vec3::new(0.0, 0.0, 0.0),
+                        Vec3::new(0.0, 0.0, 2.0),
+                        1.0,
+                    ),
+                    body: RigidBody::Dynamic,
+                    locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+                    ..Default::default()
+                },
+                max_speed: Default::default(),
+                impulse: Default::default(),
+                status_effects: Default::default(),
+                shootable: Shootable,
+                cooldowns: Cooldowns::with_abilities([Ability::Shoot]),
             },
-            Cooldowns::default(),
         ));
     }
 }
@@ -114,6 +134,7 @@ pub fn reset(
     enemy_query: Query<Entity, With<Enemy>>,
     ally_query: Query<Entity, With<Ally>>,
     player_query: Query<Entity, With<Player>>,
+    player_spawner_query: Query<&PlayerSpawner>,
     mut num_ai: ResMut<NumAi>,
 ) {
     if enemy_query.iter().next().is_none() {
@@ -123,7 +144,9 @@ pub fn reset(
 
     if player_query.iter().next().is_none() {
         num_ai.enemies = num_ai.enemies.saturating_sub(1);
-        spawn_player(&mut commands);
+        for spawner in player_spawner_query.iter() {
+            spawn_player(&mut commands, &spawner.abilities);
+        }
     }
 
     if ally_query.iter().next().is_none() {

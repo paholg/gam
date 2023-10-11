@@ -18,8 +18,10 @@ use nalgebra::ComplexField;
 use crate::{
     physics::G,
     time::{Tick, TickCounter},
-    Cooldowns, Energy, Health, Object, PLAYER_R,
+    Health, Object, PLAYER_R,
 };
+
+use super::properties::GrenadeProps;
 
 /// Calculate the initial velocity of a projectile thrown at 45 degrees up, so
 /// that it will land at target.
@@ -61,106 +63,39 @@ pub struct Grenade {
     pub kind: GrenadeKind,
 }
 
-const FRAG_GRENADE_ENERGY: f32 = 20.0;
-const FRAG_GRENADE_COOLDOWN: Tick = Tick(30);
-const FRAG_GRENADE_DELAY: Tick = Tick(120);
-const FRAG_GRENADE_DAMAGE: f32 = 8.0;
-pub const FRAG_GRENADE_EXP_RADIUS: f32 = 7.0;
-pub const FRAG_GRENADE_R: f32 = 0.30;
-
-pub fn frag_grenade(
+pub fn grenade(
     commands: &mut Commands,
-    cooldowns: &mut Cooldowns,
-    energy: &mut Energy,
     tick_counter: &TickCounter,
+    props: &GrenadeProps,
     transform: &Transform,
     shooter: Entity,
     target: Vec2,
-) -> bool {
-    if cooldowns.frag_grenade.before_now(tick_counter) && energy.cur >= FRAG_GRENADE_ENERGY {
-        energy.cur -= FRAG_GRENADE_ENERGY;
-        cooldowns.frag_grenade = tick_counter.at(FRAG_GRENADE_COOLDOWN);
+) {
+    let dir = transform.rotation * Vec3::Y;
+    let position = transform.translation + dir * (PLAYER_R + props.radius + 0.01);
+    let vel = calculate_initial_vel(position.truncate(), target);
 
-        let dir = transform.rotation * Vec3::Y;
-        let position = transform.translation + dir * (PLAYER_R + FRAG_GRENADE_R + 0.01);
-        let vel = calculate_initial_vel(position.truncate(), target);
-
-        commands.spawn((
-            Object {
-                transform: Transform::from_translation(position),
-                global_transform: GlobalTransform::default(),
-                collider: Collider::ball(FRAG_GRENADE_R),
-                mass_props: ColliderMassProperties::Density(1.0),
-                body: bevy_rapier3d::prelude::RigidBody::Dynamic,
-                velocity: vel,
-                locked_axes: LockedAxes::ROTATION_LOCKED,
-                mass: ReadMassProperties::default(),
-            },
-            Grenade {
-                expiration: tick_counter.at(FRAG_GRENADE_DELAY),
-                shooter,
-                radius: FRAG_GRENADE_R,
-                damage: FRAG_GRENADE_DAMAGE,
-                explosion_radius: FRAG_GRENADE_EXP_RADIUS,
-                kind: GrenadeKind::Frag,
-            },
-            Ccd::enabled(),
-        ));
-        true
-    } else {
-        false
-    }
-}
-
-const HEAL_GRENADE_ENERGY: f32 = 50.0;
-const HEAL_GRENADE_COOLDOWN: Tick = Tick(30);
-const HEAL_GRENADE_DELAY: Tick = Tick(120);
-const HEAL_GRENADE_DAMAGE: f32 = -20.0;
-pub const HEAL_GRENADE_EXP_RADIUS: f32 = 4.0;
-pub const HEAL_GRENADE_R: f32 = 0.20;
-
-pub fn heal_grenade(
-    commands: &mut Commands,
-    cooldowns: &mut Cooldowns,
-    energy: &mut Energy,
-    tick_counter: &TickCounter,
-    transform: &Transform,
-    shooter: Entity,
-    target: Vec2,
-) -> bool {
-    if cooldowns.heal_grenade.before_now(tick_counter) && energy.cur >= HEAL_GRENADE_ENERGY {
-        energy.cur -= HEAL_GRENADE_ENERGY;
-        cooldowns.heal_grenade = tick_counter.at(HEAL_GRENADE_COOLDOWN);
-
-        let dir = transform.rotation * Vec3::Y;
-        let position = transform.translation + dir * (PLAYER_R + HEAL_GRENADE_R + 0.01);
-        let vel = calculate_initial_vel(position.truncate(), target);
-
-        commands.spawn((
-            Object {
-                transform: Transform::from_translation(position),
-                global_transform: GlobalTransform::default(),
-                collider: Collider::ball(HEAL_GRENADE_R),
-                mass_props: ColliderMassProperties::Density(1.0),
-                body: bevy_rapier3d::prelude::RigidBody::Dynamic,
-                velocity: vel,
-                locked_axes: LockedAxes::ROTATION_LOCKED,
-                mass: ReadMassProperties::default(),
-            },
-            Grenade {
-                expiration: tick_counter.at(HEAL_GRENADE_DELAY),
-                shooter,
-                radius: HEAL_GRENADE_R,
-                damage: HEAL_GRENADE_DAMAGE,
-                explosion_radius: HEAL_GRENADE_EXP_RADIUS,
-                kind: GrenadeKind::Heal,
-            },
-            Ccd::enabled(),
-        ));
-        true
-    } else {
-        false
-    }
+    commands.spawn((
+        Object {
+            transform: Transform::from_translation(position),
+            global_transform: GlobalTransform::default(),
+            collider: Collider::ball(props.radius),
+            mass_props: ColliderMassProperties::Density(1.0),
+            body: bevy_rapier3d::prelude::RigidBody::Dynamic,
+            velocity: vel,
+            locked_axes: LockedAxes::ROTATION_LOCKED,
+            mass: ReadMassProperties::default(),
+        },
+        Grenade {
+            expiration: tick_counter.at(props.delay),
+            shooter,
+            radius: props.radius,
+            damage: props.damage,
+            explosion_radius: props.explosion_radius,
+            kind: GrenadeKind::Frag,
+        },
+        Ccd::enabled(),
+    ));
 }
 
 #[derive(Event)]
@@ -210,7 +145,8 @@ pub fn explosion_despawn_system(
                 }
             }
         }
-        commands.entity(entity).despawn_recursive();
+        // FIXME
+        // commands.entity(entity).despawn_recursive();
     }
 }
 
