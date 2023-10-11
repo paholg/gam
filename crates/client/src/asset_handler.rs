@@ -2,8 +2,8 @@ use bevy::{
     prelude::{
         default,
         shape::{self, Circle, Icosphere},
-        AssetServer, Assets, Color, Commands, Component, Entity, Handle, Mesh, ResMut, Resource,
-        StandardMaterial, Vec2, Vec3, Vec4,
+        AssetServer, Assets, Color, Commands, Component, Entity, Handle, Mesh, Res, ResMut,
+        Resource, StandardMaterial, Vec2, Vec3, Vec4,
     },
     scene::Scene,
 };
@@ -17,12 +17,7 @@ use bevy_kira_audio::AudioSource;
 use iyes_progress::prelude::AssetsLoading;
 
 use engine::{
-    ability::{
-        grenade::{
-            FRAG_GRENADE_EXP_RADIUS, FRAG_GRENADE_R, HEAL_GRENADE_EXP_RADIUS, HEAL_GRENADE_R,
-        },
-        SHOT_R,
-    },
+    ability::properties::{AbilityProps, GrenadeProps, ShootProps},
     PLAYER_R,
 };
 
@@ -105,6 +100,7 @@ pub fn asset_handler_setup(
     mut effects: ResMut<Assets<EffectAsset>>,
     asset_server: ResMut<AssetServer>,
     mut loading: ResMut<AssetsLoading>,
+    props: Res<AbilityProps>,
 ) {
     let fg = StandardMaterial {
         base_color: Color::GREEN,
@@ -150,7 +146,7 @@ pub fn asset_handler_setup(
         bg_material: materials.add(bg),
     };
 
-    let effect = effects.add(shot_effect());
+    let effect = effects.add(shot_effect(&props.shoot));
     let effect_entity = commands
         .spawn(ParticleEffectBundle::new(effect))
         .insert(ShotEffect)
@@ -182,7 +178,7 @@ pub fn asset_handler_setup(
         ..Default::default()
     };
 
-    let frag_grenade_effect = effects.add(frag_grenade_effect());
+    let frag_grenade_effect = effects.add(frag_grenade_effect(&props.frag_grenade));
     let frag_effect_entity = commands
         .spawn(ParticleEffectBundle::new(frag_grenade_effect))
         .insert(FragGrenadeEffect)
@@ -191,7 +187,7 @@ pub fn asset_handler_setup(
     let frag_grenade = GrenadeAssets {
         mesh: meshes.add(
             Mesh::try_from(Icosphere {
-                radius: FRAG_GRENADE_R,
+                radius: props.frag_grenade.radius,
                 subdivisions: 5,
             })
             .unwrap(),
@@ -199,7 +195,7 @@ pub fn asset_handler_setup(
         material: materials.add(frag_grenade_material.clone()),
         outline_mesh: meshes.add(
             HollowPolygon {
-                radius: FRAG_GRENADE_EXP_RADIUS,
+                radius: props.frag_grenade.explosion_radius,
                 thickness: 0.25,
                 vertices: 60,
             }
@@ -214,7 +210,7 @@ pub fn asset_handler_setup(
         ..Default::default()
     };
 
-    let heal_grenade_effect = effects.add(heal_grenade_effect());
+    let heal_grenade_effect = effects.add(heal_grenade_effect(&props.heal_grenade));
     let heal_effect_entity = commands
         .spawn(ParticleEffectBundle::new(heal_grenade_effect))
         .insert(FragGrenadeEffect)
@@ -223,14 +219,14 @@ pub fn asset_handler_setup(
     let heal_grenade = GrenadeAssets {
         mesh: meshes.add(
             Mesh::try_from(Icosphere {
-                radius: HEAL_GRENADE_R,
+                radius: props.heal_grenade.radius,
                 subdivisions: 5,
             })
             .unwrap(),
         ),
         outline_mesh: meshes.add(
             HollowPolygon {
-                radius: HEAL_GRENADE_EXP_RADIUS,
+                radius: props.heal_grenade.explosion_radius,
                 thickness: 0.25,
                 vertices: 60,
             }
@@ -363,7 +359,7 @@ fn load_music(
     res
 }
 
-fn shot_effect() -> EffectAsset {
+fn shot_effect(props: &ShootProps) -> EffectAsset {
     let mut color_gradient1 = Gradient::new();
     color_gradient1.add_key(0.0, Vec4::new(0.0, 4.0, 4.0, 1.0));
     color_gradient1.add_key(0.5, Vec4::new(2.0, 2.0, 4.0, 1.0));
@@ -380,7 +376,7 @@ fn shot_effect() -> EffectAsset {
 
     let pos = SetPositionSphereModifier {
         center: writer.lit(Vec3::ZERO).expr(),
-        radius: writer.lit(SHOT_R).expr(),
+        radius: writer.lit(props.radius).expr(),
         dimension: ShapeDimension::Volume,
     };
 
@@ -475,7 +471,7 @@ fn death_effect() -> EffectAsset {
         })
 }
 
-fn frag_grenade_effect() -> EffectAsset {
+fn frag_grenade_effect(props: &GrenadeProps) -> EffectAsset {
     let mut color_gradient1 = Gradient::new();
     color_gradient1.add_key(0.0, Vec4::new(4.0, 4.0, 4.0, 1.0));
     color_gradient1.add_key(0.1, Vec4::new(4.0, 0.0, 0.0, 1.0));
@@ -493,7 +489,7 @@ fn frag_grenade_effect() -> EffectAsset {
 
     let pos = SetPositionSphereModifier {
         center: writer.lit(Vec3::ZERO).expr(),
-        radius: writer.lit(FRAG_GRENADE_EXP_RADIUS).expr(),
+        radius: writer.lit(props.explosion_radius).expr(),
         dimension: ShapeDimension::Volume,
     };
 
@@ -532,7 +528,7 @@ fn frag_grenade_effect() -> EffectAsset {
         })
 }
 
-fn heal_grenade_effect() -> EffectAsset {
+fn heal_grenade_effect(props: &GrenadeProps) -> EffectAsset {
     let mut color_gradient1 = Gradient::new();
     color_gradient1.add_key(0.0, Vec4::new(4.0, 4.0, 4.0, 1.0));
     color_gradient1.add_key(0.1, Vec4::new(0.0, 4.0, 0.0, 1.0));
@@ -549,7 +545,7 @@ fn heal_grenade_effect() -> EffectAsset {
 
     let pos = SetPositionSphereModifier {
         center: writer.lit(Vec3::ZERO).expr(),
-        radius: writer.lit(HEAL_GRENADE_EXP_RADIUS).expr(),
+        radius: writer.lit(props.explosion_radius).expr(),
         dimension: ShapeDimension::Volume,
     };
 

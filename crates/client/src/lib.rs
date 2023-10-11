@@ -20,6 +20,7 @@ use engine::{
         grenade::{Explosion, Grenade, GrenadeKind, GrenadeLandEvent},
         HyperSprinting, Shot, ShotHitEvent, ABILITY_Z,
     },
+    player::PlayerSpawner,
     Ally, AppState, DeathEvent, Enemy, Player,
 };
 
@@ -62,8 +63,14 @@ impl Plugin for GamClientPlugin {
         ))
         .insert_resource(BackgroundMusic::default())
         .add_systems(Update, background_music_system)
-        .add_systems(Startup, world::setup);
+        .add_systems(Startup, world::setup)
+        .add_systems(Startup, player_spawner);
     }
+}
+
+fn player_spawner(mut commands: Commands, config: Res<Config>) {
+    let abilities = config.player.abilities.into_iter().collect();
+    commands.spawn(PlayerSpawner { abilities });
 }
 
 struct GraphicsPlugin;

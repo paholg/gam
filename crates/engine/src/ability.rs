@@ -1,5 +1,3 @@
-use std::{f32::consts::PI, time::Duration};
-
 use bevy_ecs::{
     component::Component,
     entity::Entity,
@@ -15,6 +13,7 @@ use bevy_rapier3d::prelude::{
 use bevy_transform::components::{GlobalTransform, Transform};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
+use tracing::warn;
 
 use crate::{
     status_effect::{StatusEffect, StatusEffects},
@@ -22,11 +21,17 @@ use crate::{
     Cooldowns, Energy, Health, Object, Shootable, PLAYER_R,
 };
 
-use self::grenade::{frag_grenade, heal_grenade};
+use self::{
+    grenade::grenade,
+    properties::{AbilityProps, HyperSprintProps, ShootProps, ShotgunProps},
+};
 
 pub mod grenade;
+pub mod properties;
 
-#[derive(Debug, Default, Serialize, Deserialize)]
+pub const ABILITY_Z: f32 = 1.5;
+
+#[derive(Debug, Copy, Clone, Default, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum Ability {
     #[default]
     None,
@@ -44,6 +49,7 @@ impl Ability {
         just_pressed: bool,
         commands: &mut Commands,
         tick_counter: &TickCounter,
+        props: &AbilityProps,
         entity: Entity,
         energy: &mut Energy,
         cooldowns: &mut Cooldowns,
@@ -52,52 +58,66 @@ impl Ability {
         status_effects: &mut StatusEffects,
         target: Vec2,
     ) -> bool {
+        let cooldown = match cooldowns.map.get_mut(self) {
+            Some(cd) => cd,
+            None => {
+                warn!("Tried to use an ability that we don't have a cooldown for");
+                return false;
+            }
+        };
+
+        if cooldown.before_now(tick_counter) && energy.try_use(props.cost(self)) {
+            *cooldown = tick_counter.at(props.cooldown(self));
+        } else {
+            return false;
+        }
         match self {
-            Ability::None => true,
+            Ability::None => (),
             Ability::HyperSprint => {
                 if just_pressed {
-                    hyper_sprint(commands, entity, energy, status_effects)
-                } else {
-                    false
+                    hyper_sprint(
+                        commands,
+                        &props.hyper_sprint,
+                        entity,
+                        energy,
+                        status_effects,
+                    );
                 }
             }
             Ability::Shoot => shoot(
                 commands,
-                cooldowns,
-                energy,
                 tick_counter,
+                &props.shoot,
                 transform,
                 velocity,
                 entity,
             ),
             Ability::Shotgun => shotgun(
                 commands,
-                cooldowns,
-                energy,
                 tick_counter,
+                &props.shotgun,
                 transform,
                 velocity,
                 entity,
             ),
-            Ability::FragGrenade => frag_grenade(
+            Ability::FragGrenade => grenade(
                 commands,
-                cooldowns,
-                energy,
                 tick_counter,
+                &props.frag_grenade,
                 transform,
                 entity,
                 target,
             ),
-            Ability::HealGrenade => heal_grenade(
+            Ability::HealGrenade => grenade(
                 commands,
-                cooldowns,
-                energy,
                 tick_counter,
+                &props.heal_grenade,
                 transform,
                 entity,
                 target,
             ),
         }
+        true
     }
 
     pub fn unfire(
@@ -121,16 +141,15 @@ impl Ability {
 
 #[derive(Component, Hash)]
 pub struct HyperSprinting;
-pub const HYPER_SPRINT_FACTOR: f32 = 7.0;
-const HYPER_SPRINT_COST: f32 = 2.0;
 
 fn hyper_sprint(
     commands: &mut Commands,
+    props: &HyperSprintProps,
     entity: Entity,
     energy: &Energy,
     status_effects: &mut StatusEffects,
 ) -> bool {
-    if energy.cur >= HYPER_SPRINT_COST {
+    if energy.cur >= props.cost {
         commands.entity(entity).insert(HyperSprinting);
         status_effects.effects.insert(StatusEffect::HyperSprinting);
         true
@@ -141,12 +160,11 @@ fn hyper_sprint(
 
 pub fn hyper_sprint_system(
     mut commands: Commands,
+    props: Res<AbilityProps>,
     mut query: Query<(&mut Energy, Entity, &mut StatusEffects), With<HyperSprinting>>,
 ) {
     for (mut energy, entity, mut status_effects) in &mut query {
-        if energy.cur >= HYPER_SPRINT_COST {
-            energy.cur -= HYPER_SPRINT_COST;
-        } else {
+        if !energy.try_use(props.hyper_sprint.cost) {
             hyper_sprint_disable(&mut commands, entity, &mut status_effects);
         }
     }
@@ -161,15 +179,6 @@ fn hyper_sprint_disable(
     commands.entity(entity).remove::<HyperSprinting>();
 }
 
-pub const SHOOT_COOLDOWN: Tick = Tick::new(Duration::from_millis(150));
-const SHOT_DURATION: Tick = Tick::new(Duration::from_secs(10));
-pub const SHOT_SPEED: f32 = 30.0;
-pub const SHOT_R: f32 = 0.15;
-pub const ABILITY_Z: f32 = 1.5;
-const SHOT_DAMAGE: f32 = 1.0;
-
-const SHOT_ENERGY: f32 = 5.0;
-
 #[derive(Component)]
 pub struct Shot {
     shooter: Entity,
@@ -179,27 +188,71 @@ pub struct Shot {
 
 fn shoot(
     commands: &mut Commands,
-    cooldowns: &mut Cooldowns,
-    energy: &mut Energy,
     tick_counter: &TickCounter,
+    props: &ShootProps,
     transform: &Transform,
     velocity: &Velocity,
     shooter: Entity,
-) -> bool {
-    if cooldowns.shoot.before_now(tick_counter) && energy.cur >= SHOT_ENERGY {
-        energy.cur -= SHOT_ENERGY;
-        cooldowns.shoot = tick_counter.at(SHOOT_COOLDOWN);
+) {
+    let dir = transform.rotation * Vec3::Y;
+    let position =
+        transform.translation + dir * (PLAYER_R + props.radius + 0.01) + ABILITY_Z * Vec3::Z;
+    let vel = dir * props.speed + velocity.linvel;
+    commands.spawn((
+        Object {
+            transform: Transform::from_translation(position).with_scale(Vec3::new(
+                props.radius,
+                props.radius,
+                props.radius,
+            )),
+            global_transform: GlobalTransform::default(),
+            collider: Collider::ball(props.radius),
+            mass_props: ColliderMassProperties::Density(100.0),
+            body: RigidBody::Dynamic,
+            velocity: Velocity {
+                linvel: vel,
+                angvel: Vec3::ZERO,
+            },
+            locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+            mass: ReadMassProperties::default(),
+        },
+        Sensor,
+        Shot {
+            duration: tick_counter.at(props.duration),
+            shooter,
+            damage: props.damage,
+        },
+        Ccd::enabled(),
+        ActiveEvents::COLLISION_EVENTS,
+    ));
+}
 
-        let dir = transform.rotation * Vec3::Y;
+fn shotgun(
+    commands: &mut Commands,
+    tick_counter: &TickCounter,
+    props: &ShotgunProps,
+    transform: &Transform,
+    velocity: &Velocity,
+    shooter: Entity,
+) {
+    for i in 0..props.n_pellets {
+        let idx = i as f32;
+        let n_pellets = props.n_pellets as f32;
+        let relative_angle = (n_pellets * 0.5 - idx) / n_pellets * props.spread;
+        let relative_angle = Quat::from_rotation_z(relative_angle);
+        let dir = (transform.rotation * relative_angle) * Vec3::Y;
         let position =
-            transform.translation + dir * (PLAYER_R + SHOT_R + 0.01) + ABILITY_Z * Vec3::Z;
-        let vel = dir * SHOT_SPEED + velocity.linvel;
+            transform.translation + dir * (PLAYER_R + props.radius + 0.01) + ABILITY_Z * Vec3::Z;
+        let vel = dir * props.speed + velocity.linvel;
         commands.spawn((
             Object {
-                transform: Transform::from_translation(position)
-                    .with_scale(Vec3::new(SHOT_R, SHOT_R, SHOT_R)),
+                transform: Transform::from_translation(position).with_scale(Vec3::new(
+                    props.radius,
+                    props.radius,
+                    props.radius,
+                )),
                 global_transform: GlobalTransform::default(),
-                collider: Collider::ball(SHOT_R),
+                collider: Collider::ball(props.radius),
                 mass_props: ColliderMassProperties::Density(100.0),
                 body: RigidBody::Dynamic,
                 velocity: Velocity {
@@ -211,78 +264,13 @@ fn shoot(
             },
             Sensor,
             Shot {
-                duration: tick_counter.at(SHOT_DURATION),
+                duration: tick_counter.at(props.duration),
                 shooter,
-                damage: SHOT_DAMAGE,
+                damage: props.damage,
             },
             Ccd::enabled(),
             ActiveEvents::COLLISION_EVENTS,
         ));
-        true
-    } else {
-        false
-    }
-}
-
-pub const SHOTGUN_COOLDOWN: Tick = Tick::new(Duration::from_millis(150));
-const SHOTGUN_DURATION: Tick = Tick::new(Duration::from_secs(10));
-pub const SHOTGUN_SPEED: f32 = 30.0;
-pub const SHOTGUN_R: f32 = 0.15;
-const SHOTGUN_DAMAGE: f32 = 1.0;
-const N_PELLETS: usize = 8;
-const SPREAD: f32 = PI * 0.125; // Spread angle in radians
-const SHOTGUN_ENERGY: f32 = 25.0;
-
-fn shotgun(
-    commands: &mut Commands,
-    cooldowns: &mut Cooldowns,
-    energy: &mut Energy,
-    tick_counter: &TickCounter,
-    transform: &Transform,
-    velocity: &Velocity,
-    shooter: Entity,
-) -> bool {
-    if cooldowns.shotgun.before_now(tick_counter) && energy.cur >= SHOTGUN_ENERGY {
-        cooldowns.shotgun = tick_counter.at(SHOTGUN_COOLDOWN);
-        energy.cur -= SHOTGUN_ENERGY;
-
-        for i in 0..N_PELLETS {
-            let idx = i as f32;
-            let n_pellets = N_PELLETS as f32;
-            let relative_angle = (n_pellets * 0.5 - idx) / n_pellets * SPREAD;
-            let relative_angle = Quat::from_rotation_z(relative_angle);
-            let dir = (transform.rotation * relative_angle) * Vec3::Y;
-            let position =
-                transform.translation + dir * (PLAYER_R + SHOTGUN_R + 0.01) + ABILITY_Z * Vec3::Z;
-            let vel = dir * SHOTGUN_SPEED + velocity.linvel;
-            commands.spawn((
-                Object {
-                    transform: Transform::from_translation(position)
-                        .with_scale(Vec3::new(SHOTGUN_R, SHOTGUN_R, SHOTGUN_R)),
-                    global_transform: GlobalTransform::default(),
-                    collider: Collider::ball(SHOTGUN_R),
-                    mass_props: ColliderMassProperties::Density(100.0),
-                    body: RigidBody::Dynamic,
-                    velocity: Velocity {
-                        linvel: vel,
-                        angvel: Vec3::ZERO,
-                    },
-                    locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
-                    mass: ReadMassProperties::default(),
-                },
-                Sensor,
-                Shot {
-                    duration: tick_counter.at(SHOTGUN_DURATION),
-                    shooter,
-                    damage: SHOTGUN_DAMAGE,
-                },
-                Ccd::enabled(),
-                ActiveEvents::COLLISION_EVENTS,
-            ));
-        }
-        true
-    } else {
-        false
     }
 }
 

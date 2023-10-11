@@ -8,13 +8,14 @@
 pub mod ability;
 pub mod ai;
 pub mod physics;
+pub mod player;
 pub mod status_effect;
 pub mod system;
 pub mod time;
 
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 
-use ability::{grenade::GrenadeLandEvent, ShotHitEvent};
+use ability::{grenade::GrenadeLandEvent, properties::AbilityProps, Ability, ShotHitEvent};
 use bevy_app::{App, FixedUpdate, Plugin, Startup};
 use bevy_ecs::{
     bundle::Bundle,
@@ -68,9 +69,9 @@ impl Health {
     }
 
     pub fn take(&mut self, dmg: f32) {
-        self.cur -= dmg;
-        self.cur = 0.0f32.max(self.cur);
-        self.cur = self.max.min(self.cur);
+        // Note: Damage can be negative (for healing) so we need to clamp by
+        // both min (0) and max.
+        self.cur = (self.cur - dmg).clamp(0.0, self.max);
     }
 }
 
@@ -87,6 +88,15 @@ impl Energy {
             cur: max,
             max,
             regen,
+        }
+    }
+
+    pub fn try_use(&mut self, cost: f32) -> bool {
+        if self.cur >= cost {
+            self.cur -= cost;
+            true
+        } else {
+            false
         }
     }
 }
@@ -124,15 +134,20 @@ pub struct Ally;
 #[derive(Component, Default)]
 pub struct Shootable;
 
-// TODO: Do cooldowns better. We don't want every entity to have a giant
-// cooldowns struct.
-// Or maybe we do?????
-#[derive(Component, Default)]
+#[derive(Component)]
 pub struct Cooldowns {
-    shoot: Tick,
-    shotgun: Tick,
-    frag_grenade: Tick,
-    heal_grenade: Tick,
+    // TODO: Make a nohash hashmap
+    map: HashMap<Ability, Tick>,
+}
+
+impl Cooldowns {
+    pub fn with_abilities(abilities: impl IntoIterator<Item = Ability>) -> Self {
+        let map = abilities
+            .into_iter()
+            .map(|ability| (ability, Tick::default()))
+            .collect();
+        Self { map }
+    }
 }
 
 #[derive(Bundle, Default)]
@@ -147,22 +162,17 @@ pub struct Object {
     mass: ReadMassProperties,
 }
 
-#[derive(Bundle, Default)]
+#[derive(Bundle)]
 struct Character {
+    object: Object,
     health: Health,
     energy: Energy,
-    transform: Transform,
-    global_transform: GlobalTransform,
-    collider: Collider,
-    body: RigidBody,
     max_speed: MaxSpeed,
-    velocity: Velocity,
     damping: Damping,
     impulse: ExternalImpulse,
-    locked_axes: LockedAxes,
-    mass: ReadMassProperties,
     status_effects: StatusEffects,
     shootable: Shootable,
+    cooldowns: Cooldowns,
 }
 
 #[derive(Resource)]
@@ -179,6 +189,7 @@ impl Plugin for GamPlugin {
         app.insert_resource(FixedTime::new(Duration::from_secs_f32(TIMESTEP)));
 
         app.add_state::<AppState>()
+            .insert_resource(AbilityProps::default())
             .insert_resource(NumAi {
                 enemies: 0,
                 allies: 0,
