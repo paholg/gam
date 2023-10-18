@@ -3,7 +3,7 @@ use bevy::{
         Color, Commands, Component, DespawnRecursiveExt, Entity, NodeBundle, OnEnter, OnExit,
         Plugin, Query, With,
     },
-    ui::{BackgroundColor, Style},
+    ui::{BackgroundColor, Style, Val},
 };
 use engine::AppState;
 
@@ -25,6 +25,8 @@ fn splash_setup(mut commands: Commands) {
             style: Style {
                 align_items: bevy::ui::AlignItems::Center,
                 justify_content: bevy::ui::JustifyContent::Center,
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
                 ..Default::default()
             },
             background_color: BackgroundColor(Color::BLACK),

@@ -23,5 +23,6 @@ nalgebra = "0.32.3"
 rand = "0.8"
 serde = "1"
 smallvec = "1"
+strum = { version = "0.25.0", features = ["derive"] }
 tracing.workspace = true
 # typed-builder = "0.11"

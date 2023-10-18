@@ -13,6 +13,7 @@ use bevy_rapier3d::prelude::{
 use bevy_transform::components::{GlobalTransform, Transform};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
+use strum::{Display, EnumIter};
 use tracing::warn;
 
 use crate::{
@@ -31,7 +32,9 @@ pub mod properties;
 
 pub const ABILITY_Z: f32 = 1.5;
 
-#[derive(Debug, Copy, Clone, Default, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(
+    Debug, Copy, Clone, Default, Serialize, Deserialize, PartialEq, Eq, Hash, EnumIter, Display,
+)]
 pub enum Ability {
     #[default]
     None,
