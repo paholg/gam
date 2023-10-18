@@ -146,9 +146,8 @@ fn player_movement(
             return;
         };
 
-    if action_state.pressed(Action::Move) {
-        let axis_pair = action_state.clamped_axis_pair(Action::Move).unwrap();
-        let dir = axis_pair.xy().extend(0.0);
+    if let Some(axis_pair) = action_state.axis_pair(Action::Move) {
+        let dir = axis_pair.xy().clamp_length_max(1.0).extend(0.0);
         let mut max_impulse = max_speed.impulse;
         if status_effects
             .effects
@@ -163,6 +162,7 @@ fn player_movement(
 
 const MAX_RANGE: f32 = 20.0;
 
+// TODO: Some of this needs to go into engine.
 fn player_aim(
     mut player_query: Query<(&ActionState<Action>, &mut Transform, &mut Player), Without<Camera>>,
     mut camera_query: Query<&mut Transform, With<Camera>>,

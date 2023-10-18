@@ -87,6 +87,15 @@ fn default_controls() -> InputMap<Action> {
         .insert(DualAxis::left_stick(), Action::Move)
         .insert(
             VirtualDPad {
+                up: GamepadButtonType::DPadUp.into(),
+                down: GamepadButtonType::DPadUp.into(),
+                left: GamepadButtonType::DPadLeft.into(),
+                right: GamepadButtonType::DPadRight.into(),
+            },
+            Action::Move,
+        )
+        .insert(
+            VirtualDPad {
                 up: KeyCode::W.into(),
                 down: KeyCode::S.into(),
                 left: KeyCode::A.into(),

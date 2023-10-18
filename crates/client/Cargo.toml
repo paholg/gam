@@ -33,7 +33,6 @@ bevy = { workspace = true, default-features = false, features = [
   "default_font",
   "webgl2",
 ] }
-# bevy-debug-text-overlay = "6.0.0"
 bevy_egui = "0.22"
 bevy_hanabi = { version = "0.7.0", default-features = false, features = ["3d"] }
 bevy_kira_audio = "0.17.0"
@@ -47,6 +46,7 @@ leafwing-input-manager = "0.10.0"
 rand = "0.8"
 serde = "1"
 serde_json = "1"
+strum = "0.25.0"
 thiserror = "1"
 tracing.workspace = true
 
