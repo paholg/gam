@@ -38,6 +38,7 @@ use bevy_reflect::Reflect;
 use bevy_time::fixed_timestep::FixedTime;
 use bevy_transform::components::{GlobalTransform, Transform};
 use bevy_utils::HashMap;
+use input::check_resume;
 use multiplayer::PlayerInputs;
 use physics::PhysicsPlugin;
 use status_effect::StatusEffects;
@@ -271,7 +272,7 @@ impl Plugin for GamPlugin {
 
         // Systems in order
         app.add_systems(Startup, setup).add_systems(
-            schedule,
+            schedule.clone(),
             (
                 (time::tick_counter, time::debug_tick_system).in_set(GameSet::Timer),
                 (input::apply_inputs).in_set(GameSet::Input),
@@ -298,8 +299,12 @@ impl Plugin for GamPlugin {
                 )
                     .chain()
                     .in_set(GameSet::Despawn),
-            ),
+            )
+                .run_if(game_running),
         );
+
+        // Special pause systems
+        app.add_systems(schedule, (check_resume).run_if(game_paused));
 
         // TODO: This seems to currently be required so rapier does not miss
         // events, but it is likely a source of non-determinism.
@@ -312,18 +317,12 @@ impl Plugin for GamPlugin {
     }
 }
 
-pub trait EngineTickSystem {
-    fn add_engine_tick_systems<M>(&mut self, systems: impl IntoSystemConfigs<M>) -> &mut Self;
-}
-
-impl EngineTickSystem for App {
-    fn add_engine_tick_systems<M>(&mut self, systems: impl IntoSystemConfigs<M>) -> &mut Self {
-        self.add_systems(FixedUpdate, systems.run_if(game_running))
-    }
-}
-
 pub fn game_running(state: Res<State<AppState>>) -> bool {
     state.get() == &AppState::Running
+}
+
+pub fn game_paused(state: Res<State<AppState>>) -> bool {
+    state.get() != &AppState::Running
 }
 
 pub fn setup(mut commands: Commands) {

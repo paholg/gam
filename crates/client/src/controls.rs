@@ -60,7 +60,13 @@ pub fn player_input(
             UserAction::Ability2 => action |= Action::Ability2,
             UserAction::Ability3 => action |= Action::Ability3,
             UserAction::Ability4 => action |= Action::Ability4,
-            UserAction::Menu => action |= Action::Menu,
+            UserAction::Menu => {
+                // Only want to send the menu command when just pressed, or it
+                // may flicker.
+                if action_state.just_pressed(UserAction::Menu) {
+                    action |= Action::Menu
+                }
+            }
             UserAction::Move | UserAction::Aim => (),
         }
     }
