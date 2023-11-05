@@ -25,7 +25,7 @@ pub fn setup(
             }
             .into(),
         ),
-        material: materials.add(Color::SILVER.into()),
+        material: materials.add(Color::YELLOW_GREEN.into()),
         transform: Transform::from_xyz(0.0, 0.0, -0.1),
         ..Default::default()
     });
