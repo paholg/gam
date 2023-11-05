@@ -112,10 +112,10 @@ fn default_controls() -> InputMap<UserAction> {
         .insert(GamepadButtonType::LeftTrigger2, UserAction::Ability1)
         .insert(KeyCode::Space, UserAction::Ability2)
         .insert(GamepadButtonType::South, UserAction::Ability2)
-        .insert(KeyCode::E, UserAction::Ability3)
+        .insert(KeyCode::Q, UserAction::Ability3)
         .insert(MouseButton::Other(8), UserAction::Ability3)
         .insert(GamepadButtonType::RightTrigger, UserAction::Ability3)
-        .insert(KeyCode::Q, UserAction::Ability4)
+        .insert(KeyCode::E, UserAction::Ability4)
         .insert(MouseButton::Other(9), UserAction::Ability4)
         .insert(GamepadButtonType::LeftTrigger, UserAction::Ability4);
     map

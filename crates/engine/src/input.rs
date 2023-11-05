@@ -4,7 +4,7 @@ use bevy_ecs::{
     system::{Commands, Query, Res, ResMut},
 };
 use bevy_math::{Quat, Vec3};
-use bevy_rapier3d::prelude::{ExternalImpulse, RapierConfiguration, Velocity};
+use bevy_rapier3d::prelude::{ExternalImpulse, Velocity};
 use bevy_transform::components::Transform;
 use bevy_utils::HashSet;
 
@@ -17,6 +17,25 @@ use crate::{
     AppState, Cooldowns, Energy, MaxSpeed, Player, Target,
 };
 
+pub fn check_resume(
+    inputs: Res<PlayerInputs>,
+    query: Query<&Player>,
+    state: Res<State<AppState>>,
+    mut next_state: ResMut<NextState<AppState>>,
+) {
+    for player in query.iter() {
+        let Some(input) = inputs.get(player) else {
+            tracing::warn!(?player, "Have player with no inputs");
+            continue;
+        };
+        let buttons = input.buttons();
+
+        if buttons.contains(Action::Menu) {
+            pause_resume(&state, &mut next_state);
+        }
+    }
+}
+
 pub fn apply_inputs(
     inputs: Res<PlayerInputs>,
     mut commands: Commands,
@@ -24,7 +43,6 @@ pub fn apply_inputs(
     props: Res<AbilityProps>,
     state: Res<State<AppState>>,
     mut next_state: ResMut<NextState<AppState>>,
-    mut physics_config: ResMut<RapierConfiguration>,
     mut query: Query<(
         Entity,
         &mut Energy,
@@ -54,7 +72,8 @@ pub fn apply_inputs(
     ) in query.iter_mut()
     {
         let Some(input) = inputs.get(player) else {
-            return;
+            tracing::warn!(?player, "Have player with no inputs");
+            continue;
         };
 
         // Targeting
@@ -100,17 +119,19 @@ pub fn apply_inputs(
 
         // Menu
         if buttons.contains(Action::Menu) {
-            match state.get() {
-                AppState::Loading => (),
-                AppState::Running => {
-                    physics_config.physics_pipeline_active = false;
-                    next_state.set(AppState::Paused);
-                }
-                AppState::Paused => {
-                    physics_config.physics_pipeline_active = true;
-                    next_state.set(AppState::Running);
-                }
-            }
+            pause_resume(&state, &mut next_state);
+        }
+    }
+}
+
+fn pause_resume(state: &State<AppState>, next_state: &mut NextState<AppState>) {
+    match state.get() {
+        AppState::Loading => (),
+        AppState::Running => {
+            next_state.set(AppState::Paused);
+        }
+        AppState::Paused => {
+            next_state.set(AppState::Running);
         }
     }
 }
