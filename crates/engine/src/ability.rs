@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use bevy_ecs::{
     component::Component,
     entity::Entity,
@@ -5,11 +7,12 @@ use bevy_ecs::{
     query::{Added, With, Without},
     system::{Commands, Query, Res},
 };
-use bevy_math::{Quat, Vec2, Vec3};
+use bevy_math::{Quat, Vec3};
 use bevy_rapier3d::prelude::{
     ActiveEvents, Ccd, Collider, ColliderMassProperties, CollisionEvent, LockedAxes,
     ReadMassProperties, RigidBody, Sensor, Velocity,
 };
+use bevy_reflect::Reflect;
 use bevy_transform::components::{GlobalTransform, Transform};
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
@@ -19,30 +22,69 @@ use tracing::warn;
 use crate::{
     status_effect::{StatusEffect, StatusEffects},
     time::{Tick, TickCounter},
-    Cooldowns, Energy, Health, Object, Shootable, PLAYER_R,
+    Cooldowns, Energy, Health, Object, Shootable, Target, PLAYER_R,
 };
 
 use self::{
     grenade::grenade,
-    properties::{AbilityProps, HyperSprintProps, ShootProps, ShotgunProps},
+    properties::{AbilityProps, GunProps, HyperSprintProps, ShotgunProps},
 };
 
 pub mod grenade;
 pub mod properties;
 
 pub const ABILITY_Z: f32 = 1.5;
+pub const PLAYER_ABILITY_COUNT: usize = 5;
 
 #[derive(
-    Debug, Copy, Clone, Default, Serialize, Deserialize, PartialEq, Eq, Hash, EnumIter, Display,
+    Debug,
+    Copy,
+    Clone,
+    Default,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    EnumIter,
+    Display,
+    Reflect,
+    Hash,
 )]
 pub enum Ability {
     #[default]
     None,
     HyperSprint,
-    Shoot,
+    Gun,
     Shotgun,
     FragGrenade,
     HealGrenade,
+}
+
+#[derive(Debug, Component, Clone, Serialize, Deserialize)]
+pub struct Abilities {
+    inner: Vec<Ability>,
+}
+
+impl Abilities {
+    pub fn new(abilities: Vec<Ability>) -> Self {
+        Self { inner: abilities }
+    }
+
+    pub fn iter<'a>(&'a self) -> impl Iterator<Item = Ability> + 'a {
+        self.inner.iter().copied()
+    }
+
+    pub fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = &mut Ability> + 'a {
+        self.inner.iter_mut()
+    }
+}
+
+impl Index<usize> for Abilities {
+    type Output = Ability;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.inner[index]
+    }
 }
 
 impl Ability {
@@ -59,9 +101,9 @@ impl Ability {
         transform: &Transform,
         velocity: &Velocity,
         status_effects: &mut StatusEffects,
-        target: Vec2,
+        target: &Target,
     ) -> bool {
-        let cooldown = match cooldowns.map.get_mut(self) {
+        let cooldown = match cooldowns.get_mut(self) {
             Some(cd) => cd,
             None => {
                 warn!("Tried to use an ability that we don't have a cooldown for");
@@ -74,6 +116,7 @@ impl Ability {
         } else {
             return false;
         }
+
         match self {
             Ability::None => (),
             Ability::HyperSprint => {
@@ -87,10 +130,10 @@ impl Ability {
                     );
                 }
             }
-            Ability::Shoot => shoot(
+            Ability::Gun => gun(
                 commands,
                 tick_counter,
-                &props.shoot,
+                &props.gun,
                 transform,
                 velocity,
                 entity,
@@ -134,7 +177,7 @@ impl Ability {
             Ability::HyperSprint => {
                 hyper_sprint_disable(commands, entity, status_effects);
             }
-            Ability::Shoot => (),
+            Ability::Gun => (),
             Ability::Shotgun => (),
             Ability::FragGrenade => (),
             Ability::HealGrenade => (),
@@ -189,45 +232,30 @@ pub struct Shot {
     damage: f32,
 }
 
-fn shoot(
+fn gun(
     commands: &mut Commands,
     tick_counter: &TickCounter,
-    props: &ShootProps,
+    props: &GunProps,
     transform: &Transform,
     velocity: &Velocity,
     shooter: Entity,
 ) {
     let dir = transform.rotation * Vec3::Y;
     let position =
-        transform.translation + dir * (PLAYER_R + props.radius + 0.01) + ABILITY_Z * Vec3::Z;
-    let vel = dir * props.speed + velocity.linvel;
-    commands.spawn((
-        Object {
-            transform: Transform::from_translation(position).with_scale(Vec3::new(
-                props.radius,
-                props.radius,
-                props.radius,
-            )),
-            global_transform: GlobalTransform::default(),
-            collider: Collider::ball(props.radius),
-            mass_props: ColliderMassProperties::Density(100.0),
-            body: RigidBody::Dynamic,
-            velocity: Velocity {
-                linvel: vel,
-                angvel: Vec3::ZERO,
-            },
-            locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
-            mass: ReadMassProperties::default(),
-        },
-        Sensor,
-        Shot {
-            duration: tick_counter.at(props.duration),
+        transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ABILITY_Z * Vec3::Z;
+    let velocity = dir * props.speed + velocity.linvel;
+    BulletProps {
+        position,
+        velocity,
+        radius: props.radius,
+        density: props.density,
+        shot: Shot {
             shooter,
+            duration: tick_counter.at(props.duration),
             damage: props.damage,
         },
-        Ccd::enabled(),
-        ActiveEvents::COLLISION_EVENTS,
-    ));
+    }
+    .spawn(commands);
 }
 
 fn shotgun(
@@ -245,32 +273,53 @@ fn shotgun(
         let relative_angle = Quat::from_rotation_z(relative_angle);
         let dir = (transform.rotation * relative_angle) * Vec3::Y;
         let position =
-            transform.translation + dir * (PLAYER_R + props.radius + 0.01) + ABILITY_Z * Vec3::Z;
-        let vel = dir * props.speed + velocity.linvel;
+            transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ABILITY_Z * Vec3::Z;
+        let velocity = dir * props.speed + velocity.linvel;
+        BulletProps {
+            position,
+            velocity,
+            radius: props.radius,
+            density: props.density,
+            shot: Shot {
+                shooter,
+                duration: tick_counter.at(props.duration),
+                damage: props.damage,
+            },
+        }
+        .spawn(commands);
+    }
+}
+
+struct BulletProps {
+    pub velocity: Vec3,
+    pub position: Vec3,
+    pub radius: f32,
+    pub density: f32,
+    pub shot: Shot,
+}
+
+impl BulletProps {
+    fn spawn(self, commands: &mut Commands) {
         commands.spawn((
             Object {
-                transform: Transform::from_translation(position).with_scale(Vec3::new(
-                    props.radius,
-                    props.radius,
-                    props.radius,
+                transform: Transform::from_translation(self.position).with_scale(Vec3::new(
+                    self.radius,
+                    self.radius,
+                    self.radius,
                 )),
                 global_transform: GlobalTransform::default(),
-                collider: Collider::ball(props.radius),
-                mass_props: ColliderMassProperties::Density(100.0),
+                collider: Collider::ball(self.radius),
+                mass_props: ColliderMassProperties::Density(self.density),
                 body: RigidBody::Dynamic,
                 velocity: Velocity {
-                    linvel: vel,
+                    linvel: self.velocity,
                     angvel: Vec3::ZERO,
                 },
                 locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
                 mass: ReadMassProperties::default(),
             },
             Sensor,
-            Shot {
-                duration: tick_counter.at(props.duration),
-                shooter,
-                damage: props.damage,
-            },
+            self.shot,
             Ccd::enabled(),
             ActiveEvents::COLLISION_EVENTS,
         ));

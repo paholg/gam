@@ -1,4 +1,4 @@
-use bevy_app::{App, Plugin};
+use bevy_app::{App, FixedUpdate, Plugin};
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{NoUserData, RapierConfiguration, RapierPhysicsPlugin, TimestepMode};
 
@@ -22,6 +22,6 @@ impl Plugin for PhysicsPlugin {
         };
 
         app.insert_resource(rapier_config)
-            .add_plugins(RapierPlugin::default().in_fixed_schedule());
+            .add_plugins(RapierPlugin::default().in_schedule(FixedUpdate));
     }
 }

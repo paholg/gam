@@ -9,7 +9,10 @@ use bevy::{
     reflect::TypePath,
 };
 use directories::ProjectDirs;
-use engine::{ability::Ability, Player};
+use engine::{
+    ability::{Abilities, Ability},
+    Player,
+};
 use leafwing_input_manager::{
     prelude::{DualAxis, InputManagerPlugin, InputMap, VirtualDPad},
     Actionlike, InputManagerBundle,
@@ -20,8 +23,6 @@ use tracing::{error, info, warn};
 // TODO: NAME THESE THINGS
 const ORG: &str = "Paho Corp";
 const NAME: &str = "Gam";
-
-pub const ABILITY_COUNT: usize = 5;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -38,7 +39,7 @@ pub struct ConfigPlugin;
 impl Plugin for ConfigPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.insert_resource(Config::new())
-            .add_plugins(InputManagerPlugin::<Action>::default())
+            .add_plugins(InputManagerPlugin::<UserAction>::default())
             .add_systems(Update, spawn_input_manager);
     }
 }
@@ -60,13 +61,14 @@ fn config_file() -> Result<PathBuf, Error> {
     Ok(path)
 }
 
+/// Persistent Config that should remain set between game sessions.
 #[derive(Debug, Serialize, Deserialize, Resource)]
 #[serde(default)]
 pub struct Config {
-    pub controls: InputMap<Action>,
+    pub controls: InputMap<UserAction>,
     pub graphics: Graphics,
     pub sound: Sound,
-    pub player: PlayerAbilities,
+    pub player: PlayerConfig,
 }
 
 impl Default for Config {
@@ -80,11 +82,11 @@ impl Default for Config {
     }
 }
 
-fn default_controls() -> InputMap<Action> {
+fn default_controls() -> InputMap<UserAction> {
     let mut map = InputMap::default();
-    map.insert(KeyCode::Escape, Action::Menu)
-        .insert(GamepadButtonType::Start, Action::Menu)
-        .insert(DualAxis::left_stick(), Action::Move)
+    map.insert(KeyCode::Escape, UserAction::Menu)
+        .insert(GamepadButtonType::Start, UserAction::Menu)
+        .insert(DualAxis::left_stick(), UserAction::Move)
         .insert(
             VirtualDPad {
                 up: GamepadButtonType::DPadUp.into(),
@@ -92,7 +94,7 @@ fn default_controls() -> InputMap<Action> {
                 left: GamepadButtonType::DPadLeft.into(),
                 right: GamepadButtonType::DPadRight.into(),
             },
-            Action::Move,
+            UserAction::Move,
         )
         .insert(
             VirtualDPad {
@@ -101,35 +103,38 @@ fn default_controls() -> InputMap<Action> {
                 left: KeyCode::A.into(),
                 right: KeyCode::D.into(),
             },
-            Action::Move,
+            UserAction::Move,
         )
-        .insert(DualAxis::right_stick(), Action::Aim)
-        .insert(MouseButton::Left, Action::Ability0)
-        .insert(GamepadButtonType::RightTrigger2, Action::Ability0)
-        .insert(MouseButton::Right, Action::Ability1)
-        .insert(GamepadButtonType::LeftTrigger2, Action::Ability1)
-        .insert(KeyCode::Space, Action::Ability2)
-        .insert(GamepadButtonType::South, Action::Ability2)
-        .insert(KeyCode::E, Action::Ability3)
-        .insert(MouseButton::Other(8), Action::Ability3)
-        .insert(GamepadButtonType::RightTrigger, Action::Ability3)
-        .insert(KeyCode::Q, Action::Ability4)
-        .insert(MouseButton::Other(9), Action::Ability4)
-        .insert(GamepadButtonType::LeftTrigger, Action::Ability4);
+        .insert(DualAxis::right_stick(), UserAction::Move)
+        .insert(MouseButton::Left, UserAction::Ability0)
+        .insert(GamepadButtonType::RightTrigger2, UserAction::Ability0)
+        .insert(MouseButton::Right, UserAction::Ability1)
+        .insert(GamepadButtonType::LeftTrigger2, UserAction::Ability1)
+        .insert(KeyCode::Space, UserAction::Ability2)
+        .insert(GamepadButtonType::South, UserAction::Ability2)
+        .insert(KeyCode::E, UserAction::Ability3)
+        .insert(MouseButton::Other(8), UserAction::Ability3)
+        .insert(GamepadButtonType::RightTrigger, UserAction::Ability3)
+        .insert(KeyCode::Q, UserAction::Ability4)
+        .insert(MouseButton::Other(9), UserAction::Ability4)
+        .insert(GamepadButtonType::LeftTrigger, UserAction::Ability4);
     map
 }
 
 impl Config {
     fn load() -> Result<Self, Error> {
-        let contents = fs::read_to_string(config_file()?)?;
+        let path = config_file()?;
+        let contents = fs::read_to_string(&path)?;
         let config = serde_json::from_str(&contents)?;
-        info!("Config loaded: {:#?}", config);
+        info!("Config loaded from {}", path.display());
         Ok(config)
     }
 
     fn save(&self) -> Result<(), Error> {
         let config = serde_json::to_string_pretty(self)?;
-        fs::write(config_file()?, config)?;
+        let path = config_file()?;
+        fs::write(&path, config)?;
+        info!("Config written to {}", path.display());
 
         Ok(())
     }
@@ -217,47 +222,47 @@ impl Default for Sound {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PlayerAbilities {
-    pub abilities: [Ability; ABILITY_COUNT],
+pub struct PlayerConfig {
+    pub abilities: Abilities,
 }
 
-impl Default for PlayerAbilities {
+impl Default for PlayerConfig {
     fn default() -> Self {
-        Self {
-            abilities: [
-                Ability::Shoot,
-                Ability::Shotgun,
-                Ability::HyperSprint,
-                Ability::HealGrenade,
-                Ability::FragGrenade,
-            ],
-        }
+        let abilities = Abilities::new(vec![
+            Ability::Gun,
+            Ability::Shotgun,
+            Ability::HyperSprint,
+            Ability::HealGrenade,
+            Ability::FragGrenade,
+        ]);
+        Self { abilities }
     }
 }
 
 #[derive(
-    Actionlike,
+    Debug,
+    TypePath,
+    Clone,
+    Copy,
     PartialEq,
     Eq,
     PartialOrd,
     Ord,
-    Clone,
-    Copy,
     Hash,
-    Debug,
     Serialize,
     Deserialize,
-    TypePath,
+    Actionlike,
 )]
-pub enum Action {
-    Ability0 = 0,
-    Ability1 = 1,
-    Ability2 = 2,
-    Ability3 = 3,
-    Ability4 = 4,
+pub enum UserAction {
+    Ability0,
+    Ability1,
+    Ability2,
+    Ability3,
+    Ability4,
+    Menu,
+
     Move,
     Aim,
-    Menu,
 }
 
 fn spawn_input_manager(
@@ -268,7 +273,7 @@ fn spawn_input_manager(
     for entity in query.iter() {
         commands
             .entity(entity)
-            .insert(InputManagerBundle::<Action> {
+            .insert(InputManagerBundle::<UserAction> {
                 input_map: config.controls.clone(),
                 ..Default::default()
             });

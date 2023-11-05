@@ -1,36 +1,45 @@
 #![feature(
     duration_consts_float,
     div_duration,
-    const_fn_floating_point_arithmetic
+    const_fn_floating_point_arithmetic,
+    trivial_bounds
 )]
 #![allow(clippy::type_complexity)]
 
 pub mod ability;
 pub mod ai;
+pub mod input;
+pub mod lifecycle;
+pub mod multiplayer;
 pub mod physics;
 pub mod player;
 pub mod status_effect;
-pub mod system;
 pub mod time;
 
-use std::{collections::HashMap, time::Duration};
+use std::{fmt, time::Duration};
 
-use ability::{grenade::GrenadeLandEvent, properties::AbilityProps, Ability, ShotHitEvent};
+use ability::{
+    grenade::GrenadeLandEvent, properties::AbilityProps, Abilities, Ability, ShotHitEvent,
+};
 use bevy_app::{App, FixedUpdate, Plugin, Startup};
 use bevy_ecs::{
     bundle::Bundle,
     component::Component,
     event::Event,
     schedule::{IntoSystemConfigs, State, States},
-    system::{Commands, Res, Resource},
+    system::{Commands, Query, Res, Resource},
 };
 use bevy_math::{Quat, Vec2, Vec3};
 use bevy_rapier3d::prelude::{
     Collider, ColliderMassProperties, Damping, ExternalImpulse, LockedAxes, ReadMassProperties,
     RigidBody, Velocity,
 };
+use bevy_reflect::Reflect;
 use bevy_time::fixed_timestep::FixedTime;
 use bevy_transform::components::{GlobalTransform, Transform};
+use bevy_utils::HashMap;
+use input::InputPlugin;
+use multiplayer::MultiplayerPlugin;
 use physics::PhysicsPlugin;
 use status_effect::StatusEffects;
 use time::{Tick, TickPlugin, TIMESTEP};
@@ -57,7 +66,7 @@ const DAMPING: Damping = Damping {
 
 pub const PLANE: f32 = 50.0;
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Reflect)]
 pub struct Health {
     pub cur: f32,
     pub max: f32,
@@ -75,7 +84,7 @@ impl Health {
     }
 }
 
-#[derive(Component, Default)]
+#[derive(Component, Default, Reflect)]
 pub struct Energy {
     pub cur: f32,
     pub max: f32,
@@ -101,7 +110,7 @@ impl Energy {
     }
 }
 
-#[derive(Component, Copy, Clone, Debug)]
+#[derive(Component, Copy, Clone, Debug, Reflect)]
 pub struct MaxSpeed {
     pub impulse: f32,
 }
@@ -112,10 +121,26 @@ impl Default for MaxSpeed {
     }
 }
 
-/// Indicate this entity is a player. Currently, we assume one player.
-#[derive(Component)]
+/// A target corresponds to a player's cursor location in game coordinates.
+/// It may also end up representing something for AI.
+#[derive(Component, Default)]
+pub struct Target(pub Vec2);
+
+#[derive(Component, Debug, Copy, Clone, PartialEq, Eq, Hash, Resource)]
 pub struct Player {
-    pub target: Vec2,
+    handle: u32,
+}
+
+impl fmt::Display for Player {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Player({})", self.handle)
+    }
+}
+
+impl Player {
+    pub fn new(handle: u32) -> Self {
+        Self { handle }
+    }
 }
 
 /// Indicate this entity is controlled by AI.
@@ -134,19 +159,22 @@ pub struct Ally;
 #[derive(Component, Default)]
 pub struct Shootable;
 
-#[derive(Component)]
+#[derive(Component, Reflect, Default)]
 pub struct Cooldowns {
-    // TODO: Make a nohash hashmap
     map: HashMap<Ability, Tick>,
 }
 
 impl Cooldowns {
-    pub fn with_abilities(abilities: impl IntoIterator<Item = Ability>) -> Self {
-        let map = abilities
-            .into_iter()
+    pub fn new(abilities: &Abilities) -> Self {
+        let cooldowns = abilities
+            .iter()
             .map(|ability| (ability, Tick::default()))
             .collect();
-        Self { map }
+        Self { map: cooldowns }
+    }
+
+    pub fn get_mut(&mut self, ability: &Ability) -> Option<&mut Tick> {
+        self.map.get_mut(ability)
     }
 }
 
@@ -173,9 +201,10 @@ struct Character {
     status_effects: StatusEffects,
     shootable: Shootable,
     cooldowns: Cooldowns,
+    abilities: Abilities,
 }
 
-#[derive(Resource)]
+#[derive(Resource, Reflect, Default, Debug)]
 pub struct NumAi {
     pub enemies: usize,
     pub allies: usize,
@@ -202,31 +231,33 @@ impl Plugin for GamPlugin {
                 ability::grenade::grenade_land_system,
             ))
             .add_event::<GrenadeLandEvent>()
-            .add_engine_tick_systems((
-                ability::grenade::grenade_explode_system,
-                ability::grenade::explosion_despawn_system,
-            ))
             .add_event::<ShotHitEvent>()
             .add_event::<DeathEvent>()
             .add_engine_tick_systems((ability::shot_hit_system, ability::shot_kickback_system))
             .add_plugins(ai::simple::SimpleAiPlugin)
-            .add_engine_tick_systems((system::die, system::energy_regen, system::reset))
-            .add_plugins(PhysicsPlugin);
+            .add_engine_tick_systems((lifecycle::die, energy_regen, lifecycle::reset))
+            .add_plugins(PhysicsPlugin)
+            .add_plugins(InputPlugin)
+            .add_plugins(MultiplayerPlugin)
+            .add_engine_tick_systems((
+                ability::grenade::grenade_explode_system,
+                ability::grenade::explosion_despawn_system,
+            ));
     }
 }
 
-pub trait FixedTimestepSystem {
+pub trait EngineTickSystem {
     fn add_engine_tick_systems<M>(&mut self, systems: impl IntoSystemConfigs<M>) -> &mut Self;
+}
+
+impl EngineTickSystem for App {
+    fn add_engine_tick_systems<M>(&mut self, systems: impl IntoSystemConfigs<M>) -> &mut Self {
+        self.add_systems(FixedUpdate, systems.run_if(game_running))
+    }
 }
 
 pub fn game_running(state: Res<State<AppState>>) -> bool {
     state.get() == &AppState::Running
-}
-
-impl FixedTimestepSystem for App {
-    fn add_engine_tick_systems<M>(&mut self, systems: impl IntoSystemConfigs<M>) -> &mut Self {
-        self.add_systems(FixedUpdate, systems.run_if(game_running))
-    }
 }
 
 pub fn setup(mut commands: Commands) {
@@ -257,6 +288,13 @@ pub fn setup(mut commands: Commands) {
         ),
     ]);
     commands.spawn((RigidBody::KinematicPositionBased, collider));
+}
+
+pub fn energy_regen(mut query: Query<&mut Energy>) {
+    for mut energy in &mut query {
+        energy.cur += energy.regen;
+        energy.cur = energy.cur.min(energy.max);
+    }
 }
 
 // Returns an angle of rotation, along the z-axis, so that `from` will be pointing to `to`

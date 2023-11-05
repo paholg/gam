@@ -9,7 +9,7 @@ use super::Ability;
 #[derive(Debug, Resource)]
 pub struct AbilityProps {
     pub hyper_sprint: HyperSprintProps,
-    pub shoot: ShootProps,
+    pub gun: GunProps,
     pub shotgun: ShotgunProps,
     pub frag_grenade: GrenadeProps,
     pub heal_grenade: GrenadeProps,
@@ -37,7 +37,7 @@ impl Default for AbilityProps {
                 kind: GrenadeKind::Heal,
             },
             hyper_sprint: Default::default(),
-            shoot: Default::default(),
+            gun: Default::default(),
             shotgun: Default::default(),
         }
     }
@@ -48,7 +48,7 @@ impl AbilityProps {
         match ability {
             Ability::None => Tick::default(),
             Ability::HyperSprint => Tick::default(),
-            Ability::Shoot => self.shoot.cooldown,
+            Ability::Gun => self.gun.cooldown,
             Ability::Shotgun => self.shotgun.cooldown,
             Ability::FragGrenade => self.frag_grenade.cooldown,
             Ability::HealGrenade => self.heal_grenade.cooldown,
@@ -59,7 +59,7 @@ impl AbilityProps {
         match ability {
             Ability::None => 0.0,
             Ability::HyperSprint => self.hyper_sprint.cost,
-            Ability::Shoot => self.shoot.cost,
+            Ability::Gun => self.gun.cost,
             Ability::Shotgun => self.shotgun.cost,
             Ability::FragGrenade => self.frag_grenade.cost,
             Ability::HealGrenade => self.heal_grenade.cost,
@@ -84,24 +84,26 @@ impl Default for HyperSprintProps {
 }
 
 #[derive(Debug)]
-pub struct ShootProps {
+pub struct GunProps {
     pub cost: f32,
     pub cooldown: Tick,
     pub duration: Tick,
     pub speed: f32,
     pub radius: f32,
     pub damage: f32,
+    pub density: f32,
 }
 
-impl Default for ShootProps {
+impl Default for GunProps {
     fn default() -> Self {
         Self {
             cost: 5.0,
             cooldown: Tick::new(Duration::from_millis(150)),
             duration: Tick::new(Duration::from_secs(10)),
-            speed: 30.0,
+            speed: 50.0,
             radius: 0.15,
             damage: 1.0,
+            density: 100.0,
         }
     }
 }
@@ -117,6 +119,7 @@ pub struct ShotgunProps {
     pub n_pellets: usize,
     /// Spread angle in radians.
     pub spread: f32,
+    pub density: f32,
 }
 
 impl Default for ShotgunProps {
@@ -130,6 +133,7 @@ impl Default for ShotgunProps {
             damage: 1.0,
             n_pellets: 8,
             spread: PI * 0.125,
+            density: 100.0,
         }
     }
 }

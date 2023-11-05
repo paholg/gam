@@ -1,207 +1,119 @@
-use std::f32::consts::PI;
-
 use bevy::{
     prelude::{
-        Camera, Commands, Entity, EventReader, GlobalTransform, NextState, Plugin, Quat, Query,
-        Res, ResMut, Resource, State, Transform, Update, Vec3, With, Without,
+        Camera, EventReader, GlobalTransform, Plugin, Query, Res, ResMut, Resource, Transform,
+        Update, Vec2, Vec3, With, Without,
     },
     window::{CursorMoved, PrimaryWindow, Window},
 };
-use bevy_rapier3d::prelude::{ExternalImpulse, RapierConfiguration, Velocity};
+
 use leafwing_input_manager::prelude::ActionState;
 
 use engine::{
-    ability::{properties::AbilityProps, ABILITY_Z},
-    pointing_angle,
-    status_effect::{StatusEffect, StatusEffects},
-    time::TickCounter,
-    AppState, Cooldowns, Energy, FixedTimestepSystem, MaxSpeed, Player,
+    ability::ABILITY_Z,
+    multiplayer::{Action, Input, PlayerInputs},
+    Player, Target,
 };
+use tracing::warn;
 
-use crate::CAMERA_OFFSET;
+use crate::{config::UserAction, CAMERA_OFFSET};
 
-use super::config::{Action, Config, ABILITY_COUNT};
-
-pub struct ControlPlugin;
+pub struct ControlPlugin {
+    pub player: Player,
+}
 
 impl Plugin for ControlPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_systems(Update, (menu, player_aim, update_cursor))
-            .add_engine_tick_systems((player_ability, player_movement))
-            .insert_resource(CameraFollowMode::Mouse);
+        app.insert_resource(CameraFollowMode::Mouse)
+            .insert_resource(self.player)
+            .add_systems(Update, player_input)
+            .add_systems(Update, update_cursor);
     }
 }
 
 #[derive(Resource, PartialEq, Eq, Debug, Clone, Copy)]
-enum CameraFollowMode {
+pub enum CameraFollowMode {
     Mouse,
     Controller,
 }
 
-fn menu(
-    query: Query<&ActionState<Action>, With<Player>>,
-    state: Res<State<AppState>>,
-    mut next_state: ResMut<NextState<AppState>>,
-    mut physics_config: ResMut<RapierConfiguration>,
-) {
-    let action_state = if let Ok(action_state) = query.get_single() {
-        action_state
-    } else {
-        return;
-    };
-
-    if action_state.just_pressed(Action::Menu) {
-        match state.get() {
-            AppState::Loading => (),
-            AppState::Running => {
-                physics_config.physics_pipeline_active = false;
-                next_state.set(AppState::Paused);
-            }
-            AppState::Paused => {
-                physics_config.physics_pipeline_active = true;
-                next_state.set(AppState::Running);
-            }
-        }
-    }
-}
-
-fn player_ability(
-    config: Res<Config>,
-    mut commands: Commands,
-    tick_counter: Res<TickCounter>,
-    props: Res<AbilityProps>,
-    mut query: Query<(
-        Entity,
-        &ActionState<Action>,
-        &mut Energy,
-        &mut Cooldowns,
-        &mut Velocity,
-        &mut StatusEffects,
-        &Transform,
-        &Player,
-    )>,
-) {
-    let (
-        entity,
-        action_state,
-        mut energy,
-        mut cooldowns,
-        velocity,
-        mut status_effects,
-        transform,
-        player,
-    ) = match query.get_single_mut() {
-        Ok(q) => q,
-        Err(_) => return,
-    };
-
-    // Abilities:
-    for pressed in &action_state.get_pressed() {
-        let just_pressed = action_state.just_pressed(*pressed);
-        let pressed_usize = *pressed as usize;
-        if pressed_usize < ABILITY_COUNT {
-            let ability = &config.player.abilities[pressed_usize];
-            ability.fire(
-                just_pressed,
-                &mut commands,
-                &tick_counter,
-                &props,
-                entity,
-                &mut energy,
-                &mut cooldowns,
-                transform,
-                &velocity,
-                &mut status_effects,
-                player.target,
-            );
-        }
-    }
-
-    for released in &action_state.get_just_released() {
-        let released_usize = *released as usize;
-        if released_usize < ABILITY_COUNT {
-            let ability = &config.player.abilities[released_usize];
-            ability.unfire(&mut commands, entity, &mut status_effects);
-        }
-    }
-}
-
-// TODO: Some of this needs to go into engine.
-fn player_movement(
-    mut query: Query<
-        (
-            &ActionState<Action>,
-            &mut ExternalImpulse,
-            &MaxSpeed,
-            &StatusEffects,
-        ),
-        With<Player>,
-    >,
-    props: Res<AbilityProps>,
-) {
-    let (action_state, mut impulse, max_speed, status_effects) =
-        if let Ok(q) = query.get_single_mut() {
-            q
-        } else {
-            return;
-        };
-
-    if let Some(axis_pair) = action_state.axis_pair(Action::Move) {
-        let dir = axis_pair.xy().clamp_length_max(1.0).extend(0.0);
-        let mut max_impulse = max_speed.impulse;
-        if status_effects
-            .effects
-            .contains(&StatusEffect::HyperSprinting)
-        {
-            max_impulse *= props.hyper_sprint.factor;
-        }
-
-        impulse.impulse = dir * max_impulse;
-    }
-}
-
 const MAX_RANGE: f32 = 20.0;
 
-// TODO: Some of this needs to go into engine.
-fn player_aim(
-    mut player_query: Query<(&ActionState<Action>, &mut Transform, &mut Player), Without<Camera>>,
-    mut camera_query: Query<&mut Transform, With<Camera>>,
+pub fn player_input(
+    player: Res<Player>,
+    mut player_inputs: ResMut<PlayerInputs>,
+    player_query: Query<(&Player, &ActionState<UserAction>, &Transform)>,
+    primary_window: Query<&Window, With<PrimaryWindow>>,
+    camera_query: Query<(&Camera, &GlobalTransform)>,
     mut camera_mode: ResMut<CameraFollowMode>,
+    cursor_events: EventReader<CursorMoved>,
 ) {
-    let (action_state, mut transform, mut player) = if let Ok(query) = player_query.get_single_mut()
-    {
-        query
-    } else {
-        return;
+    let player = *player;
+    let filtered_query = player_query.iter().find(|tuple| *tuple.0 == player);
+    let (_, action_state, player_transform) = match filtered_query {
+        Some(tuple) => tuple,
+        None => {
+            warn!("{player} not found");
+            return;
+        }
     };
 
-    if action_state.pressed(Action::Aim) {
-        let axis_pair = action_state.clamped_axis_pair(Action::Aim).unwrap();
-        let rotation = axis_pair.rotation().unwrap().into_radians() - PI * 0.5;
-        transform.rotation = Quat::from_axis_angle(Vec3::Z, rotation);
-
-        player.target = transform.translation.truncate() + axis_pair.xy() * MAX_RANGE;
-
-        *camera_mode = CameraFollowMode::Controller;
+    let mut action = Action::none();
+    for pressed in action_state.get_pressed() {
+        match pressed {
+            UserAction::Ability0 => action |= Action::Ability0,
+            UserAction::Ability1 => action |= Action::Ability1,
+            UserAction::Ability2 => action |= Action::Ability2,
+            UserAction::Ability3 => action |= Action::Ability3,
+            UserAction::Ability4 => action |= Action::Ability4,
+            UserAction::Menu => action |= Action::Menu,
+            UserAction::Move | UserAction::Aim => (),
+        }
     }
 
-    if *camera_mode == CameraFollowMode::Controller {
-        let mut camera_transform = if let Ok(query) = camera_query.get_single_mut() {
-            query
-        } else {
-            return;
-        };
-        let look_at = transform.translation;
-        *camera_transform =
-            Transform::from_translation(CAMERA_OFFSET + look_at).looking_at(look_at, Vec3::Z);
-    }
+    let movement = action_state
+        .clamped_axis_pair(UserAction::Move)
+        .map(|pair| pair.xy())
+        .unwrap_or_default();
+
+    let cursor = match action_state.clamped_axis_pair(UserAction::Aim) {
+        Some(pair) => {
+            *camera_mode = CameraFollowMode::Controller;
+            player_transform.translation.truncate() + pair.xy() * MAX_RANGE
+        }
+        None => {
+            if cursor_events.is_empty() && *camera_mode == CameraFollowMode::Controller {
+                player_transform.translation.truncate()
+            } else {
+                *camera_mode = CameraFollowMode::Mouse;
+                cursor_from_mouse(primary_window, camera_query)
+                    .unwrap_or(player_transform.translation.truncate())
+            }
+        }
+    };
+
+    let input = Input::new(action, movement, cursor);
+    player_inputs.insert(player, input);
 }
 
-/// Moves the camera and orients the player based on the mouse cursor.
+fn cursor_from_mouse(
+    primary_window: Query<&Window, With<PrimaryWindow>>,
+    camera_query: Query<(&Camera, &GlobalTransform)>,
+) -> Option<Vec2> {
+    let cursor_window = primary_window.single().cursor_position()?;
+
+    let (camera, camera_global_transform) = camera_query.get_single().ok()?;
+
+    let ray = camera.viewport_to_world(camera_global_transform, cursor_window)?;
+    let distance = ray.intersect_plane(Vec3::new(0.0, 0.0, ABILITY_Z), Vec3::Z)?;
+    let cursor = ray.get_point(distance);
+    Some(cursor.truncate())
+}
+
+/// Moves the camera based on the mouse cursor.
 fn update_cursor(
     primary_window: Query<&Window, With<PrimaryWindow>>,
     mut camera_query: Query<(&mut Transform, &Camera, &GlobalTransform)>,
-    mut player_query: Query<(&mut Transform, &mut Player), Without<Camera>>,
+    mut player_query: Query<(&Transform, &mut Target), (With<Player>, Without<Camera>)>,
     cursor_events: EventReader<CursorMoved>,
     mut camera_mode: ResMut<CameraFollowMode>,
 ) {
@@ -212,7 +124,7 @@ fn update_cursor(
     *camera_mode = CameraFollowMode::Mouse;
 
     let (mut camera_transform, camera, camera_global_transform) = camera_query.single_mut();
-    let Ok((mut player_transform, mut player)) = player_query.get_single_mut() else {
+    let Ok((player_transform, mut target)) = player_query.get_single_mut() else {
         return;
     };
 
@@ -227,15 +139,12 @@ fn update_cursor(
     let Some(ground_distance) = ray.intersect_plane(Vec3::new(0.0, 0.0, 0.0), Vec3::Z) else {
         return;
     };
-    player.target = ray.get_point(ground_distance).truncate();
+    target.0 = ray.get_point(ground_distance).truncate();
 
     let Some(distance) = ray.intersect_plane(Vec3::new(0.0, 0.0, ABILITY_Z), Vec3::Z) else {
         return;
     };
     let cursor = ray.get_point(distance);
-
-    let angle = pointing_angle(player_transform.translation, cursor);
-    player_transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
 
     let camera_weight = 0.9;
     const CURSOR_WEIGHT: f32 = 0.33;

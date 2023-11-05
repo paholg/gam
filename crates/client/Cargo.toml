@@ -4,7 +4,7 @@ name = "client"
 version = "0.1.0"
 
 [dependencies]
-engine.path = "../engine/"
+engine.path = "../engine"
 
 bevy = { workspace = true, default-features = false, features = [
   "animation",

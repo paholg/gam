@@ -6,7 +6,7 @@ use bevy_ecs::{
     event::{Event, EventWriter},
     system::{Commands, Query, Res},
 };
-use bevy_hierarchy::DespawnRecursiveExt;
+use bevy_hierarchy::{despawn_with_children_recursive, DespawnRecursiveExt};
 use bevy_math::{Vec2, Vec3};
 use bevy_rapier3d::prelude::{
     Ccd, Collider, ColliderMassProperties, LockedAxes, RapierContext, ReadMassProperties, Sensor,
@@ -18,7 +18,7 @@ use nalgebra::ComplexField;
 use crate::{
     physics::G,
     time::{Tick, TickCounter},
-    Health, Object, PLAYER_R,
+    Health, Object, Target, PLAYER_R,
 };
 
 use super::properties::GrenadeProps;
@@ -69,11 +69,11 @@ pub fn grenade(
     props: &GrenadeProps,
     transform: &Transform,
     shooter: Entity,
-    target: Vec2,
+    target: &Target,
 ) {
     let dir = transform.rotation * Vec3::Y;
     let position = transform.translation + dir * (PLAYER_R + props.radius + 0.01);
-    let vel = calculate_initial_vel(position.truncate(), target);
+    let vel = calculate_initial_vel(position.truncate(), target.0);
 
     commands.spawn((
         Object {
