@@ -13,7 +13,6 @@ use bevy_kira_audio::{
 use bevy_mod_inverse_kinematics::InverseKinematicsPlugin;
 use iyes_progress::ProgressPlugin;
 use rand::Rng;
-use tracing::info;
 
 use engine::{
     ability::{
@@ -166,7 +165,10 @@ fn draw_grenade_outline_system(
 ) {
     for event in event_reader.iter() {
         let entity = event.entity;
-        let grenade = query.get(entity).unwrap();
+        let Ok(grenade) = query.get(entity) else {
+            tracing::warn!(?entity, "Can't find grenade to outline.");
+            continue;
+        };
         let (mesh, material) = match grenade.kind {
             GrenadeKind::Frag => (
                 assets.frag_grenade.outline_mesh.clone(),
@@ -259,8 +261,11 @@ fn draw_shot_hit_system(
     mut event_reader: EventReader<ShotHitEvent>,
 ) {
     for hit in event_reader.iter() {
-        let (mut transform, mut effect_spawner) =
-            effects.get_mut(assets.shot.effect_entity).unwrap();
+        let Ok((mut transform, mut effect_spawner)) = effects.get_mut(assets.shot.effect_entity)
+        else {
+            tracing::warn!(?hit, "Could not get shot effect");
+            continue;
+        };
         *transform = hit.transform;
         effect_spawner.reset();
         audio
@@ -277,8 +282,11 @@ fn draw_death_system(
     mut event_reader: EventReader<DeathEvent>,
 ) {
     for death in event_reader.iter() {
-        let (mut transform, mut effect_spawner) =
-            effects.get_mut(assets.player.despawn_effect).unwrap();
+        let Ok((mut transform, mut effect_spawner)) = effects.get_mut(assets.player.despawn_effect)
+        else {
+            tracing::warn!(?death, "Could not get death effect");
+            continue;
+        };
         *transform = death.transform;
         transform.translation.z += ABILITY_Z;
         effect_spawner.reset();
@@ -301,7 +309,14 @@ fn draw_explosion_system(
             GrenadeKind::Frag => assets.frag_grenade.effect_entity,
             GrenadeKind::Heal => assets.heal_grenade.effect_entity,
         };
-        let (mut transform, mut effect_spawner) = effects.get_mut(effect_entity).unwrap();
+        let Ok((mut transform, mut effect_spawner)) = effects.get_mut(effect_entity) else {
+            tracing::warn!(
+                ?explosion_transform,
+                ?explosion,
+                "Could not get effect for explosion."
+            );
+            continue;
+        };
         *transform = *explosion_transform;
         effect_spawner.reset();
 
@@ -317,8 +332,12 @@ fn draw_hyper_sprint_system(
     query: Query<&Transform, (With<HyperSprinting>, Without<HyperSprintEffect>)>,
 ) {
     for sprint_transform in query.iter() {
-        let (mut transform, mut effect_spawner) =
-            effects.get_mut(assets.hyper_sprint.effect_entity).unwrap();
+        let Ok((mut transform, mut effect_spawner)) =
+            effects.get_mut(assets.hyper_sprint.effect_entity)
+        else {
+            tracing::warn!(?sprint_transform, "Could not get sprint effect.");
+            continue;
+        };
         *transform = *sprint_transform;
         effect_spawner.reset();
     }
@@ -355,7 +374,6 @@ fn background_music_system(
         let mut rng = rand::thread_rng();
         let idx = rng.gen_range(0..asset_handler.music.len());
         let (name, song) = asset_handler.music[idx].clone();
-        info!(%name, "Playing");
         let handle = audio
             .play(song)
             .with_volume(Volume::Decibels(config.sound.music_volume))

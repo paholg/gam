@@ -27,7 +27,7 @@ use crate::{
 
 use self::{
     grenade::grenade,
-    properties::{AbilityProps, GunProps, HyperSprintProps, ShotgunProps},
+    properties::{AbilityProps, GunProps, ShotgunProps},
 };
 
 pub mod grenade;
@@ -91,7 +91,6 @@ impl Ability {
     #[allow(clippy::too_many_arguments)]
     pub fn fire(
         &self,
-        just_pressed: bool,
         commands: &mut Commands,
         tick_counter: &TickCounter,
         props: &AbilityProps,
@@ -119,17 +118,7 @@ impl Ability {
 
         match self {
             Ability::None => (),
-            Ability::HyperSprint => {
-                if just_pressed {
-                    hyper_sprint(
-                        commands,
-                        &props.hyper_sprint,
-                        entity,
-                        energy,
-                        status_effects,
-                    );
-                }
-            }
+            Ability::HyperSprint => hyper_sprint(commands, entity, status_effects),
             Ability::Gun => gun(
                 commands,
                 tick_counter,
@@ -188,32 +177,9 @@ impl Ability {
 #[derive(Component, Hash)]
 pub struct HyperSprinting;
 
-fn hyper_sprint(
-    commands: &mut Commands,
-    props: &HyperSprintProps,
-    entity: Entity,
-    energy: &Energy,
-    status_effects: &mut StatusEffects,
-) -> bool {
-    if energy.cur >= props.cost {
-        commands.entity(entity).insert(HyperSprinting);
-        status_effects.effects.insert(StatusEffect::HyperSprinting);
-        true
-    } else {
-        false
-    }
-}
-
-pub fn hyper_sprint_system(
-    mut commands: Commands,
-    props: Res<AbilityProps>,
-    mut query: Query<(&mut Energy, Entity, &mut StatusEffects), With<HyperSprinting>>,
-) {
-    for (mut energy, entity, mut status_effects) in &mut query {
-        if !energy.try_use(props.hyper_sprint.cost) {
-            hyper_sprint_disable(&mut commands, entity, &mut status_effects);
-        }
-    }
+fn hyper_sprint(commands: &mut Commands, entity: Entity, status_effects: &mut StatusEffects) {
+    commands.entity(entity).insert(HyperSprinting);
+    status_effects.effects.insert(StatusEffect::HyperSprinting);
 }
 
 fn hyper_sprint_disable(
@@ -244,7 +210,7 @@ fn gun(
     let position =
         transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ABILITY_Z * Vec3::Z;
     let velocity = dir * props.speed + velocity.linvel;
-    BulletProps {
+    Bullet {
         position,
         velocity,
         radius: props.radius,
@@ -275,7 +241,7 @@ fn shotgun(
         let position =
             transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ABILITY_Z * Vec3::Z;
         let velocity = dir * props.speed + velocity.linvel;
-        BulletProps {
+        Bullet {
             position,
             velocity,
             radius: props.radius,
@@ -290,7 +256,7 @@ fn shotgun(
     }
 }
 
-struct BulletProps {
+struct Bullet {
     pub velocity: Vec3,
     pub position: Vec3,
     pub radius: f32,
@@ -298,7 +264,7 @@ struct BulletProps {
     pub shot: Shot,
 }
 
-impl BulletProps {
+impl Bullet {
     fn spawn(self, commands: &mut Commands) {
         commands.spawn((
             Object {
@@ -350,7 +316,7 @@ pub fn shot_despawn_system(
     }
 }
 
-#[derive(Event)]
+#[derive(Event, Debug)]
 pub struct ShotHitEvent {
     pub transform: Transform,
 }
@@ -361,7 +327,6 @@ pub fn shot_hit_system(
     mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
     shot_query: Query<(Entity, &Transform, &Velocity, &ReadMassProperties, &Shot)>,
-    // explosion_query: Query<&Explosion>,
     mut health_query: Query<&mut Health>,
     mut momentum_query: Query<
         (&mut Velocity, &ReadMassProperties),

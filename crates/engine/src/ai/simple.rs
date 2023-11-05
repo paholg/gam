@@ -1,10 +1,10 @@
 use std::cmp::Ordering;
 
-use bevy_app::{App, Plugin};
 use bevy_ecs::{
     component::Component,
     entity::Entity,
     query::{ReadOnlyWorldQuery, With, Without},
+    schedule::{IntoSystemConfigs, SystemConfigs},
     system::{Commands, Query, Res},
 };
 use bevy_math::{Quat, Vec3};
@@ -18,10 +18,8 @@ use crate::{
     pointing_angle,
     status_effect::StatusEffects,
     time::TickCounter,
-    Ai, Ally, Cooldowns, Enemy, Energy, EngineTickSystem, MaxSpeed, Target,
+    Ai, Ally, Cooldowns, Enemy, Energy, MaxSpeed, Target,
 };
-
-pub struct SimpleAiPlugin;
 
 #[derive(Component)]
 pub enum Attitude {
@@ -41,15 +39,14 @@ impl Attitude {
     }
 }
 
-impl Plugin for SimpleAiPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_engine_tick_systems((
-            update_enemy_orientation,
-            update_ally_orientation,
-            stupid_gun_system,
-            just_move_system,
-        ));
-    }
+pub fn system_set() -> SystemConfigs {
+    (
+        update_enemy_orientation,
+        update_ally_orientation,
+        stupid_gun_system,
+        just_move_system,
+    )
+        .chain()
 }
 
 fn just_move_system(
@@ -131,7 +128,6 @@ fn stupid_gun_system(
         q_ai.iter_mut()
     {
         Ability::Gun.fire(
-            false,
             &mut commands,
             &tick_counter,
             &props,

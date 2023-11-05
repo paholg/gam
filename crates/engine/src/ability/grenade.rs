@@ -6,7 +6,7 @@ use bevy_ecs::{
     event::{Event, EventWriter},
     system::{Commands, Query, Res},
 };
-use bevy_hierarchy::{despawn_with_children_recursive, DespawnRecursiveExt};
+use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::{Vec2, Vec3};
 use bevy_rapier3d::prelude::{
     Ccd, Collider, ColliderMassProperties, LockedAxes, RapierContext, ReadMassProperties, Sensor,
@@ -18,7 +18,7 @@ use nalgebra::ComplexField;
 use crate::{
     physics::G,
     time::{Tick, TickCounter},
-    Health, Object, Target, PLAYER_R,
+    Health, Object, Target, DAMPING, PLAYER_R,
 };
 
 use super::properties::GrenadeProps;
@@ -45,7 +45,7 @@ fn calculate_initial_vel(spawn: Vec2, target: Vec2) -> Velocity {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum GrenadeKind {
     Frag,
     Heal,
@@ -92,7 +92,7 @@ pub fn grenade(
             radius: props.radius,
             damage: props.damage,
             explosion_radius: props.explosion_radius,
-            kind: GrenadeKind::Frag,
+            kind: props.kind,
         },
         Ccd::enabled(),
     ));
@@ -104,6 +104,7 @@ pub struct GrenadeLandEvent {
 }
 
 pub fn grenade_land_system(
+    mut commands: Commands,
     mut query: Query<(
         Entity,
         &Grenade,
@@ -118,12 +119,14 @@ pub fn grenade_land_system(
             transform.translation.z = grenade.radius;
             *axes |= LockedAxes::TRANSLATION_LOCKED_Z;
             velocity.linvel = Vec3::ZERO;
+            // Grenades on the ground should not roll around freely.
+            commands.entity(entity).insert(DAMPING);
             event_writer.send(GrenadeLandEvent { entity });
         }
     }
 }
 
-#[derive(Component)]
+#[derive(Debug, Component)]
 pub struct Explosion {
     pub damage: f32,
     pub kind: GrenadeKind,
@@ -137,16 +140,16 @@ pub fn explosion_despawn_system(
     rapier: Res<RapierContext>,
 ) {
     for (entity, explosion) in &query {
-        for (e1, e2, intersecting) in rapier.intersections_with(entity) {
-            if intersecting {
-                let other = if e1 == entity { e2 } else { e1 };
-                if let Ok(mut health) = health_query.get_mut(other) {
-                    health.take(explosion.damage);
-                }
+        let targets = rapier
+            .intersections_with(entity)
+            .filter_map(|(e1, e2, intersecting)| if intersecting { Some((e1, e2)) } else { None })
+            .map(|(e1, e2)| if e1 == entity { e2 } else { e1 });
+        for target in targets {
+            if let Ok(mut health) = health_query.get_mut(target) {
+                health.take(explosion.damage);
             }
         }
-        // FIXME
-        // commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn_recursive();
     }
 }
 

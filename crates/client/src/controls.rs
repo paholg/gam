@@ -13,7 +13,6 @@ use engine::{
     multiplayer::{Action, Input, PlayerInputs},
     Player, Target,
 };
-use tracing::warn;
 
 use crate::{config::UserAction, CAMERA_OFFSET};
 
@@ -49,12 +48,8 @@ pub fn player_input(
 ) {
     let player = *player;
     let filtered_query = player_query.iter().find(|tuple| *tuple.0 == player);
-    let (_, action_state, player_transform) = match filtered_query {
-        Some(tuple) => tuple,
-        None => {
-            warn!("{player} not found");
-            return;
-        }
+    let Some((_, action_state, player_transform)) = filtered_query else {
+        return;
     };
 
     let mut action = Action::none();

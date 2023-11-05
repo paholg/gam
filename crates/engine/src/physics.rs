@@ -1,18 +1,25 @@
-use bevy_app::{App, FixedUpdate, Plugin};
+use bevy_app::{App, Plugin};
+
+use bevy_ecs::schedule::SystemConfigs;
 use bevy_math::Vec3;
-use bevy_rapier3d::prelude::{NoUserData, RapierConfiguration, RapierPhysicsPlugin, TimestepMode};
+use bevy_rapier3d::prelude::{
+    NoUserData, PhysicsSet, RapierConfiguration, RapierPhysicsPlugin, TimestepMode,
+};
 
 use crate::time::PHYSICS_TIMESTEP;
 
 pub type RapierPlugin = RapierPhysicsPlugin<NoUserData>;
 
-pub struct PhysicsPlugin;
-
 pub const G: f32 = 9.81;
 
-impl Plugin for PhysicsPlugin {
-    fn build(&self, app: &mut App) {
-        let rapier_config = RapierConfiguration {
+pub struct PhysicsPlugin {
+    config: RapierConfiguration,
+    rapier: RapierPlugin,
+}
+
+impl PhysicsPlugin {
+    pub fn new() -> Self {
+        let config = RapierConfiguration {
             gravity: Vec3::Z * (-G),
             timestep_mode: TimestepMode::Fixed {
                 dt: PHYSICS_TIMESTEP,
@@ -20,8 +27,44 @@ impl Plugin for PhysicsPlugin {
             },
             ..Default::default()
         };
+        let rapier = RapierPlugin::default().with_default_system_setup(false);
 
-        app.insert_resource(rapier_config)
-            .add_plugins(RapierPlugin::default().in_schedule(FixedUpdate));
+        Self { config, rapier }
+    }
+
+    pub fn set1(&self) -> SystemConfigs {
+        RapierPlugin::get_systems(PhysicsSet::SyncBackend)
+    }
+
+    pub fn set2(&self) -> SystemConfigs {
+        RapierPlugin::get_systems(PhysicsSet::StepSimulation)
+    }
+
+    pub fn set3(&self) -> SystemConfigs {
+        RapierPlugin::get_systems(PhysicsSet::Writeback)
+    }
+}
+
+impl Plugin for PhysicsPlugin {
+    fn build(&self, app: &mut App) {
+        app.insert_resource(self.config);
+        self.rapier.build(app);
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use bevy_rapier3d::prelude::PhysicsSet;
+
+    #[test]
+    fn physics_sets() {
+        let set = PhysicsSet::SyncBackend;
+        // A simple test to make sure we get a compiler error if a new set is
+        // added.
+        match set {
+            PhysicsSet::SyncBackend => (),
+            PhysicsSet::StepSimulation => (),
+            PhysicsSet::Writeback => (),
+        }
     }
 }

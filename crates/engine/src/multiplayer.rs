@@ -1,6 +1,5 @@
 use core::fmt;
 
-use bevy_app::Plugin;
 use bevy_ecs::system::Resource;
 use bevy_math::Vec2;
 
@@ -16,11 +15,21 @@ use crate::{
     Player,
 };
 
-pub struct MultiplayerPlugin;
+/// The inputs of all players
+#[derive(Resource, Default, Debug)]
+pub struct PlayerInputs {
+    map: HashMap<Player, Input>,
+}
 
-impl Plugin for MultiplayerPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
-        app.insert_resource(PlayerInputs::default());
+impl PlayerInputs {
+    pub fn get(&self, player: &Player) -> Option<&Input> {
+        self.map.get(player)
+    }
+
+    pub fn insert(&mut self, player: Player, input: Input) {
+        if input.is_ok() {
+            self.map.insert(player, input);
+        }
     }
 }
 
@@ -143,24 +152,6 @@ impl Input {
 
     pub fn cursor(&self) -> Vec2 {
         Vec2::new(self.cursor_x, self.cursor_y)
-    }
-}
-
-/// The inputs of all players
-#[derive(Resource, Default, Debug)]
-pub struct PlayerInputs {
-    map: HashMap<Player, Input>,
-}
-
-impl PlayerInputs {
-    pub fn get(&self, player: &Player) -> Option<&Input> {
-        self.map.get(player)
-    }
-
-    pub fn insert(&mut self, player: Player, input: Input) {
-        if input.is_ok() {
-            self.map.insert(player, input);
-        }
     }
 }
 

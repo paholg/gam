@@ -25,6 +25,7 @@ pub fn die(
 ) {
     for (entity, health, &transform) in query.iter() {
         if health.cur <= 0.0 {
+            tracing::debug!(?entity, ?health, ?transform, "DEATH");
             event_writer.send(DeathEvent { transform });
             commands.entity(entity).despawn_recursive();
         }
@@ -45,34 +46,37 @@ fn spawn_enemies(commands: &mut Commands, num: usize) {
         let loc = point_in_plane();
         let abilities = Abilities::new(vec![Ability::Gun]);
 
-        commands.spawn((
-            Enemy,
-            Ai,
-            Character {
-                health: Health::new(10.0),
-                energy: Energy::new(5.0, 0.2),
-                damping: DAMPING,
-                object: Object {
-                    transform: Transform::from_translation(loc),
-                    global_transform: GlobalTransform::default(),
-                    collider: Collider::capsule(
-                        Vec3::new(0.0, 0.0, 0.0),
-                        Vec3::new(0.0, 0.0, 2.0),
-                        1.0,
-                    ),
-                    body: RigidBody::Dynamic,
-                    locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
-                    ..Default::default()
+        let id = commands
+            .spawn((
+                Enemy,
+                Ai,
+                Character {
+                    health: Health::new(10.0),
+                    energy: Energy::new(5.0, 0.2),
+                    damping: DAMPING,
+                    object: Object {
+                        transform: Transform::from_translation(loc),
+                        global_transform: GlobalTransform::default(),
+                        collider: Collider::capsule(
+                            Vec3::new(0.0, 0.0, 0.0),
+                            Vec3::new(0.0, 0.0, 2.0),
+                            1.0,
+                        ),
+                        body: RigidBody::Dynamic,
+                        locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+                        ..Default::default()
+                    },
+                    max_speed: Default::default(),
+                    impulse: Default::default(),
+                    status_effects: Default::default(),
+                    shootable: Shootable,
+                    cooldowns: Cooldowns::new(&abilities),
+                    abilities,
                 },
-                max_speed: Default::default(),
-                impulse: Default::default(),
-                status_effects: Default::default(),
-                shootable: Shootable,
-                cooldowns: Cooldowns::new(&abilities),
-                abilities,
-            },
-            Attitude::rand(),
-        ));
+                Attitude::rand(),
+            ))
+            .id();
+        tracing::debug!(?id, "Spawning enemy");
     }
 }
 
@@ -80,32 +84,35 @@ fn spawn_allies(commands: &mut Commands, num: usize) {
     for _ in 0..num {
         let loc = point_in_plane();
         let abilities = Abilities::new(vec![Ability::Gun]);
-        commands.spawn((
-            Ally,
-            Ai,
-            Character {
-                health: Health::new(100.0),
-                energy: Energy::new(100.0, ENERGY_REGEN),
-                damping: DAMPING,
-                object: Object {
-                    transform: Transform::from_translation(loc),
-                    collider: Collider::capsule(
-                        Vec3::new(0.0, 0.0, 0.0),
-                        Vec3::new(0.0, 0.0, 2.0),
-                        1.0,
-                    ),
-                    body: RigidBody::Dynamic,
-                    locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
-                    ..Default::default()
+        let id = commands
+            .spawn((
+                Ally,
+                Ai,
+                Character {
+                    health: Health::new(100.0),
+                    energy: Energy::new(100.0, ENERGY_REGEN),
+                    damping: DAMPING,
+                    object: Object {
+                        transform: Transform::from_translation(loc),
+                        collider: Collider::capsule(
+                            Vec3::new(0.0, 0.0, 0.0),
+                            Vec3::new(0.0, 0.0, 2.0),
+                            1.0,
+                        ),
+                        body: RigidBody::Dynamic,
+                        locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+                        ..Default::default()
+                    },
+                    max_speed: Default::default(),
+                    impulse: Default::default(),
+                    status_effects: Default::default(),
+                    shootable: Shootable,
+                    cooldowns: Cooldowns::new(&abilities),
+                    abilities,
                 },
-                max_speed: Default::default(),
-                impulse: Default::default(),
-                status_effects: Default::default(),
-                shootable: Shootable,
-                cooldowns: Cooldowns::new(&abilities),
-                abilities,
-            },
-        ));
+            ))
+            .id();
+        tracing::debug!(?id, "Spawning ally");
     }
 }
 
@@ -123,7 +130,6 @@ pub fn reset(
     }
 
     if player_query.iter().next().is_none() {
-        tracing::warn!("NO PLAYERS");
         num_ai.enemies = num_ai.enemies.saturating_sub(1);
         for info in player_info_query.iter() {
             info.spawn_player(&mut commands);

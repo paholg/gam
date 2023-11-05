@@ -4,7 +4,7 @@ use bevy_ecs::system::Resource;
 
 use crate::time::Tick;
 
-use super::Ability;
+use super::{grenade::GrenadeKind, Ability};
 
 #[derive(Debug, Resource)]
 pub struct AbilityProps {
@@ -72,6 +72,7 @@ pub struct HyperSprintProps {
     pub cost: f32,
     /// Speed multiplication factor.
     pub factor: f32,
+    pub cooldown: Tick,
 }
 
 impl Default for HyperSprintProps {
@@ -79,6 +80,7 @@ impl Default for HyperSprintProps {
         Self {
             cost: 2.0,
             factor: 7.0,
+            cooldown: Tick(0),
         }
     }
 }
@@ -136,12 +138,6 @@ impl Default for ShotgunProps {
             density: 100.0,
         }
     }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum GrenadeKind {
-    Frag,
-    Heal,
 }
 
 #[derive(Debug)]
