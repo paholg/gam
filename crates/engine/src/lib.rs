@@ -112,6 +112,8 @@ impl Energy {
     }
 }
 
+/// We currently move Characters by applying an impulse; this is the highest
+/// impulse they can use.
 #[derive(Component, Copy, Clone, Debug, Reflect)]
 pub struct MaxSpeed {
     pub impulse: f32,
@@ -246,6 +248,8 @@ impl Plugin for GamPlugin {
         // TODO: Currently, events are only used for engine -> client
         // communication. We should probably come up with a method so that the
         // server does not need to generate them.
+        // Note: If any events are needed by the server, don't use `add_event`. See
+        // https://bevy-cheatbook.github.io/patterns/manual-event-clear.html
         app.add_event::<GrenadeLandEvent>()
             .add_event::<ShotHitEvent>()
             .add_event::<DeathEvent>();
