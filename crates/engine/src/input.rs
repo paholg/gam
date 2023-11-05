@@ -1,4 +1,3 @@
-use bevy_app::Plugin;
 use bevy_ecs::{
     entity::Entity,
     schedule::{NextState, State},
@@ -7,6 +6,7 @@ use bevy_ecs::{
 use bevy_math::{Quat, Vec3};
 use bevy_rapier3d::prelude::{ExternalImpulse, RapierConfiguration, Velocity};
 use bevy_transform::components::Transform;
+use bevy_utils::HashSet;
 
 use crate::{
     ability::{properties::AbilityProps, Abilities},
@@ -14,18 +14,10 @@ use crate::{
     pointing_angle,
     status_effect::{StatusEffect, StatusEffects},
     time::TickCounter,
-    AppState, Cooldowns, Energy, EngineTickSystem, MaxSpeed, Player, Target,
+    AppState, Cooldowns, Energy, MaxSpeed, Player, Target,
 };
 
-pub struct InputPlugin;
-
-impl Plugin for InputPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
-        app.add_engine_tick_systems(apply_inputs);
-    }
-}
-
-fn apply_inputs(
+pub fn apply_inputs(
     inputs: Res<PlayerInputs>,
     mut commands: Commands,
     tick_counter: Res<TickCounter>,
@@ -71,23 +63,11 @@ fn apply_inputs(
         let angle = pointing_angle(transform.translation, cursor.extend(0.0));
         transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
 
-        // Movement
-        let dir = input.movement().clamp_length_max(1.0).extend(0.0);
-        let mut max_impulse = max_speed.impulse;
-        if status_effects
-            .effects
-            .contains(&StatusEffect::HyperSprinting)
-        {
-            max_impulse *= props.hyper_sprint.factor;
-        }
-        impulse.impulse = dir * max_impulse;
-
         // Abilities
         let buttons = input.buttons();
-
+        let mut abilities_not_fired = abilities.iter().collect::<HashSet<_>>();
         for ability in buttons.abilities_fired(abilities) {
-            ability.fire(
-                true, // FIXME
+            let fired = ability.fire(
                 &mut commands,
                 &tick_counter,
                 &props,
@@ -99,7 +79,24 @@ fn apply_inputs(
                 &mut status_effects,
                 &target,
             );
+            if fired {
+                abilities_not_fired.remove(&ability);
+            }
         }
+        for ability in abilities_not_fired {
+            ability.unfire(&mut commands, entity, &mut status_effects);
+        }
+
+        // Movement
+        let dir = input.movement().clamp_length_max(1.0).extend(0.0);
+        let mut max_impulse = max_speed.impulse;
+        if status_effects
+            .effects
+            .contains(&StatusEffect::HyperSprinting)
+        {
+            max_impulse *= props.hyper_sprint.factor;
+        }
+        impulse.impulse = dir * max_impulse;
 
         // Menu
         if buttons.contains(Action::Menu) {

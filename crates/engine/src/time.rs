@@ -3,12 +3,9 @@ use std::{
     time::{Duration, Instant},
 };
 
-use bevy_app::{App, Plugin};
 use bevy_ecs::system::{ResMut, Resource};
 use bevy_reflect::Reflect;
 use tracing::info;
-
-use crate::EngineTickSystem;
 
 /// The timestep at which we run our game.
 pub const TIMESTEP: f32 = PHYSICS_TIMESTEP;
@@ -66,7 +63,7 @@ impl Default for TickCounter {
 impl TickCounter {
     const DIAGNOSTIC_ITERS: u32 = 10_000;
 
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             tick: Tick(0),
             since: Instant::now(),
@@ -82,11 +79,11 @@ impl TickCounter {
     }
 }
 
-fn tick_counter(mut tick_counter: ResMut<TickCounter>) {
+pub fn tick_counter(mut tick_counter: ResMut<TickCounter>) {
     tick_counter.tick.0 += 1;
 }
 
-fn debug_tick_system(mut tick_counter: ResMut<TickCounter>) {
+pub fn debug_tick_system(mut tick_counter: ResMut<TickCounter>) {
     if tick_counter.diagnostic_iter() {
         let tick = tick_counter.tick;
 
@@ -95,14 +92,5 @@ fn debug_tick_system(mut tick_counter: ResMut<TickCounter>) {
         tick_counter.since = now;
 
         info!(tick = tick.0, ?avg_dur, "Tick");
-    }
-}
-
-pub struct TickPlugin;
-
-impl Plugin for TickPlugin {
-    fn build(&self, app: &mut App) {
-        app.insert_resource(TickCounter::new())
-            .add_engine_tick_systems((tick_counter, debug_tick_system));
     }
 }

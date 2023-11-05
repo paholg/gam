@@ -21,12 +21,12 @@ use std::{fmt, time::Duration};
 use ability::{
     grenade::GrenadeLandEvent, properties::AbilityProps, Abilities, Ability, ShotHitEvent,
 };
-use bevy_app::{App, FixedUpdate, Plugin, Startup};
+use bevy_app::{App, FixedUpdate, Plugin, PostUpdate, Startup};
 use bevy_ecs::{
     bundle::Bundle,
     component::Component,
     event::Event,
-    schedule::{IntoSystemConfigs, State, States},
+    schedule::{IntoSystemConfigs, IntoSystemSetConfigs, State, States, SystemSet},
     system::{Commands, Query, Res, Resource},
 };
 use bevy_math::{Quat, Vec2, Vec3};
@@ -38,11 +38,10 @@ use bevy_reflect::Reflect;
 use bevy_time::fixed_timestep::FixedTime;
 use bevy_transform::components::{GlobalTransform, Transform};
 use bevy_utils::HashMap;
-use input::InputPlugin;
-use multiplayer::MultiplayerPlugin;
+use multiplayer::PlayerInputs;
 use physics::PhysicsPlugin;
 use status_effect::StatusEffects;
-use time::{Tick, TickPlugin, TIMESTEP};
+use time::{Tick, TickCounter, TIMESTEP};
 
 #[derive(States, PartialEq, Eq, Debug, Copy, Clone, Hash, Default)]
 pub enum AppState {
@@ -52,13 +51,15 @@ pub enum AppState {
     Paused,
 }
 
-#[derive(Event)]
+#[derive(Debug, Event)]
 pub struct DeathEvent {
     pub transform: Transform,
 }
 
 pub const PLAYER_R: f32 = 1.0;
 const IMPULSE: f32 = 15.0;
+// TODO: Replace this with friction maybe?
+// That might make it easier to have slippery/sticky ground effects.
 const DAMPING: Damping = Damping {
     linear_damping: 5.0,
     angular_damping: 0.0,
@@ -66,7 +67,7 @@ const DAMPING: Damping = Damping {
 
 pub const PLANE: f32 = 50.0;
 
-#[derive(Component, Default, Reflect)]
+#[derive(Component, Default, Reflect, Debug)]
 pub struct Health {
     pub cur: f32,
     pub max: f32,
@@ -213,36 +214,101 @@ pub struct NumAi {
 /// This plugin contains everything needed to run the game headlessly.
 pub struct GamPlugin;
 
+#[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
+pub enum GameSet {
+    Timer,
+    Input,
+    Ai,
+    Physics1,
+    Physics2,
+    Physics3,
+    Stuff,
+    Despawn,
+}
+
 impl Plugin for GamPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(FixedTime::new(Duration::from_secs_f32(TIMESTEP)));
+        // State
+        app.add_state::<AppState>();
 
-        app.add_state::<AppState>()
+        // Resources
+        app.insert_resource(FixedTime::new(Duration::from_secs_f32(TIMESTEP)))
+            .insert_resource(TickCounter::new())
             .insert_resource(AbilityProps::default())
             .insert_resource(NumAi {
                 enemies: 0,
                 allies: 0,
             })
-            .add_plugins(TickPlugin)
-            .add_systems(Startup, setup)
-            .add_engine_tick_systems((
-                ability::hyper_sprint_system,
-                ability::shot_despawn_system,
-                ability::grenade::grenade_land_system,
-            ))
-            .add_event::<GrenadeLandEvent>()
+            .insert_resource(PlayerInputs::default());
+
+        // Events
+        // TODO: Currently, events are only used for engine -> client
+        // communication. We should probably come up with a method so that the
+        // server does not need to generate them.
+        app.add_event::<GrenadeLandEvent>()
             .add_event::<ShotHitEvent>()
-            .add_event::<DeathEvent>()
-            .add_engine_tick_systems((ability::shot_hit_system, ability::shot_kickback_system))
-            .add_plugins(ai::simple::SimpleAiPlugin)
-            .add_engine_tick_systems((lifecycle::die, energy_regen, lifecycle::reset))
-            .add_plugins(PhysicsPlugin)
-            .add_plugins(InputPlugin)
-            .add_plugins(MultiplayerPlugin)
-            .add_engine_tick_systems((
-                ability::grenade::grenade_explode_system,
-                ability::grenade::explosion_despawn_system,
-            ));
+            .add_event::<DeathEvent>();
+
+        let physics = PhysicsPlugin::new();
+
+        let schedule = FixedUpdate;
+
+        // Sytem sets
+        app.configure_sets(
+            schedule.clone(),
+            (
+                GameSet::Timer,
+                GameSet::Input,
+                GameSet::Ai,
+                GameSet::Physics1,
+                GameSet::Physics2,
+                GameSet::Physics3,
+                GameSet::Stuff,
+                GameSet::Despawn,
+            )
+                .chain(),
+        );
+
+        // Systems in order
+        app.add_systems(Startup, setup).add_systems(
+            schedule,
+            (
+                (time::tick_counter, time::debug_tick_system).in_set(GameSet::Timer),
+                (input::apply_inputs).in_set(GameSet::Input),
+                (ai::simple::system_set()).in_set(GameSet::Ai),
+                physics.set1().in_set(GameSet::Physics1),
+                physics.set2().in_set(GameSet::Physics2),
+                physics.set3().in_set(GameSet::Physics3),
+                (
+                    // Note: Most things should go here.
+                    energy_regen,
+                    lifecycle::reset,
+                    ability::grenade::grenade_land_system,
+                    ability::shot_kickback_system,
+                )
+                    .chain()
+                    .in_set(GameSet::Stuff),
+                (
+                    // Systems that despawn at the end.
+                    ability::shot_hit_system,
+                    ability::grenade::explosion_despawn_system,
+                    ability::grenade::grenade_explode_system,
+                    ability::shot_despawn_system,
+                    lifecycle::die,
+                )
+                    .chain()
+                    .in_set(GameSet::Despawn),
+            ),
+        );
+
+        // TODO: This seems to currently be required so rapier does not miss
+        // events, but it is likely a source of non-determinism.
+        app.add_systems(PostUpdate, (bevy_rapier3d::plugin::systems::sync_removals,));
+
+        // Plugins
+        // Note: None of these plugins should include systems; any systems
+        // should be included manually below to ensure determinism.
+        app.add_plugins(physics);
     }
 }
 

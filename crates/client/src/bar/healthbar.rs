@@ -87,7 +87,15 @@ pub fn healthbar_update_system(
     >,
 ) {
     for (parent, children, mut transform) in q_healthbar.iter_mut() {
-        let (parent_transform, health, healthbar) = q_parent.get(parent.get()).unwrap();
+        let Ok((parent_transform, health, healthbar)) = q_parent.get(parent.get()) else {
+            tracing::warn!(
+                ?parent,
+                ?children,
+                ?transform,
+                "Could not get parent for healthbar."
+            );
+            continue;
+        };
         let healthiness = (health.cur / health.max).max(0.0);
         let rotation = parent_transform.rotation.inverse();
         transform.rotation = rotation;
