@@ -15,8 +15,10 @@ bevy_ecs = "0.11"
 bevy_hierarchy = "0.11"
 bevy_log = "0.11"
 bevy_math = "0.11"
+bevy_reflect = "0.11"
 bevy_time = "0.11"
 bevy_transform = "0.11"
+bevy_utils = "0.11"
 
 # Note on enhanced-determinism:
 # If some of the values used to initialized Rapier structures are computed using

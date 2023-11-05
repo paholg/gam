@@ -1,3 +1,7 @@
+use bevy_app::App;
+
 fn main() {
-    println!("Hello, world!");
+    let mut app = App::new();
+
+    app.add_plugins(engine::GamPlugin);
 }

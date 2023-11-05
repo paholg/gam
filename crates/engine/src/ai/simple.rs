@@ -7,18 +7,18 @@ use bevy_ecs::{
     query::{ReadOnlyWorldQuery, With, Without},
     system::{Commands, Query, Res},
 };
-use bevy_math::{Quat, Vec2, Vec3};
+use bevy_math::{Quat, Vec3};
 use bevy_rapier3d::prelude::{ExternalImpulse, Velocity};
 use bevy_transform::components::Transform;
 use rand::Rng;
 
 use crate::{
     ability::{properties::AbilityProps, Ability},
+    lifecycle::point_in_plane,
     pointing_angle,
     status_effect::StatusEffects,
-    system::point_in_plane,
     time::TickCounter,
-    Ai, Ally, Cooldowns, Enemy, Energy, FixedTimestepSystem, MaxSpeed,
+    Ai, Ally, Cooldowns, Enemy, Energy, EngineTickSystem, MaxSpeed, Target,
 };
 
 pub struct SimpleAiPlugin;
@@ -46,7 +46,7 @@ impl Plugin for SimpleAiPlugin {
         app.add_engine_tick_systems((
             update_enemy_orientation,
             update_ally_orientation,
-            stupid_shoot_system,
+            stupid_gun_system,
             just_move_system,
         ));
     }
@@ -97,7 +97,7 @@ fn update_enemy_orientation(
     enemy_query: Query<(&mut Transform, &Velocity), (With<Enemy>, With<Ai>, Without<Ally>)>,
     props: Res<AbilityProps>,
 ) {
-    let shot_speed = props.shoot.speed;
+    let shot_speed = props.gun.speed;
     point_to_closest(enemy_query, ally_query, shot_speed);
 }
 
@@ -106,11 +106,11 @@ fn update_ally_orientation(
     ally_query: Query<(&mut Transform, &Velocity), (With<Ally>, With<Ai>, Without<Enemy>)>,
     props: Res<AbilityProps>,
 ) {
-    let shot_speed = props.shoot.speed;
+    let shot_speed = props.gun.speed;
     point_to_closest(ally_query, enemy_query, shot_speed);
 }
 
-fn stupid_shoot_system(
+fn stupid_gun_system(
     mut commands: Commands,
     tick_counter: Res<TickCounter>,
 
@@ -130,7 +130,7 @@ fn stupid_shoot_system(
     for (entity, mut cooldowns, mut energy, velocity, transform, mut status_effects) in
         q_ai.iter_mut()
     {
-        Ability::Shoot.fire(
+        Ability::Gun.fire(
             false,
             &mut commands,
             &tick_counter,
@@ -141,7 +141,7 @@ fn stupid_shoot_system(
             transform,
             velocity,
             &mut status_effects,
-            Vec2::ZERO,
+            &Target::default(),
         );
     }
 }

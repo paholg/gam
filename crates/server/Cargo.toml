@@ -4,4 +4,11 @@ name = "server"
 version = "0.1.0"
 
 [dependencies]
+# Internal crates
 engine.path = "../engine"
+
+# Bevy crates
+bevy_app.workspace = true
+bevy_ecs.workspace = true
+
+# Other crates

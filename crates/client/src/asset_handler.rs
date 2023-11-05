@@ -17,7 +17,7 @@ use bevy_kira_audio::AudioSource;
 use iyes_progress::prelude::AssetsLoading;
 
 use engine::{
-    ability::properties::{AbilityProps, GrenadeProps, ShootProps},
+    ability::properties::{AbilityProps, GrenadeProps, GunProps},
     PLAYER_R,
 };
 
@@ -146,7 +146,7 @@ pub fn asset_handler_setup(
         bg_material: materials.add(bg),
     };
 
-    let effect = effects.add(shot_effect(&props.shoot));
+    let effect = effects.add(shot_effect(&props.gun));
     let effect_entity = commands
         .spawn(ParticleEffectBundle::new(effect))
         .insert(ShotEffect)
@@ -323,7 +323,8 @@ pub fn asset_handler_setup(
     };
 
     let asset_handler = AssetHandler {
-        music: load_music(&asset_server, &mut loading),
+        // FIXME
+        music: vec![], // load_music(&asset_server, &mut loading),
         healthbar,
         energybar,
         shot,
@@ -359,7 +360,7 @@ fn load_music(
     res
 }
 
-fn shot_effect(props: &ShootProps) -> EffectAsset {
+fn shot_effect(props: &GunProps) -> EffectAsset {
     let mut color_gradient1 = Gradient::new();
     color_gradient1.add_key(0.0, Vec4::new(0.0, 4.0, 4.0, 1.0));
     color_gradient1.add_key(0.5, Vec4::new(2.0, 2.0, 4.0, 1.0));

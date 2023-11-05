@@ -1,4 +1,6 @@
-use bevy::prelude::{App, PluginGroup};
+use bevy::prelude::{App, Commands, PluginGroup, Res, Startup};
+use client::Config;
+use engine::{player::PlayerInfo, Player};
 
 fn main() {
     let mut app = App::new();
@@ -13,7 +15,11 @@ fn main() {
         }),
         engine::GamPlugin,
         client::GamClientPlugin,
-    ));
+        client::ControlPlugin {
+            player: Player::new(0),
+        },
+    ))
+    .add_systems(Startup, player_spawner);
 
     #[cfg(feature = "debug")]
     app.add_plugins((
@@ -23,4 +29,12 @@ fn main() {
     ));
 
     app.run();
+}
+
+fn player_spawner(mut commands: Commands, config: Res<Config>) {
+    commands.spawn(PlayerInfo {
+        abilities: config.player.abilities.clone(),
+        // FIXME
+        handle: Player::new(0),
+    });
 }

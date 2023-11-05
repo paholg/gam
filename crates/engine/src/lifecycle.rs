@@ -5,14 +5,17 @@ use bevy_ecs::{
     system::{Commands, Query, ResMut},
 };
 use bevy_hierarchy::DespawnRecursiveExt;
-use bevy_math::{Vec2, Vec3};
+use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody};
 use bevy_transform::components::{GlobalTransform, Transform};
 use rand::Rng;
 
 use crate::{
-    ability::Ability, ai::simple::Attitude, player::PlayerSpawner, Ai, Ally, Character, Cooldowns,
-    DeathEvent, Enemy, Energy, Health, NumAi, Object, Player, Shootable, DAMPING, PLANE, PLAYER_R,
+    ability::{Abilities, Ability},
+    ai::simple::Attitude,
+    player::PlayerInfo,
+    Ai, Ally, Character, Cooldowns, DeathEvent, Enemy, Energy, Health, NumAi, Object, Player,
+    Shootable, DAMPING, PLANE, PLAYER_R,
 };
 
 pub fn die(
@@ -28,34 +31,7 @@ pub fn die(
     }
 }
 
-const ENERGY_REGEN: f32 = 0.5;
-
-fn spawn_player(commands: &mut Commands, abilities: &[Ability]) {
-    commands.spawn((
-        Player { target: Vec2::ZERO },
-        Ally,
-        Character {
-            health: Health::new(100.0),
-            energy: Energy::new(100.0, ENERGY_REGEN),
-            damping: DAMPING,
-            object: Object {
-                collider: Collider::capsule(
-                    Vec3::new(0.0, 0.0, 0.0),
-                    Vec3::new(0.0, 0.0, 2.0),
-                    1.0,
-                ),
-                body: RigidBody::Dynamic,
-                locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
-                ..Default::default()
-            },
-            max_speed: Default::default(),
-            impulse: Default::default(),
-            status_effects: Default::default(),
-            shootable: Shootable,
-            cooldowns: Cooldowns::with_abilities(abilities.iter().copied()),
-        },
-    ));
-}
+pub const ENERGY_REGEN: f32 = 0.5;
 
 pub fn point_in_plane() -> Vec3 {
     let mut rng = rand::thread_rng();
@@ -67,6 +43,7 @@ pub fn point_in_plane() -> Vec3 {
 fn spawn_enemies(commands: &mut Commands, num: usize) {
     for _ in 0..num {
         let loc = point_in_plane();
+        let abilities = Abilities::new(vec![Ability::Gun]);
 
         commands.spawn((
             Enemy,
@@ -91,7 +68,8 @@ fn spawn_enemies(commands: &mut Commands, num: usize) {
                 impulse: Default::default(),
                 status_effects: Default::default(),
                 shootable: Shootable,
-                cooldowns: Cooldowns::with_abilities([Ability::Shoot]),
+                cooldowns: Cooldowns::new(&abilities),
+                abilities,
             },
             Attitude::rand(),
         ));
@@ -101,6 +79,7 @@ fn spawn_enemies(commands: &mut Commands, num: usize) {
 fn spawn_allies(commands: &mut Commands, num: usize) {
     for _ in 0..num {
         let loc = point_in_plane();
+        let abilities = Abilities::new(vec![Ability::Gun]);
         commands.spawn((
             Ally,
             Ai,
@@ -123,7 +102,8 @@ fn spawn_allies(commands: &mut Commands, num: usize) {
                 impulse: Default::default(),
                 status_effects: Default::default(),
                 shootable: Shootable,
-                cooldowns: Cooldowns::with_abilities([Ability::Shoot]),
+                cooldowns: Cooldowns::new(&abilities),
+                abilities,
             },
         ));
     }
@@ -134,7 +114,7 @@ pub fn reset(
     enemy_query: Query<Entity, With<Enemy>>,
     ally_query: Query<Entity, With<Ally>>,
     player_query: Query<Entity, With<Player>>,
-    player_spawner_query: Query<&PlayerSpawner>,
+    player_info_query: Query<&PlayerInfo>,
     mut num_ai: ResMut<NumAi>,
 ) {
     if enemy_query.iter().next().is_none() {
@@ -143,20 +123,14 @@ pub fn reset(
     }
 
     if player_query.iter().next().is_none() {
+        tracing::warn!("NO PLAYERS");
         num_ai.enemies = num_ai.enemies.saturating_sub(1);
-        for spawner in player_spawner_query.iter() {
-            spawn_player(&mut commands, &spawner.abilities);
+        for info in player_info_query.iter() {
+            info.spawn_player(&mut commands);
         }
     }
 
     if ally_query.iter().next().is_none() {
         spawn_allies(&mut commands, num_ai.allies);
-    }
-}
-
-pub fn energy_regen(mut query: Query<&mut Energy>) {
-    for mut energy in &mut query {
-        energy.cur += energy.regen;
-        energy.cur = energy.cur.min(energy.max);
     }
 }

@@ -20,8 +20,7 @@ use engine::{
         grenade::{Explosion, Grenade, GrenadeKind, GrenadeLandEvent},
         HyperSprinting, Shot, ShotHitEvent, ABILITY_Z,
     },
-    player::PlayerSpawner,
-    Ally, AppState, DeathEvent, Enemy, Player,
+    Ally, AppState, DeathEvent, Enemy, Player, Target,
 };
 
 use self::{
@@ -29,8 +28,7 @@ use self::{
         asset_handler_setup, AssetHandler, DeathEffect, HyperSprintEffect, ShotEffect,
     },
     bar::{BarPlugin, Energybar, Healthbar},
-    config::{Config, ConfigPlugin},
-    controls::ControlPlugin,
+    config::ConfigPlugin,
     splash::SplashPlugin,
 };
 
@@ -42,6 +40,9 @@ mod shapes;
 mod splash;
 mod ui;
 mod world;
+
+pub use config::Config;
+pub use controls::ControlPlugin;
 
 const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, -50.0, 50.0);
 
@@ -57,20 +58,13 @@ impl Plugin for GamClientPlugin {
                 .track_assets(),
             AudioPlugin,
             ConfigPlugin,
-            ControlPlugin,
             GraphicsPlugin,
             bevy_hanabi::HanabiPlugin,
         ))
         .insert_resource(BackgroundMusic::default())
         .add_systems(Update, background_music_system)
-        .add_systems(Startup, world::setup)
-        .add_systems(Startup, player_spawner);
+        .add_systems(Startup, world::setup);
     }
-}
-
-fn player_spawner(mut commands: Commands, config: Res<Config>) {
-    let abilities = config.player.abilities.into_iter().collect();
-    commands.spawn(PlayerSpawner { abilities });
 }
 
 struct GraphicsPlugin;
@@ -357,7 +351,7 @@ fn background_music_system(
         },
     };
 
-    if should_play {
+    if should_play && !asset_handler.music.is_empty() {
         let mut rng = rand::thread_rng();
         let idx = rng.gen_range(0..asset_handler.music.len());
         let (name, song) = asset_handler.music[idx].clone();
@@ -373,25 +367,25 @@ fn background_music_system(
 }
 
 #[derive(Component)]
-struct Target {
+struct CursorTarget {
     owner: Entity,
 }
 
 fn draw_target_system(
     mut commands: Commands,
-    query: Query<(Entity, &Player), Added<Player>>,
+    query: Query<(Entity, &Target), Added<Player>>,
     asset_handler: Res<AssetHandler>,
 ) {
-    for (entity, player) in &query {
+    for (entity, target) in &query {
         let target_entity = commands
             .spawn((
                 PbrBundle {
                     material: asset_handler.target.material.clone(),
                     mesh: asset_handler.target.mesh.clone(),
-                    transform: Transform::from_translation(player.target.extend(0.0)),
+                    transform: Transform::from_translation(target.0.extend(0.0)),
                     ..Default::default()
                 },
-                Target { owner: entity },
+                CursorTarget { owner: entity },
             ))
             .id();
         commands.entity(entity).push_children(&[target_entity]);
@@ -399,15 +393,15 @@ fn draw_target_system(
 }
 
 fn update_target_system(
-    player_query: Query<(&Player, &Transform)>,
-    mut target_query: Query<(&mut Transform, &Target), Without<Player>>,
+    player_query: Query<(&Transform, &Target), With<Player>>,
+    mut target_query: Query<(&mut Transform, &CursorTarget), Without<Player>>,
 ) {
     for (mut transform, target) in &mut target_query {
-        if let Ok((player, player_transform)) = player_query.get(target.owner) {
+        if let Ok((player_transform, target)) = player_query.get(target.owner) {
             let rotation = player_transform.rotation.inverse();
             transform.rotation = rotation;
             transform.translation =
-                rotation * (player.target.extend(0.0) - player_transform.translation);
+                rotation * (target.0.extend(0.0) - player_transform.translation);
         }
     }
 }
