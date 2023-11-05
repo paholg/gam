@@ -25,12 +25,15 @@ use super::properties::GrenadeProps;
 
 /// Calculate the initial velocity of a projectile thrown at 45 degrees up, so
 /// that it will land at target.
+// FIXME: This assumes the projectile starts and ends at Z=0.
+// This is not a good assumption.
 fn calculate_initial_vel(spawn: Vec2, target: Vec2) -> Velocity {
     let dir_in_plane = target - spawn;
     let dist = dir_in_plane.length();
 
     let phi = PI / 12.0;
 
+    // Recall: We use `ComplexField` for platform-independent determinism.
     let sin2phi = ComplexField::sin(2.0 * phi);
     let tan = ComplexField::tan(phi);
     let v0 = (dist * G / sin2phi).sqrt();

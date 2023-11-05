@@ -323,8 +323,7 @@ pub fn asset_handler_setup(
     };
 
     let asset_handler = AssetHandler {
-        // FIXME
-        music: vec![], // load_music(&asset_server, &mut loading),
+        music: load_music(&asset_server, &mut loading),
         healthbar,
         energybar,
         shot,

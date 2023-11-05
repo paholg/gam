@@ -25,7 +25,6 @@ pub fn check_resume(
 ) {
     for player in query.iter() {
         let Some(input) = inputs.get(player) else {
-            tracing::warn!(?player, "Have player with no inputs");
             continue;
         };
         let buttons = input.buttons();
@@ -72,7 +71,6 @@ pub fn apply_inputs(
     ) in query.iter_mut()
     {
         let Some(input) = inputs.get(player) else {
-            tracing::warn!(?player, "Have player with no inputs");
             continue;
         };
 
