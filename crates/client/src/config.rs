@@ -62,6 +62,7 @@ fn config_file() -> Result<PathBuf, Error> {
 }
 
 /// Persistent Config that should remain set between game sessions.
+// TODO: On config change, reload the relevant entities.
 #[derive(Debug, Serialize, Deserialize, Resource)]
 #[serde(default)]
 pub struct Config {
@@ -206,6 +207,7 @@ impl From<Sensitivity> for fxaa::Sensitivity {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Sound {
+    pub global_volume: f64,
     pub effects_volume: f64,
     pub music_volume: f64,
     pub speech_volume: f64,
@@ -214,6 +216,7 @@ pub struct Sound {
 impl Default for Sound {
     fn default() -> Self {
         Self {
+            global_volume: -20.0,
             effects_volume: -20.0,
             music_volume: -20.0,
             speech_volume: -20.0,

@@ -1,8 +1,12 @@
+#![feature(path_file_prefix)]
+
 use bevy::{
+    asset::LoadedFolder,
     prelude::{
-        Added, Assets, BuildChildren, Bundle, Commands, Component, ComputedVisibility, Entity,
-        EventReader, Handle, Mesh, PbrBundle, Plugin, Query, Res, ResMut, Resource,
-        StandardMaterial, Startup, Transform, Update, Vec3, Visibility, With, Without,
+        Added, Assets, BuildChildren, Bundle, Commands, Component, Entity, EventReader, Handle,
+        InheritedVisibility, Mesh, PbrBundle, Plugin, Query, Res, ResMut, Resource,
+        StandardMaterial, Startup, Transform, Update, Vec3, ViewVisibility, Visibility, With,
+        Without,
     },
     scene::Scene,
 };
@@ -10,7 +14,6 @@ use bevy_hanabi::EffectSpawner;
 use bevy_kira_audio::{
     prelude::Volume, Audio, AudioControl, AudioInstance, AudioPlugin, PlaybackState,
 };
-use bevy_mod_inverse_kinematics::InverseKinematicsPlugin;
 use iyes_progress::ProgressPlugin;
 use rand::Rng;
 
@@ -71,7 +74,7 @@ struct GraphicsPlugin;
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_systems(Startup, asset_handler_setup)
-            .add_plugins((InverseKinematicsPlugin, BarPlugin, ui::UiPlugin))
+            .add_plugins((BarPlugin, ui::UiPlugin))
             .add_systems(
                 Update,
                 (
@@ -97,10 +100,11 @@ struct ObjectGraphics {
     material: Handle<StandardMaterial>,
     mesh: Handle<Mesh>,
     visibility: Visibility,
-    computed_visibility: ComputedVisibility,
+    inherited_visibility: InheritedVisibility,
+    view_visibility: ViewVisibility,
 }
 
-#[derive(Bundle)]
+#[derive(Bundle, Default)]
 struct CharacterGraphics {
     healthbar: Healthbar,
     energybar: Energybar,
@@ -108,7 +112,8 @@ struct CharacterGraphics {
     outline: Handle<Mesh>,
     material: Handle<StandardMaterial>,
     visibility: Visibility,
-    computed_visibility: ComputedVisibility,
+    inherited_visibility: InheritedVisibility,
+    view_visibility: ViewVisibility,
 }
 
 fn draw_shot_system(
@@ -123,8 +128,7 @@ fn draw_shot_system(
         ecmds.insert(ObjectGraphics {
             material: assets.shot.material.clone(),
             mesh: assets.shot.mesh.clone(),
-            visibility: Visibility::Visible,
-            computed_visibility: ComputedVisibility::default(),
+            ..Default::default()
         });
     }
 }
@@ -151,8 +155,7 @@ fn draw_grenade_system(
         ecmds.insert(ObjectGraphics {
             material,
             mesh,
-            visibility: Visibility::Visible,
-            computed_visibility: ComputedVisibility::default(),
+            ..Default::default()
         });
     }
 }
@@ -163,7 +166,7 @@ fn draw_grenade_outline_system(
     query: Query<&Grenade>,
     mut event_reader: EventReader<GrenadeLandEvent>,
 ) {
-    for event in event_reader.iter() {
+    for event in event_reader.read() {
         let entity = event.entity;
         let Ok(grenade) = query.get(entity) else {
             tracing::warn!(?entity, "Can't find grenade to outline.");
@@ -200,13 +203,10 @@ fn draw_player_system(
             continue;
         };
         ecmds.insert(CharacterGraphics {
-            healthbar: Healthbar::default(),
-            energybar: Energybar::default(),
             scene: assets.player.scene.clone(),
             outline: assets.player.outline_mesh.clone(),
             material: assets.player.outline_material.clone(),
-            visibility: Visibility::Visible,
-            computed_visibility: ComputedVisibility::default(),
+            ..Default::default()
         });
     }
 }
@@ -221,13 +221,10 @@ fn draw_enemy_system(
             continue;
         };
         ecmds.insert(CharacterGraphics {
-            healthbar: Healthbar::default(),
-            energybar: Energybar::default(),
             scene: assets.enemy.scene.clone(),
             outline: assets.enemy.outline_mesh.clone(),
             material: assets.enemy.outline_material.clone(),
-            visibility: Visibility::Visible,
-            computed_visibility: ComputedVisibility::default(),
+            ..Default::default()
         });
     }
 }
@@ -242,13 +239,10 @@ fn draw_ally_system(
             continue;
         };
         ecmds.insert(CharacterGraphics {
-            healthbar: Healthbar::default(),
-            energybar: Energybar::default(),
             scene: assets.ally.scene.clone(),
             outline: assets.ally.outline_mesh.clone(),
             material: assets.ally.outline_material.clone(),
-            visibility: Visibility::Visible,
-            computed_visibility: ComputedVisibility::default(),
+            ..Default::default()
         });
     }
 }
@@ -260,7 +254,7 @@ fn draw_shot_hit_system(
     mut effects: Query<(&mut Transform, &mut EffectSpawner), With<ShotEffect>>,
     mut event_reader: EventReader<ShotHitEvent>,
 ) {
-    for hit in event_reader.iter() {
+    for hit in event_reader.read() {
         let Ok((mut transform, mut effect_spawner)) = effects.get_mut(assets.shot.effect_entity)
         else {
             tracing::warn!(?hit, "Could not get shot effect");
@@ -281,7 +275,7 @@ fn draw_death_system(
     mut effects: Query<(&mut Transform, &mut EffectSpawner), With<DeathEffect>>,
     mut event_reader: EventReader<DeathEvent>,
 ) {
-    for death in event_reader.iter() {
+    for death in event_reader.read() {
         let Ok((mut transform, mut effect_spawner)) = effects.get_mut(assets.player.despawn_effect)
         else {
             tracing::warn!(?death, "Could not get death effect");
@@ -350,15 +344,16 @@ struct BackgroundMusic {
 }
 
 fn background_music_system(
-    asset_handler: Res<AssetHandler>,
+    assets: Res<AssetHandler>,
     audio: Res<Audio>,
     config: Res<Config>,
     mut bg_music: ResMut<BackgroundMusic>,
-    assets: Res<Assets<AudioInstance>>,
+    audio_assets: Res<Assets<AudioInstance>>,
+    loaded_folders: Res<Assets<LoadedFolder>>,
 ) {
     let should_play = match &bg_music.handle {
         None => true,
-        Some(handle) => match assets.get(handle) {
+        Some(handle) => match audio_assets.get(handle) {
             Some(asset) => {
                 if asset.state() == PlaybackState::Stopped {
                     true
@@ -370,17 +365,28 @@ fn background_music_system(
         },
     };
 
-    if should_play && !asset_handler.music.is_empty() {
-        let mut rng = rand::thread_rng();
-        let idx = rng.gen_range(0..asset_handler.music.len());
-        let (name, song) = asset_handler.music[idx].clone();
-        let handle = audio
-            .play(song)
-            .with_volume(Volume::Decibels(config.sound.music_volume))
-            .handle();
+    if should_play {
+        if let Some(folder) = loaded_folders.get(&assets.music) {
+            let mut rng = rand::thread_rng();
+            let idx = rng.gen_range(0..folder.handles.len());
+            let track = folder.handles[idx].clone().typed();
+            let name = track
+                .path()
+                .unwrap()
+                .path()
+                .file_prefix()
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
 
-        bg_music.name = Some(name);
-        bg_music.handle = Some(handle);
+            let handle = audio
+                .play(track)
+                .with_volume(Volume::Decibels(config.sound.music_volume))
+                .handle();
+
+            bg_music.name = Some(name);
+            bg_music.handle = Some(handle);
+        }
     }
 }
 

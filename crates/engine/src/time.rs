@@ -8,10 +8,8 @@ use bevy_reflect::Reflect;
 use tracing::info;
 
 /// The timestep at which we run our game.
-pub const TIMESTEP: f32 = PHYSICS_TIMESTEP;
-pub const PHYSICS_INVERSE_TIMESTEP: usize = 60;
-/// The timestep the physics engine sees.
-pub const PHYSICS_TIMESTEP: f32 = 1.0 / (PHYSICS_INVERSE_TIMESTEP as f32);
+pub const FREQUENCY: f32 = 60.0;
+pub const TIMESTEP: f32 = 1.0 / FREQUENCY;
 
 /// Represents a duration in ticks rather than time.
 #[derive(Default, Debug, Copy, Clone, Reflect)]
@@ -22,7 +20,7 @@ impl Tick {
     pub const fn new(duration: Duration) -> Self {
         // This function is a bit funky as we're limited by what we can do in a
         // const function. E.g. No access to `round` or `max`.
-        let ticks = (duration.as_secs_f32() * PHYSICS_INVERSE_TIMESTEP as f32 + 0.5) as u32;
+        let ticks = (duration.as_secs_f32() * FREQUENCY + 0.5) as u32;
 
         let val = if ticks == 0 { 1 } else { ticks };
 

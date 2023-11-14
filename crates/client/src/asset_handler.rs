@@ -1,4 +1,5 @@
 use bevy::{
+    asset::LoadedFolder,
     prelude::{
         default,
         shape::{self, Circle, Icosphere},
@@ -77,7 +78,7 @@ pub struct AssetHandler {
     pub player: CharacterAssets,
     pub ally: CharacterAssets,
     pub enemy: CharacterAssets,
-    pub music: Vec<(String, Handle<AudioSource>)>,
+    pub music: Handle<LoadedFolder>,
     pub target: Target,
 }
 
@@ -338,25 +339,8 @@ pub fn asset_handler_setup(
     commands.insert_resource(asset_handler);
 }
 
-fn load_music(
-    asset_server: &AssetServer,
-    loading: &mut AssetsLoading,
-) -> Vec<(String, Handle<AudioSource>)> {
-    // Load all assets in parallel first
-    asset_server
-        .load_folder("audio/Galacti-Chrons Weird Music Pack")
-        .unwrap();
-    let mut res = Vec::new();
-    for entry in glob::glob("assets/audio/Galacti-Chrons Weird Music Pack/*.ogg").unwrap() {
-        if let Ok(path) = entry {
-            let fname = path.file_name().unwrap().to_string_lossy().into_owned();
-            let rel_path = format!("audio/Galacti-Chrons Weird Music Pack/{}", fname);
-            let handle = asset_server.get_handle(rel_path);
-            loading.add(&handle);
-            res.push((fname, handle));
-        }
-    }
-    res
+fn load_music(asset_server: &AssetServer, loading: &mut AssetsLoading) -> Handle<LoadedFolder> {
+    asset_server.load_folder("audio/Galacti-Chrons Weird Music Pack")
 }
 
 fn shot_effect(props: &GunProps) -> EffectAsset {

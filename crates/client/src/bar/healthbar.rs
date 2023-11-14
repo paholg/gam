@@ -1,7 +1,7 @@
 use bevy::prelude::{
-    default, Added, BuildChildren, Bundle, Children, Commands, Component, ComputedVisibility,
-    Entity, GlobalTransform, Parent, PbrBundle, Query, Res, Transform, Vec2, Vec3, Visibility,
-    With, Without,
+    default, Added, BuildChildren, Bundle, Children, Commands, Component, Entity, GlobalTransform,
+    InheritedVisibility, Parent, PbrBundle, Query, Res, Transform, Vec2, Vec3, ViewVisibility,
+    Visibility, With, Without,
 };
 use engine::Health;
 use tracing::warn;
@@ -25,15 +25,16 @@ impl Default for Healthbar {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct HealthbarMarker;
 
-#[derive(Bundle)]
+#[derive(Bundle, Default)]
 struct HealthbarBundle {
     transform: Transform,
     global_transform: GlobalTransform,
     visibility: Visibility,
-    computed_visibility: ComputedVisibility,
+    inherited_visibility: InheritedVisibility,
+    view_visibility: ViewVisibility,
     marker: HealthbarMarker,
 }
 
@@ -64,15 +65,7 @@ pub fn add_healthbar_system(
                 ..default()
             })
             .id();
-        let bundle = commands
-            .spawn(HealthbarBundle {
-                marker: HealthbarMarker,
-                transform: Transform::default(),
-                global_transform: GlobalTransform::default(),
-                visibility: Visibility::Visible,
-                computed_visibility: ComputedVisibility::default(),
-            })
-            .id();
+        let bundle = commands.spawn(HealthbarBundle::default()).id();
         commands.entity(bundle).push_children(&[bar, background]);
         commands.entity(parent).push_children(&[bundle]);
     }
