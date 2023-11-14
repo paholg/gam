@@ -21,7 +21,7 @@ bevy_utils.workspace = true
 
 # Other crates
 bevy_rapier3d.workspace = true
-bitmask-enum = "2.2.2"
+bitmask-enum = "2.2.3"
 bytemuck = { version = "1.14.0", features = ["derive"] }
 # bincode = { version = "2.0.0-rc.2", features = ["serde"] }
 nalgebra = "0.32.3"

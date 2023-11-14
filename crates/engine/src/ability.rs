@@ -335,7 +335,7 @@ pub fn shot_hit_system(
     mut hit_event_writer: EventWriter<ShotHitEvent>,
 ) {
     let mut shots_to_despawn: SmallVec<[(Entity, Transform); 10]> = smallvec::SmallVec::new();
-    for collision_event in collision_events.iter() {
+    for collision_event in collision_events.read() {
         let CollisionEvent::Started(e1, e2, _flags) = collision_event else {
             continue;
         };

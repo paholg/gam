@@ -33,15 +33,15 @@ bevy = { workspace = true, default-features = false, features = [
   "default_font",
   "webgl2",
 ] }
-bevy_egui = "0.22"
-bevy_hanabi = { version = "0.7.0", default-features = false, features = ["3d"] }
-bevy_kira_audio = "0.17.0"
-bevy_mod_inverse_kinematics = "0.4.0"
+bevy_egui = "0.23"
+bevy_hanabi = { version = "0.8.0", default-features = false, features = ["3d"] }
+bevy_kira_audio = "0.18.0"
+bevy_mod_inverse_kinematics = "0.5.0"
 bevy_rapier3d.workspace = true
 directories = "5"
 glob = "0.3.1"
-iyes_progress = { version = "0.9.1", features = ["assets"] }
-leafwing-input-manager = "0.10.0"
+iyes_progress = { version = "0.10.0", features = ["assets"] }
+leafwing-input-manager = "0.11.1"
 rand = "0.8"
 serde = "1"
 serde_json = "1"

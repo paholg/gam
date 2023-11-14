@@ -6,7 +6,7 @@ use bevy_rapier3d::prelude::{
     NoUserData, PhysicsSet, RapierConfiguration, RapierPhysicsPlugin, TimestepMode,
 };
 
-use crate::time::PHYSICS_TIMESTEP;
+use crate::time::TIMESTEP;
 
 pub type RapierPlugin = RapierPhysicsPlugin<NoUserData>;
 
@@ -22,7 +22,7 @@ impl PhysicsPlugin {
         let config = RapierConfiguration {
             gravity: Vec3::Z * (-G),
             timestep_mode: TimestepMode::Fixed {
-                dt: PHYSICS_TIMESTEP,
+                dt: TIMESTEP,
                 substeps: 1,
             },
             ..Default::default()

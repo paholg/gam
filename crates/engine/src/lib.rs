@@ -16,7 +16,7 @@ pub mod player;
 pub mod status_effect;
 pub mod time;
 
-use std::{fmt, time::Duration};
+use std::fmt;
 
 use ability::{
     grenade::GrenadeLandEvent, properties::AbilityProps, Abilities, Ability, ShotHitEvent,
@@ -35,14 +35,14 @@ use bevy_rapier3d::prelude::{
     RigidBody, Velocity,
 };
 use bevy_reflect::Reflect;
-use bevy_time::fixed_timestep::FixedTime;
+use bevy_time::{Fixed, Time};
 use bevy_transform::components::{GlobalTransform, Transform};
 use bevy_utils::HashMap;
 use input::check_resume;
 use multiplayer::PlayerInputs;
 use physics::PhysicsPlugin;
 use status_effect::StatusEffects;
-use time::{Tick, TickCounter, TIMESTEP};
+use time::{Tick, TickCounter, FREQUENCY};
 
 #[derive(States, PartialEq, Eq, Debug, Copy, Clone, Hash, Default)]
 pub enum AppState {
@@ -235,7 +235,7 @@ impl Plugin for GamPlugin {
         app.add_state::<AppState>();
 
         // Resources
-        app.insert_resource(FixedTime::new(Duration::from_secs_f32(TIMESTEP)))
+        app.insert_resource(Time::<Fixed>::from_hz(FREQUENCY as f64))
             .insert_resource(TickCounter::new())
             .insert_resource(AbilityProps::default())
             .insert_resource(NumAi {

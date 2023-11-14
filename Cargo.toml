@@ -7,18 +7,19 @@ members = [
 resolver = "2"
 
 [workspace.dependencies]
-bevy = { version = "0.11", default-features = false }
-bevy_app = "0.11"
-bevy_core = "0.11"
-bevy_diagnostic = "0.11"
-bevy_ecs = "0.11"
-bevy_hierarchy = "0.11"
-bevy_log = "0.11"
-bevy_math = "0.11"
-bevy_reflect = "0.11"
-bevy_time = "0.11"
-bevy_transform = "0.11"
-bevy_utils = "0.11"
+bevy = { version = "0.12", default-features = false }
+bevy_app = "0.12"
+bevy_core = "0.12"
+bevy_diagnostic = "0.12"
+bevy_ecs = "0.12"
+bevy_hierarchy = "0.12"
+bevy_internal = "0.12"
+bevy_log = "0.12"
+bevy_math = "0.12"
+bevy_reflect = "0.12"
+bevy_time = "0.12"
+bevy_transform = "0.12"
+bevy_utils = "0.12"
 
 # Note on enhanced-determinism:
 # If some of the values used to initialized Rapier structures are computed using
@@ -27,10 +28,8 @@ bevy_utils = "0.11"
 # being used originate from the ComplexField or RealField traits from nalgebra.
 # For example, do ComplexField::sin(0.4) (where ComplexField is imported by use
 # nalgebra::ComplexField) instead of 0.4.sin()
-# TODO: Change this once a version past 0.22 is out.
-# bevy_rapier3d = { version = "0.22", features = ["enhanced-determinism"] }
-bevy_rapier3d = { git = "https://github.com/dimforge/bevy_rapier", features = ["enhanced-determinism"] }
-tracing = "0.1.39"
+bevy_rapier3d = { version = "0.23", features = ["enhanced-determinism"] }
+tracing = "0.1.40"
 
 # Enable a small amount of optimization in debug mode
 [profile.dev]

@@ -10,5 +10,6 @@ engine.path = "../engine"
 # Bevy crates
 bevy_app.workspace = true
 bevy_ecs.workspace = true
+bevy_internal.workspace = true
 
 # Other crates
