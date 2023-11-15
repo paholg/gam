@@ -27,9 +27,7 @@ impl PlayerInputs {
     }
 
     pub fn insert(&mut self, player: Player, input: Input) {
-        if input.is_ok() {
-            self.map.insert(player, input);
-        }
+        self.map.insert(player, input);
     }
 }
 
@@ -138,10 +136,6 @@ impl Input {
         }
     }
 
-    pub fn is_ok(&self) -> bool {
-        self.cursor_x.is_normal() && self.cursor_y.is_normal()
-    }
-
     pub fn buttons(&self) -> Action {
         Action::from(self.buttons)
     }
@@ -150,8 +144,12 @@ impl Input {
         Vec2::new(self.move_x.into(), self.move_y.into())
     }
 
-    pub fn cursor(&self) -> Vec2 {
-        Vec2::new(self.cursor_x, self.cursor_y)
+    pub fn cursor(&self) -> Option<Vec2> {
+        if self.cursor_x.is_finite() && self.cursor_y.is_finite() {
+            Some(Vec2::new(self.cursor_x, self.cursor_y))
+        } else {
+            None
+        }
     }
 }
 

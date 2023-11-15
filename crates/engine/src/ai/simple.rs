@@ -82,7 +82,7 @@ fn point_to_closest<T: ReadOnlyWorldQuery, U: ReadOnlyWorldQuery>(
             let lead = (vel.linvel - velocity.linvel) * dt * 0.5; // Just partially lead for now
             let lead_translation = trans.translation + lead;
             let angle = pointing_angle(transform.translation, lead_translation);
-            if !angle.is_nan() {
+            if let Some(angle) = angle {
                 transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
             }
         }

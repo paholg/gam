@@ -367,7 +367,11 @@ pub fn energy_regen(mut query: Query<&mut Energy>) {
 }
 
 // Returns an angle of rotation, along the z-axis, so that `from` will be pointing to `to`
-pub fn pointing_angle(from: Vec3, to: Vec3) -> f32 {
-    let dir = to - from;
-    -dir.truncate().angle_between(Vec2::Y)
+pub fn pointing_angle(from: Vec3, to: Vec3) -> Option<f32> {
+    let dir = (to - from).truncate();
+    if dir.x == 0.0 && dir.y == 0.0 {
+        None
+    } else {
+        Some(-dir.angle_between(Vec2::Y))
+    }
 }
