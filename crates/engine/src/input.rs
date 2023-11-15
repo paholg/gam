@@ -75,10 +75,12 @@ pub fn apply_inputs(
         };
 
         // Targeting
-        let cursor = input.cursor();
-        target.0 = cursor;
-        let angle = pointing_angle(transform.translation, cursor.extend(0.0));
-        transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
+        if let Some(cursor) = input.cursor() {
+            target.0 = cursor;
+            if let Some(angle) = pointing_angle(transform.translation, cursor.extend(0.0)) {
+                transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
+            }
+        }
 
         // Abilities
         let buttons = input.buttons();

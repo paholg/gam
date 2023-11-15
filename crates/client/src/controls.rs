@@ -124,7 +124,11 @@ fn update_cursor(
 
     *camera_mode = CameraFollowMode::Mouse;
 
-    let (mut camera_transform, camera, camera_global_transform) = camera_query.single_mut();
+    let Ok((mut camera_transform, camera, camera_global_transform)) = camera_query.get_single_mut()
+    else {
+        return;
+    };
+
     let Ok((player_transform, mut target)) = player_query.get_single_mut() else {
         return;
     };

@@ -324,7 +324,7 @@ pub fn asset_handler_setup(
     };
 
     let asset_handler = AssetHandler {
-        music: load_music(&asset_server, &mut loading),
+        music: load_music(&asset_server),
         healthbar,
         energybar,
         shot,
@@ -339,7 +339,7 @@ pub fn asset_handler_setup(
     commands.insert_resource(asset_handler);
 }
 
-fn load_music(asset_server: &AssetServer, loading: &mut AssetsLoading) -> Handle<LoadedFolder> {
+fn load_music(asset_server: &AssetServer) -> Handle<LoadedFolder> {
     asset_server.load_folder("audio/Galacti-Chrons Weird Music Pack")
 }
 
