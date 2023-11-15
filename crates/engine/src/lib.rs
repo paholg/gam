@@ -10,6 +10,7 @@ pub mod ability;
 pub mod ai;
 pub mod input;
 pub mod lifecycle;
+pub mod math;
 pub mod multiplayer;
 pub mod physics;
 pub mod player;

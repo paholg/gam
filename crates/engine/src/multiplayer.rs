@@ -139,7 +139,7 @@ impl Input {
     }
 
     pub fn is_ok(&self) -> bool {
-        self.cursor_x.is_normal() && self.cursor_y.is_normal()
+        self.cursor_x.is_finite() && self.cursor_y.is_finite()
     }
 
     pub fn buttons(&self) -> Action {

@@ -1,5 +1,3 @@
-use std::f32::consts::PI;
-
 use bevy_ecs::{
     component::Component,
     entity::Entity,
@@ -7,15 +5,14 @@ use bevy_ecs::{
     system::{Commands, Query, Res},
 };
 use bevy_hierarchy::DespawnRecursiveExt;
-use bevy_math::{Vec2, Vec3};
 use bevy_rapier3d::prelude::{
     Ccd, Collider, ColliderMassProperties, LockedAxes, RapierContext, ReadMassProperties, Sensor,
     Velocity,
 };
 use bevy_transform::components::{GlobalTransform, Transform};
-use nalgebra::ComplexField;
 
 use crate::{
+    math::{F32, PI, V2, V3},
     physics::G,
     time::{Tick, TickCounter},
     Health, Object, Target, DAMPING, PLAYER_R,
@@ -27,15 +24,15 @@ use super::properties::GrenadeProps;
 /// that it will land at target.
 // FIXME: This assumes the projectile starts and ends at Z=0.
 // This is not a good assumption.
-fn calculate_initial_vel(spawn: Vec2, target: Vec2) -> Velocity {
+fn calculate_initial_vel(spawn: V2, target: V2) -> Velocity {
     let dir_in_plane = target - spawn;
     let dist = dir_in_plane.length();
 
     let phi = PI / 12.0;
 
     // Recall: We use `ComplexField` for platform-independent determinism.
-    let sin2phi = ComplexField::sin(2.0 * phi);
-    let tan = ComplexField::tan(phi);
+    let sin2phi = (F32::new(2.0) * phi).sin();
+    let tan = phi.tan();
     let v0 = (dist * G / sin2phi).sqrt();
 
     let z = dist * tan;
@@ -44,7 +41,7 @@ fn calculate_initial_vel(spawn: Vec2, target: Vec2) -> Velocity {
 
     Velocity {
         linvel,
-        angvel: Vec3::ZERO,
+        angvel: V3::ZERO,
     }
 }
 
@@ -74,7 +71,7 @@ pub fn grenade(
     shooter: Entity,
     target: &Target,
 ) {
-    let dir = transform.rotation * Vec3::Y;
+    let dir = transform.rotation * V3::Y;
     let position = transform.translation + dir * (PLAYER_R + props.radius + 0.01);
     let vel = calculate_initial_vel(position.truncate(), target.0);
 
