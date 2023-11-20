@@ -1,10 +1,10 @@
-use std::{f32::consts::PI, time::Duration};
+use std::f32::consts::PI;
 
 use bevy_ecs::system::Resource;
 
 use crate::time::Tick;
 
-use super::{grenade::GrenadeKind, Ability};
+use super::{explosion::ExplosionKind, Ability};
 
 #[derive(Debug, Resource)]
 pub struct AbilityProps {
@@ -13,6 +13,7 @@ pub struct AbilityProps {
     pub shotgun: ShotgunProps,
     pub frag_grenade: GrenadeProps,
     pub heal_grenade: GrenadeProps,
+    pub seeker_rocket: SeekerRocketProps,
 }
 
 impl Default for AbilityProps {
@@ -25,7 +26,7 @@ impl Default for AbilityProps {
                 damage: 8.0,
                 explosion_radius: 7.0,
                 radius: 0.30,
-                kind: GrenadeKind::Frag,
+                kind: ExplosionKind::Damage,
             },
             heal_grenade: GrenadeProps {
                 cost: 50.0,
@@ -34,11 +35,12 @@ impl Default for AbilityProps {
                 damage: -20.0,
                 explosion_radius: 4.0,
                 radius: 0.20,
-                kind: GrenadeKind::Heal,
+                kind: ExplosionKind::Heal,
             },
             hyper_sprint: Default::default(),
             gun: Default::default(),
             shotgun: Default::default(),
+            seeker_rocket: Default::default(),
         }
     }
 }
@@ -52,6 +54,7 @@ impl AbilityProps {
             Ability::Shotgun => self.shotgun.cooldown,
             Ability::FragGrenade => self.frag_grenade.cooldown,
             Ability::HealGrenade => self.heal_grenade.cooldown,
+            Ability::SeekerRocket => self.seeker_rocket.cooldown,
         }
     }
 
@@ -63,6 +66,7 @@ impl AbilityProps {
             Ability::Shotgun => self.shotgun.cost,
             Ability::FragGrenade => self.frag_grenade.cost,
             Ability::HealGrenade => self.heal_grenade.cost,
+            Ability::SeekerRocket => self.seeker_rocket.cost,
         }
     }
 }
@@ -100,8 +104,8 @@ impl Default for GunProps {
     fn default() -> Self {
         Self {
             cost: 5.0,
-            cooldown: Tick::new(Duration::from_millis(150)),
-            duration: Tick::new(Duration::from_secs(10)),
+            cooldown: Tick(10),
+            duration: Tick(600),
             speed: 50.0,
             radius: 0.15,
             damage: 1.0,
@@ -128,8 +132,8 @@ impl Default for ShotgunProps {
     fn default() -> Self {
         Self {
             cost: 25.0,
-            cooldown: Tick::new(Duration::from_millis(150)),
-            duration: Tick::new(Duration::from_secs(10)),
+            cooldown: Tick(10),
+            duration: Tick(600),
             speed: 30.0,
             radius: 0.15,
             damage: 1.0,
@@ -148,5 +152,38 @@ pub struct GrenadeProps {
     pub damage: f32,
     pub explosion_radius: f32,
     pub radius: f32,
-    pub kind: GrenadeKind,
+    pub kind: ExplosionKind,
+}
+
+#[derive(Debug)]
+pub struct SeekerRocketProps {
+    pub cost: f32,
+    pub cooldown: Tick,
+    pub duration: Tick,
+    pub damage: f32,
+    pub explosion_radius: f32,
+    pub max_impulse: f32,
+    // Max turn per tick, in radians.
+    pub turning_radius: f32,
+    // Note: Shape is a capsule.
+    pub radius: f32,
+    pub length: f32,
+    pub health: f32,
+}
+
+impl Default for SeekerRocketProps {
+    fn default() -> Self {
+        Self {
+            cost: 20.0,
+            cooldown: Tick(30),
+            duration: Tick(300),
+            damage: 8.0,
+            explosion_radius: 5.0,
+            max_impulse: 0.5,
+            turning_radius: PI * 0.007,
+            radius: 0.3,
+            length: 0.6,
+            health: 3.0,
+        }
+    }
 }

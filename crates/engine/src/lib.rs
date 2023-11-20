@@ -19,7 +19,8 @@ pub mod time;
 use std::fmt;
 
 use ability::{
-    grenade::GrenadeLandEvent, properties::AbilityProps, Abilities, Ability, ShotHitEvent,
+    grenade::GrenadeLandEvent, properties::AbilityProps, seeker_rocket, Abilities, Ability,
+    ShotHitEvent,
 };
 use bevy_app::{App, FixedUpdate, Plugin, PostUpdate, Startup};
 use bevy_ecs::{
@@ -290,13 +291,14 @@ impl Plugin for GamPlugin {
                     lifecycle::reset,
                     ability::grenade::grenade_land_system,
                     ability::shot_kickback_system,
+                    seeker_rocket::seeker_rocket_tracking,
                 )
                     .chain()
                     .in_set(GameSet::Stuff),
                 (
                     // Systems that despawn at the end.
                     ability::shot_hit_system,
-                    ability::grenade::explosion_despawn_system,
+                    ability::explosion::explosion_despawn_system,
                     ability::grenade::grenade_explode_system,
                     ability::shot_despawn_system,
                     lifecycle::die,
@@ -367,11 +369,57 @@ pub fn energy_regen(mut query: Query<&mut Energy>) {
 }
 
 // Returns an angle of rotation, along the z-axis, so that `from` will be pointing to `to`
+// TODO: Replace this with `Transform::look_at`.
 pub fn pointing_angle(from: Vec3, to: Vec3) -> Option<f32> {
     let dir = (to - from).truncate();
     if dir.x == 0.0 && dir.y == 0.0 {
         None
     } else {
         Some(-dir.angle_between(Vec2::Y))
+    }
+}
+
+pub struct PrettyPrinter(String);
+
+impl fmt::Display for PrettyPrinter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl fmt::Debug for PrettyPrinter {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl From<String> for PrettyPrinter {
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+
+/// A simple trait for nicely printing types for debugging.
+///
+/// Mostly used for logging float types with limited precision.
+pub trait PrettyPrint {
+    fn pp(&self) -> PrettyPrinter;
+}
+
+impl PrettyPrint for Vec3 {
+    fn pp(&self) -> PrettyPrinter {
+        format!("[{:0.2}, {:0.2}, {:0.2}]", self.x, self.y, self.z).into()
+    }
+}
+
+impl PrettyPrint for Vec2 {
+    fn pp(&self) -> PrettyPrinter {
+        format!("[{:0.2}, {:0.2}]", self.x, self.y).into()
+    }
+}
+
+impl PrettyPrint for f32 {
+    fn pp(&self) -> PrettyPrinter {
+        format!("{self:0.2}").into()
     }
 }
