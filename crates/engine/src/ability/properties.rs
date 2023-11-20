@@ -4,7 +4,7 @@ use bevy_ecs::system::Resource;
 
 use crate::time::Tick;
 
-use super::{explosion::ExplosionKind, Ability};
+use super::{grenade::GrenadeKind, Ability};
 
 #[derive(Debug, Resource)]
 pub struct AbilityProps {
@@ -26,7 +26,7 @@ impl Default for AbilityProps {
                 damage: 8.0,
                 explosion_radius: 7.0,
                 radius: 0.30,
-                kind: ExplosionKind::Damage,
+                kind: GrenadeKind::Frag,
             },
             heal_grenade: GrenadeProps {
                 cost: 50.0,
@@ -35,7 +35,7 @@ impl Default for AbilityProps {
                 damage: -20.0,
                 explosion_radius: 4.0,
                 radius: 0.20,
-                kind: ExplosionKind::Heal,
+                kind: GrenadeKind::Heal,
             },
             hyper_sprint: Default::default(),
             gun: Default::default(),
@@ -152,7 +152,7 @@ pub struct GrenadeProps {
     pub damage: f32,
     pub explosion_radius: f32,
     pub radius: f32,
-    pub kind: ExplosionKind,
+    pub kind: GrenadeKind,
 }
 
 #[derive(Debug)]
@@ -178,7 +178,7 @@ impl Default for SeekerRocketProps {
             cooldown: Tick(30),
             duration: Tick(300),
             damage: 8.0,
-            explosion_radius: 5.0,
+            explosion_radius: 3.0,
             max_impulse: 0.5,
             turning_radius: PI * 0.007,
             radius: 0.3,
