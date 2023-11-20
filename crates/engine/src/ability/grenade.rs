@@ -9,8 +9,7 @@ use bevy_ecs::{
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::{Vec2, Vec3};
 use bevy_rapier3d::prelude::{
-    Ccd, Collider, ColliderMassProperties, LockedAxes, RapierContext, ReadMassProperties, Sensor,
-    Velocity,
+    Collider, ColliderMassProperties, LockedAxes, ReadMassProperties, Sensor, Velocity,
 };
 use bevy_transform::components::{GlobalTransform, Transform};
 use nalgebra::ComplexField;
@@ -18,10 +17,13 @@ use nalgebra::ComplexField;
 use crate::{
     physics::G,
     time::{Tick, TickCounter},
-    Health, Object, Target, DAMPING, PLAYER_R,
+    Object, Target, DAMPING, PLAYER_R,
 };
 
-use super::properties::GrenadeProps;
+use super::{
+    explosion::{Explosion, ExplosionKind},
+    properties::GrenadeProps,
+};
 
 /// Calculate the initial velocity of a projectile thrown at 45 degrees up, so
 /// that it will land at target.
@@ -48,12 +50,6 @@ fn calculate_initial_vel(spawn: Vec2, target: Vec2) -> Velocity {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
-pub enum GrenadeKind {
-    Frag,
-    Heal,
-}
-
 #[derive(Component)]
 pub struct Grenade {
     // TODO: Use this field
@@ -63,7 +59,7 @@ pub struct Grenade {
     damage: f32,
     radius: f32,
     explosion_radius: f32,
-    pub kind: GrenadeKind,
+    pub kind: ExplosionKind,
 }
 
 pub fn grenade(
@@ -97,7 +93,6 @@ pub fn grenade(
             explosion_radius: props.explosion_radius,
             kind: props.kind,
         },
-        Ccd::enabled(),
     ));
 }
 
@@ -126,33 +121,6 @@ pub fn grenade_land_system(
             commands.entity(entity).insert(DAMPING);
             event_writer.send(GrenadeLandEvent { entity });
         }
-    }
-}
-
-#[derive(Debug, Component)]
-pub struct Explosion {
-    pub damage: f32,
-    pub kind: GrenadeKind,
-}
-
-// Explosions only last one frame.
-pub fn explosion_despawn_system(
-    mut commands: Commands,
-    query: Query<(Entity, &Explosion)>,
-    mut health_query: Query<&mut Health>,
-    rapier: Res<RapierContext>,
-) {
-    for (entity, explosion) in &query {
-        let targets = rapier
-            .intersections_with(entity)
-            .filter_map(|(e1, e2, intersecting)| if intersecting { Some((e1, e2)) } else { None })
-            .map(|(e1, e2)| if e1 == entity { e2 } else { e1 });
-        for target in targets {
-            if let Ok(mut health) = health_query.get_mut(target) {
-                health.take(explosion.damage);
-            }
-        }
-        commands.entity(entity).despawn_recursive();
     }
 }
 

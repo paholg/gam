@@ -2,7 +2,7 @@ use bevy::{
     asset::LoadedFolder,
     prelude::{
         default,
-        shape::{self, Circle, Icosphere},
+        shape::{self, Capsule, Circle, Icosphere},
         AssetServer, Assets, Color, Commands, Component, Entity, Handle, Mesh, Res, ResMut,
         Resource, StandardMaterial, Vec2, Vec3, Vec4,
     },
@@ -18,7 +18,7 @@ use bevy_kira_audio::AudioSource;
 use iyes_progress::prelude::AssetsLoading;
 
 use engine::{
-    ability::properties::{AbilityProps, GrenadeProps, GunProps},
+    ability::properties::{AbilityProps, GrenadeProps, GunProps, SeekerRocketProps},
     PLAYER_R,
 };
 
@@ -42,6 +42,14 @@ pub struct ShotAssets {
 }
 
 pub struct GrenadeAssets {
+    pub mesh: Handle<Mesh>,
+    pub material: Handle<StandardMaterial>,
+    pub effect_entity: Entity,
+    pub outline_mesh: Handle<Mesh>,
+    pub outline_material: Handle<StandardMaterial>,
+}
+
+pub struct SeekerRocketAssets {
     pub mesh: Handle<Mesh>,
     pub material: Handle<StandardMaterial>,
     pub effect_entity: Entity,
@@ -74,6 +82,7 @@ pub struct AssetHandler {
     pub shot: ShotAssets,
     pub frag_grenade: GrenadeAssets,
     pub heal_grenade: GrenadeAssets,
+    pub seeker_rocket: SeekerRocketAssets,
     pub hyper_sprint: HyperSprintAssets,
     pub player: CharacterAssets,
     pub ally: CharacterAssets,
@@ -238,6 +247,38 @@ pub fn asset_handler_setup(
         effect_entity: heal_effect_entity,
     };
 
+    let seeker_rocket_material = StandardMaterial {
+        emissive: Color::rgb_linear(0.1, 0.1, 10.0),
+        ..Default::default()
+    };
+    let seeker_rocket_effect = effects.add(seeker_rocket_effect(&props.seeker_rocket));
+    let seeker_rocket_effect_entity = commands
+        .spawn(ParticleEffectBundle::new(seeker_rocket_effect))
+        .insert(FragGrenadeEffect)
+        .id();
+
+    let seeker_rocket = SeekerRocketAssets {
+        mesh: meshes.add(
+            Mesh::try_from(Capsule {
+                radius: props.seeker_rocket.radius,
+                depth: props.seeker_rocket.length,
+                ..Default::default()
+            })
+            .unwrap(),
+        ),
+        outline_mesh: meshes.add(
+            HollowPolygon {
+                radius: props.seeker_rocket.explosion_radius,
+                thickness: 0.25,
+                vertices: 60,
+            }
+            .into(),
+        ),
+        material: materials.add(seeker_rocket_material.clone()),
+        outline_material: materials.add(seeker_rocket_material),
+        effect_entity: seeker_rocket_effect_entity,
+    };
+
     let effect = effects.add(hyper_sprint_effect());
     let effect_entity = commands
         .spawn(ParticleEffectBundle::new(effect))
@@ -330,6 +371,7 @@ pub fn asset_handler_setup(
         shot,
         frag_grenade,
         heal_grenade,
+        seeker_rocket,
         hyper_sprint,
         player,
         ally,
@@ -554,6 +596,63 @@ fn heal_grenade_effect(props: &GrenadeProps) -> EffectAsset {
 
     EffectAsset::new(32768, spawner, writer.finish())
         .with_name("heal_grenade_effect")
+        .init(pos)
+        .init(vel)
+        .init(lifetime)
+        .init(age)
+        .update(drag)
+        .render(ColorOverLifetimeModifier {
+            gradient: color_gradient1,
+        })
+        .render(SizeOverLifetimeModifier {
+            gradient: size_gradient1,
+            screen_space_size: false,
+        })
+}
+
+fn seeker_rocket_effect(props: &SeekerRocketProps) -> EffectAsset {
+    let mut color_gradient1 = Gradient::new();
+    color_gradient1.add_key(0.0, Vec4::new(4.0, 4.0, 4.0, 1.0));
+    color_gradient1.add_key(0.1, Vec4::new(4.0, 0.0, 0.0, 1.0));
+    color_gradient1.add_key(0.6, Vec4::new(2.0, 1.0, 0.0, 1.0));
+    color_gradient1.add_key(0.8, Vec4::new(0.0, 0.0, 0.0, 1.0));
+    color_gradient1.add_key(1.0, Vec4::new(0.0, 0.0, 0.0, 0.0));
+
+    let mut size_gradient1 = Gradient::new();
+    size_gradient1.add_key(0.0, Vec2::splat(0.2));
+    size_gradient1.add_key(0.3, Vec2::splat(0.3));
+    size_gradient1.add_key(1.0, Vec2::splat(0.0));
+
+    let spawner = Spawner::once(500.0.into(), false);
+    let writer = ExprWriter::new();
+
+    let pos = SetPositionSphereModifier {
+        center: writer.lit(Vec3::ZERO).expr(),
+        radius: writer.lit(props.explosion_radius).expr(),
+        dimension: ShapeDimension::Volume,
+    };
+
+    let vel = SetVelocitySphereModifier {
+        center: writer.lit(Vec3::ZERO).expr(),
+        speed: writer.lit(6.0).uniform(writer.lit(7.0)).expr(),
+    };
+
+    let lifetime = SetAttributeModifier {
+        attribute: Attribute::LIFETIME,
+        value: writer.lit(0.4).uniform(writer.lit(0.6)).expr(),
+    };
+
+    let age = SetAttributeModifier {
+        attribute: Attribute::AGE,
+        value: writer.lit(0.0).uniform(writer.lit(0.2)).expr(),
+    };
+
+    let drag = LinearDragModifier {
+        drag: writer.lit(5.0).expr(),
+    };
+
+    EffectAsset::new(32768, spawner, writer.finish())
+        .with_name("seeker_rocket")
         .init(pos)
         .init(vel)
         .init(lifetime)

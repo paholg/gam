@@ -28,10 +28,13 @@ use crate::{
 use self::{
     grenade::grenade,
     properties::{AbilityProps, GunProps, ShotgunProps},
+    seeker_rocket::{seeker_rocket, SeekerRocket},
 };
 
+pub mod explosion;
 pub mod grenade;
 pub mod properties;
+pub mod seeker_rocket;
 
 pub const ABILITY_Z: f32 = 1.5;
 pub const PLAYER_ABILITY_COUNT: usize = 5;
@@ -58,6 +61,7 @@ pub enum Ability {
     Shotgun,
     FragGrenade,
     HealGrenade,
+    SeekerRocket,
 }
 
 #[derive(Debug, Component, Clone, Serialize, Deserialize)]
@@ -151,6 +155,14 @@ impl Ability {
                 entity,
                 target,
             ),
+            Ability::SeekerRocket => seeker_rocket(
+                commands,
+                tick_counter,
+                &props.seeker_rocket,
+                transform,
+                velocity,
+                entity,
+            ),
         }
         true
     }
@@ -170,6 +182,7 @@ impl Ability {
             Ability::Shotgun => (),
             Ability::FragGrenade => (),
             Ability::HealGrenade => (),
+            Ability::SeekerRocket => (),
         }
     }
 }
@@ -327,6 +340,7 @@ pub fn shot_hit_system(
     mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
     shot_query: Query<(Entity, &Transform, &Velocity, &ReadMassProperties, &Shot)>,
+    rocket_query: Query<(Entity, &SeekerRocket, &Transform)>,
     mut health_query: Query<&mut Health>,
     mut momentum_query: Query<
         (&mut Velocity, &ReadMassProperties),
@@ -348,6 +362,21 @@ pub fn shot_hit_system(
             } else if let Ok((e, t, v, m, s)) = shot_query.get(e2) {
                 (e, t.to_owned(), v, m, s, e1)
             } else {
+                // FIXME: THIS IS HIDEOUS
+                //
+                // We are handling the rocket in the `else` of the `let _ = if` branch for shots.
+                // Adding any more abilities just means deeper hell.
+                let (rocket_entity, rocket, transform) = if let Ok((e, r, t)) = rocket_query.get(e1)
+                {
+                    (e, r, t)
+                } else if let Ok((e, r, t)) = rocket_query.get(e2) {
+                    (e, r, t)
+                } else {
+                    continue;
+                };
+
+                seeker_rocket::explode(&mut commands, rocket_entity, rocket, transform);
+
                 continue;
             };
 

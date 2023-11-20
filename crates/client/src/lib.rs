@@ -19,7 +19,9 @@ use rand::Rng;
 
 use engine::{
     ability::{
-        grenade::{Explosion, Grenade, GrenadeKind, GrenadeLandEvent},
+        explosion::{Explosion, ExplosionKind},
+        grenade::{Grenade, GrenadeLandEvent},
+        seeker_rocket::SeekerRocket,
         HyperSprinting, Shot, ShotHitEvent, ABILITY_Z,
     },
     Ally, AppState, DeathEvent, Enemy, Player, Target,
@@ -84,6 +86,7 @@ impl Plugin for GraphicsPlugin {
                     draw_shot_system,
                     draw_grenade_system,
                     draw_grenade_outline_system,
+                    draw_seeker_rocket_system,
                     draw_shot_hit_system,
                     draw_death_system,
                     draw_explosion_system,
@@ -143,11 +146,11 @@ fn draw_grenade_system(
             continue;
         };
         let (mesh, material) = match grenade.kind {
-            GrenadeKind::Frag => (
+            ExplosionKind::Damage => (
                 assets.frag_grenade.mesh.clone(),
                 assets.frag_grenade.material.clone(),
             ),
-            GrenadeKind::Heal => (
+            ExplosionKind::Heal => (
                 assets.heal_grenade.mesh.clone(),
                 assets.heal_grenade.material.clone(),
             ),
@@ -173,11 +176,11 @@ fn draw_grenade_outline_system(
             continue;
         };
         let (mesh, material) = match grenade.kind {
-            GrenadeKind::Frag => (
+            ExplosionKind::Damage => (
                 assets.frag_grenade.outline_mesh.clone(),
                 assets.frag_grenade.outline_material.clone(),
             ),
-            GrenadeKind::Heal => (
+            ExplosionKind::Heal => (
                 assets.heal_grenade.outline_mesh.clone(),
                 assets.heal_grenade.outline_material.clone(),
             ),
@@ -190,6 +193,23 @@ fn draw_grenade_outline_system(
             })
             .id();
         commands.entity(entity).push_children(&[outline_entity]);
+    }
+}
+
+fn draw_seeker_rocket_system(
+    mut commands: Commands,
+    assets: Res<AssetHandler>,
+    query: Query<Entity, Added<SeekerRocket>>,
+) {
+    for entity in query.iter() {
+        let Some(mut ecmds) = commands.get_entity(entity) else {
+            continue;
+        };
+        ecmds.insert(ObjectGraphics {
+            material: assets.seeker_rocket.material.clone(),
+            mesh: assets.seeker_rocket.mesh.clone(),
+            ..Default::default()
+        });
     }
 }
 
@@ -300,8 +320,8 @@ fn draw_explosion_system(
 ) {
     for (explosion_transform, explosion) in &query {
         let effect_entity = match explosion.kind {
-            GrenadeKind::Frag => assets.frag_grenade.effect_entity,
-            GrenadeKind::Heal => assets.heal_grenade.effect_entity,
+            ExplosionKind::Damage => assets.frag_grenade.effect_entity,
+            ExplosionKind::Heal => assets.heal_grenade.effect_entity,
         };
         let Ok((mut transform, mut effect_spawner)) = effects.get_mut(effect_entity) else {
             tracing::warn!(
