@@ -20,7 +20,7 @@ use rand::Rng;
 use engine::{
     ability::{
         explosion::{Explosion, ExplosionKind},
-        grenade::{Grenade, GrenadeLandEvent},
+        grenade::{Grenade, GrenadeKind, GrenadeLandEvent},
         seeker_rocket::SeekerRocket,
         HyperSprinting, Shot, ShotHitEvent, ABILITY_Z,
     },
@@ -146,11 +146,11 @@ fn draw_grenade_system(
             continue;
         };
         let (mesh, material) = match grenade.kind {
-            ExplosionKind::Damage => (
+            GrenadeKind::Frag => (
                 assets.frag_grenade.mesh.clone(),
                 assets.frag_grenade.material.clone(),
             ),
-            ExplosionKind::Heal => (
+            GrenadeKind::Heal => (
                 assets.heal_grenade.mesh.clone(),
                 assets.heal_grenade.material.clone(),
             ),
@@ -176,11 +176,11 @@ fn draw_grenade_outline_system(
             continue;
         };
         let (mesh, material) = match grenade.kind {
-            ExplosionKind::Damage => (
+            GrenadeKind::Frag => (
                 assets.frag_grenade.outline_mesh.clone(),
                 assets.frag_grenade.outline_material.clone(),
             ),
-            ExplosionKind::Heal => (
+            GrenadeKind::Heal => (
                 assets.heal_grenade.outline_mesh.clone(),
                 assets.heal_grenade.outline_material.clone(),
             ),
@@ -320,8 +320,9 @@ fn draw_explosion_system(
 ) {
     for (explosion_transform, explosion) in &query {
         let effect_entity = match explosion.kind {
-            ExplosionKind::Damage => assets.frag_grenade.effect_entity,
-            ExplosionKind::Heal => assets.heal_grenade.effect_entity,
+            ExplosionKind::FragGrenade => assets.frag_grenade.effect_entity,
+            ExplosionKind::HealGrenade => assets.heal_grenade.effect_entity,
+            ExplosionKind::SeekerRocket => assets.seeker_rocket.effect_entity,
         };
         let Ok((mut transform, mut effect_spawner)) = effects.get_mut(effect_entity) else {
             tracing::warn!(

@@ -103,6 +103,9 @@ pub struct DeathEffect;
 #[derive(Component)]
 pub struct FragGrenadeEffect;
 
+#[derive(Component)]
+pub struct SeekerRocketEffect;
+
 pub fn asset_handler_setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
@@ -254,7 +257,7 @@ pub fn asset_handler_setup(
     let seeker_rocket_effect = effects.add(seeker_rocket_effect(&props.seeker_rocket));
     let seeker_rocket_effect_entity = commands
         .spawn(ParticleEffectBundle::new(seeker_rocket_effect))
-        .insert(FragGrenadeEffect)
+        .insert(SeekerRocketEffect)
         .id();
 
     let seeker_rocket = SeekerRocketAssets {

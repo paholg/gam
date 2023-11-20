@@ -6,8 +6,9 @@ use crate::Health;
 
 #[derive(Clone, Copy, Debug)]
 pub enum ExplosionKind {
-    Damage,
-    Heal,
+    FragGrenade,
+    HealGrenade,
+    SeekerRocket,
 }
 
 #[derive(Debug, Component)]

@@ -50,6 +50,21 @@ fn calculate_initial_vel(spawn: Vec2, target: Vec2) -> Velocity {
     }
 }
 
+#[derive(Debug, Copy, Clone)]
+pub enum GrenadeKind {
+    Frag,
+    Heal,
+}
+
+impl GrenadeKind {
+    pub fn explosion_kind(&self) -> ExplosionKind {
+        match self {
+            GrenadeKind::Frag => ExplosionKind::FragGrenade,
+            GrenadeKind::Heal => ExplosionKind::HealGrenade,
+        }
+    }
+}
+
 #[derive(Component)]
 pub struct Grenade {
     // TODO: Use this field
@@ -59,7 +74,7 @@ pub struct Grenade {
     damage: f32,
     radius: f32,
     explosion_radius: f32,
-    pub kind: ExplosionKind,
+    pub kind: GrenadeKind,
 }
 
 pub fn grenade(
@@ -142,7 +157,7 @@ pub fn grenade_explode_system(
                 Sensor,
                 Explosion {
                     damage: grenade.damage,
-                    kind: grenade.kind,
+                    kind: grenade.kind.explosion_kind(),
                 },
             ));
         }

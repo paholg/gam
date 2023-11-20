@@ -79,6 +79,9 @@ pub fn seeker_rocket_tracking(
     target_query: Query<&Target>,
 ) {
     for (rocket, mut transform, mut impulse) in query.iter_mut() {
+        // Set impulse whether or not we have a target.
+        impulse.impulse = transform.rotation * Vec3::Y * rocket.max_impulse;
+
         let Ok(target) = target_query.get(rocket.shooter) else {
             continue;
         };
@@ -91,7 +94,6 @@ pub fn seeker_rocket_tracking(
         let rotation = desired_rotation.clamp(-rocket.turning_radius, rocket.turning_radius);
 
         transform.rotate_z(rotation);
-        impulse.impulse = transform.rotation * Vec3::Y * rocket.max_impulse;
     }
 }
 
@@ -112,7 +114,7 @@ pub fn explode(
         Sensor,
         Explosion {
             damage: rocket.damage,
-            kind: ExplosionKind::Damage,
+            kind: ExplosionKind::SeekerRocket,
         },
     ));
 }
