@@ -92,11 +92,7 @@ fn background_music_system(
         None => true,
         Some(handle) => match audio_assets.get(handle) {
             Some(asset) => {
-                if asset.state() == PlaybackState::Stopped {
-                    true
-                } else {
-                    false
-                }
+                asset.state() == PlaybackState::Stopped
             }
             None => false,
         },

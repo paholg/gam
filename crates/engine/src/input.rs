@@ -93,8 +93,8 @@ pub fn apply_inputs(
                 entity,
                 &mut energy,
                 &mut cooldowns,
-                &*transform,
-                &velocity,
+                &transform,
+                velocity,
                 &mut status_effects,
                 &target,
             );
