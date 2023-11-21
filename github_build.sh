@@ -2,15 +2,12 @@
 
 set -euo pipefail
 
-version=$1
-target=$2
+for target in "$@"; do
+  cargo build --release --locked --target "$target" --bin client
 
-dir="gam-$version"
-out_file="gam-$version-$target.zip"
-
-echo "TARGET=$out_file" >> "$GITHUB_ENV"
-
-mkdir "$dir"
-cp "target/$target/release/client" "$dir/"
-cp -r assets/ "$dir/"
-7z a -tzip "$out_file" "$dir/"
+  mkdir "gam"
+  cp "target/$target/release/client" "gam/"
+  cp -r assets/ "gam/"
+  7z a -tzip "gam-$target.zip" "gam/"
+  rm -r "gam"
+done
