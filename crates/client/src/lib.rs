@@ -91,9 +91,7 @@ fn background_music_system(
     let should_play = match &bg_music.handle {
         None => true,
         Some(handle) => match audio_assets.get(handle) {
-            Some(asset) => {
-                asset.state() == PlaybackState::Stopped
-            }
+            Some(asset) => asset.state() == PlaybackState::Stopped,
             None => false,
         },
     };
