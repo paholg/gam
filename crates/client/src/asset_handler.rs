@@ -57,7 +57,7 @@ pub struct SeekerRocketAssets {
     pub outline_material: Handle<StandardMaterial>,
 }
 
-pub struct Target {
+pub struct TargetAssets {
     pub mesh: Handle<Mesh>,
     pub material: Handle<StandardMaterial>,
 }
@@ -88,7 +88,7 @@ pub struct AssetHandler {
     pub ally: CharacterAssets,
     pub enemy: CharacterAssets,
     pub music: Handle<LoadedFolder>,
-    pub target: Target,
+    pub target: TargetAssets,
 }
 
 #[derive(Component)]
@@ -362,7 +362,7 @@ pub fn asset_handler_setup(
     let mut target_material = outline_material;
     target_material.base_color = Color::CRIMSON;
     target_material.emissive = Color::CRIMSON;
-    let target = Target {
+    let target = TargetAssets {
         mesh: meshes.add(Circle::new(0.2).into()),
         material: materials.add(target_material),
     };
