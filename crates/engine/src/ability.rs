@@ -74,11 +74,11 @@ impl Abilities {
         Self { inner: abilities }
     }
 
-    pub fn iter<'a>(&'a self) -> impl Iterator<Item = Ability> + 'a {
+    pub fn iter(&self) -> impl Iterator<Item = Ability> + '_ {
         self.inner.iter().copied()
     }
 
-    pub fn iter_mut<'a>(&'a mut self) -> impl Iterator<Item = &mut Ability> + 'a {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Ability> {
         self.inner.iter_mut()
     }
 }

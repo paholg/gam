@@ -42,3 +42,6 @@ opt-level = 3
 [profile.release]
 # Recommended by Rapier for increased performance.
 codegen-units = 1
+
+[workspace.lints.clippy]
+type_complexity = "allow"

@@ -17,6 +17,12 @@ pub struct PhysicsPlugin {
     rapier: RapierPlugin,
 }
 
+impl Default for PhysicsPlugin {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PhysicsPlugin {
     pub fn new() -> Self {
         let config = RapierConfiguration {

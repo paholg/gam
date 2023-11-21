@@ -41,7 +41,7 @@ pub fn seeker_rocket(
     velocity: &Velocity,
     shooter: Entity,
 ) {
-    let mut rocket_transform = transform.clone();
+    let mut rocket_transform = *transform;
     let dir = transform.rotation * Vec3::Y;
     rocket_transform.translation =
         transform.translation + dir * (PLAYER_R + props.length * 2.0) + ABILITY_Z * Vec3::Z;
