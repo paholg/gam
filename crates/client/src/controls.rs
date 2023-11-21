@@ -11,7 +11,7 @@ use leafwing_input_manager::prelude::ActionState;
 use engine::{
     ability::ABILITY_Z,
     multiplayer::{Action, Input, PlayerInputs},
-    Player, Target,
+    Player,
 };
 
 use crate::{config::UserAction, CAMERA_OFFSET};
@@ -22,16 +22,18 @@ pub struct ControlPlugin {
 
 impl Plugin for ControlPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.insert_resource(CameraFollowMode::Mouse)
+        app.insert_resource(CameraFollowMode::default())
             .insert_resource(self.player)
-            .add_systems(Update, player_input)
-            .add_systems(Update, update_cursor);
+            .add_systems(Update, player_input);
     }
 }
 
-#[derive(Resource, PartialEq, Eq, Debug, Clone, Copy)]
+#[derive(Resource, PartialEq, Eq, Debug, Clone, Copy, Default)]
 pub enum CameraFollowMode {
     Mouse,
+    // Note: We set controller as default, as a simple mouse movement will
+    // switch to mouse, but we require more work to set it to controller.
+    #[default]
     Controller,
 }
 
@@ -40,9 +42,9 @@ const MAX_RANGE: f32 = 20.0;
 pub fn player_input(
     player: Res<Player>,
     mut player_inputs: ResMut<PlayerInputs>,
-    player_query: Query<(&Player, &ActionState<UserAction>, &Transform)>,
-    primary_window: Query<&Window, With<PrimaryWindow>>,
-    camera_query: Query<(&Camera, &GlobalTransform)>,
+    player_query: Query<(&Player, &ActionState<UserAction>, &Transform), Without<Camera>>,
+    primary_window: Query<&Window, (With<PrimaryWindow>, Without<Camera>)>,
+    mut camera_query: Query<(&Camera, &GlobalTransform, &mut Transform)>,
     mut camera_mode: ResMut<CameraFollowMode>,
     cursor_events: EventReader<CursorMoved>,
 ) {
@@ -75,88 +77,52 @@ pub fn player_input(
         .clamped_axis_pair(UserAction::Move)
         .map(|pair| pair.xy())
         .unwrap_or_default();
+    let (camera, camera_global_transform, mut camera_transform) = camera_query.single_mut();
 
-    let cursor = match action_state.clamped_axis_pair(UserAction::Aim) {
-        Some(pair) => {
-            *camera_mode = CameraFollowMode::Controller;
-            player_transform.translation.truncate() + pair.xy() * MAX_RANGE
+    // Try to determine if the player wants to use mouse or controller to aim.
+    let controller_aim = action_state
+        .clamped_axis_pair(UserAction::Aim)
+        .unwrap_or_default();
+    if !cursor_events.is_empty() {
+        *camera_mode = CameraFollowMode::Mouse;
+    } else if controller_aim.length_squared() > 0.5 * 0.5 {
+        *camera_mode = CameraFollowMode::Controller;
+    }
+
+    let cursor = match *camera_mode {
+        CameraFollowMode::Mouse => {
+            cursor_from_mouse(primary_window.single(), camera, camera_global_transform)
+                .unwrap_or(player_transform.translation.truncate())
         }
-        None => {
-            if cursor_events.is_empty() && *camera_mode == CameraFollowMode::Controller {
-                player_transform.translation.truncate()
-            } else {
-                *camera_mode = CameraFollowMode::Mouse;
-                cursor_from_mouse(primary_window, camera_query)
-                    .unwrap_or(player_transform.translation.truncate())
-            }
+        CameraFollowMode::Controller => {
+            player_transform.translation.truncate() + controller_aim.xy() * MAX_RANGE
         }
     };
 
     let input = Input::new(action, movement, cursor);
     player_inputs.insert(player, input);
-}
 
-fn cursor_from_mouse(
-    primary_window: Query<&Window, With<PrimaryWindow>>,
-    camera_query: Query<(&Camera, &GlobalTransform)>,
-) -> Option<Vec2> {
-    let cursor_window = primary_window.single().cursor_position()?;
-
-    let (camera, camera_global_transform) = camera_query.get_single().ok()?;
-
-    let ray = camera.viewport_to_world(camera_global_transform, cursor_window)?;
-    let distance = ray.intersect_plane(Vec3::new(0.0, 0.0, ABILITY_Z), Vec3::Z)?;
-    let cursor = ray.get_point(distance);
-    Some(cursor.truncate())
-}
-
-/// Moves the camera based on the mouse cursor.
-fn update_cursor(
-    primary_window: Query<&Window, With<PrimaryWindow>>,
-    mut camera_query: Query<(&mut Transform, &Camera, &GlobalTransform)>,
-    mut player_query: Query<(&Transform, &mut Target), (With<Player>, Without<Camera>)>,
-    cursor_events: EventReader<CursorMoved>,
-    mut camera_mode: ResMut<CameraFollowMode>,
-) {
-    if cursor_events.is_empty() && *camera_mode == CameraFollowMode::Controller {
-        return;
-    }
-
-    *camera_mode = CameraFollowMode::Mouse;
-
-    let Ok((mut camera_transform, camera, camera_global_transform)) = camera_query.get_single_mut()
-    else {
-        return;
-    };
-
-    let Ok((player_transform, mut target)) = player_query.get_single_mut() else {
-        return;
-    };
-
-    let Some(cursor_window) = primary_window.single().cursor_position() else {
-        return;
-    };
-
-    let Some(ray) = camera.viewport_to_world(camera_global_transform, cursor_window) else {
-        return;
-    };
-
-    let Some(ground_distance) = ray.intersect_plane(Vec3::new(0.0, 0.0, 0.0), Vec3::Z) else {
-        return;
-    };
-    target.0 = ray.get_point(ground_distance).truncate();
-
-    let Some(distance) = ray.intersect_plane(Vec3::new(0.0, 0.0, ABILITY_Z), Vec3::Z) else {
-        return;
-    };
-    let cursor = ray.get_point(distance);
-
+    // Update camera
     let camera_weight = 0.9;
     const CURSOR_WEIGHT: f32 = 0.33;
-    let look_at = cursor * CURSOR_WEIGHT + player_transform.translation * (1.0 - CURSOR_WEIGHT);
+    let look_at =
+        cursor.extend(0.0) * CURSOR_WEIGHT + player_transform.translation * (1.0 - CURSOR_WEIGHT);
     let look_at = (camera_transform.translation - CAMERA_OFFSET) * camera_weight
         + look_at * (1.0 - camera_weight);
 
     *camera_transform =
         Transform::from_translation(CAMERA_OFFSET + look_at).looking_at(look_at, Vec3::Z);
+}
+
+fn cursor_from_mouse(
+    primary_window: &Window,
+    camera: &Camera,
+    camera_gt: &GlobalTransform,
+) -> Option<Vec2> {
+    let cursor_window = primary_window.cursor_position()?;
+
+    let ray = camera.viewport_to_world(camera_gt, cursor_window)?;
+    let distance = ray.intersect_plane(Vec3::new(0.0, 0.0, ABILITY_Z), Vec3::Z)?;
+    let cursor = ray.get_point(distance);
+    Some(cursor.truncate())
 }
