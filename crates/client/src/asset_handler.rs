@@ -180,8 +180,8 @@ pub fn asset_handler_setup(
         ),
         material: materials.add(shot_material),
         effect_entity,
-        spawn_sound: asset_server.load("audio/laserSmall_000.ogg"),
-        despawn_sound: asset_server.load("audio/laserSmall_000.ogg"),
+        spawn_sound: asset_server.load("third-party/audio/other/laserSmall_000.ogg"),
+        despawn_sound: asset_server.load("third-party/audio/other/laserSmall_000.ogg"),
     };
     loading.add(&shot.spawn_sound);
     loading.add(&shot.despawn_sound);
@@ -294,7 +294,7 @@ pub fn asset_handler_setup(
     loading.add(&robot);
     let snowman = asset_server.load("models/temp/snowman.glb#Scene0");
     loading.add(&snowman);
-    let death_sound = asset_server.load("audio/explosionCrunch_000.ogg");
+    let death_sound = asset_server.load("third-party/audio/other/explosionCrunch_000.ogg");
     loading.add(&death_sound);
 
     let outline = meshes.add(
@@ -385,7 +385,7 @@ pub fn asset_handler_setup(
 }
 
 fn load_music(asset_server: &AssetServer) -> Handle<LoadedFolder> {
-    asset_server.load_folder("audio/Galacti-Chrons Weird Music Pack")
+    asset_server.load_folder("third-party/audio/Galacti-Chrons Weird Music Pack")
 }
 
 fn shot_effect(props: &GunProps) -> EffectAsset {
