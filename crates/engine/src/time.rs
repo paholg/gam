@@ -1,7 +1,4 @@
-use std::{
-    ops::Mul,
-    time::{Duration, Instant},
-};
+use std::{ops::Mul, time::Instant};
 
 use bevy_ecs::system::{ResMut, Resource};
 use bevy_reflect::Reflect;
@@ -16,17 +13,6 @@ pub const TIMESTEP: f32 = 1.0 / FREQUENCY;
 pub struct Tick(pub u32);
 
 impl Tick {
-    /// Construct a new `Tick` from a duration using the engine `TIMESTEP`.
-    pub const fn new(duration: Duration) -> Self {
-        // This function is a bit funky as we're limited by what we can do in a
-        // const function. E.g. No access to `round` or `max`.
-        let ticks = (duration.as_secs_f32() * FREQUENCY + 0.5) as u32;
-
-        let val = if ticks == 0 { 1 } else { ticks };
-
-        Self(val)
-    }
-
     pub fn before_now(&self, counter: &TickCounter) -> bool {
         self.0 <= counter.tick.0
     }
@@ -59,7 +45,7 @@ impl Default for TickCounter {
 }
 
 impl TickCounter {
-    const DIAGNOSTIC_ITERS: u32 = 10_000;
+    const DIAGNOSTIC_ITERS: u32 = 1_000;
 
     pub fn new() -> Self {
         Self {

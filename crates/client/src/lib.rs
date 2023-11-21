@@ -1,9 +1,11 @@
-#![feature(path_file_prefix)]
-
 use aim::AimPlugin;
 use bevy::{
     asset::LoadedFolder,
-    prelude::{Assets, Handle, Plugin, Res, ResMut, Resource, Startup, Update, Vec3},
+    ecs::component::ComponentInfo,
+    prelude::{
+        Assets, Children, Entity, Handle, Parent, Plugin, Query, Res, ResMut, Resource, Startup,
+        Update, Vec3, World,
+    },
 };
 
 use bevy_kira_audio::{
@@ -109,7 +111,7 @@ fn background_music_system(
                 .path()
                 .unwrap()
                 .path()
-                .file_prefix()
+                .file_stem()
                 .unwrap()
                 .to_string_lossy()
                 .to_string();
@@ -122,5 +124,60 @@ fn background_music_system(
             bg_music.name = Some(name);
             bg_music.handle = Some(handle);
         }
+    }
+}
+
+#[derive(Debug)]
+struct Hierarchy {
+    #[allow(dead_code)]
+    entity: Entity,
+    #[allow(dead_code)]
+    components: Vec<String>,
+    #[allow(dead_code)]
+    children: Vec<Hierarchy>,
+}
+
+/// Print the full hierarchy that includes this entity.
+pub fn print_hierarchy(
+    initial_entity: Entity,
+    world: &World,
+    q_parents: Query<&Children>,
+    q_children: Query<&Parent>,
+) {
+    // First let's go to the top
+    let mut entity = initial_entity;
+    while let Ok(parent) = q_children.get(entity) {
+        entity = parent.get();
+    }
+
+    let hierarchy = print_hierarchy_inner(entity, world, &q_parents);
+
+    println!("**************************************************");
+    println!("{:#?}", hierarchy);
+    println!("**************************************************");
+}
+
+fn print_hierarchy_inner(entity: Entity, world: &World, q_parents: &Query<&Children>) -> Hierarchy {
+    let components = world
+        .inspect_entity(entity)
+        .into_iter()
+        .map(ComponentInfo::name)
+        .map(ToOwned::to_owned)
+        .collect();
+
+    let children = q_parents
+        .get(entity)
+        .map(|children| {
+            children
+                .iter()
+                .map(|child| print_hierarchy_inner(*child, world, q_parents))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    Hierarchy {
+        entity,
+        components,
+        children,
     }
 }

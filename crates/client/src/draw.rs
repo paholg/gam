@@ -1,16 +1,14 @@
 use bevy::{
     prelude::{
-        Added, BuildChildren, Bundle, Commands, Entity, EventReader, Handle,
-        InheritedVisibility, Mesh, PbrBundle, Plugin, Query, Res,
-        StandardMaterial, Transform, Update, ViewVisibility, Visibility, With,
-        Without,
+        Added, BuildChildren, Bundle, Commands, Component, Entity, EventReader, Handle,
+        InheritedVisibility, Mesh, Parent, PbrBundle, Plugin, Query, Res, StandardMaterial,
+        Transform, Update, ViewVisibility, Visibility, With, Without,
     },
     scene::Scene,
 };
 use bevy_hanabi::EffectSpawner;
-use bevy_kira_audio::{
-    prelude::Volume, Audio, AudioControl,
-};
+use bevy_kira_audio::{prelude::Volume, Audio, AudioControl};
+use bevy_mod_raycast::prelude::RaycastMesh;
 use engine::{
     ability::{
         explosion::{Explosion, ExplosionKind},
@@ -22,9 +20,7 @@ use engine::{
 };
 
 use crate::{
-    asset_handler::{
-        AssetHandler, DeathEffect, HyperSprintEffect, ShotEffect,
-    },
+    asset_handler::{AssetHandler, DeathEffect, HyperSprintEffect, ShotEffect},
     bar::{Energybar, Healthbar},
     Config,
 };
@@ -37,6 +33,7 @@ impl Plugin for DrawPlugin {
         app.add_systems(
             Update,
             (
+                raycast_scene_system,
                 draw_player_system,
                 draw_enemy_system,
                 draw_ally_system,
@@ -53,6 +50,11 @@ impl Plugin for DrawPlugin {
     }
 }
 
+/// A Component to be added to entities with `Scene`s, that we want to act as
+/// `RaycastMesh<()>`s.
+#[derive(Component, Default)]
+struct RaycastScene;
+
 #[derive(Bundle, Default)]
 struct ObjectGraphics {
     material: Handle<StandardMaterial>,
@@ -67,11 +69,31 @@ struct CharacterGraphics {
     healthbar: Healthbar,
     energybar: Energybar,
     scene: Handle<Scene>,
-    outline: Handle<Mesh>,
-    material: Handle<StandardMaterial>,
     visibility: Visibility,
     inherited_visibility: InheritedVisibility,
     view_visibility: ViewVisibility,
+    raycast: RaycastScene,
+}
+
+fn raycast_scene_system(
+    mut commands: Commands,
+    q_meshes: Query<(Entity, &Parent), Added<Handle<Mesh>>>,
+    q_children: Query<&Parent>,
+    q_parents: Query<&Handle<Scene>, With<RaycastScene>>,
+) {
+    // A `Scene` has meshes as its grandchildren, so we need a silly bit of
+    // indirection to tell if we should add our `RaycastMesh`.
+    for (entity, parent) in q_meshes.iter() {
+        let Ok(parent) = q_children.get(parent.get()) else {
+            continue;
+        };
+        let Ok(grandparent) = q_children.get(parent.get()) else {
+            continue;
+        };
+        if q_parents.get(grandparent.get()).is_ok() {
+            commands.entity(entity).insert(RaycastMesh::<()>::default());
+        }
+    }
 }
 
 fn draw_shot_system(
@@ -174,15 +196,20 @@ fn draw_player_system(
     query: Query<Entity, Added<Player>>,
 ) {
     for entity in query.iter() {
-        let Some(mut ecmds) = commands.get_entity(entity) else {
-            continue;
-        };
-        ecmds.insert(CharacterGraphics {
-            scene: assets.player.scene.clone(),
-            outline: assets.player.outline_mesh.clone(),
-            material: assets.player.outline_material.clone(),
-            ..Default::default()
-        });
+        let outline = commands
+            .spawn(PbrBundle {
+                mesh: assets.player.outline_mesh.clone(),
+                material: assets.player.outline_material.clone(),
+                ..Default::default()
+            })
+            .id();
+        commands
+            .entity(entity)
+            .insert(CharacterGraphics {
+                scene: assets.player.scene.clone(),
+                ..Default::default()
+            })
+            .push_children(&[outline]);
     }
 }
 
@@ -192,15 +219,20 @@ fn draw_enemy_system(
     query: Query<Entity, Added<Enemy>>,
 ) {
     for entity in query.iter() {
-        let Some(mut ecmds) = commands.get_entity(entity) else {
-            continue;
-        };
-        ecmds.insert(CharacterGraphics {
-            scene: assets.enemy.scene.clone(),
-            outline: assets.enemy.outline_mesh.clone(),
-            material: assets.enemy.outline_material.clone(),
-            ..Default::default()
-        });
+        let outline = commands
+            .spawn(PbrBundle {
+                mesh: assets.enemy.outline_mesh.clone(),
+                material: assets.enemy.outline_material.clone(),
+                ..Default::default()
+            })
+            .id();
+        commands
+            .entity(entity)
+            .insert((CharacterGraphics {
+                scene: assets.enemy.scene.clone(),
+                ..Default::default()
+            },))
+            .push_children(&[outline]);
     }
 }
 
@@ -210,15 +242,20 @@ fn draw_ally_system(
     query: Query<Entity, (Added<Ally>, Without<Player>)>,
 ) {
     for entity in query.iter() {
-        let Some(mut ecmds) = commands.get_entity(entity) else {
-            continue;
-        };
-        ecmds.insert(CharacterGraphics {
-            scene: assets.ally.scene.clone(),
-            outline: assets.ally.outline_mesh.clone(),
-            material: assets.ally.outline_material.clone(),
-            ..Default::default()
-        });
+        let outline = commands
+            .spawn(PbrBundle {
+                mesh: assets.ally.outline_mesh.clone(),
+                material: assets.ally.outline_material.clone(),
+                ..Default::default()
+            })
+            .id();
+        commands
+            .entity(entity)
+            .insert(CharacterGraphics {
+                scene: assets.ally.scene.clone(),
+                ..Default::default()
+            })
+            .push_children(&[outline]);
     }
 }
 

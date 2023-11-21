@@ -1,9 +1,3 @@
-#![feature(
-    duration_consts_float,
-    div_duration,
-    const_fn_floating_point_arithmetic,
-    trivial_bounds
-)]
 #![allow(clippy::type_complexity)]
 
 pub mod ability;
@@ -408,18 +402,46 @@ pub trait PrettyPrint {
 
 impl PrettyPrint for Vec3 {
     fn pp(&self) -> PrettyPrinter {
-        format!("[{:0.2}, {:0.2}, {:0.2}]", self.x, self.y, self.z).into()
+        format!("[{:0.1}, {:0.1}, {:0.1}]", self.x, self.y, self.z).into()
+    }
+}
+
+impl PrettyPrint for Quat {
+    fn pp(&self) -> PrettyPrinter {
+        format!(
+            "[{:0.1}, {:0.1}, {:0.1}, {:0.1}]",
+            self.x, self.y, self.z, self.w
+        )
+        .into()
     }
 }
 
 impl PrettyPrint for Vec2 {
     fn pp(&self) -> PrettyPrinter {
-        format!("[{:0.2}, {:0.2}]", self.x, self.y).into()
+        format!("[{:0.1}, {:0.1}]", self.x, self.y).into()
     }
 }
 
 impl PrettyPrint for f32 {
     fn pp(&self) -> PrettyPrinter {
-        format!("{self:0.2}").into()
+        format!("{self:0.1}").into()
+    }
+}
+
+impl PrettyPrint for Transform {
+    fn pp(&self) -> PrettyPrinter {
+        format!(
+            "<t: {}, r: {}, s: {}>",
+            self.translation.pp(),
+            self.rotation.pp(),
+            self.scale.pp()
+        )
+        .into()
+    }
+}
+
+impl PrettyPrint for GlobalTransform {
+    fn pp(&self) -> PrettyPrinter {
+        self.compute_transform().pp()
     }
 }
