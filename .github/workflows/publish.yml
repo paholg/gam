@@ -23,8 +23,8 @@ jobs:
         with:
           lfs: true
       - run: git lfs pull
-      - uses: Swatinem/rust-cache@v2
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
       - name: Install Bevy Deps
         run: sudo apt-get update && sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
         if: runner.os == 'linux'
