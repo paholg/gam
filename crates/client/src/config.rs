@@ -106,7 +106,7 @@ fn default_controls() -> InputMap<UserAction> {
             },
             UserAction::Move,
         )
-        .insert(DualAxis::right_stick(), UserAction::Move)
+        .insert(DualAxis::right_stick(), UserAction::Aim)
         .insert(MouseButton::Left, UserAction::Ability0)
         .insert(GamepadButtonType::RightTrigger2, UserAction::Ability0)
         .insert(MouseButton::Right, UserAction::Ability1)
