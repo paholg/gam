@@ -2,7 +2,7 @@ use bevy::{
     asset::LoadedFolder,
     prelude::{
         default,
-        shape::{self, Capsule, Circle, Icosphere},
+        shape::{self, Capsule, Circle, Cylinder, Icosphere},
         AssetServer, Assets, Color, Commands, Component, Entity, Handle, Mesh, Res, ResMut,
         Resource, StandardMaterial, Vec2, Vec3, Vec4,
     },
@@ -58,8 +58,11 @@ pub struct SeekerRocketAssets {
 }
 
 pub struct TargetAssets {
-    pub mesh: Handle<Mesh>,
-    pub material: Handle<StandardMaterial>,
+    pub cursor_mesh: Handle<Mesh>,
+    pub cursor_material: Handle<StandardMaterial>,
+    pub laser_mesh: Handle<Mesh>,
+    pub laser_material: Handle<StandardMaterial>,
+    pub laser_length: f32,
 }
 
 pub struct HyperSprintAssets {
@@ -362,9 +365,26 @@ pub fn asset_handler_setup(
     let mut target_material = outline_material;
     target_material.base_color = Color::CRIMSON;
     target_material.emissive = Color::CRIMSON;
+
+    let target_laser_material = StandardMaterial {
+        emissive: Color::rgb_linear(10.0, 0.0, 0.1),
+        ..Default::default()
+    };
+    let laser_length = 100.0;
     let target = TargetAssets {
-        mesh: meshes.add(Circle::new(0.2).into()),
-        material: materials.add(target_material),
+        cursor_mesh: meshes.add(Circle::new(0.25).into()),
+        cursor_material: materials.add(target_material),
+        laser_mesh: meshes.add(
+            Cylinder {
+                radius: 0.01,
+                height: 1.0,
+                resolution: 3,
+                segments: 1,
+            }
+            .into(),
+        ),
+        laser_material: materials.add(target_laser_material),
+        laser_length,
     };
 
     let asset_handler = AssetHandler {

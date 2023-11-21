@@ -792,12 +792,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_mod_inverse_kinematics"
-version = "0.5.0"
+name = "bevy_mod_raycast"
+version = "0.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ed76d18aa51b0df6dd39c6cda2cf87c1ebbb0e033272edb7dd22285a9b90fb02"
+checksum = "6b127622dcbfd9e6a1661219af65965625901c2549b434f0c44c4460dd055dce"
 dependencies = [
- "bevy",
+ "bevy_app",
+ "bevy_asset",
+ "bevy_derive",
+ "bevy_ecs",
+ "bevy_gizmos",
+ "bevy_math",
+ "bevy_reflect",
+ "bevy_render",
+ "bevy_sprite",
+ "bevy_transform",
+ "bevy_utils",
+ "bevy_window",
+ "crossbeam-channel",
 ]
 
 [[package]]
@@ -1357,11 +1369,10 @@ dependencies = [
  "bevy_egui",
  "bevy_hanabi",
  "bevy_kira_audio",
- "bevy_mod_inverse_kinematics",
+ "bevy_mod_raycast",
  "bevy_rapier3d",
  "directories",
  "engine",
- "glob",
  "iyes_progress",
  "leafwing-input-manager",
  "rand",
@@ -1776,11 +1787,8 @@ name = "engine"
 version = "0.1.0"
 dependencies = [
  "bevy_app",
- "bevy_core",
- "bevy_diagnostic",
  "bevy_ecs",
  "bevy_hierarchy",
- "bevy_log",
  "bevy_math",
  "bevy_rapier3d",
  "bevy_reflect",
@@ -2500,17 +2508,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "lewton"
-version = "0.10.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "777b48df9aaab155475a83a7df3070395ea1ac6902f5cd062b8f2b028075c030"
-dependencies = [
- "byteorder",
- "ogg",
- "tinyvec",
-]
-
-[[package]]
 name = "libc"
 version = "0.2.150"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3031,15 +3028,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ogg"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6951b4e8bf21c8193da321bcce9c9dd2e13c858fe078bf9054a288b419ae5d6e"
-dependencies = [
- "byteorder",
-]
-
-[[package]]
 name = "once_cell"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3468,7 +3456,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3b1bb7b48ee48471f55da122c0044fcc7600cfcc85db88240b89cb832935e611"
 dependencies = [
  "cpal",
- "lewton",
 ]
 
 [[package]]
@@ -3578,7 +3565,6 @@ name = "server"
 version = "0.1.0"
 dependencies = [
  "bevy_app",
- "bevy_ecs",
  "bevy_internal",
  "engine",
 ]

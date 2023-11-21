@@ -8,11 +8,8 @@ version = "0.1.0"
 # We use individual bevy crates to make sure we don't accidentally include
 # client-facing features of bevy in this crate.
 bevy_app.workspace = true
-bevy_core.workspace = true
-bevy_diagnostic.workspace = true
 bevy_ecs.workspace = true
 bevy_hierarchy.workspace = true
-bevy_log.workspace = true
 bevy_math.workspace = true
 bevy_reflect.workspace = true
 bevy_time.workspace = true

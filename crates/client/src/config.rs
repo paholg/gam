@@ -99,10 +99,10 @@ fn default_controls() -> InputMap<UserAction> {
         )
         .insert(
             VirtualDPad {
-                up: KeyCode::W.into(),
-                down: KeyCode::S.into(),
-                left: KeyCode::A.into(),
-                right: KeyCode::D.into(),
+                up: KeyCode::E.into(),
+                down: KeyCode::D.into(),
+                left: KeyCode::S.into(),
+                right: KeyCode::F.into(),
             },
             UserAction::Move,
         )
@@ -113,10 +113,10 @@ fn default_controls() -> InputMap<UserAction> {
         .insert(GamepadButtonType::LeftTrigger2, UserAction::Ability1)
         .insert(KeyCode::Space, UserAction::Ability2)
         .insert(GamepadButtonType::South, UserAction::Ability2)
-        .insert(KeyCode::Q, UserAction::Ability3)
+        .insert(KeyCode::W, UserAction::Ability3)
         .insert(MouseButton::Other(8), UserAction::Ability3)
         .insert(GamepadButtonType::RightTrigger, UserAction::Ability3)
-        .insert(KeyCode::E, UserAction::Ability4)
+        .insert(KeyCode::R, UserAction::Ability4)
         .insert(MouseButton::Other(9), UserAction::Ability4)
         .insert(GamepadButtonType::LeftTrigger, UserAction::Ability4);
     map
@@ -233,7 +233,7 @@ impl Default for PlayerConfig {
     fn default() -> Self {
         let abilities = Abilities::new(vec![
             Ability::Gun,
-            Ability::Shotgun,
+            Ability::SeekerRocket,
             Ability::HyperSprint,
             Ability::HealGrenade,
             Ability::FragGrenade,
