@@ -3,12 +3,14 @@ use client::Config;
 use engine::{player::PlayerInfo, Player};
 
 fn main() {
+    rust_i18n::set_locale("en");
+
     let mut app = App::new();
 
     app.add_plugins((
         bevy::DefaultPlugins.set(bevy::window::WindowPlugin {
             primary_window: Some(bevy::window::Window {
-                present_mode: bevy::window::PresentMode::AutoVsync,
+                present_mode: bevy::window::PresentMode::AutoNoVsync,
                 ..Default::default()
             }),
             ..Default::default()

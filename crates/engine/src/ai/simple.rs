@@ -7,15 +7,15 @@ use bevy_ecs::{
     schedule::{IntoSystemConfigs, SystemConfigs},
     system::{Commands, Query, Res},
 };
-use bevy_math::{Quat, Vec3};
+use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{ExternalImpulse, Velocity};
 use bevy_transform::components::Transform;
 use rand::Rng;
 
 use crate::{
     ability::{properties::AbilityProps, Ability},
+    face,
     lifecycle::point_in_plane,
-    pointing_angle,
     status_effect::StatusEffects,
     time::TickCounter,
     Ai, Ally, Cooldowns, Enemy, Energy, MaxSpeed, Target,
@@ -81,10 +81,8 @@ fn point_to_closest<T: ReadOnlyWorldQuery, U: ReadOnlyWorldQuery>(
             let dt = dist / shot_speed;
             let lead = (vel.linvel - velocity.linvel) * dt * 0.5; // Just partially lead for now
             let lead_translation = trans.translation + lead;
-            let angle = pointing_angle(transform.translation, lead_translation);
-            if let Some(angle) = angle {
-                transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
-            }
+
+            face(&mut transform, lead_translation);
         }
     }
 }

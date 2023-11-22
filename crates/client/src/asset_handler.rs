@@ -254,7 +254,7 @@ pub fn asset_handler_setup(
     };
 
     let seeker_rocket_material = StandardMaterial {
-        emissive: Color::rgb_linear(0.1, 0.1, 10.0),
+        emissive: Color::rgb_linear(10.0, 0.1, 10.0),
         ..Default::default()
     };
     let seeker_rocket_effect = effects.add(seeker_rocket_effect(&props.seeker_rocket));
@@ -636,8 +636,8 @@ fn heal_grenade_effect(props: &GrenadeProps) -> EffectAsset {
 fn seeker_rocket_effect(props: &SeekerRocketProps) -> EffectAsset {
     let mut color_gradient1 = Gradient::new();
     color_gradient1.add_key(0.0, Vec4::new(4.0, 4.0, 4.0, 1.0));
-    color_gradient1.add_key(0.1, Vec4::new(4.0, 0.0, 0.0, 1.0));
-    color_gradient1.add_key(0.6, Vec4::new(2.0, 1.0, 0.0, 1.0));
+    color_gradient1.add_key(0.1, Vec4::new(4.0, 0.0, 4.0, 1.0));
+    color_gradient1.add_key(0.6, Vec4::new(2.0, 1.0, 2.0, 1.0));
     color_gradient1.add_key(0.8, Vec4::new(0.0, 0.0, 0.0, 1.0));
     color_gradient1.add_key(1.0, Vec4::new(0.0, 0.0, 0.0, 0.0));
 

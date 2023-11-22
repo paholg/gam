@@ -33,7 +33,7 @@ bevy = { workspace = true, default-features = false, features = [
   "default_font",
   "webgl2",
 ] }
-bevy_egui = "0.23"
+bevy-ui-navigation = "0.33.1"
 bevy_hanabi = { version = "0.8.0", default-features = false, features = ["3d"] }
 bevy_kira_audio = "0.18.0"
 bevy_mod_raycast = "0.16.0"
@@ -42,9 +42,11 @@ directories = "5"
 iyes_progress = { version = "0.10.0", features = ["assets"] }
 leafwing-input-manager = "0.11.1"
 rand = "0.8"
+rust-i18n = "2.3.0"
 serde = "1"
 serde_json = "1"
 strum = "0.25.0"
+subenum = "1.1.1"
 thiserror = "1"
 tracing.workspace = true
 

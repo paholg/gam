@@ -360,15 +360,13 @@ pub fn energy_regen(mut query: Query<&mut Energy>) {
     }
 }
 
-// Returns an angle of rotation, along the z-axis, so that `from` will be pointing to `to`
-// TODO: Replace this with `Transform::look_at`.
-pub fn pointing_angle(from: Vec3, to: Vec3) -> Option<f32> {
-    let dir = (to - from).truncate();
-    if dir.x == 0.0 && dir.y == 0.0 {
-        None
-    } else {
-        Some(-dir.angle_between(Vec2::Y))
-    }
+/// Rotate the transform so that it faces `target`
+///
+/// Note: this is different from `Transform::look_at` in that Bevy calls the
+/// y-axis up, so our definitions of `forward` and `up` are different.
+pub fn face(transform: &mut Transform, target: Vec3) {
+    let face = target - transform.translation;
+    transform.look_to(-Vec3::Z, face);
 }
 
 pub struct PrettyPrinter(String);
