@@ -169,6 +169,7 @@ pub struct SeekerRocketProps {
     pub radius: f32,
     pub length: f32,
     pub health: f32,
+    pub damping: f32,
 }
 
 impl Default for SeekerRocketProps {
@@ -179,8 +180,9 @@ impl Default for SeekerRocketProps {
             duration: Tick(300),
             damage: 8.0,
             explosion_radius: 3.0,
-            max_impulse: 0.5,
-            turning_radius: PI * 0.007,
+            max_impulse: 0.3,
+            damping: 0.5,
+            turning_radius: PI * 0.05,
             radius: 0.3,
             length: 0.6,
             health: 3.0,

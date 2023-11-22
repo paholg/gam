@@ -38,6 +38,8 @@ mod world;
 pub use config::Config;
 pub use controls::ControlPlugin;
 
+rust_i18n::i18n!("../../locales");
+
 const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, -50.0, 50.0);
 
 /// This plugin includes user input and graphics.

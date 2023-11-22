@@ -6,14 +6,14 @@ use bevy_ecs::{
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{
-    ActiveEvents, Collider, ColliderMassProperties, ExternalImpulse, LockedAxes,
+    ActiveEvents, Collider, ColliderMassProperties, Damping, ExternalImpulse, LockedAxes,
     ReadMassProperties, Sensor, Velocity,
 };
 use bevy_transform::components::{GlobalTransform, Transform};
 
 use crate::{
     time::{Tick, TickCounter},
-    Health, Object, Target, DAMPING, PLAYER_R,
+    Health, Object, Target, PLAYER_R,
 };
 
 use super::{
@@ -67,7 +67,10 @@ pub fn seeker_rocket(
             max_impulse: props.max_impulse,
             turning_radius: props.turning_radius,
         },
-        DAMPING,
+        Damping {
+            linear_damping: props.damping,
+            angular_damping: 0.0,
+        },
         ExternalImpulse::default(),
         Sensor,
         ActiveEvents::COLLISION_EVENTS,
@@ -87,8 +90,7 @@ pub fn seeker_rocket_tracking(
         };
         let target = target.0;
 
-        // TODO: Why is this up and not forward?
-        let facing = transform.up().truncate();
+        let facing = transform.local_y().truncate();
 
         let desired_rotation = facing.angle_between(target - transform.translation.truncate());
         let rotation = desired_rotation.clamp(-rocket.turning_radius, rocket.turning_radius);

@@ -8,9 +8,11 @@ use bevy::{
     },
     reflect::TypePath,
 };
+use bevy_ui_navigation::{events::ScopeDirection, prelude::NavRequest};
 use directories::ProjectDirs;
 use engine::{
     ability::{Abilities, Ability},
+    multiplayer::Action,
     Player,
 };
 use leafwing_input_manager::{
@@ -18,6 +20,7 @@ use leafwing_input_manager::{
     Actionlike, InputManagerBundle,
 };
 use serde::{Deserialize, Serialize};
+use subenum::subenum;
 use tracing::{error, info, warn};
 
 // TODO: NAME THESE THINGS
@@ -118,7 +121,19 @@ fn default_controls() -> InputMap<UserAction> {
         .insert(GamepadButtonType::RightTrigger, UserAction::Ability3)
         .insert(KeyCode::R, UserAction::Ability4)
         .insert(MouseButton::Other(9), UserAction::Ability4)
-        .insert(GamepadButtonType::LeftTrigger, UserAction::Ability4);
+        .insert(GamepadButtonType::LeftTrigger, UserAction::Ability4)
+        // Menu controls
+        .insert(GamepadButtonType::LeftTrigger, UserAction::TabLeft)
+        .insert(GamepadButtonType::RightTrigger, UserAction::TabRight)
+        .insert(GamepadButtonType::LeftTrigger2, UserAction::TabLeft)
+        .insert(GamepadButtonType::RightTrigger2, UserAction::TabRight)
+        .insert(GamepadButtonType::South, UserAction::Select)
+        .insert(GamepadButtonType::East, UserAction::Cancel)
+        .insert(KeyCode::W, UserAction::TabLeft)
+        .insert(KeyCode::R, UserAction::TabRight)
+        .insert(KeyCode::Return, UserAction::Select)
+        .insert(MouseButton::Left, UserAction::Select)
+        .insert(MouseButton::Right, UserAction::Cancel);
     map
 }
 
@@ -256,16 +271,59 @@ impl Default for PlayerConfig {
     Deserialize,
     Actionlike,
 )]
+#[subenum(GameAction, MenuAction)]
 pub enum UserAction {
+    // Game actions
+    #[subenum(GameAction)]
     Ability0,
+    #[subenum(GameAction)]
     Ability1,
+    #[subenum(GameAction)]
     Ability2,
+    #[subenum(GameAction)]
     Ability3,
+    #[subenum(GameAction)]
     Ability4,
-    Menu,
 
+    // Not real actions; just indicate that an AxisPair was used.
     Move,
     Aim,
+
+    // This one's weird, as it is a game action, we just handle it specially.
+    Menu,
+
+    // Menu actions
+    #[subenum(MenuAction)]
+    Select,
+    #[subenum(MenuAction)]
+    Cancel,
+    #[subenum(MenuAction)]
+    TabLeft,
+    #[subenum(MenuAction)]
+    TabRight,
+}
+
+impl From<GameAction> for Action {
+    fn from(value: GameAction) -> Self {
+        match value {
+            GameAction::Ability0 => Action::Ability0,
+            GameAction::Ability1 => Action::Ability1,
+            GameAction::Ability2 => Action::Ability2,
+            GameAction::Ability3 => Action::Ability3,
+            GameAction::Ability4 => Action::Ability4,
+        }
+    }
+}
+
+impl From<MenuAction> for NavRequest {
+    fn from(value: MenuAction) -> Self {
+        match value {
+            MenuAction::Select => NavRequest::Action,
+            MenuAction::Cancel => NavRequest::Cancel,
+            MenuAction::TabLeft => NavRequest::ScopeMove(ScopeDirection::Previous),
+            MenuAction::TabRight => NavRequest::ScopeMove(ScopeDirection::Next),
+        }
+    }
 }
 
 fn spawn_input_manager(

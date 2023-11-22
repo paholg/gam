@@ -3,15 +3,14 @@ use bevy_ecs::{
     schedule::{NextState, State},
     system::{Commands, Query, Res, ResMut},
 };
-use bevy_math::{Quat, Vec3};
 use bevy_rapier3d::prelude::{ExternalImpulse, Velocity};
 use bevy_transform::components::Transform;
 use bevy_utils::HashSet;
 
 use crate::{
     ability::{properties::AbilityProps, Abilities},
+    face,
     multiplayer::{Action, PlayerInputs},
-    pointing_angle,
     status_effect::{StatusEffect, StatusEffects},
     time::TickCounter,
     AppState, Cooldowns, Energy, MaxSpeed, Player, Target,
@@ -77,9 +76,7 @@ pub fn apply_inputs(
         // Targeting
         if let Some(cursor) = input.cursor() {
             target.0 = cursor;
-            if let Some(angle) = pointing_angle(transform.translation, cursor.extend(0.0)) {
-                transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
-            }
+            face(&mut transform, cursor.extend(0.0));
         }
 
         // Abilities
@@ -126,7 +123,7 @@ pub fn apply_inputs(
 
 fn pause_resume(state: &State<AppState>, next_state: &mut NextState<AppState>) {
     match state.get() {
-        AppState::Loading => (),
+        AppState::Loading => {}
         AppState::Running => {
             next_state.set(AppState::Paused);
         }

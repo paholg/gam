@@ -14,7 +14,10 @@ use engine::{
     Player,
 };
 
-use crate::{config::UserAction, CAMERA_OFFSET};
+use crate::{
+    config::{GameAction, UserAction},
+    CAMERA_OFFSET,
+};
 
 pub struct ControlPlugin {
     pub player: Player,
@@ -54,23 +57,17 @@ pub fn player_input(
         return;
     };
 
-    let mut action = Action::none();
-    for pressed in action_state.get_pressed() {
-        match pressed {
-            UserAction::Ability0 => action |= Action::Ability0,
-            UserAction::Ability1 => action |= Action::Ability1,
-            UserAction::Ability2 => action |= Action::Ability2,
-            UserAction::Ability3 => action |= Action::Ability3,
-            UserAction::Ability4 => action |= Action::Ability4,
-            UserAction::Menu => {
-                // Only want to send the menu command when just pressed, or it
-                // may flicker.
-                if action_state.just_pressed(UserAction::Menu) {
-                    action |= Action::Menu
-                }
-            }
-            UserAction::Move | UserAction::Aim => (),
-        }
+    let mut actions = action_state
+        .get_pressed()
+        .into_iter()
+        .filter_map(|a| GameAction::try_from(a).ok())
+        .map(Action::from)
+        .fold(Action::none(), |acc, a| acc | a);
+
+    // Handle menu separately, as we only want to send it when `just_pressed`
+    // to prevent flickering.
+    if action_state.just_pressed(UserAction::Menu) {
+        actions |= Action::Menu;
     }
 
     let movement = action_state
@@ -99,7 +96,7 @@ pub fn player_input(
         }
     };
 
-    let input = Input::new(action, movement, cursor);
+    let input = Input::new(actions, movement, cursor);
     player_inputs.insert(player, input);
 
     // Update camera
