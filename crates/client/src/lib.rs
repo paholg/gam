@@ -30,6 +30,7 @@ mod bar;
 mod config;
 mod controls;
 mod draw;
+mod particles;
 mod shapes;
 mod splash;
 mod ui;
