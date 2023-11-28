@@ -56,8 +56,6 @@ impl ParticleEffectPool {
         }
         self.last_run = frame.0;
 
-        tracing::info!(i = self.index, l = self.effects.len());
-
         if self.index < self.effects.len() {
             let entity = self.effects[self.index];
             self.index += 1;
