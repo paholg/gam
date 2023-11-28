@@ -85,7 +85,7 @@ impl Default for HyperSprintProps {
     fn default() -> Self {
         Self {
             cost: 2.0,
-            factor: 7.0,
+            factor: 5.0,
             cooldown: Tick(0),
         }
     }

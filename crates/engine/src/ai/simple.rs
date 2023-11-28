@@ -62,8 +62,9 @@ fn just_move_system(
                 }
                 *target - transform.translation
             }
-        };
-        impulse.impulse = target_vec.normalize() * max_speed.impulse;
+        }
+        .truncate();
+        impulse.impulse = target_vec.normalize().extend(0.0) * max_speed.impulse;
     }
 }
 

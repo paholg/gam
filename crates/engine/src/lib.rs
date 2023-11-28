@@ -1,15 +1,3 @@
-pub mod ability;
-pub mod ai;
-pub mod collision;
-pub mod death_callback;
-pub mod input;
-pub mod lifecycle;
-pub mod multiplayer;
-pub mod physics;
-pub mod player;
-pub mod status_effect;
-pub mod time;
-
 use std::fmt;
 
 use ability::{
@@ -24,8 +12,8 @@ use bevy_ecs::{
 };
 use bevy_math::{Quat, Vec2, Vec3};
 use bevy_rapier3d::prelude::{
-    Collider, ColliderMassProperties, Damping, ExternalImpulse, LockedAxes, ReadMassProperties,
-    RigidBody, Velocity,
+    Collider, ColliderMassProperties, Damping, ExternalForce, ExternalImpulse, Friction,
+    LockedAxes, ReadMassProperties, RigidBody, Velocity,
 };
 use bevy_reflect::Reflect;
 use bevy_time::{Fixed, Time};
@@ -38,6 +26,19 @@ use physics::PhysicsPlugin;
 use status_effect::StatusEffects;
 use time::{Tick, TickCounter, FREQUENCY};
 
+pub mod ability;
+pub mod ai;
+pub mod collision;
+pub mod death_callback;
+pub mod input;
+pub mod level;
+pub mod lifecycle;
+pub mod multiplayer;
+pub mod physics;
+pub mod player;
+pub mod status_effect;
+pub mod time;
+
 #[derive(States, PartialEq, Eq, Debug, Copy, Clone, Hash, Default)]
 pub enum AppState {
     #[default]
@@ -48,8 +49,6 @@ pub enum AppState {
 
 pub const PLAYER_R: f32 = 1.0;
 const IMPULSE: f32 = 15.0;
-// TODO: Replace this with friction maybe?
-// That might make it easier to have slippery/sticky ground effects.
 const DAMPING: Damping = Damping {
     linear_damping: 5.0,
     angular_damping: 0.0,
@@ -220,7 +219,9 @@ struct Character {
     energy: Energy,
     max_speed: MaxSpeed,
     damping: Damping,
+    friction: Friction,
     impulse: ExternalImpulse,
+    force: ExternalForce,
     status_effects: StatusEffects,
     shootable: Shootable,
     cooldowns: Cooldowns,
@@ -281,8 +282,6 @@ impl Plugin for GamPlugin {
             schedule.clone(),
             (
                 GameSet::Timer,
-                GameSet::Input,
-                GameSet::Ai,
                 GameSet::Physics1,
                 GameSet::Physics2,
                 GameSet::Physics3,
@@ -297,19 +296,22 @@ impl Plugin for GamPlugin {
             schedule.clone(),
             (
                 (time::tick_counter, time::debug_tick_system).in_set(GameSet::Timer),
-                (input::apply_inputs).in_set(GameSet::Input),
-                (ai::simple::system_set()).in_set(GameSet::Ai),
                 physics.set1().in_set(GameSet::Physics1),
                 physics.set2().in_set(GameSet::Physics2),
                 physics.set3().in_set(GameSet::Physics3),
                 (
                     // Note: Most things should go here.
+                    clear_forces,
+                    clear_impulses,
                     energy_regen,
                     lifecycle::reset,
+                    input::apply_inputs,
+                    ai::simple::system_set(),
                     ability::grenade::grenade_land_system,
                     ability::bullet::bullet_kickback_system,
                     seeker_rocket::seeker_rocket_tracking,
                     ability::grenade::grenade_explode_system,
+                    lifecycle::fall,
                     // Collisions
                     collision::clear_colliding_system,
                     collision::collision_system,
@@ -353,9 +355,9 @@ pub fn game_paused(state: Res<State<AppState>>) -> bool {
 }
 
 pub fn setup(mut commands: Commands) {
-    // Ground plane
-    const WALL: f32 = 1.0;
-    const HALF_WALL: f32 = WALL * 2.0;
+    // Walls
+    const WALL: f32 = 5.0;
+    const HALF_WALL: f32 = WALL * 0.5;
     const HALF_PLANE: f32 = PLANE * 0.5;
     let collider = Collider::compound(vec![
         (
@@ -379,7 +381,16 @@ pub fn setup(mut commands: Commands) {
             Collider::cuboid(HALF_WALL, HALF_PLANE + HALF_WALL, HALF_WALL),
         ),
     ]);
-    commands.spawn((RigidBody::KinematicPositionBased, collider));
+
+    let floor = Collider::cuboid(HALF_PLANE, HALF_PLANE, HALF_WALL);
+    commands.spawn((
+        RigidBody::Fixed,
+        floor,
+        Transform::from_translation(Vec3::new(0.0, 0.0, -HALF_WALL)),
+        GlobalTransform::default(),
+        Friction::default(),
+    ));
+    commands.spawn((RigidBody::Fixed, collider));
 }
 
 pub fn energy_regen(mut query: Query<&mut Energy>) {
@@ -389,12 +400,25 @@ pub fn energy_regen(mut query: Query<&mut Energy>) {
     }
 }
 
+pub fn clear_forces(mut query: Query<&mut ExternalForce>) {
+    for mut force in &mut query {
+        *force = ExternalForce::default();
+    }
+}
+
+pub fn clear_impulses(mut query: Query<&mut ExternalImpulse>) {
+    for mut impulse in &mut query {
+        impulse.reset();
+    }
+}
+
 /// Rotate the transform so that it faces `target`
 ///
 /// Note: this is different from `Transform::look_at` in that Bevy calls the
 /// y-axis up, so our definitions of `forward` and `up` are different.
 pub fn face(transform: &mut Transform, target: Vec3) {
-    let face = target - transform.translation;
+    let mut face = target - transform.translation;
+    face.z = 0.0;
     transform.look_to(-Vec3::Z, face);
 }
 

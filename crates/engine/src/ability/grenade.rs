@@ -18,7 +18,7 @@ use crate::{
     death_callback::{DeathCallback, ExplosionCallback},
     physics::G,
     time::{Tick, TickCounter},
-    Health, Kind, Object, Target, DAMPING, PLAYER_R,
+    Health, Kind, Object, Target, PLAYER_R,
 };
 
 use super::properties::GrenadeProps;
@@ -117,23 +117,13 @@ pub struct GrenadeLandEvent {
 }
 
 pub fn grenade_land_system(
-    mut commands: Commands,
-    mut query: Query<(
-        Entity,
-        &Grenade,
-        &mut LockedAxes,
-        &mut Transform,
-        &mut Velocity,
-    )>,
+    mut query: Query<(Entity, &Grenade, &mut Transform, &mut Velocity)>,
     mut event_writer: EventWriter<GrenadeLandEvent>,
 ) {
-    for (entity, grenade, mut axes, mut transform, mut velocity) in &mut query {
+    for (entity, grenade, mut transform, mut velocity) in &mut query {
         if transform.translation.z < grenade.radius && velocity.linvel.z < 0.0 {
             transform.translation.z = grenade.radius;
-            *axes |= LockedAxes::TRANSLATION_LOCKED_Z;
             velocity.linvel = Vec3::ZERO;
-            // Grenades on the ground should not roll around freely.
-            commands.entity(entity).insert(DAMPING);
             event_writer.send(GrenadeLandEvent { entity });
         }
     }

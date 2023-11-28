@@ -6,7 +6,7 @@ use bevy_ecs::{
 };
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
-use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody};
+use bevy_rapier3d::prelude::{Collider, Friction, LockedAxes, RigidBody};
 use bevy_transform::components::{GlobalTransform, Transform};
 use rand::Rng;
 
@@ -20,10 +20,20 @@ use crate::{
     DAMPING, PLANE, PLAYER_R,
 };
 
+pub const DEATH_Z: f32 = -10.0;
+
 #[derive(Debug, Event)]
 pub struct DeathEvent {
     pub transform: Transform,
     pub kind: Kind,
+}
+
+pub fn fall(mut query: Query<(&mut Health, &Transform)>) {
+    for (mut health, transform) in &mut query {
+        if transform.translation.z < DEATH_Z {
+            health.die();
+        }
+    }
 }
 
 pub fn die(
@@ -92,22 +102,24 @@ fn spawn_enemies(commands: &mut Commands, num: usize) {
                 Character {
                     health: Health::new(10.0),
                     energy: Energy::new(5.0, 0.2),
-                    damping: DAMPING,
                     object: Object {
                         transform: Transform::from_translation(loc),
                         global_transform: GlobalTransform::default(),
                         collider: Collider::capsule(
-                            Vec3::new(0.0, 0.0, 0.0),
-                            Vec3::new(0.0, 0.0, 2.0),
+                            Vec3::new(0.0, 0.0, PLAYER_R),
+                            Vec3::new(0.0, 0.0, 1.0 + PLAYER_R),
                             1.0,
                         ),
                         body: RigidBody::Dynamic,
-                        locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+                        locked_axes: LockedAxes::ROTATION_LOCKED,
                         kind: Kind::Enemy,
                         ..Default::default()
                     },
                     max_speed: Default::default(),
+                    damping: DAMPING,
                     impulse: Default::default(),
+                    force: Default::default(),
+                    friction: Friction::default(),
                     status_effects: Default::default(),
                     shootable: Shootable,
                     cooldowns: Cooldowns::new(&abilities),
@@ -131,21 +143,23 @@ fn spawn_allies(commands: &mut Commands, num: usize) {
                 Character {
                     health: Health::new(100.0),
                     energy: Energy::new(100.0, ENERGY_REGEN),
-                    damping: DAMPING,
                     object: Object {
                         transform: Transform::from_translation(loc),
                         collider: Collider::capsule(
-                            Vec3::new(0.0, 0.0, 0.0),
-                            Vec3::new(0.0, 0.0, 2.0),
+                            Vec3::new(0.0, 0.0, PLAYER_R),
+                            Vec3::new(0.0, 0.0, 1.0 + PLAYER_R),
                             1.0,
                         ),
                         body: RigidBody::Dynamic,
-                        locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+                        locked_axes: LockedAxes::ROTATION_LOCKED,
                         kind: Kind::Ally,
                         ..Default::default()
                     },
                     max_speed: Default::default(),
+                    damping: DAMPING,
                     impulse: Default::default(),
+                    force: Default::default(),
+                    friction: Friction::default(),
                     status_effects: Default::default(),
                     shootable: Shootable,
                     cooldowns: Cooldowns::new(&abilities),

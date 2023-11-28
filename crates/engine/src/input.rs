@@ -112,7 +112,7 @@ pub fn apply_inputs(
         {
             max_impulse *= props.hyper_sprint.factor;
         }
-        impulse.impulse = dir * max_impulse;
+        impulse.impulse += dir * max_impulse;
 
         // Menu
         if buttons.contains(Action::Menu) {
