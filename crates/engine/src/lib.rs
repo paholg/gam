@@ -293,7 +293,7 @@ impl Plugin for GamPlugin {
         );
 
         // Systems in order
-        app.add_systems(Startup, level::default_level).add_systems(
+        app.add_systems(Startup, level::test_level).add_systems(
             schedule.clone(),
             (
                 (time::tick_counter, time::debug_tick_system).in_set(GameSet::Timer),

@@ -2,7 +2,7 @@ use bevy_ecs::{
     component::Component,
     entity::Entity,
     query::With,
-    system::{Commands, Query, Res, Resource},
+    system::{Commands, Query, Res, ResMut, Resource},
 };
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
@@ -10,7 +10,7 @@ use bevy_rapier3d::prelude::{Collider, Friction, RigidBody};
 use bevy_transform::components::{GlobalTransform, Transform};
 use rand::Rng;
 
-use crate::PLAYER_R;
+use crate::{lifecycle::DEATH_Z, PLAYER_R};
 
 /// A market to indicate that an entity is part of a level, and should be
 /// deleted when it ends.
@@ -23,9 +23,9 @@ pub fn clear_level(mut commands: Commands, query: Query<Entity, With<InLevel>>) 
     }
 }
 
-const WALL_HEIGHT: f32 = 2.0;
+pub const WALL_HEIGHT: f32 = 2.0;
 const WALL_WIDTH: f32 = 0.5;
-// const SHORT_WALL: f32 = 1.0;
+pub const SHORT_WALL: f32 = 1.0;
 
 #[derive(Resource)]
 pub struct LevelProps {
@@ -77,6 +77,45 @@ impl FloorSpawner {
                 loc: self.loc,
             },
         ));
+    }
+}
+
+const PIT_COLOR: [u8; 3] = [0, 0, 0];
+const FLOOR_COLOR: [u8; 3] = [150, 240, 110];
+const WALL_COLOR: [u8; 3] = [220, 110, 165];
+const SHORT_WALL_COLOR: [u8; 3] = [255, 200, 255];
+
+pub fn test_level(mut commands: Commands, mut props: ResMut<LevelProps>) {
+    let pixel = 1.0;
+    let image = image::io::Reader::open("assets/levels/test2.png")
+        .unwrap()
+        .decode()
+        .unwrap()
+        .into_rgb8();
+    let (width, height) = image.dimensions();
+    props.x = width as f32 * pixel;
+    props.y = height as f32 * pixel;
+
+    for (x, y, color) in image.enumerate_pixels() {
+        let height = match color.0 {
+            PIT_COLOR => continue,
+            FLOOR_COLOR => 0.0,
+            SHORT_WALL_COLOR => SHORT_WALL,
+            WALL_COLOR => WALL_HEIGHT,
+            color => {
+                tracing::warn!("Not an acceptable color: {color:?}");
+                WALL_HEIGHT * 2.0
+            }
+        };
+        let x = x as f32 * pixel;
+        let y = y as f32 * pixel;
+        let dim = Vec3::new(pixel, pixel, -DEATH_Z + height);
+        let loc = Vec3::new(
+            -props.x * 0.5 + x,
+            props.y * 0.5 - y,
+            DEATH_Z * 0.5 + height * 0.5,
+        );
+        FloorSpawner::new(dim, loc).spawn(&mut commands);
     }
 }
 

@@ -20,7 +20,7 @@ use crate::{
     DAMPING, PLAYER_R,
 };
 
-pub const DEATH_Z: f32 = -10.0;
+pub const DEATH_Z: f32 = -2.0;
 
 #[derive(Debug, Event)]
 pub struct DeathEvent {
