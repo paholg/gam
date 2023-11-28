@@ -3,7 +3,7 @@ use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{Collider, LockedAxes, RigidBody};
 
 use crate::{
-    ability::Abilities, lifecycle::ENERGY_REGEN, Ally, Character, Cooldowns, Energy, Health,
+    ability::Abilities, lifecycle::ENERGY_REGEN, Ally, Character, Cooldowns, Energy, Health, Kind,
     Object, Player, Shootable, Target, DAMPING, PLAYER_R,
 };
 
@@ -32,6 +32,7 @@ impl PlayerInfo {
                         ),
                         body: RigidBody::Dynamic,
                         locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+                        kind: Kind::Player,
                         ..Default::default()
                     },
                     max_speed: Default::default(),

@@ -1,4 +1,7 @@
-use std::{ops::Mul, time::Instant};
+use std::{
+    ops::{Mul, SubAssign},
+    time::Instant,
+};
 
 use bevy_ecs::system::{ResMut, Resource};
 use bevy_reflect::Reflect;
@@ -9,7 +12,7 @@ pub const FREQUENCY: f32 = 60.0;
 pub const TIMESTEP: f32 = 1.0 / FREQUENCY;
 
 /// Represents a duration in ticks rather than time.
-#[derive(Default, Debug, Copy, Clone, Reflect)]
+#[derive(Default, Debug, Copy, Clone, Reflect, PartialEq, Eq)]
 pub struct Tick(pub u32);
 
 impl Tick {
@@ -29,6 +32,12 @@ impl Mul<u32> for Tick {
 impl From<u32> for Tick {
     fn from(val: u32) -> Self {
         Self(val)
+    }
+}
+
+impl SubAssign for Tick {
+    fn sub_assign(&mut self, rhs: Self) {
+        self.0 = self.0.saturating_sub(rhs.0);
     }
 }
 

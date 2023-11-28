@@ -1,5 +1,7 @@
 pub mod ability;
 pub mod ai;
+pub mod collision;
+pub mod death_callback;
 pub mod input;
 pub mod lifecycle;
 pub mod multiplayer;
@@ -12,13 +14,11 @@ use std::fmt;
 
 use ability::{
     grenade::GrenadeLandEvent, properties::AbilityProps, seeker_rocket, Abilities, Ability,
-    ShotHitEvent,
 };
 use bevy_app::{App, FixedUpdate, Plugin, PostUpdate, Startup};
 use bevy_ecs::{
     bundle::Bundle,
     component::Component,
-    event::Event,
     schedule::{IntoSystemConfigs, IntoSystemSetConfigs, State, States, SystemSet},
     system::{Commands, Query, Res, Resource},
 };
@@ -32,6 +32,7 @@ use bevy_time::{Fixed, Time};
 use bevy_transform::components::{GlobalTransform, Transform};
 use bevy_utils::HashMap;
 use input::check_resume;
+use lifecycle::DeathEvent;
 use multiplayer::PlayerInputs;
 use physics::PhysicsPlugin;
 use status_effect::StatusEffects;
@@ -45,11 +46,6 @@ pub enum AppState {
     Paused,
 }
 
-#[derive(Debug, Event)]
-pub struct DeathEvent {
-    pub transform: Transform,
-}
-
 pub const PLAYER_R: f32 = 1.0;
 const IMPULSE: f32 = 15.0;
 // TODO: Replace this with friction maybe?
@@ -59,23 +55,52 @@ const DAMPING: Damping = Damping {
     angular_damping: 0.0,
 };
 
+/// Represents the kind of entity this is; used, at least, for effects.
+///
+/// All in-game entities should probably have this component.
+#[derive(Component, Debug, Default, Copy, Clone)]
+pub enum Kind {
+    #[default]
+    Other,
+    Player,
+    Enemy,
+    Ally,
+    Bullet,
+    FragGrenade,
+    HealGrenade,
+    SeekerRocket,
+}
+
 pub const PLANE: f32 = 50.0;
 
 #[derive(Component, Default, Reflect, Debug)]
 pub struct Health {
     pub cur: f32,
     pub max: f32,
+    pub death_delay: Tick,
 }
 
 impl Health {
     pub fn new(max: f32) -> Self {
-        Self { cur: max, max }
+        Self::new_with_delay(max, Tick(0))
+    }
+
+    pub fn new_with_delay(max: f32, death_delay: Tick) -> Self {
+        Self {
+            cur: max,
+            max,
+            death_delay,
+        }
     }
 
     pub fn take(&mut self, dmg: f32) {
         // Note: Damage can be negative (for healing) so we need to clamp by
         // both min (0) and max.
         self.cur = (self.cur - dmg).clamp(0.0, self.max);
+    }
+
+    pub fn die(&mut self) {
+        self.cur = 0.0;
     }
 }
 
@@ -185,6 +210,7 @@ pub struct Object {
     velocity: Velocity,
     locked_axes: LockedAxes,
     mass: ReadMassProperties,
+    kind: Kind,
 }
 
 #[derive(Bundle)]
@@ -238,13 +264,12 @@ impl Plugin for GamPlugin {
             .insert_resource(PlayerInputs::default());
 
         // Events
-        // TODO: Currently, events are only used for engine -> client
+        // TODO: Currently, these events are only used for engine -> client
         // communication. We should probably come up with a method so that the
         // server does not need to generate them.
         // Note: If any events are needed by the server, don't use `add_event`. See
         // https://bevy-cheatbook.github.io/patterns/manual-event-clear.html
         app.add_event::<GrenadeLandEvent>()
-            .add_event::<ShotHitEvent>()
             .add_event::<DeathEvent>();
 
         let physics = PhysicsPlugin::new();
@@ -282,17 +307,21 @@ impl Plugin for GamPlugin {
                     energy_regen,
                     lifecycle::reset,
                     ability::grenade::grenade_land_system,
-                    ability::shot_kickback_system,
+                    ability::bullet::bullet_kickback_system,
                     seeker_rocket::seeker_rocket_tracking,
+                    ability::grenade::grenade_explode_system,
+                    // Collisions
+                    collision::clear_colliding_system,
+                    collision::collision_system,
+                    ability::bullet::bullet_collision_system,
+                    ability::seeker_rocket::seeker_rocket_collision_system,
+                    death_callback::explosion_collision_system,
                 )
                     .chain()
                     .in_set(GameSet::Stuff),
                 (
-                    // Systems that despawn at the end.
-                    ability::shot_hit_system,
-                    ability::explosion::explosion_despawn_system,
-                    ability::grenade::grenade_explode_system,
-                    ability::shot_despawn_system,
+                    // Put systems that despawn things at the end.
+                    ability::bullet::bullet_despawn_system,
                     lifecycle::die,
                 )
                     .chain()

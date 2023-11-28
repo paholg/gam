@@ -1,8 +1,8 @@
 use bevy_ecs::{
     entity::Entity,
-    event::EventWriter,
-    query::With,
-    system::{Commands, Query, ResMut},
+    event::{Event, EventWriter},
+    query::{With, Without},
+    system::{Commands, Query, Res, ResMut},
 };
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
@@ -13,23 +13,62 @@ use rand::Rng;
 use crate::{
     ability::{Abilities, Ability},
     ai::simple::Attitude,
+    death_callback::DeathCallback,
     player::PlayerInfo,
-    Ai, Ally, Character, Cooldowns, DeathEvent, Enemy, Energy, Health, NumAi, Object, Player,
-    Shootable, DAMPING, PLANE, PLAYER_R,
+    time::{Tick, TickCounter},
+    Ai, Ally, Character, Cooldowns, Enemy, Energy, Health, Kind, NumAi, Object, Player, Shootable,
+    DAMPING, PLANE, PLAYER_R,
 };
+
+#[derive(Debug, Event)]
+pub struct DeathEvent {
+    pub transform: Transform,
+    pub kind: Kind,
+}
 
 pub fn die(
     mut commands: Commands,
-    query: Query<(Entity, &Health, &Transform)>,
+    mut without_callback_q: Query<(Entity, &mut Health, &Transform, &Kind), Without<DeathCallback>>,
+    mut with_callback_q: Query<(Entity, &mut Health, &Transform, &Kind, &DeathCallback)>,
     mut event_writer: EventWriter<DeathEvent>,
+    tick_counter: Res<TickCounter>,
 ) {
-    for (entity, health, &transform) in query.iter() {
-        if health.cur <= 0.0 {
-            tracing::debug!(?entity, ?health, ?transform, "DEATH");
-            event_writer.send(DeathEvent { transform });
-            commands.entity(entity).despawn_recursive();
-        }
-    }
+    let events = without_callback_q
+        .iter_mut()
+        .filter_map(|(entity, mut health, &transform, &kind)| {
+            if health.cur <= 0.0 {
+                if health.death_delay == Tick(0) {
+                    tracing::debug!(tick = ?tick_counter.tick, ?entity, ?health, ?transform, "DEATH");
+                    commands.entity(entity).despawn_recursive();
+                    Some(DeathEvent { transform, kind })
+                } else {
+                    health.death_delay -= Tick(1);
+                    None
+                }
+            } else {
+                None
+            }
+        });
+    event_writer.send_batch(events);
+
+    let more_events =
+        with_callback_q
+            .iter_mut()
+            .filter_map(|(entity, mut health, &transform, &kind, callback)| {
+                if health.cur <= 0.0 {
+                    if health.death_delay == Tick(0) {
+                        tracing::debug!(tick = ?tick_counter.tick, ?entity, ?health, ?transform, "DEATH WITH CALLBACK");
+                        callback.call(&mut commands, &transform);
+                        commands.entity(entity).despawn_recursive();
+                        Some(DeathEvent { transform, kind })
+                    } else { health.death_delay -= Tick(1);
+                        None
+                    }
+                } else {
+                    None
+                }
+            });
+    event_writer.send_batch(more_events);
 }
 
 pub const ENERGY_REGEN: f32 = 0.5;
@@ -64,6 +103,7 @@ fn spawn_enemies(commands: &mut Commands, num: usize) {
                         ),
                         body: RigidBody::Dynamic,
                         locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+                        kind: Kind::Enemy,
                         ..Default::default()
                     },
                     max_speed: Default::default(),
@@ -101,6 +141,7 @@ fn spawn_allies(commands: &mut Commands, num: usize) {
                         ),
                         body: RigidBody::Dynamic,
                         locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+                        kind: Kind::Ally,
                         ..Default::default()
                     },
                     max_speed: Default::default(),
