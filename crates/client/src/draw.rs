@@ -1,7 +1,8 @@
 use bevy::{
+    core::FrameCount,
     prelude::{
         Added, BuildChildren, Bundle, Commands, Component, Entity, EventReader, Handle,
-        InheritedVisibility, Mesh, Parent, PbrBundle, Plugin, Query, Res, StandardMaterial,
+        InheritedVisibility, Mesh, Parent, PbrBundle, Plugin, Query, Res, ResMut, StandardMaterial,
         Transform, Update, ViewVisibility, Visibility, With, Without,
     },
     scene::Scene,
@@ -21,7 +22,7 @@ use engine::{
 };
 
 use crate::{
-    asset_handler::{AssetHandler, HyperSprintEffect},
+    asset_handler::AssetHandler,
     bar::{Energybar, Healthbar},
     Config,
 };
@@ -259,30 +260,31 @@ fn draw_ally_system(
 }
 
 fn draw_death_system(
-    assets: Res<AssetHandler>,
+    mut commands: Commands,
+    mut assets: ResMut<AssetHandler>,
     audio: Res<Audio>,
     config: Res<Config>,
     mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
     mut event_reader: EventReader<DeathEvent>,
+    frame: Res<FrameCount>,
 ) {
+    // TODO: Reset
     for death in event_reader.read() {
-        let effect_entity = match death.kind {
+        let effect = match death.kind {
             Kind::Other => continue,
-            Kind::Player => assets.player.despawn_effect,
-            Kind::Enemy => assets.enemy.despawn_effect,
-            Kind::Ally => assets.ally.despawn_effect,
-            Kind::Bullet => assets.shot.effect_entity,
-            Kind::FragGrenade => assets.frag_grenade.effect_entity,
-            Kind::HealGrenade => assets.heal_grenade.effect_entity,
-            Kind::SeekerRocket => assets.seeker_rocket.effect_entity,
+            Kind::Player => &mut assets.player.despawn_effect,
+            Kind::Enemy => &mut assets.enemy.despawn_effect,
+            Kind::Ally => &mut assets.ally.despawn_effect,
+            Kind::Bullet => &mut assets.shot.collision_effect,
+            Kind::FragGrenade => &mut assets.frag_grenade.explosion_effect,
+            Kind::HealGrenade => &mut assets.heal_grenade.explosion_effect,
+            Kind::SeekerRocket => &mut assets.seeker_rocket.explosion_effect,
         };
-        let Ok((mut transform, mut effect_spawner)) = effects.get_mut(effect_entity) else {
-            tracing::warn!(?death, "Could not get death effect");
-            continue;
-        };
-        *transform = death.transform;
+
+        let mut transform = death.transform;
         transform.translation.z += ABILITY_Z;
-        effect_spawner.reset();
+
+        effect.trigger(&mut commands, transform, &mut effects, &frame);
 
         let sound = match death.kind {
             Kind::Bullet => assets.shot.despawn_sound.clone(),
@@ -302,18 +304,15 @@ fn draw_death_system(
 }
 
 fn draw_hyper_sprint_system(
-    assets: Res<AssetHandler>,
-    mut effects: Query<(&mut Transform, &mut EffectSpawner), With<HyperSprintEffect>>,
-    query: Query<&Transform, (With<HyperSprinting>, Without<HyperSprintEffect>)>,
+    mut commands: Commands,
+    mut assets: ResMut<AssetHandler>,
+    mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
+    query: Query<&Transform, (With<HyperSprinting>, Without<EffectSpawner>)>,
+    frame: Res<FrameCount>,
 ) {
-    for sprint_transform in query.iter() {
-        let Ok((mut transform, mut effect_spawner)) =
-            effects.get_mut(assets.hyper_sprint.effect_entity)
-        else {
-            tracing::warn!(?sprint_transform, "Could not get sprint effect.");
-            continue;
-        };
-        *transform = *sprint_transform;
-        effect_spawner.reset();
+    let effect = &mut assets.hyper_sprint.effect;
+
+    for &sprint_transform in query.iter() {
+        effect.trigger(&mut commands, sprint_transform, &mut effects, &frame);
     }
 }

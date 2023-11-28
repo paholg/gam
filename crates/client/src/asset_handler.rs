@@ -3,8 +3,8 @@ use bevy::{
     prelude::{
         default,
         shape::{self, Capsule, Circle, Cylinder, Icosphere},
-        AssetServer, Assets, Color, Commands, Component, Entity, Handle, Mesh, Res, ResMut,
-        Resource, StandardMaterial, Vec2, Vec3, Vec4,
+        AssetServer, Assets, Color, Commands, Handle, Mesh, Res, ResMut, Resource,
+        StandardMaterial, Vec2, Vec3, Vec4,
     },
     scene::Scene,
 };
@@ -24,6 +24,7 @@ use engine::{
 
 use crate::{
     bar::{Energybar, Healthbar},
+    particles::ParticleEffectPool,
     shapes::HollowPolygon,
 };
 
@@ -36,7 +37,7 @@ pub struct BarAssets {
 pub struct ShotAssets {
     pub mesh: Handle<Mesh>,
     pub material: Handle<StandardMaterial>,
-    pub effect_entity: Entity,
+    pub collision_effect: ParticleEffectPool,
     pub spawn_sound: Handle<AudioSource>,
     pub despawn_sound: Handle<AudioSource>,
 }
@@ -44,7 +45,7 @@ pub struct ShotAssets {
 pub struct GrenadeAssets {
     pub mesh: Handle<Mesh>,
     pub material: Handle<StandardMaterial>,
-    pub effect_entity: Entity,
+    pub explosion_effect: ParticleEffectPool,
     pub outline_mesh: Handle<Mesh>,
     pub outline_material: Handle<StandardMaterial>,
 }
@@ -52,7 +53,7 @@ pub struct GrenadeAssets {
 pub struct SeekerRocketAssets {
     pub mesh: Handle<Mesh>,
     pub material: Handle<StandardMaterial>,
-    pub effect_entity: Entity,
+    pub explosion_effect: ParticleEffectPool,
     pub outline_mesh: Handle<Mesh>,
     pub outline_material: Handle<StandardMaterial>,
 }
@@ -66,7 +67,7 @@ pub struct TargetAssets {
 }
 
 pub struct HyperSprintAssets {
-    pub effect_entity: Entity,
+    pub effect: ParticleEffectPool,
 }
 
 pub struct CharacterAssets {
@@ -74,7 +75,7 @@ pub struct CharacterAssets {
     pub outline_mesh: Handle<Mesh>,
     pub outline_material: Handle<StandardMaterial>,
     pub despawn_sound: Handle<AudioSource>,
-    pub despawn_effect: Entity,
+    pub despawn_effect: ParticleEffectPool,
 }
 
 // A collection of HandleIds for assets for spawning.
@@ -93,21 +94,6 @@ pub struct AssetHandler {
     pub music: Handle<LoadedFolder>,
     pub target: TargetAssets,
 }
-
-#[derive(Component)]
-pub struct ShotEffect;
-
-#[derive(Component)]
-pub struct HyperSprintEffect;
-
-#[derive(Component)]
-pub struct DeathEffect;
-
-#[derive(Component)]
-pub struct FragGrenadeEffect;
-
-#[derive(Component)]
-pub struct SeekerRocketEffect;
 
 pub fn asset_handler_setup(
     mut commands: Commands,
@@ -163,10 +149,7 @@ pub fn asset_handler_setup(
     };
 
     let effect = effects.add(shot_effect(&props.gun));
-    let effect_entity = commands
-        .spawn(ParticleEffectBundle::new(effect))
-        .insert(ShotEffect)
-        .id();
+    let effect_pool = ParticleEffectBundle::new(effect).into();
 
     let shot_material = StandardMaterial {
         emissive: Color::rgb_linear(0.0, 20.0, 20.0),
@@ -182,7 +165,7 @@ pub fn asset_handler_setup(
             .unwrap(),
         ),
         material: materials.add(shot_material),
-        effect_entity,
+        collision_effect: effect_pool,
         spawn_sound: asset_server.load("third-party/audio/other/laserSmall_000.ogg"),
         despawn_sound: asset_server.load("third-party/audio/other/laserSmall_000.ogg"),
     };
@@ -195,10 +178,7 @@ pub fn asset_handler_setup(
     };
 
     let frag_grenade_effect = effects.add(frag_grenade_effect(&props.frag_grenade));
-    let frag_effect_entity = commands
-        .spawn(ParticleEffectBundle::new(frag_grenade_effect))
-        .insert(FragGrenadeEffect)
-        .id();
+    let frag_effect = ParticleEffectBundle::new(frag_grenade_effect).into();
 
     let frag_grenade = GrenadeAssets {
         mesh: meshes.add(
@@ -218,7 +198,7 @@ pub fn asset_handler_setup(
             .into(),
         ),
         outline_material: materials.add(frag_grenade_material),
-        effect_entity: frag_effect_entity,
+        explosion_effect: frag_effect,
     };
 
     let heal_grenade_material = StandardMaterial {
@@ -227,11 +207,7 @@ pub fn asset_handler_setup(
     };
 
     let heal_grenade_effect = effects.add(heal_grenade_effect(&props.heal_grenade));
-    let heal_effect_entity = commands
-        .spawn(ParticleEffectBundle::new(heal_grenade_effect))
-        .insert(FragGrenadeEffect)
-        .id();
-
+    let heal_effect = ParticleEffectBundle::new(heal_grenade_effect).into();
     let heal_grenade = GrenadeAssets {
         mesh: meshes.add(
             Mesh::try_from(Icosphere {
@@ -250,7 +226,7 @@ pub fn asset_handler_setup(
         ),
         material: materials.add(heal_grenade_material.clone()),
         outline_material: materials.add(heal_grenade_material),
-        effect_entity: heal_effect_entity,
+        explosion_effect: heal_effect,
     };
 
     let seeker_rocket_material = StandardMaterial {
@@ -258,10 +234,7 @@ pub fn asset_handler_setup(
         ..Default::default()
     };
     let seeker_rocket_effect = effects.add(seeker_rocket_effect(&props.seeker_rocket));
-    let seeker_rocket_effect_entity = commands
-        .spawn(ParticleEffectBundle::new(seeker_rocket_effect))
-        .insert(SeekerRocketEffect)
-        .id();
+    let seeker_rocket_effect = ParticleEffectBundle::new(seeker_rocket_effect).into();
 
     let seeker_rocket = SeekerRocketAssets {
         mesh: meshes.add(
@@ -282,16 +255,15 @@ pub fn asset_handler_setup(
         ),
         material: materials.add(seeker_rocket_material.clone()),
         outline_material: materials.add(seeker_rocket_material),
-        effect_entity: seeker_rocket_effect_entity,
+        explosion_effect: seeker_rocket_effect,
     };
 
     let effect = effects.add(hyper_sprint_effect());
-    let effect_entity = commands
-        .spawn(ParticleEffectBundle::new(effect))
-        .insert(HyperSprintEffect)
-        .id();
+    let hyper_sprint_effect = ParticleEffectBundle::new(effect).into();
 
-    let hyper_sprint = HyperSprintAssets { effect_entity };
+    let hyper_sprint = HyperSprintAssets {
+        effect: hyper_sprint_effect,
+    };
 
     let robot = asset_server.load("models/temp/robot1.glb#Scene0");
     loading.add(&robot);
@@ -333,17 +305,14 @@ pub fn asset_handler_setup(
     ally_outline.emissive = Color::CYAN.with_a(OUTLINE_ALPHA);
 
     let death_effect = effects.add(death_effect());
-    let death_effect_entity = commands
-        .spawn(ParticleEffectBundle::new(death_effect))
-        .insert(DeathEffect)
-        .id();
+    let death_effect: ParticleEffectPool = ParticleEffectBundle::new(death_effect).into();
 
     let player = CharacterAssets {
         scene: robot.clone(),
         outline_mesh: outline.clone(),
         outline_material: materials.add(player_outline),
         despawn_sound: death_sound.clone(),
-        despawn_effect: death_effect_entity,
+        despawn_effect: death_effect.clone(),
     };
 
     let ally = CharacterAssets {
@@ -351,7 +320,7 @@ pub fn asset_handler_setup(
         outline_mesh: outline.clone(),
         outline_material: materials.add(ally_outline),
         despawn_sound: death_sound.clone(),
-        despawn_effect: death_effect_entity,
+        despawn_effect: death_effect.clone(),
     };
 
     let enemy = CharacterAssets {
@@ -359,7 +328,7 @@ pub fn asset_handler_setup(
         outline_mesh: outline,
         outline_material: materials.add(enemy_outline),
         despawn_sound: death_sound,
-        despawn_effect: death_effect_entity,
+        despawn_effect: death_effect,
     };
 
     let mut target_material = outline_material;
@@ -420,7 +389,7 @@ fn shot_effect(props: &GunProps) -> EffectAsset {
     size_gradient1.add_key(0.3, Vec2::splat(0.1));
     size_gradient1.add_key(1.0, Vec2::splat(0.0));
 
-    let spawner = Spawner::once(250.0.into(), false);
+    let spawner = Spawner::once(250.0.into(), true);
     let writer = ExprWriter::new();
 
     let pos = SetPositionSphereModifier {
@@ -476,7 +445,7 @@ fn death_effect() -> EffectAsset {
     size_gradient1.add_key(0.3, Vec2::splat(0.3));
     size_gradient1.add_key(1.0, Vec2::splat(0.0));
 
-    let spawner = Spawner::once(500.0.into(), false);
+    let spawner = Spawner::once(500.0.into(), true);
     let writer = ExprWriter::new();
 
     let pos = SetPositionSphereModifier {
@@ -533,7 +502,7 @@ fn frag_grenade_effect(props: &GrenadeProps) -> EffectAsset {
     size_gradient1.add_key(0.3, Vec2::splat(0.3));
     size_gradient1.add_key(1.0, Vec2::splat(0.0));
 
-    let spawner = Spawner::once(500.0.into(), false);
+    let spawner = Spawner::once(500.0.into(), true);
     let writer = ExprWriter::new();
 
     let pos = SetPositionSphereModifier {
@@ -589,7 +558,7 @@ fn heal_grenade_effect(props: &GrenadeProps) -> EffectAsset {
     size_gradient1.add_key(0.3, Vec2::splat(0.3));
     size_gradient1.add_key(1.0, Vec2::splat(0.0));
 
-    let spawner = Spawner::once(500.0.into(), false);
+    let spawner = Spawner::once(500.0.into(), true);
     let writer = ExprWriter::new();
 
     let pos = SetPositionSphereModifier {
@@ -646,7 +615,7 @@ fn seeker_rocket_effect(props: &SeekerRocketProps) -> EffectAsset {
     size_gradient1.add_key(0.3, Vec2::splat(0.3));
     size_gradient1.add_key(1.0, Vec2::splat(0.0));
 
-    let spawner = Spawner::once(500.0.into(), false);
+    let spawner = Spawner::once(500.0.into(), true);
     let writer = ExprWriter::new();
 
     let pos = SetPositionSphereModifier {
@@ -696,7 +665,7 @@ fn hyper_sprint_effect() -> EffectAsset {
     gradient.add_key(0.5, Vec4::splat(1.0));
     gradient.add_key(1.0, Vec4::new(1.0, 1.0, 1.0, 0.0));
 
-    let spawner = Spawner::once(32.0.into(), false);
+    let spawner = Spawner::once(32.0.into(), true);
     let writer = ExprWriter::new();
 
     let pos = SetPositionCircleModifier {
