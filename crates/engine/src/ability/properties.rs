@@ -27,6 +27,7 @@ impl Default for AbilityProps {
                 explosion_radius: 7.0,
                 radius: 0.30,
                 kind: GrenadeKind::Frag,
+                health: 3.0,
             },
             heal_grenade: GrenadeProps {
                 cost: 50.0,
@@ -36,6 +37,7 @@ impl Default for AbilityProps {
                 explosion_radius: 4.0,
                 radius: 0.20,
                 kind: GrenadeKind::Heal,
+                health: 3.0,
             },
             hyper_sprint: Default::default(),
             gun: Default::default(),
@@ -98,6 +100,7 @@ pub struct GunProps {
     pub radius: f32,
     pub damage: f32,
     pub density: f32,
+    pub bullet_health: f32,
 }
 
 impl Default for GunProps {
@@ -109,6 +112,7 @@ impl Default for GunProps {
             speed: 50.0,
             radius: 0.15,
             damage: 1.0,
+            bullet_health: 1.0,
             density: 100.0,
         }
     }
@@ -126,6 +130,7 @@ pub struct ShotgunProps {
     /// Spread angle in radians.
     pub spread: f32,
     pub density: f32,
+    pub bullet_health: f32,
 }
 
 impl Default for ShotgunProps {
@@ -137,6 +142,7 @@ impl Default for ShotgunProps {
             speed: 30.0,
             radius: 0.15,
             damage: 1.0,
+            bullet_health: 1.0,
             n_pellets: 8,
             spread: PI * 0.125,
             density: 100.0,
@@ -153,6 +159,7 @@ pub struct GrenadeProps {
     pub explosion_radius: f32,
     pub radius: f32,
     pub kind: GrenadeKind,
+    pub health: f32,
 }
 
 #[derive(Debug)]

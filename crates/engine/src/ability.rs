@@ -1,37 +1,28 @@
 use std::ops::Index;
 
-use bevy_ecs::{
-    component::Component,
-    entity::Entity,
-    event::{Event, EventReader, EventWriter},
-    query::{Added, With, Without},
-    system::{Commands, Query, Res},
-};
+use bevy_ecs::{component::Component, entity::Entity, system::Commands};
 use bevy_math::{Quat, Vec3};
-use bevy_rapier3d::prelude::{
-    ActiveEvents, Ccd, Collider, ColliderMassProperties, CollisionEvent, LockedAxes,
-    ReadMassProperties, RigidBody, Sensor, Velocity,
-};
+use bevy_rapier3d::prelude::Velocity;
 use bevy_reflect::Reflect;
-use bevy_transform::components::{GlobalTransform, Transform};
+use bevy_transform::components::Transform;
 use serde::{Deserialize, Serialize};
-use smallvec::SmallVec;
 use strum::{Display, EnumIter};
 use tracing::warn;
 
 use crate::{
     status_effect::{StatusEffect, StatusEffects},
-    time::{Tick, TickCounter},
-    Cooldowns, Energy, Health, Object, Shootable, Target, PLAYER_R,
+    time::TickCounter,
+    Cooldowns, Energy, Health, Target, PLAYER_R,
 };
 
 use self::{
+    bullet::{Bullet, BulletSpawner},
     grenade::grenade,
     properties::{AbilityProps, GunProps, ShotgunProps},
-    seeker_rocket::{seeker_rocket, SeekerRocket},
+    seeker_rocket::seeker_rocket,
 };
 
-pub mod explosion;
+pub mod bullet;
 pub mod grenade;
 pub mod properties;
 pub mod seeker_rocket;
@@ -204,13 +195,6 @@ fn hyper_sprint_disable(
     commands.entity(entity).remove::<HyperSprinting>();
 }
 
-#[derive(Component)]
-pub struct Shot {
-    shooter: Entity,
-    duration: Tick,
-    damage: f32,
-}
-
 fn gun(
     commands: &mut Commands,
     tick_counter: &TickCounter,
@@ -223,16 +207,17 @@ fn gun(
     let position =
         transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ABILITY_Z * Vec3::Z;
     let velocity = dir * props.speed + velocity.linvel;
-    Bullet {
+    BulletSpawner {
         position,
         velocity,
         radius: props.radius,
         density: props.density,
-        shot: Shot {
+        bullet: Bullet {
             shooter,
             duration: tick_counter.at(props.duration),
             damage: props.damage,
         },
+        health: Health::new(props.bullet_health),
     }
     .spawn(commands);
 }
@@ -254,145 +239,18 @@ fn shotgun(
         let position =
             transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ABILITY_Z * Vec3::Z;
         let velocity = dir * props.speed + velocity.linvel;
-        Bullet {
+        BulletSpawner {
             position,
             velocity,
             radius: props.radius,
             density: props.density,
-            shot: Shot {
+            bullet: Bullet {
                 shooter,
                 duration: tick_counter.at(props.duration),
                 damage: props.damage,
             },
+            health: Health::new(props.bullet_health),
         }
         .spawn(commands);
-    }
-}
-
-struct Bullet {
-    pub velocity: Vec3,
-    pub position: Vec3,
-    pub radius: f32,
-    pub density: f32,
-    pub shot: Shot,
-}
-
-impl Bullet {
-    fn spawn(self, commands: &mut Commands) {
-        commands.spawn((
-            Object {
-                transform: Transform::from_translation(self.position).with_scale(Vec3::new(
-                    self.radius,
-                    self.radius,
-                    self.radius,
-                )),
-                global_transform: GlobalTransform::default(),
-                collider: Collider::ball(self.radius),
-                mass_props: ColliderMassProperties::Density(self.density),
-                body: RigidBody::Dynamic,
-                velocity: Velocity {
-                    linvel: self.velocity,
-                    angvel: Vec3::ZERO,
-                },
-                locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
-                mass: ReadMassProperties::default(),
-            },
-            Sensor,
-            self.shot,
-            Ccd::enabled(),
-            ActiveEvents::COLLISION_EVENTS,
-        ));
-    }
-}
-
-pub fn shot_kickback_system(
-    shot_query: Query<(&Velocity, &ReadMassProperties, &Shot), Added<Shot>>,
-    mut momentum_query: Query<(&mut Velocity, &ReadMassProperties), Without<Shot>>,
-) {
-    for (v, m, shot) in shot_query.iter() {
-        let Ok((mut shooter_v, shooter_m)) = momentum_query.get_mut(shot.shooter) else {
-            continue;
-        };
-        shooter_v.linvel -= v.linvel * m.get().mass / shooter_m.get().mass;
-    }
-}
-
-pub fn shot_despawn_system(
-    mut commands: Commands,
-    tick_counter: Res<TickCounter>,
-    mut query: Query<(Entity, &mut Shot)>,
-) {
-    for (entity, shot) in query.iter_mut() {
-        if shot.duration.before_now(&tick_counter) {
-            commands.entity(entity).despawn();
-        }
-    }
-}
-
-#[derive(Event, Debug)]
-pub struct ShotHitEvent {
-    pub transform: Transform,
-}
-
-// Note: This iterates through all collision_events. We should use one system
-// for all such intersections to avoid duplicate work.
-pub fn shot_hit_system(
-    mut commands: Commands,
-    mut collision_events: EventReader<CollisionEvent>,
-    shot_query: Query<(Entity, &Transform, &Velocity, &ReadMassProperties, &Shot)>,
-    rocket_query: Query<(Entity, &SeekerRocket, &Transform)>,
-    mut health_query: Query<&mut Health>,
-    mut momentum_query: Query<
-        (&mut Velocity, &ReadMassProperties),
-        (With<Shootable>, Without<Shot>),
-    >,
-    mut hit_event_writer: EventWriter<ShotHitEvent>,
-) {
-    let mut shots_to_despawn: SmallVec<[(Entity, Transform); 10]> = smallvec::SmallVec::new();
-    for collision_event in collision_events.read() {
-        let CollisionEvent::Started(e1, e2, _flags) = collision_event else {
-            continue;
-        };
-        let e1 = *e1;
-        let e2 = *e2;
-
-        let (shot_entity, shot_transform, shot_vel, shot_mass, shot, target_entity) =
-            if let Ok((e, t, v, m, s)) = shot_query.get(e1) {
-                (e, t.to_owned(), v, m, s, e2)
-            } else if let Ok((e, t, v, m, s)) = shot_query.get(e2) {
-                (e, t.to_owned(), v, m, s, e1)
-            } else {
-                // FIXME: THIS IS HIDEOUS
-                //
-                // We are handling the rocket in the `else` of the `let _ = if` branch for shots.
-                // Adding any more abilities just means deeper hell.
-                let (rocket_entity, rocket, transform) = if let Ok((e, r, t)) = rocket_query.get(e1)
-                {
-                    (e, r, t)
-                } else if let Ok((e, r, t)) = rocket_query.get(e2) {
-                    (e, r, t)
-                } else {
-                    continue;
-                };
-
-                seeker_rocket::explode(&mut commands, rocket_entity, rocket, transform);
-
-                continue;
-            };
-
-        shots_to_despawn.push((shot_entity, shot_transform));
-        if let Ok(mut health) = health_query.get_mut(target_entity) {
-            health.take(shot.damage);
-        }
-        if let Ok((mut vel, mass)) = momentum_query.get_mut(target_entity) {
-            vel.linvel += shot_vel.linvel * shot_mass.get().mass / mass.get().mass;
-        }
-    }
-    shots_to_despawn.sort_by_key(|(entity, _transform)| *entity);
-    shots_to_despawn.dedup_by_key(|(entity, _transform)| *entity);
-
-    for (entity, transform) in shots_to_despawn.into_iter() {
-        commands.entity(entity).despawn();
-        hit_event_writer.send(ShotHitEvent { transform });
     }
 }

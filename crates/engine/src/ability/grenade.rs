@@ -6,24 +6,22 @@ use bevy_ecs::{
     event::{Event, EventWriter},
     system::{Commands, Query, Res},
 };
-use bevy_hierarchy::DespawnRecursiveExt;
+
 use bevy_math::{Vec2, Vec3};
 use bevy_rapier3d::prelude::{
-    Collider, ColliderMassProperties, LockedAxes, ReadMassProperties, Sensor, Velocity,
+    Collider, ColliderMassProperties, LockedAxes, ReadMassProperties, Velocity,
 };
 use bevy_transform::components::{GlobalTransform, Transform};
 use nalgebra::ComplexField;
 
 use crate::{
+    death_callback::{DeathCallback, ExplosionCallback},
     physics::G,
     time::{Tick, TickCounter},
-    Object, Target, DAMPING, PLAYER_R,
+    Health, Kind, Object, Target, DAMPING, PLAYER_R,
 };
 
-use super::{
-    explosion::{Explosion, ExplosionKind},
-    properties::GrenadeProps,
-};
+use super::properties::GrenadeProps;
 
 /// Calculate the initial velocity of a projectile thrown at 45 degrees up, so
 /// that it will land at target.
@@ -56,11 +54,11 @@ pub enum GrenadeKind {
     Heal,
 }
 
-impl GrenadeKind {
-    pub fn explosion_kind(&self) -> ExplosionKind {
-        match self {
-            GrenadeKind::Frag => ExplosionKind::FragGrenade,
-            GrenadeKind::Heal => ExplosionKind::HealGrenade,
+impl From<GrenadeKind> for Kind {
+    fn from(value: GrenadeKind) -> Self {
+        match value {
+            GrenadeKind::Frag => Kind::FragGrenade,
+            GrenadeKind::Heal => Kind::HealGrenade,
         }
     }
 }
@@ -71,9 +69,7 @@ pub struct Grenade {
     #[allow(dead_code)]
     shooter: Entity,
     expiration: Tick,
-    damage: f32,
     radius: f32,
-    explosion_radius: f32,
     pub kind: GrenadeKind,
 }
 
@@ -99,15 +95,19 @@ pub fn grenade(
             velocity: vel,
             locked_axes: LockedAxes::ROTATION_LOCKED,
             mass: ReadMassProperties::default(),
+            kind: props.kind.into(),
         },
         Grenade {
             expiration: tick_counter.at(props.delay),
             shooter,
             radius: props.radius,
-            damage: props.damage,
-            explosion_radius: props.explosion_radius,
             kind: props.kind,
         },
+        DeathCallback::Explosion(ExplosionCallback {
+            damage: props.damage,
+            radius: props.explosion_radius,
+        }),
+        Health::new(props.health),
     ));
 }
 
@@ -140,26 +140,12 @@ pub fn grenade_land_system(
 }
 
 pub fn grenade_explode_system(
-    mut commands: Commands,
-    query: Query<(Entity, &Grenade, &Transform)>,
+    mut query: Query<(&Grenade, &mut Health)>,
     tick_counter: Res<TickCounter>,
 ) {
-    for (entity, grenade, transform) in &query {
+    for (grenade, mut health) in &mut query {
         if grenade.expiration.before_now(&tick_counter) {
-            commands.entity(entity).despawn_recursive();
-            commands.spawn((
-                Object {
-                    transform: *transform,
-                    collider: Collider::ball(grenade.explosion_radius),
-                    body: bevy_rapier3d::prelude::RigidBody::KinematicPositionBased,
-                    ..Default::default()
-                },
-                Sensor,
-                Explosion {
-                    damage: grenade.damage,
-                    kind: grenade.kind.explosion_kind(),
-                },
-            ));
+            health.die();
         }
     }
 }

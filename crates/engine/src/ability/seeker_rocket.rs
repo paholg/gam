@@ -1,9 +1,9 @@
 use bevy_ecs::{
     component::Component,
     entity::Entity,
+    query::{With, Without},
     system::{Commands, Query},
 };
-use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{
     ActiveEvents, Collider, ColliderMassProperties, Damping, ExternalImpulse, LockedAxes,
@@ -12,23 +12,19 @@ use bevy_rapier3d::prelude::{
 use bevy_transform::components::{GlobalTransform, Transform};
 
 use crate::{
+    collision::{Colliding, TrackCollisions},
+    death_callback::{DeathCallback, ExplosionCallback},
     time::{Tick, TickCounter},
-    Health, Object, Target, PLAYER_R,
+    Health, Kind, Object, Target, PLAYER_R,
 };
 
-use super::{
-    explosion::{Explosion, ExplosionKind},
-    properties::SeekerRocketProps,
-    ABILITY_Z,
-};
+use super::{bullet::Bullet, properties::SeekerRocketProps, ABILITY_Z};
 
 #[derive(Component)]
 pub struct SeekerRocket {
     pub shooter: Entity,
     pub expiration: Tick,
-    pub damage: f32,
     pub radius: f32,
-    pub explosion_radius: f32,
     pub max_impulse: f32,
     pub turning_radius: f32,
 }
@@ -56,24 +52,28 @@ pub fn seeker_rocket(
             velocity: *velocity,
             locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
             mass: ReadMassProperties::default(),
+            kind: Kind::SeekerRocket,
         },
         Health::new(props.health),
         SeekerRocket {
             expiration: tick_counter.at(props.duration),
             shooter,
             radius: props.radius,
-            damage: props.damage,
-            explosion_radius: props.explosion_radius,
             max_impulse: props.max_impulse,
             turning_radius: props.turning_radius,
         },
+        DeathCallback::Explosion(ExplosionCallback {
+            damage: props.damage,
+            radius: props.explosion_radius,
+        }),
         Damping {
             linear_damping: props.damping,
             angular_damping: 0.0,
         },
         ExternalImpulse::default(),
-        Sensor,
         ActiveEvents::COLLISION_EVENTS,
+        TrackCollisions,
+        Sensor,
     ));
 }
 
@@ -99,24 +99,22 @@ pub fn seeker_rocket_tracking(
     }
 }
 
-pub fn explode(
-    commands: &mut Commands,
-    entity: Entity,
-    rocket: &SeekerRocket,
-    transform: &Transform,
+pub fn seeker_rocket_collision_system(
+    mut rocket_q: Query<(&mut Health, &Colliding), With<SeekerRocket>>,
+    // For now, we explode rockets on contact with anything but a bullet. Should be smarter about this.
+    bullet_q: Query<(), (With<Bullet>, Without<SeekerRocket>)>,
 ) {
-    commands.entity(entity).despawn_recursive();
-    commands.spawn((
-        Object {
-            transform: *transform,
-            collider: Collider::ball(rocket.explosion_radius),
-            body: bevy_rapier3d::prelude::RigidBody::KinematicPositionBased,
-            ..Default::default()
-        },
-        Sensor,
-        Explosion {
-            damage: rocket.damage,
-            kind: ExplosionKind::SeekerRocket,
-        },
-    ));
+    for (mut health, colliding) in &mut rocket_q {
+        let mut die = false;
+
+        for &target in &colliding.targets {
+            if bullet_q.get(target).is_err() {
+                die = true;
+            }
+        }
+
+        if die {
+            health.die();
+        }
+    }
 }

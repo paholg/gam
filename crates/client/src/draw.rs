@@ -11,16 +11,17 @@ use bevy_kira_audio::{prelude::Volume, Audio, AudioControl};
 use bevy_mod_raycast::prelude::RaycastMesh;
 use engine::{
     ability::{
-        explosion::{Explosion, ExplosionKind},
+        bullet::Bullet,
         grenade::{Grenade, GrenadeKind, GrenadeLandEvent},
         seeker_rocket::SeekerRocket,
-        HyperSprinting, Shot, ShotHitEvent, ABILITY_Z,
+        HyperSprinting, ABILITY_Z,
     },
-    Ally, DeathEvent, Enemy, Player,
+    lifecycle::DeathEvent,
+    Ally, Enemy, Kind, Player,
 };
 
 use crate::{
-    asset_handler::{AssetHandler, DeathEffect, HyperSprintEffect, ShotEffect},
+    asset_handler::{AssetHandler, HyperSprintEffect},
     bar::{Energybar, Healthbar},
     Config,
 };
@@ -41,9 +42,7 @@ impl Plugin for DrawPlugin {
                 draw_grenade_system,
                 draw_grenade_outline_system,
                 draw_seeker_rocket_system,
-                draw_shot_hit_system,
                 draw_death_system,
-                draw_explosion_system,
                 draw_hyper_sprint_system,
             ),
         );
@@ -99,7 +98,7 @@ fn raycast_scene_system(
 fn draw_shot_system(
     mut commands: Commands,
     assets: Res<AssetHandler>,
-    query: Query<Entity, Added<Shot>>,
+    query: Query<Entity, Added<Bullet>>,
 ) {
     for entity in query.iter() {
         let Some(mut ecmds) = commands.get_entity(entity) else {
@@ -259,37 +258,25 @@ fn draw_ally_system(
     }
 }
 
-fn draw_shot_hit_system(
-    assets: Res<AssetHandler>,
-    audio: Res<Audio>,
-    config: Res<Config>,
-    mut effects: Query<(&mut Transform, &mut EffectSpawner), With<ShotEffect>>,
-    mut event_reader: EventReader<ShotHitEvent>,
-) {
-    for hit in event_reader.read() {
-        let Ok((mut transform, mut effect_spawner)) = effects.get_mut(assets.shot.effect_entity)
-        else {
-            tracing::warn!(?hit, "Could not get shot effect");
-            continue;
-        };
-        *transform = hit.transform;
-        effect_spawner.reset();
-        audio
-            .play(assets.shot.despawn_sound.clone())
-            .with_volume(Volume::Decibels(config.sound.effects_volume));
-    }
-}
-
 fn draw_death_system(
     assets: Res<AssetHandler>,
     audio: Res<Audio>,
     config: Res<Config>,
-    mut effects: Query<(&mut Transform, &mut EffectSpawner), With<DeathEffect>>,
+    mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
     mut event_reader: EventReader<DeathEvent>,
 ) {
     for death in event_reader.read() {
-        let Ok((mut transform, mut effect_spawner)) = effects.get_mut(assets.player.despawn_effect)
-        else {
+        let effect_entity = match death.kind {
+            Kind::Other => continue,
+            Kind::Player => assets.player.despawn_effect,
+            Kind::Enemy => assets.enemy.despawn_effect,
+            Kind::Ally => assets.ally.despawn_effect,
+            Kind::Bullet => assets.shot.effect_entity,
+            Kind::FragGrenade => assets.frag_grenade.effect_entity,
+            Kind::HealGrenade => assets.heal_grenade.effect_entity,
+            Kind::SeekerRocket => assets.seeker_rocket.effect_entity,
+        };
+        let Ok((mut transform, mut effect_spawner)) = effects.get_mut(effect_entity) else {
             tracing::warn!(?death, "Could not get death effect");
             continue;
         };
@@ -297,38 +284,19 @@ fn draw_death_system(
         transform.translation.z += ABILITY_Z;
         effect_spawner.reset();
 
-        audio
-            .play(assets.player.despawn_sound.clone())
-            .with_volume(Volume::Decibels(config.sound.effects_volume));
-    }
-}
-
-fn draw_explosion_system(
-    assets: Res<AssetHandler>,
-    audio: Res<Audio>,
-    config: Res<Config>,
-    mut effects: Query<(&mut Transform, &mut EffectSpawner), Without<Explosion>>,
-    query: Query<(&Transform, &Explosion), Added<Explosion>>,
-) {
-    for (explosion_transform, explosion) in &query {
-        let effect_entity = match explosion.kind {
-            ExplosionKind::FragGrenade => assets.frag_grenade.effect_entity,
-            ExplosionKind::HealGrenade => assets.heal_grenade.effect_entity,
-            ExplosionKind::SeekerRocket => assets.seeker_rocket.effect_entity,
+        let sound = match death.kind {
+            Kind::Bullet => assets.shot.despawn_sound.clone(),
+            Kind::Other => continue,
+            Kind::Player
+            | Kind::Enemy
+            | Kind::Ally
+            | Kind::FragGrenade
+            | Kind::HealGrenade
+            | Kind::SeekerRocket => assets.player.despawn_sound.clone(),
         };
-        let Ok((mut transform, mut effect_spawner)) = effects.get_mut(effect_entity) else {
-            tracing::warn!(
-                ?explosion_transform,
-                ?explosion,
-                "Could not get effect for explosion."
-            );
-            continue;
-        };
-        *transform = *explosion_transform;
-        effect_spawner.reset();
 
         audio
-            .play(assets.player.despawn_sound.clone())
+            .play(sound)
             .with_volume(Volume::Decibels(config.sound.effects_volume));
     }
 }

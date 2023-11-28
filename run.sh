@@ -11,6 +11,6 @@ case $1 in
   ;;
   *)
     echo "Invalid argument"
-    # exit 1
+    exit 1
   ;;
 esac
