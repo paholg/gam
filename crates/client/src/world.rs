@@ -3,15 +3,33 @@ use std::f32::consts::PI;
 use bevy::{
     core_pipeline::bloom::BloomSettings,
     prelude::{
-        Camera, Camera3dBundle, Commands, PerspectiveProjection, PointLight, PointLightBundle, Res,
-        Transform, Vec3,
+        shape, Assets, Camera, Camera3dBundle, Color, Commands, Mesh, PbrBundle,
+        PerspectiveProjection, ResMut, StandardMaterial, Transform, Vec2, Vec3,
     },
 };
-use engine::level::{InLevel, LevelProps};
+use engine::lifecycle::DEATH_Z;
 
 use crate::CAMERA_OFFSET;
 
-pub fn setup(mut commands: Commands, level: Res<LevelProps>) {
+pub fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    // Death floor
+    commands.spawn(PbrBundle {
+        mesh: meshes.add(
+            shape::Quad {
+                size: Vec2::new(100_000.0, 100_000.0),
+                ..Default::default()
+            }
+            .into(),
+        ),
+        material: materials.add(Color::BLACK.into()),
+        transform: Transform::from_xyz(0.0, 0.0, DEATH_Z),
+        ..Default::default()
+    });
+
     // Camera
     commands.spawn((
         Camera3dBundle {
@@ -28,73 +46,5 @@ pub fn setup(mut commands: Commands, level: Res<LevelProps>) {
             ..Default::default()
         },
         BloomSettings::default(),
-    ));
-
-    let light_range = (level.x + level.y) * 0.5;
-
-    // Light
-    commands.spawn((
-        PointLightBundle {
-            point_light: PointLight {
-                range: light_range,
-                intensity: 1000.0,
-                ..Default::default()
-            },
-            transform: Transform::from_xyz(-0.5 * level.x, -0.5 * level.y, 10.0),
-            ..Default::default()
-        },
-        InLevel,
-    ));
-    commands.spawn((
-        PointLightBundle {
-            point_light: PointLight {
-                range: light_range,
-                intensity: 1000.0,
-                shadows_enabled: true,
-                ..Default::default()
-            },
-            transform: Transform::from_xyz(0.5 * level.x, -0.5 * level.y, 10.0),
-            ..Default::default()
-        },
-        InLevel,
-    ));
-    commands.spawn((
-        PointLightBundle {
-            point_light: PointLight {
-                range: light_range,
-                intensity: 1000.0,
-                shadows_enabled: true,
-                ..Default::default()
-            },
-            transform: Transform::from_xyz(-0.5 * level.x, 0.5 * level.y, 10.0),
-            ..Default::default()
-        },
-        InLevel,
-    ));
-    commands.spawn((
-        PointLightBundle {
-            point_light: PointLight {
-                range: light_range,
-                intensity: 1000.0,
-                shadows_enabled: true,
-                ..Default::default()
-            },
-            transform: Transform::from_xyz(0.5 * level.x, 0.5 * level.y, 10.0),
-            ..Default::default()
-        },
-        InLevel,
-    ));
-    commands.spawn((
-        PointLightBundle {
-            point_light: PointLight {
-                range: light_range,
-                intensity: 1000.0,
-                shadows_enabled: true,
-                ..Default::default()
-            },
-            transform: Transform::from_xyz(0.0, 0.0, 10.0),
-            ..Default::default()
-        },
-        InLevel,
     ));
 }

@@ -1,9 +1,10 @@
 use bevy::{
     core::FrameCount,
     prelude::{
-        shape, Added, AlphaMode, Assets, BuildChildren, Bundle, Color, Commands, Component, Entity,
+        shape, Added, Assets, BuildChildren, Bundle, Color, Commands, Component, Entity,
         EventReader, Handle, InheritedVisibility, Mesh, Parent, PbrBundle, Plugin, Query, Res,
-        ResMut, StandardMaterial, Transform, Update, ViewVisibility, Visibility, With, Without,
+        ResMut, SpotLight, SpotLightBundle, StandardMaterial, Transform, Update, Vec3,
+        ViewVisibility, Visibility, With, Without,
     },
     scene::Scene,
 };
@@ -17,8 +18,8 @@ use engine::{
         seeker_rocket::SeekerRocket,
         HyperSprinting,
     },
-    level::Floor,
-    lifecycle::DeathEvent,
+    level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
+    lifecycle::{DeathEvent, DEATH_Z},
     Ally, Enemy, Kind, Player,
 };
 
@@ -47,6 +48,7 @@ impl Plugin for DrawPlugin {
                 draw_death_system,
                 draw_hyper_sprint_system,
                 draw_wall_system,
+                draw_lights_system,
             ),
         );
     }
@@ -325,11 +327,12 @@ fn draw_wall_system(
     mut materials: ResMut<Assets<StandardMaterial>>,
     query: Query<(Entity, &Floor), Added<Floor>>,
 ) {
-    let material = materials.add(StandardMaterial {
+    let floor_mat = materials.add(StandardMaterial {
         base_color: Color::rgba(0.6, 0.8, 0.2, 0.8),
-        alpha_mode: AlphaMode::Blend,
         ..Default::default()
     });
+    let short_wall_mat = materials.add(Color::ALICE_BLUE.into());
+    let wall_mat = materials.add(Color::AQUAMARINE.into());
 
     for (entity, floor) in &query {
         let shape = shape::Box {
@@ -341,6 +344,14 @@ fn draw_wall_system(
             max_z: floor.dim.z * 0.5,
         };
 
+        let material = if floor.dim.z >= WALL_HEIGHT - DEATH_Z - 0.1 {
+            wall_mat.clone()
+        } else if floor.dim.z >= SHORT_WALL - DEATH_Z - 0.1 {
+            short_wall_mat.clone()
+        } else {
+            floor_mat.clone()
+        };
+
         // First add InheritedVisibility to our entity to make bevy happy.
         commands
             .entity(entity)
@@ -350,12 +361,48 @@ fn draw_wall_system(
             .spawn((
                 PbrBundle {
                     mesh: meshes.add(shape.into()),
-                    material: material.clone(),
+                    material,
                     ..Default::default()
                 },
                 RaycastMesh::<()>::default(),
             ))
             .id();
         commands.entity(entity).push_children(&[wall]);
+    }
+}
+
+fn draw_lights_system(mut commands: Commands, level: Res<LevelProps>, query: Query<&SpotLight>) {
+    if query.iter().next().is_some() {
+        return;
+    }
+    let step_size = 20.0;
+    let xmin = (-level.x * 0.5 / step_size).round() as i32;
+    let xmax = -xmin;
+    let ymin = (-level.y * 0.5 / step_size).round() as i32;
+    let ymax = -ymin;
+
+    for x in xmin..=xmax {
+        for y in ymin..=ymax {
+            let x = x as f32 * step_size;
+            let y = y as f32 * step_size;
+
+            // Offset the light a bit, for more interesting shadows.
+            let t = Transform::from_xyz(x - step_size, y, 20.0)
+                .looking_at(Vec3::new(x, y, 0.0), Vec3::ZERO);
+
+            commands.spawn((
+                SpotLightBundle {
+                    spot_light: SpotLight {
+                        shadows_enabled: true,
+                        range: 40.0,
+                        intensity: 8000.0,
+                        ..Default::default()
+                    },
+                    transform: t,
+                    ..Default::default()
+                },
+                InLevel,
+            ));
+        }
     }
 }
