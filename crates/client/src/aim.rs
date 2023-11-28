@@ -1,11 +1,11 @@
 use bevy::prelude::{
     Added, BuildChildren, Commands, Component, Entity, Parent, PbrBundle, Plugin, Query, Res,
-    SpatialBundle, Transform, Update, Vec3, With, Without,
+    SpatialBundle, Transform, Update, With, Without,
 };
 use bevy_mod_raycast::prelude::{DeferredRaycastingPlugin, RaycastSource};
-use engine::{ability::ABILITY_Z, Player, Target};
+use engine::{ability::ABILITY_Y, FromPlane, Player, Target, FORWARD, UP};
 
-use crate::asset_handler::AssetHandler;
+use crate::{asset_handler::AssetHandler, in_plane};
 
 /// A plugin for managing aiming, such as drawing and updating the cursor.
 pub struct AimPlugin;
@@ -39,7 +39,7 @@ fn draw_target_system(
                 PbrBundle {
                     material: asset_handler.target.cursor_material.clone(),
                     mesh: asset_handler.target.cursor_mesh.clone(),
-                    transform: Transform::from_translation(target.0.extend(0.0)),
+                    transform: in_plane().with_translation(target.0.from_plane(0.0)),
                     ..Default::default()
                 },
                 CursorTarget,
@@ -55,10 +55,12 @@ fn update_target_system(
 ) {
     for (parent, mut transform) in &mut target_query {
         if let Ok((player_transform, target)) = player_query.get(parent.get()) {
+            let mut t = in_plane();
             let rotation = player_transform.rotation.inverse();
-            transform.rotation = rotation;
-            transform.translation =
-                rotation * (target.0.extend(0.0) - player_transform.translation);
+            t.rotate(rotation);
+            t.translation = rotation * (target.0.from_plane(0.01) - player_transform.translation);
+
+            *transform = t;
         }
     }
 }
@@ -74,15 +76,14 @@ fn draw_laser_system(
     asset_handler: Res<AssetHandler>,
 ) {
     for entity in &query {
-        let mut laser_transform = Transform::from_translation(ABILITY_Z * Vec3::Z);
+        let mut laser_transform = in_plane().with_translation(ABILITY_Y);
         update_laser(asset_handler.target.laser_length, &mut laser_transform);
 
         let raycast = commands
             .spawn((
                 RaycastSource::<()>::new_transform_empty(),
                 SpatialBundle {
-                    transform: Transform::from_translation(ABILITY_Z * Vec3::Z)
-                        .looking_to(Vec3::Y, Vec3::Z),
+                    transform: Transform::from_translation(ABILITY_Y).looking_to(FORWARD, UP),
                     ..Default::default()
                 },
             ))
@@ -122,6 +123,8 @@ fn update_laser_system(
 }
 
 fn update_laser(length: f32, transform: &mut Transform) {
+    // We need to scale in the "y" direction because that's the orientation of
+    // the cylinder that we use to draw the laser, it's just rotated.
     transform.scale.y = length;
-    transform.translation.y = length * 0.5;
+    transform.translation.z = -length * 0.5;
 }

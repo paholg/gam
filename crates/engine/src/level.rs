@@ -10,7 +10,7 @@ use bevy_rapier3d::prelude::{Collider, Friction, RigidBody};
 use bevy_transform::components::{GlobalTransform, Transform};
 use rand::Rng;
 
-use crate::{lifecycle::DEATH_Z, PLAYER_R};
+use crate::{lifecycle::DEATH_Y, PLAYER_R};
 
 /// A market to indicate that an entity is part of a level, and should be
 /// deleted when it ends.
@@ -30,12 +30,12 @@ pub const SHORT_WALL: f32 = 1.0;
 #[derive(Resource)]
 pub struct LevelProps {
     pub x: f32,
-    pub y: f32,
+    pub z: f32,
 }
 
 impl Default for LevelProps {
     fn default() -> Self {
-        Self { x: 50.0, y: 50.0 }
+        Self { x: 50.0, z: 50.0 }
     }
 }
 
@@ -43,8 +43,8 @@ impl LevelProps {
     pub fn point_in_plane(&self) -> Vec3 {
         let mut rng = rand::thread_rng();
         let x = rng.gen::<f32>() * (self.x - PLAYER_R) - (self.x - PLAYER_R) * 0.5;
-        let y = rng.gen::<f32>() * (self.y - PLAYER_R) - (self.y - PLAYER_R) * 0.5;
-        Vec3::new(x, y, 0.0)
+        let z = rng.gen::<f32>() * (self.z - PLAYER_R) - (self.z - PLAYER_R) * 0.5;
+        Vec3::new(x, 0.0, z)
     }
 }
 
@@ -94,9 +94,9 @@ pub fn test_level(mut commands: Commands, mut props: ResMut<LevelProps>) {
         .into_rgb8();
     let (width, height) = image.dimensions();
     props.x = width as f32 * pixel;
-    props.y = height as f32 * pixel;
+    props.z = height as f32 * pixel;
 
-    for (x, y, color) in image.enumerate_pixels() {
+    for (x, z, color) in image.enumerate_pixels() {
         let height = match color.0 {
             PIT_COLOR => continue,
             FLOOR_COLOR => 0.0,
@@ -108,12 +108,12 @@ pub fn test_level(mut commands: Commands, mut props: ResMut<LevelProps>) {
             }
         };
         let x = x as f32 * pixel;
-        let y = y as f32 * pixel;
-        let dim = Vec3::new(pixel, pixel, -DEATH_Z + height);
+        let z = z as f32 * pixel;
+        let dim = Vec3::new(pixel, -DEATH_Y + height, pixel);
         let loc = Vec3::new(
             -props.x * 0.5 + x,
-            props.y * 0.5 - y,
-            DEATH_Z * 0.5 + height * 0.5,
+            DEATH_Y * 0.5 + height * 0.5,
+            -props.z * 0.5 + z,
         );
         FloorSpawner::new(dim, loc).spawn(&mut commands);
     }
@@ -125,34 +125,34 @@ pub fn default_level(mut commands: Commands, props: Res<LevelProps>) {
     let commands = &mut commands;
     // Floor
     FloorSpawner::new(
-        Vec3::new(props.x + width, props.y + width, height),
-        Vec3::new(0.0, 0.0, -height * 0.5),
+        Vec3::new(props.x + width, height, props.z + height),
+        Vec3::new(0.0, -height * 0.5, 0.0),
     )
     .spawn(commands);
 
     // Walls
     let half_wall = height * 0.5;
     FloorSpawner::new(
-        Vec3::new(props.x + width, width, height),
-        Vec3::new(0.0, -props.y * 0.5, half_wall),
+        Vec3::new(props.x + width, height, width),
+        Vec3::new(0.0, half_wall, -props.z * 0.5),
     )
     .spawn(commands);
 
     FloorSpawner::new(
         Vec3::new(props.x + width, width, height),
-        Vec3::new(0.0, props.y * 0.5, half_wall),
+        Vec3::new(0.0, half_wall, props.z * 0.5),
     )
     .spawn(commands);
 
     FloorSpawner::new(
-        Vec3::new(width, props.y + width, height),
-        Vec3::new(-props.x * 0.5, 0.0, half_wall),
+        Vec3::new(width, height, props.z + width),
+        Vec3::new(-props.x * 0.5, half_wall, 0.0),
     )
     .spawn(commands);
 
     FloorSpawner::new(
-        Vec3::new(width, props.y + width, height),
-        Vec3::new(props.x * 0.5, 0.0, half_wall),
+        Vec3::new(width, height, props.z + width),
+        Vec3::new(props.x * 0.5, half_wall, 0.0),
     )
     .spawn(commands);
 }

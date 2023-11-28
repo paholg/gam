@@ -48,6 +48,9 @@ pub enum AppState {
     Paused,
 }
 
+pub const FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
+pub const UP: Vec3 = Vec3::Y;
+
 pub const PLAYER_R: f32 = 1.0;
 const IMPULSE: f32 = 15.0;
 const DAMPING: Damping = Damping {
@@ -374,16 +377,6 @@ pub fn clear_impulses(mut query: Query<&mut ExternalImpulse>) {
     }
 }
 
-/// Rotate the transform so that it faces `target`
-///
-/// Note: this is different from `Transform::look_at` in that Bevy calls the
-/// y-axis up, so our definitions of `forward` and `up` are different.
-pub fn face(transform: &mut Transform, target: Vec3) {
-    let mut face = target - transform.translation;
-    face.z = 0.0;
-    transform.look_to(-Vec3::Z, face);
-}
-
 pub struct PrettyPrinter(String);
 
 impl fmt::Display for PrettyPrinter {
@@ -454,5 +447,31 @@ impl PrettyPrint for Transform {
 impl PrettyPrint for GlobalTransform {
     fn pp(&self) -> PrettyPrinter {
         self.compute_transform().pp()
+    }
+}
+
+/// Sometimes we want to work in a 2d plane, so functions like `Vec3::truncate`
+/// and `Vec2::extend` would be useful, except that Bevy and Rapier really want
+/// us to consider Y to be up, so the XZ plane in 3d becomes the XY plane in 2d.
+pub trait ToPlane {
+    fn to_plane(self) -> Vec2;
+}
+
+impl ToPlane for Vec3 {
+    fn to_plane(self) -> Vec2 {
+        Vec2::new(self.x, -self.z)
+    }
+}
+
+/// Sometimes we want to work in a 2d plane, so functions like `Vec3::truncate`
+/// and `Vec2::extend` would be useful, except that Bevy and Rapier really want
+/// us to consider Y to be up, so the XZ plane in 3d becomes the XY plane in 2d.
+pub trait FromPlane {
+    fn from_plane(self, y: f32) -> Vec3;
+}
+
+impl FromPlane for Vec2 {
+    fn from_plane(self, y: f32) -> Vec3 {
+        Vec3::new(self.x, y, -self.y)
     }
 }

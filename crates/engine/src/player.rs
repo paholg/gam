@@ -25,8 +25,8 @@ impl PlayerInfo {
                     energy: Energy::new(100.0, ENERGY_REGEN),
                     object: Object {
                         collider: Collider::capsule(
-                            Vec3::new(0.0, 0.0, PLAYER_R),
-                            Vec3::new(0.0, 0.0, 1.0 + PLAYER_R),
+                            Vec3::new(0.0, PLAYER_R, 0.0),
+                            Vec3::new(0.0, 1.0 + PLAYER_R, 0.0),
                             PLAYER_R,
                         ),
                         body: RigidBody::Dynamic,

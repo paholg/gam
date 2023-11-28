@@ -2,8 +2,8 @@ use bevy::{
     core::FrameCount,
     prelude::{
         shape, Added, Assets, BuildChildren, Bundle, Color, Commands, Component, Entity,
-        EventReader, Handle, InheritedVisibility, Mesh, Parent, PbrBundle, Plugin, Query, Res,
-        ResMut, SpotLight, SpotLightBundle, StandardMaterial, Transform, Update, Vec3,
+        EventReader, GlobalTransform, Handle, InheritedVisibility, Mesh, Parent, PbrBundle, Plugin,
+        Query, Res, ResMut, SpotLight, SpotLightBundle, StandardMaterial, Transform, Update, Vec3,
         ViewVisibility, Visibility, With, Without,
     },
     scene::Scene,
@@ -19,14 +19,14 @@ use engine::{
         HyperSprinting,
     },
     level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
-    lifecycle::{DeathEvent, DEATH_Z},
-    Ally, Enemy, Kind, Player,
+    lifecycle::{DeathEvent, DEATH_Y},
+    Ally, Enemy, Kind, Player, UP,
 };
 
 use crate::{
     asset_handler::AssetHandler,
     bar::{Energybar, Healthbar},
-    Config,
+    in_plane, Config,
 };
 
 /// A plugin for spawning graphics for newly-created entities.
@@ -186,10 +186,18 @@ fn draw_seeker_rocket_system(
         let Some(mut ecmds) = commands.get_entity(entity) else {
             continue;
         };
-        ecmds.insert(ObjectGraphics {
-            material: assets.seeker_rocket.material.clone(),
-            mesh: assets.seeker_rocket.mesh.clone(),
-            ..Default::default()
+        ecmds.insert(InheritedVisibility::default());
+
+        ecmds.with_children(|builder| {
+            builder.spawn((
+                ObjectGraphics {
+                    material: assets.seeker_rocket.material.clone(),
+                    mesh: assets.seeker_rocket.mesh.clone(),
+                    ..Default::default()
+                },
+                in_plane(),
+                GlobalTransform::default(),
+            ));
         });
     }
 }
@@ -204,7 +212,7 @@ fn draw_player_system(
             .spawn(PbrBundle {
                 mesh: assets.player.outline_mesh.clone(),
                 material: assets.player.outline_material.clone(),
-                transform: Transform::from_xyz(0.0, 0.0, 0.01),
+                transform: in_plane().with_translation(Vec3::new(0.0, 0.01, 0.0)),
                 ..Default::default()
             })
             .id();
@@ -228,7 +236,7 @@ fn draw_enemy_system(
             .spawn(PbrBundle {
                 mesh: assets.enemy.outline_mesh.clone(),
                 material: assets.enemy.outline_material.clone(),
-                transform: Transform::from_xyz(0.0, 0.0, 0.01),
+                transform: in_plane().with_translation(Vec3::new(0.0, 0.01, 0.0)),
                 ..Default::default()
             })
             .id();
@@ -252,7 +260,7 @@ fn draw_ally_system(
             .spawn(PbrBundle {
                 mesh: assets.ally.outline_mesh.clone(),
                 material: assets.ally.outline_material.clone(),
-                transform: Transform::from_xyz(0.0, 0.0, 0.01),
+                transform: in_plane().with_translation(Vec3::new(0.0, 0.01, 0.0)),
                 ..Default::default()
             })
             .id();
@@ -344,9 +352,9 @@ fn draw_wall_system(
             max_z: floor.dim.z * 0.5,
         };
 
-        let material = if floor.dim.z >= WALL_HEIGHT - DEATH_Z - 0.1 {
+        let material = if floor.dim.y >= WALL_HEIGHT - DEATH_Y - 0.1 {
             wall_mat.clone()
-        } else if floor.dim.z >= SHORT_WALL - DEATH_Z - 0.1 {
+        } else if floor.dim.y >= SHORT_WALL - DEATH_Y - 0.1 {
             short_wall_mat.clone()
         } else {
             floor_mat.clone()
@@ -378,17 +386,17 @@ fn draw_lights_system(mut commands: Commands, level: Res<LevelProps>, query: Que
     let step_size = 20.0;
     let xmin = (-level.x * 0.5 / step_size).round() as i32;
     let xmax = -xmin;
-    let ymin = (-level.y * 0.5 / step_size).round() as i32;
-    let ymax = -ymin;
+    let zmin = (-level.z * 0.5 / step_size).round() as i32;
+    let zmax = -zmin;
 
     for x in xmin..=xmax {
-        for y in ymin..=ymax {
+        for z in zmin..=zmax {
             let x = x as f32 * step_size;
-            let y = y as f32 * step_size;
+            let z = z as f32 * step_size;
 
             // Offset the light a bit, for more interesting shadows.
-            let t = Transform::from_xyz(x - step_size, y, 20.0)
-                .looking_at(Vec3::new(x, y, 0.0), Vec3::ZERO);
+            let t =
+                Transform::from_xyz(x - step_size, 20.0, z).looking_at(Vec3::new(x, 0.0, z), UP);
 
             commands.spawn((
                 SpotLightBundle {

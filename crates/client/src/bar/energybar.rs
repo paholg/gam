@@ -6,7 +6,7 @@ use bevy::prelude::{
 use engine::Energy;
 use tracing::warn;
 
-use crate::asset_handler::AssetHandler;
+use crate::{asset_handler::AssetHandler, in_plane};
 
 use super::BarMarker;
 
@@ -19,7 +19,7 @@ pub struct Energybar {
 impl Default for Energybar {
     fn default() -> Self {
         Self {
-            displacement: Vec3::new(0.0, -0.87, 0.01),
+            displacement: Vec3::new(0.0, 0.01, 0.87),
             size: Vec2::new(1.8, 0.3),
         }
     }
@@ -49,7 +49,7 @@ pub fn add_energybar_system(
                 PbrBundle {
                     material: assets.energybar.fg_material.clone(),
                     mesh: assets.energybar.mesh.clone(),
-                    transform: Transform::from_translation(energybar.displacement),
+                    transform: in_plane().with_translation(energybar.displacement),
                     ..default()
                 },
                 BarMarker,
@@ -59,9 +59,8 @@ pub fn add_energybar_system(
             .spawn(PbrBundle {
                 material: assets.energybar.bg_material.clone(),
                 mesh: assets.energybar.mesh.clone(),
-                transform: Transform::from_translation(
-                    energybar.displacement - Vec3::new(0.0, 0.0, 0.01),
-                ),
+                transform: in_plane()
+                    .with_translation(energybar.displacement - Vec3::new(0.0, 0.01, 0.0)),
                 ..default()
             })
             .id();
