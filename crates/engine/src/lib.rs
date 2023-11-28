@@ -8,7 +8,7 @@ use bevy_ecs::{
     bundle::Bundle,
     component::Component,
     schedule::{IntoSystemConfigs, IntoSystemSetConfigs, State, States, SystemSet},
-    system::{Commands, Query, Res, Resource},
+    system::{Query, Res, Resource},
 };
 use bevy_math::{Quat, Vec2, Vec3};
 use bevy_rapier3d::prelude::{
@@ -20,6 +20,7 @@ use bevy_time::{Fixed, Time};
 use bevy_transform::components::{GlobalTransform, Transform};
 use bevy_utils::HashMap;
 use input::check_resume;
+use level::{InLevel, LevelProps};
 use lifecycle::DeathEvent;
 use multiplayer::PlayerInputs;
 use physics::PhysicsPlugin;
@@ -69,8 +70,6 @@ pub enum Kind {
     HealGrenade,
     SeekerRocket,
 }
-
-pub const PLANE: f32 = 50.0;
 
 #[derive(Component, Default, Reflect, Debug)]
 pub struct Health {
@@ -210,6 +209,7 @@ pub struct Object {
     locked_axes: LockedAxes,
     mass: ReadMassProperties,
     kind: Kind,
+    in_level: InLevel,
 }
 
 #[derive(Bundle)]
@@ -262,7 +262,8 @@ impl Plugin for GamPlugin {
                 enemies: 0,
                 allies: 0,
             })
-            .insert_resource(PlayerInputs::default());
+            .insert_resource(PlayerInputs::default())
+            .insert_resource(LevelProps::default());
 
         // Events
         // TODO: Currently, these events are only used for engine -> client
@@ -292,7 +293,7 @@ impl Plugin for GamPlugin {
         );
 
         // Systems in order
-        app.add_systems(Startup, setup).add_systems(
+        app.add_systems(Startup, level::default_level).add_systems(
             schedule.clone(),
             (
                 (time::tick_counter, time::debug_tick_system).in_set(GameSet::Timer),
@@ -352,45 +353,6 @@ pub fn game_running(state: Res<State<AppState>>) -> bool {
 
 pub fn game_paused(state: Res<State<AppState>>) -> bool {
     state.get() != &AppState::Running
-}
-
-pub fn setup(mut commands: Commands) {
-    // Walls
-    const WALL: f32 = 5.0;
-    const HALF_WALL: f32 = WALL * 0.5;
-    const HALF_PLANE: f32 = PLANE * 0.5;
-    let collider = Collider::compound(vec![
-        (
-            Vec3::new(-HALF_WALL, -HALF_PLANE - HALF_WALL, 0.0),
-            Quat::IDENTITY,
-            Collider::cuboid(HALF_PLANE + HALF_WALL, HALF_WALL, HALF_WALL),
-        ),
-        (
-            Vec3::new(-HALF_PLANE - HALF_WALL, HALF_WALL, 0.0),
-            Quat::IDENTITY,
-            Collider::cuboid(HALF_WALL, HALF_PLANE + HALF_WALL, HALF_WALL),
-        ),
-        (
-            Vec3::new(HALF_WALL, HALF_PLANE + HALF_WALL, 0.0),
-            Quat::IDENTITY,
-            Collider::cuboid(HALF_PLANE + HALF_WALL, HALF_WALL, HALF_WALL),
-        ),
-        (
-            Vec3::new(HALF_PLANE + HALF_WALL, -HALF_WALL, 0.0),
-            Quat::IDENTITY,
-            Collider::cuboid(HALF_WALL, HALF_PLANE + HALF_WALL, HALF_WALL),
-        ),
-    ]);
-
-    let floor = Collider::cuboid(HALF_PLANE, HALF_PLANE, HALF_WALL);
-    commands.spawn((
-        RigidBody::Fixed,
-        floor,
-        Transform::from_translation(Vec3::new(0.0, 0.0, -HALF_WALL)),
-        GlobalTransform::default(),
-        Friction::default(),
-    ));
-    commands.spawn((RigidBody::Fixed, collider));
 }
 
 pub fn energy_regen(mut query: Query<&mut Energy>) {

@@ -14,6 +14,7 @@ use bevy_transform::components::{GlobalTransform, Transform};
 use crate::{
     collision::{Colliding, TrackCollisions},
     death_callback::{DeathCallback, ExplosionCallback},
+    level::InLevel,
     time::{Tick, TickCounter},
     Health, Kind, Object, Target, PLAYER_R,
 };
@@ -53,6 +54,7 @@ pub fn seeker_rocket(
             locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
             mass: ReadMassProperties::default(),
             kind: Kind::SeekerRocket,
+            in_level: InLevel,
         },
         Health::new(props.health),
         SeekerRocket {

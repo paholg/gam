@@ -16,6 +16,7 @@ use nalgebra::ComplexField;
 
 use crate::{
     death_callback::{DeathCallback, ExplosionCallback},
+    level::InLevel,
     physics::G,
     time::{Tick, TickCounter},
     Health, Kind, Object, Target, PLAYER_R,
@@ -96,6 +97,7 @@ pub fn grenade(
             locked_axes: LockedAxes::ROTATION_LOCKED,
             mass: ReadMassProperties::default(),
             kind: props.kind.into(),
+            in_level: InLevel,
         },
         Grenade {
             expiration: tick_counter.at(props.delay),

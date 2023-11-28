@@ -15,7 +15,7 @@ use rand::Rng;
 use crate::{
     ability::{properties::AbilityProps, Ability},
     face,
-    lifecycle::point_in_plane,
+    level::LevelProps,
     status_effect::StatusEffects,
     time::TickCounter,
     Ai, Ally, Cooldowns, Enemy, Energy, MaxSpeed, Target,
@@ -29,12 +29,12 @@ pub enum Attitude {
 }
 
 impl Attitude {
-    pub fn rand() -> Self {
+    pub fn rand(level: &LevelProps) -> Self {
         let mut rng = rand::thread_rng();
         match rng.gen_range(0..3) {
             0 => Self::Chase,
             1 => Self::RunAway,
-            _ => Self::PickPoint(point_in_plane()),
+            _ => Self::PickPoint(level.point_in_plane()),
         }
     }
 }
@@ -51,6 +51,7 @@ pub fn system_set() -> SystemConfigs {
 
 fn just_move_system(
     mut query: Query<(&mut ExternalImpulse, &Transform, &MaxSpeed, &mut Attitude), With<Ai>>,
+    level: Res<LevelProps>,
 ) {
     for (mut impulse, transform, max_speed, mut attitude) in query.iter_mut() {
         let target_vec = match *attitude {
@@ -58,7 +59,7 @@ fn just_move_system(
             Attitude::RunAway => -(transform.rotation * Vec3::Y),
             Attitude::PickPoint(ref mut target) => {
                 while transform.translation.distance_squared(*target) < 1.0 {
-                    *target = point_in_plane();
+                    *target = level.point_in_plane();
                 }
                 *target - transform.translation
             }

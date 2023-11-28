@@ -8,16 +8,16 @@ use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{Collider, Friction, LockedAxes, RigidBody};
 use bevy_transform::components::{GlobalTransform, Transform};
-use rand::Rng;
 
 use crate::{
     ability::{Abilities, Ability},
     ai::simple::Attitude,
     death_callback::DeathCallback,
+    level::LevelProps,
     player::PlayerInfo,
     time::{Tick, TickCounter},
     Ai, Ally, Character, Cooldowns, Enemy, Energy, Health, Kind, NumAi, Object, Player, Shootable,
-    DAMPING, PLANE, PLAYER_R,
+    DAMPING, PLAYER_R,
 };
 
 pub const DEATH_Z: f32 = -10.0;
@@ -83,16 +83,9 @@ pub fn die(
 
 pub const ENERGY_REGEN: f32 = 0.5;
 
-pub fn point_in_plane() -> Vec3 {
-    let mut rng = rand::thread_rng();
-    let x = rng.gen::<f32>() * (PLANE - PLAYER_R) - (PLANE - PLAYER_R) * 0.5;
-    let y = rng.gen::<f32>() * (PLANE - PLAYER_R) - (PLANE - PLAYER_R) * 0.5;
-    Vec3::new(x, y, 0.0)
-}
-
-fn spawn_enemies(commands: &mut Commands, num: usize) {
+fn spawn_enemies(commands: &mut Commands, num: usize, level: &LevelProps) {
     for _ in 0..num {
-        let loc = point_in_plane();
+        let loc = level.point_in_plane();
         let abilities = Abilities::new(vec![Ability::Gun]);
 
         let id = commands
@@ -125,16 +118,16 @@ fn spawn_enemies(commands: &mut Commands, num: usize) {
                     cooldowns: Cooldowns::new(&abilities),
                     abilities,
                 },
-                Attitude::rand(),
+                Attitude::rand(level),
             ))
             .id();
         tracing::debug!(?id, "Spawning enemy");
     }
 }
 
-fn spawn_allies(commands: &mut Commands, num: usize) {
+fn spawn_allies(commands: &mut Commands, num: usize, level: &LevelProps) {
     for _ in 0..num {
-        let loc = point_in_plane();
+        let loc = level.point_in_plane();
         let abilities = Abilities::new(vec![Ability::Gun]);
         let id = commands
             .spawn((
@@ -178,10 +171,11 @@ pub fn reset(
     player_query: Query<Entity, With<Player>>,
     player_info_query: Query<&PlayerInfo>,
     mut num_ai: ResMut<NumAi>,
+    level: Res<LevelProps>,
 ) {
     if enemy_query.iter().next().is_none() {
         num_ai.enemies += 1;
-        spawn_enemies(&mut commands, num_ai.enemies);
+        spawn_enemies(&mut commands, num_ai.enemies, &level);
     }
 
     if player_query.iter().next().is_none() {
@@ -192,6 +186,6 @@ pub fn reset(
     }
 
     if ally_query.iter().next().is_none() {
-        spawn_allies(&mut commands, num_ai.allies);
+        spawn_allies(&mut commands, num_ai.allies, &level);
     }
 }
