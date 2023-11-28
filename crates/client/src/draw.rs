@@ -1,9 +1,9 @@
 use bevy::{
     core::FrameCount,
     prelude::{
-        Added, BuildChildren, Bundle, Commands, Component, Entity, EventReader, Handle,
-        InheritedVisibility, Mesh, Parent, PbrBundle, Plugin, Query, Res, ResMut, StandardMaterial,
-        Transform, Update, ViewVisibility, Visibility, With, Without,
+        shape, Added, AlphaMode, Assets, BuildChildren, Bundle, Color, Commands, Component, Entity,
+        EventReader, Handle, InheritedVisibility, Mesh, Parent, PbrBundle, Plugin, Query, Res,
+        ResMut, StandardMaterial, Transform, Update, ViewVisibility, Visibility, With, Without,
     },
     scene::Scene,
 };
@@ -15,8 +15,9 @@ use engine::{
         bullet::Bullet,
         grenade::{Grenade, GrenadeKind, GrenadeLandEvent},
         seeker_rocket::SeekerRocket,
-        HyperSprinting, ABILITY_Z,
+        HyperSprinting,
     },
+    level::Floor,
     lifecycle::DeathEvent,
     Ally, Enemy, Kind, Player,
 };
@@ -45,6 +46,7 @@ impl Plugin for DrawPlugin {
                 draw_seeker_rocket_system,
                 draw_death_system,
                 draw_hyper_sprint_system,
+                draw_wall_system,
             ),
         );
     }
@@ -200,6 +202,7 @@ fn draw_player_system(
             .spawn(PbrBundle {
                 mesh: assets.player.outline_mesh.clone(),
                 material: assets.player.outline_material.clone(),
+                transform: Transform::from_xyz(0.0, 0.0, 0.01),
                 ..Default::default()
             })
             .id();
@@ -223,6 +226,7 @@ fn draw_enemy_system(
             .spawn(PbrBundle {
                 mesh: assets.enemy.outline_mesh.clone(),
                 material: assets.enemy.outline_material.clone(),
+                transform: Transform::from_xyz(0.0, 0.0, 0.01),
                 ..Default::default()
             })
             .id();
@@ -246,6 +250,7 @@ fn draw_ally_system(
             .spawn(PbrBundle {
                 mesh: assets.ally.outline_mesh.clone(),
                 material: assets.ally.outline_material.clone(),
+                transform: Transform::from_xyz(0.0, 0.0, 0.01),
                 ..Default::default()
             })
             .id();
@@ -281,10 +286,7 @@ fn draw_death_system(
             Kind::SeekerRocket => &mut assets.seeker_rocket.explosion_effect,
         };
 
-        let mut transform = death.transform;
-        transform.translation.z += ABILITY_Z;
-
-        effect.trigger(&mut commands, transform, &mut effects, &frame);
+        effect.trigger(&mut commands, death.transform, &mut effects, &frame);
 
         let sound = match death.kind {
             Kind::Bullet => assets.shot.despawn_sound.clone(),
@@ -314,5 +316,46 @@ fn draw_hyper_sprint_system(
 
     for &sprint_transform in query.iter() {
         effect.trigger(&mut commands, sprint_transform, &mut effects, &frame);
+    }
+}
+
+fn draw_wall_system(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    query: Query<(Entity, &Floor), Added<Floor>>,
+) {
+    let material = materials.add(StandardMaterial {
+        base_color: Color::rgba(0.6, 0.8, 0.2, 0.8),
+        alpha_mode: AlphaMode::Blend,
+        ..Default::default()
+    });
+
+    for (entity, floor) in &query {
+        let shape = shape::Box {
+            min_x: -floor.dim.x * 0.5,
+            max_x: floor.dim.x * 0.5,
+            min_y: -floor.dim.y * 0.5,
+            max_y: floor.dim.y * 0.5,
+            min_z: -floor.dim.z * 0.5,
+            max_z: floor.dim.z * 0.5,
+        };
+
+        // First add InheritedVisibility to our entity to make bevy happy.
+        commands
+            .entity(entity)
+            .insert(InheritedVisibility::default());
+
+        let wall = commands
+            .spawn((
+                PbrBundle {
+                    mesh: meshes.add(shape.into()),
+                    material: material.clone(),
+                    ..Default::default()
+                },
+                RaycastMesh::<()>::default(),
+            ))
+            .id();
+        commands.entity(entity).push_children(&[wall]);
     }
 }

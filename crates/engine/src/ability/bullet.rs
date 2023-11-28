@@ -13,6 +13,7 @@ use bevy_transform::components::{GlobalTransform, Transform};
 
 use crate::{
     collision::{Colliding, TrackCollisions},
+    level::InLevel,
     time::{Tick, TickCounter},
     Health, Kind, Object,
 };
@@ -53,6 +54,7 @@ impl BulletSpawner {
                 locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
                 mass: ReadMassProperties::default(),
                 kind: Kind::Bullet,
+                in_level: InLevel,
             },
             ActiveEvents::COLLISION_EVENTS,
             TrackCollisions,
