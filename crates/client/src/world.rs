@@ -17,6 +17,7 @@ pub fn setup(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
+    // Floor
     commands.spawn(PbrBundle {
         mesh: meshes.add(
             shape::Quad {
