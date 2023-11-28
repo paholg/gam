@@ -19,14 +19,14 @@ use crate::{
     level::InLevel,
     physics::G,
     time::{Tick, TickCounter},
-    Health, Kind, Object, Target, PLAYER_R,
+    FromPlane, Health, Kind, Object, Target, ToPlane, FORWARD, PLAYER_R,
 };
 
 use super::properties::GrenadeProps;
 
 /// Calculate the initial velocity of a projectile thrown at 45 degrees up, so
 /// that it will land at target.
-// FIXME: This assumes the projectile starts and ends at Z=0.
+// FIXME: This assumes the projectile starts and ends at Y=0.
 // This is not a good assumption.
 fn calculate_initial_vel(spawn: Vec2, target: Vec2) -> Velocity {
     let dir_in_plane = target - spawn;
@@ -39,8 +39,8 @@ fn calculate_initial_vel(spawn: Vec2, target: Vec2) -> Velocity {
     let tan = ComplexField::tan(phi);
     let v0 = (dist * G / sin2phi).sqrt();
 
-    let z = dist * tan;
-    let dir = dir_in_plane.extend(z).normalize();
+    let y = dist * tan;
+    let dir = dir_in_plane.from_plane(y).normalize();
     let linvel = v0 * dir;
 
     Velocity {
@@ -82,9 +82,9 @@ pub fn grenade(
     shooter: Entity,
     target: &Target,
 ) {
-    let dir = transform.rotation * Vec3::Y;
+    let dir = transform.rotation * FORWARD;
     let position = transform.translation + dir * (PLAYER_R + props.radius + 0.01);
-    let vel = calculate_initial_vel(position.truncate(), target.0);
+    let vel = calculate_initial_vel(position.to_plane(), target.0);
 
     commands.spawn((
         Object {
@@ -123,8 +123,8 @@ pub fn grenade_land_system(
     mut event_writer: EventWriter<GrenadeLandEvent>,
 ) {
     for (entity, grenade, mut transform, mut velocity) in &mut query {
-        if transform.translation.z < grenade.radius && velocity.linvel.z < 0.0 {
-            transform.translation.z = grenade.radius;
+        if transform.translation.y < grenade.radius && velocity.linvel.y < 0.0 {
+            transform.translation.y = grenade.radius;
             velocity.linvel = Vec3::ZERO;
             event_writer.send(GrenadeLandEvent { entity });
         }

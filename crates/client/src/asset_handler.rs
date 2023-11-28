@@ -669,15 +669,15 @@ fn hyper_sprint_effect() -> EffectAsset {
     let writer = ExprWriter::new();
 
     let pos = SetPositionCircleModifier {
-        center: writer.lit(Vec3::Z * 0.1).expr(),
-        axis: writer.lit(Vec3::Z).expr(),
+        center: writer.lit(Vec3::Y * 0.1).expr(),
+        axis: writer.lit(Vec3::Y).expr(),
         radius: writer.lit(PLAYER_R).expr(),
         dimension: ShapeDimension::Surface,
     };
 
     let vel = SetVelocityCircleModifier {
         center: writer.lit(Vec3::ZERO).expr(),
-        axis: writer.lit(Vec3::Z).expr(),
+        axis: writer.lit(Vec3::Y).expr(),
         speed: writer.lit(2.0).uniform(writer.lit(3.0)).expr(),
     };
 

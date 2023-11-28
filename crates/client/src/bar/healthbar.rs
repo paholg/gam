@@ -6,7 +6,7 @@ use bevy::prelude::{
 use engine::Health;
 use tracing::warn;
 
-use crate::asset_handler::AssetHandler;
+use crate::{asset_handler::AssetHandler, in_plane};
 
 use super::BarMarker;
 
@@ -19,7 +19,7 @@ pub struct Healthbar {
 impl Default for Healthbar {
     fn default() -> Self {
         Self {
-            displacement: Vec3::new(0.0, -0.7, 0.01),
+            displacement: Vec3::new(0.0, 0.01, 0.7),
             size: Vec2::new(1.8, 0.3),
         }
     }
@@ -49,7 +49,7 @@ pub fn add_healthbar_system(
                 PbrBundle {
                     material: assets.healthbar.fg_material.clone(),
                     mesh: assets.healthbar.mesh.clone(),
-                    transform: Transform::from_translation(healthbar.displacement),
+                    transform: in_plane().with_translation(healthbar.displacement),
                     ..default()
                 },
                 BarMarker,
@@ -59,9 +59,8 @@ pub fn add_healthbar_system(
             .spawn(PbrBundle {
                 material: assets.healthbar.bg_material.clone(),
                 mesh: assets.healthbar.mesh.clone(),
-                transform: Transform::from_translation(
-                    healthbar.displacement - Vec3::new(0.0, 0.0, 0.01),
-                ),
+                transform: in_plane()
+                    .with_translation(healthbar.displacement - Vec3::new(0.0, 0.01, 0.0)),
                 ..default()
             })
             .id();

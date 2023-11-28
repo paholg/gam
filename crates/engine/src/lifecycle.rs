@@ -20,7 +20,7 @@ use crate::{
     DAMPING, PLAYER_R,
 };
 
-pub const DEATH_Z: f32 = -2.0;
+pub const DEATH_Y: f32 = -2.0;
 
 #[derive(Debug, Event)]
 pub struct DeathEvent {
@@ -30,12 +30,13 @@ pub struct DeathEvent {
 
 pub fn fall(mut query: Query<(&mut Health, &Transform)>) {
     for (mut health, transform) in &mut query {
-        if transform.translation.z < DEATH_Z {
+        if transform.translation.y < DEATH_Y {
             health.die();
         }
     }
 }
 
+// TODO: Use `Option<&DeathCallback>` instead of two queries.
 pub fn die(
     mut commands: Commands,
     mut without_callback_q: Query<(Entity, &mut Health, &Transform, &Kind), Without<DeathCallback>>,
@@ -99,9 +100,9 @@ fn spawn_enemies(commands: &mut Commands, num: usize, level: &LevelProps) {
                         transform: Transform::from_translation(loc),
                         global_transform: GlobalTransform::default(),
                         collider: Collider::capsule(
-                            Vec3::new(0.0, 0.0, PLAYER_R),
-                            Vec3::new(0.0, 0.0, 1.0 + PLAYER_R),
-                            1.0,
+                            Vec3::new(0.0, PLAYER_R, 0.0),
+                            Vec3::new(0.0, 1.0 + PLAYER_R, 0.0),
+                            PLAYER_R,
                         ),
                         body: RigidBody::Dynamic,
                         locked_axes: LockedAxes::ROTATION_LOCKED,
@@ -139,9 +140,9 @@ fn spawn_allies(commands: &mut Commands, num: usize, level: &LevelProps) {
                     object: Object {
                         transform: Transform::from_translation(loc),
                         collider: Collider::capsule(
-                            Vec3::new(0.0, 0.0, PLAYER_R),
-                            Vec3::new(0.0, 0.0, 1.0 + PLAYER_R),
-                            1.0,
+                            Vec3::new(0.0, PLAYER_R, 0.0),
+                            Vec3::new(0.0, 1.0 + PLAYER_R, 0.0),
+                            PLAYER_R,
                         ),
                         body: RigidBody::Dynamic,
                         locked_axes: LockedAxes::ROTATION_LOCKED,

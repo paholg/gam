@@ -51,7 +51,7 @@ impl BulletSpawner {
                     linvel: self.velocity,
                     angvel: Vec3::ZERO,
                 },
-                locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Z,
+                locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Y,
                 mass: ReadMassProperties::default(),
                 kind: Kind::Bullet,
                 in_level: InLevel,

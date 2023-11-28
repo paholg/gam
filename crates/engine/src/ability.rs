@@ -12,7 +12,7 @@ use tracing::warn;
 use crate::{
     status_effect::{StatusEffect, StatusEffects},
     time::TickCounter,
-    Cooldowns, Energy, Health, Target, PLAYER_R,
+    Cooldowns, Energy, Health, Target, FORWARD, PLAYER_R,
 };
 
 use self::{
@@ -27,7 +27,7 @@ pub mod grenade;
 pub mod properties;
 pub mod seeker_rocket;
 
-pub const ABILITY_Z: f32 = 1.5;
+pub const ABILITY_Y: Vec3 = Vec3::new(0.0, 1.5, 0.0);
 pub const PLAYER_ABILITY_COUNT: usize = 5;
 
 #[derive(
@@ -203,9 +203,8 @@ fn gun(
     velocity: &Velocity,
     shooter: Entity,
 ) {
-    let dir = transform.rotation * Vec3::Y;
-    let position =
-        transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ABILITY_Z * Vec3::Z;
+    let dir = transform.rotation * FORWARD;
+    let position = transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ABILITY_Y;
     let velocity = dir * props.speed + velocity.linvel;
     BulletSpawner {
         position,
@@ -235,9 +234,8 @@ fn shotgun(
         let n_pellets = props.n_pellets as f32;
         let relative_angle = (n_pellets * 0.5 - idx) / n_pellets * props.spread;
         let relative_angle = Quat::from_rotation_z(relative_angle);
-        let dir = (transform.rotation * relative_angle) * Vec3::Y;
-        let position =
-            transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ABILITY_Z * Vec3::Z;
+        let dir = (transform.rotation * relative_angle) * FORWARD;
+        let position = transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ABILITY_Y;
         let velocity = dir * props.speed + velocity.linvel;
         BulletSpawner {
             position,

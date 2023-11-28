@@ -9,11 +9,10 @@ use bevy_utils::HashSet;
 
 use crate::{
     ability::{properties::AbilityProps, Abilities},
-    face,
     multiplayer::{Action, PlayerInputs},
     status_effect::{StatusEffect, StatusEffects},
     time::TickCounter,
-    AppState, Cooldowns, Energy, MaxSpeed, Player, Target,
+    AppState, Cooldowns, Energy, FromPlane, MaxSpeed, Player, Target, ToPlane, UP,
 };
 
 pub fn check_resume(
@@ -76,7 +75,9 @@ pub fn apply_inputs(
         // Targeting
         if let Some(cursor) = input.cursor() {
             target.0 = cursor;
-            face(&mut transform, cursor.extend(0.0));
+            if transform.translation.to_plane() != cursor {
+                transform.look_at(cursor.from_plane(0.0), UP);
+            }
         }
 
         // Abilities
@@ -104,7 +105,7 @@ pub fn apply_inputs(
         }
 
         // Movement
-        let dir = input.movement().clamp_length_max(1.0).extend(0.0);
+        let dir = input.movement().clamp_length_max(1.0).from_plane(0.0);
         let mut max_impulse = max_speed.impulse;
         if status_effects
             .effects

@@ -4,7 +4,7 @@ use bevy::{
     ecs::component::ComponentInfo,
     prelude::{
         Assets, Children, Entity, Handle, Parent, Plugin, Query, Res, ResMut, Resource, Startup,
-        Update, Vec3, World,
+        Transform, Update, Vec3, World,
     },
 };
 
@@ -15,7 +15,7 @@ use draw::DrawPlugin;
 use iyes_progress::ProgressPlugin;
 use rand::Rng;
 
-use engine::AppState;
+use engine::{AppState, UP};
 
 use self::{
     asset_handler::{asset_handler_setup, AssetHandler},
@@ -41,7 +41,13 @@ pub use controls::ControlPlugin;
 
 rust_i18n::i18n!("../../locales");
 
-const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, -50.0, 50.0);
+const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, 50.0, 50.0);
+
+/// Return a Transform such that things normally in the XY-plane will instead be
+/// correctly oriented in the XZ plane.
+pub fn in_plane() -> Transform {
+    Transform::IDENTITY.looking_to(-UP, Vec3::Z)
+}
 
 /// This plugin includes user input and graphics.
 pub struct GamClientPlugin;

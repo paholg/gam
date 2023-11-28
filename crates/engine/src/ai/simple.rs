@@ -14,11 +14,10 @@ use rand::Rng;
 
 use crate::{
     ability::{properties::AbilityProps, Ability},
-    face,
     level::LevelProps,
     status_effect::StatusEffects,
     time::TickCounter,
-    Ai, Ally, Cooldowns, Enemy, Energy, MaxSpeed, Target,
+    Ai, Ally, Cooldowns, Enemy, Energy, FromPlane, MaxSpeed, Target, ToPlane, FORWARD, UP,
 };
 
 #[derive(Component)]
@@ -55,8 +54,8 @@ fn just_move_system(
 ) {
     for (mut impulse, transform, max_speed, mut attitude) in query.iter_mut() {
         let target_vec = match *attitude {
-            Attitude::Chase => transform.rotation * Vec3::Y,
-            Attitude::RunAway => -(transform.rotation * Vec3::Y),
+            Attitude::Chase => transform.rotation * FORWARD,
+            Attitude::RunAway => -(transform.rotation * FORWARD),
             Attitude::PickPoint(ref mut target) => {
                 while transform.translation.distance_squared(*target) < 1.0 {
                     *target = level.point_in_plane();
@@ -64,8 +63,8 @@ fn just_move_system(
                 *target - transform.translation
             }
         }
-        .truncate();
-        impulse.impulse = target_vec.normalize().extend(0.0) * max_speed.impulse;
+        .to_plane();
+        impulse.impulse = target_vec.normalize().from_plane(0.0) * max_speed.impulse;
     }
 }
 
@@ -84,7 +83,7 @@ fn point_to_closest<T: ReadOnlyWorldQuery, U: ReadOnlyWorldQuery>(
             let lead = (vel.linvel - velocity.linvel) * dt * 0.5; // Just partially lead for now
             let lead_translation = trans.translation + lead;
 
-            face(&mut transform, lead_translation);
+            transform.look_at(lead_translation, UP);
         }
     }
 }

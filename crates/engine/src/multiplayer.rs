@@ -120,9 +120,9 @@ impl From<f32> for BoundedF8 {
 pub struct Input {
     buttons: u16,
     move_x: BoundedF8,
-    move_y: BoundedF8,
+    move_z: BoundedF8,
     cursor_x: f32,
-    cursor_y: f32,
+    cursor_z: f32,
 }
 
 impl Input {
@@ -130,9 +130,9 @@ impl Input {
         Self {
             buttons: buttons.bits(),
             move_x: movement.x.into(),
-            move_y: movement.y.into(),
+            move_z: movement.y.into(),
             cursor_x: cursor.x,
-            cursor_y: cursor.y,
+            cursor_z: cursor.y,
         }
     }
 
@@ -141,12 +141,12 @@ impl Input {
     }
 
     pub fn movement(&self) -> Vec2 {
-        Vec2::new(self.move_x.into(), self.move_y.into())
+        Vec2::new(self.move_x.into(), self.move_z.into())
     }
 
     pub fn cursor(&self) -> Option<Vec2> {
-        if self.cursor_x.is_finite() && self.cursor_y.is_finite() {
-            Some(Vec2::new(self.cursor_x, self.cursor_y))
+        if self.cursor_x.is_finite() && self.cursor_z.is_finite() {
+            Some(Vec2::new(self.cursor_x, self.cursor_z))
         } else {
             None
         }

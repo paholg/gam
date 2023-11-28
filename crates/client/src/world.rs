@@ -7,9 +7,9 @@ use bevy::{
         PerspectiveProjection, ResMut, StandardMaterial, Transform, Vec2, Vec3,
     },
 };
-use engine::lifecycle::DEATH_Z;
+use engine::{lifecycle::DEATH_Y, UP};
 
-use crate::CAMERA_OFFSET;
+use crate::{in_plane, CAMERA_OFFSET};
 
 pub fn setup(
     mut commands: Commands,
@@ -20,13 +20,13 @@ pub fn setup(
     commands.spawn(PbrBundle {
         mesh: meshes.add(
             shape::Quad {
-                size: Vec2::new(100_000.0, 100_000.0),
+                size: Vec2::new(10_000.0, 10_000.0),
                 ..Default::default()
             }
             .into(),
         ),
         material: materials.add(Color::BLACK.into()),
-        transform: Transform::from_xyz(0.0, 0.0, DEATH_Z),
+        transform: in_plane().with_translation(Vec3::new(0.0, DEATH_Y, 0.0)),
         ..Default::default()
     });
 
@@ -42,7 +42,7 @@ pub fn setup(
                 ..Default::default()
             }
             .into(),
-            transform: Transform::from_translation(CAMERA_OFFSET).looking_at(Vec3::ZERO, Vec3::Z),
+            transform: Transform::from_translation(CAMERA_OFFSET).looking_at(Vec3::ZERO, UP),
             ..Default::default()
         },
         BloomSettings::default(),
