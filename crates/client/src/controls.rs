@@ -40,7 +40,7 @@ pub enum CameraFollowMode {
     Controller,
 }
 
-const MAX_RANGE: f32 = 20.0;
+const MAX_RANGE: f32 = 30.0;
 
 pub fn player_input(
     player: Res<Player>,
