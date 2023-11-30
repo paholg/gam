@@ -45,8 +45,6 @@ fn calculate_initial_vel(spawn: Vec3, target: Vec3) -> Velocity {
     let dir = dir_in_plane.to_3d(dist_in_plane * tan_phi).normalize();
     let linvel = v0 * dir;
 
-    tracing::info!(?spawn, ?target, ?linvel);
-
     Velocity {
         linvel,
         angvel: Vec3::ZERO,
