@@ -6,9 +6,7 @@ use bevy_ecs::{
 };
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
-use bevy_rapier3d::prelude::{
-    Collider, Friction, QueryFilter, QueryFilterFlags, RapierContext, RigidBody,
-};
+use bevy_rapier3d::prelude::{Collider, Friction, QueryFilter, RapierContext, RigidBody};
 use bevy_transform::components::{GlobalTransform, Transform};
 use rand::Rng;
 
@@ -44,20 +42,25 @@ impl Default for LevelProps {
 impl LevelProps {
     pub fn point_in_plane(&self, rapier_context: &RapierContext) -> Vec3 {
         let mut rng = rand::thread_rng();
+        let filter = QueryFilter::default();
         loop {
             let x = rng.gen::<f32>() * (self.x - PLAYER_R) - (self.x - PLAYER_R) * 0.5;
             let z = rng.gen::<f32>() * (self.z - PLAYER_R) - (self.z - PLAYER_R) * 0.5;
             let loc = Vec3::new(x, 0.0, z);
 
-            let filter = QueryFilter {
-                flags: QueryFilterFlags::ONLY_FIXED,
-                ..Default::default()
-            };
-            if let Some((_entity, toi)) =
-                rapier_context.cast_ray(loc + Vec3::new(0.0, 0.1, 0.0), -Vec3::Y, 0.2, true, filter)
-            {
-                if toi > 0.0 {
-                    // There's ground beneath us, and we're not in a wall!
+            let ray_loc = loc + Vec3::new(0.0, 0.1, 0.0);
+            let y_ray = rapier_context.cast_ray(ray_loc, -Vec3::Y, 0.2, true, filter);
+            let other_rays = [
+                rapier_context.cast_ray(ray_loc, Vec3::X, PLAYER_R, true, filter),
+                rapier_context.cast_ray(ray_loc, -Vec3::X, PLAYER_R, true, filter),
+                rapier_context.cast_ray(ray_loc, Vec3::Z, PLAYER_R, true, filter),
+                rapier_context.cast_ray(ray_loc, -Vec3::Z, PLAYER_R, true, filter),
+            ];
+
+            if let Some((_entity, toi)) = y_ray {
+                if toi > 0.0 && other_rays.into_iter().all(|r| r.is_none()) {
+                    // There's ground beneath us, and we're not in a wall or the
+                    // player!
                     return loc;
                 }
             }
