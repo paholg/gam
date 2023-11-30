@@ -73,13 +73,13 @@ impl<T> Bar<T> {
 
 impl Default for Bar<Health> {
     fn default() -> Self {
-        Self::new(0.7, Vec2::new(1.8, 0.3))
+        Self::new(0.18, Vec2::new(0.45, 0.08))
     }
 }
 
 impl Default for Bar<Energy> {
     fn default() -> Self {
-        Self::new(0.87, Vec2::new(1.8, 0.3))
+        Self::new(0.22, Vec2::new(0.45, 0.08))
     }
 }
 
@@ -194,7 +194,10 @@ fn bar_add_system<T: Component + BarAssets + Default>(
 // Finally, that has children, one of which we need to modify; fgbar_q.
 pub fn bar_update_system<T: Component + HasBar>(
     entity_q: Query<(&Transform, &T), (Without<BarMarker<T>>, Without<BarChildMarker<T>>)>,
-    graphics_q: Query<(&Parent, &Bar<T>), (Without<BarMarker<T>>, Without<BarChildMarker<T>>)>,
+    graphics_q: Query<
+        (&Parent, &Transform, &Bar<T>),
+        (Without<BarMarker<T>>, Without<BarChildMarker<T>>),
+    >,
     mut bar_q: Query<
         (&Parent, &Children, &mut Transform),
         (With<BarMarker<T>>, Without<BarChildMarker<T>>),
@@ -202,7 +205,7 @@ pub fn bar_update_system<T: Component + HasBar>(
     mut fgbar_q: Query<&mut Transform, (With<BarChildMarker<T>>, Without<BarMarker<T>>)>,
 ) {
     for (parent, children, mut transform) in &mut bar_q {
-        let Ok((grandparent, bar)) = graphics_q.get(parent.get()) else {
+        let Ok((grandparent, graphics_transform, bar)) = graphics_q.get(parent.get()) else {
             tracing::warn!(
                 ?parent,
                 ?children,
@@ -222,7 +225,7 @@ pub fn bar_update_system<T: Component + HasBar>(
             continue;
         };
         let percent = quantity.percent();
-        let rotation = entity_transform.rotation.inverse();
+        let rotation = graphics_transform.rotation.inverse() * entity_transform.rotation.inverse();
         transform.rotation = rotation;
         transform.translation = rotation * bar.displacement;
 

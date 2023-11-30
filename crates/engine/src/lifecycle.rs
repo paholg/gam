@@ -10,17 +10,18 @@ use bevy_rapier3d::prelude::{Friction, LockedAxes, RapierContext, RigidBody};
 use bevy_transform::components::Transform;
 
 use crate::{
-    ability::{Abilities, Ability, ABILITY_Y},
+    ability::{Abilities, Ability},
     ai::simple::Attitude,
     death_callback::DeathCallback,
     level::LevelProps,
     player::{character_collider, PlayerInfo},
     time::{Tick, TickCounter},
     Ai, Ally, Character, Cooldowns, Enemy, Energy, FootOffset, Health, Kind, NumAi, Object, Player,
-    Shootable, PLAYER_HEIGHT, PLAYER_R,
+    Shootable, ABILITY_Y, PLAYER_HEIGHT, PLAYER_R,
 };
 
-pub const DEATH_Y: f32 = -2.0;
+// TODO: Once we figure out getting stuck on walls, make this larger.
+pub const DEATH_Y: f32 = -0.5;
 
 #[derive(Debug, Event)]
 pub struct DeathEvent {

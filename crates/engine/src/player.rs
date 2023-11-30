@@ -3,10 +3,8 @@ use bevy_rapier3d::prelude::{Collider, Friction, LockedAxes, RigidBody};
 use bevy_transform::components::Transform;
 
 use crate::{
-    ability::{Abilities, ABILITY_Y},
-    lifecycle::ENERGY_REGEN,
-    Ally, Character, Cooldowns, Energy, Health, Kind, Object, Player, Shootable, Target,
-    PLAYER_HEIGHT, PLAYER_R,
+    ability::Abilities, lifecycle::ENERGY_REGEN, Ally, Character, Cooldowns, Energy, Health, Kind,
+    Object, Player, Shootable, Target, ABILITY_Y, PLAYER_HEIGHT, PLAYER_R,
 };
 
 #[derive(Debug, Component)]

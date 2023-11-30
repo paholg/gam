@@ -23,9 +23,9 @@ pub fn clear_level(mut commands: Commands, query: Query<Entity, With<InLevel>>) 
     }
 }
 
-pub const WALL_HEIGHT: f32 = 2.0;
-const WALL_WIDTH: f32 = 0.5;
-pub const SHORT_WALL: f32 = 1.0;
+pub const WALL_HEIGHT: f32 = 0.6;
+const WALL_WIDTH: f32 = 0.3;
+pub const SHORT_WALL: f32 = 0.25;
 
 #[derive(Resource)]
 pub struct LevelProps {
@@ -35,7 +35,7 @@ pub struct LevelProps {
 
 impl Default for LevelProps {
     fn default() -> Self {
-        Self { x: 50.0, z: 50.0 }
+        Self { x: 15.0, z: 15.0 }
     }
 }
 
@@ -106,7 +106,7 @@ const WALL_COLOR: [u8; 3] = [220, 110, 165];
 const SHORT_WALL_COLOR: [u8; 3] = [255, 200, 255];
 
 pub fn test_level(mut commands: Commands, mut props: ResMut<LevelProps>) {
-    let pixel = 1.0;
+    let pixel = 0.25;
     let image = image::io::Reader::open("assets/levels/test2.png")
         .unwrap()
         .decode()

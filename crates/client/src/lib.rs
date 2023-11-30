@@ -41,7 +41,7 @@ pub use controls::ControlPlugin;
 
 rust_i18n::i18n!("../../locales");
 
-const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, 50.0, 50.0);
+const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, 12.0, 12.0);
 
 /// Return a Transform such that things normally in the XY-plane will instead be
 /// correctly oriented in the XZ plane.

@@ -9,9 +9,8 @@ use bevy::{
 use leafwing_input_manager::prelude::ActionState;
 
 use engine::{
-    ability::ABILITY_Y,
     multiplayer::{Action, Input, PlayerInputs},
-    Player, To2d, To3d, UP,
+    Player, To2d, To3d, ABILITY_Y, UP,
 };
 
 use crate::{
@@ -40,7 +39,7 @@ pub enum CameraFollowMode {
     Controller,
 }
 
-const MAX_RANGE: f32 = 30.0;
+const MAX_RANGE: f32 = 7.0;
 
 pub fn player_input(
     player: Res<Player>,
