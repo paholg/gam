@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use bevy_ecs::system::Resource;
 
-use crate::time::Tick;
+use crate::{movement::MaxSpeed, time::Tick};
 
 use super::{grenade::GrenadeKind, Ability};
 
@@ -169,14 +169,13 @@ pub struct SeekerRocketProps {
     pub duration: Tick,
     pub damage: f32,
     pub explosion_radius: f32,
-    pub max_impulse: f32,
     // Max turn per tick, in radians.
     pub turning_radius: f32,
     // Note: Shape is a capsule.
     pub radius: f32,
     pub length: f32,
     pub health: f32,
-    pub damping: f32,
+    pub max_speed: MaxSpeed,
 }
 
 impl Default for SeekerRocketProps {
@@ -187,12 +186,14 @@ impl Default for SeekerRocketProps {
             duration: Tick(300),
             damage: 8.0,
             explosion_radius: 3.0,
-            max_impulse: 0.3,
-            damping: 0.5,
-            turning_radius: PI * 0.05,
+            turning_radius: PI * 0.02,
             radius: 0.3,
             length: 0.6,
             health: 3.0,
+            max_speed: MaxSpeed {
+                force: 20.0,
+                speed: 40.0,
+            },
         }
     }
 }

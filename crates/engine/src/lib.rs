@@ -10,8 +10,8 @@ use bevy_ecs::{
 };
 use bevy_math::{Quat, Vec2, Vec3};
 use bevy_rapier3d::prelude::{
-    Collider, ColliderMassProperties, Damping, ExternalForce, ExternalImpulse, Friction,
-    LockedAxes, ReadMassProperties, RigidBody, Velocity,
+    Collider, ColliderMassProperties, ExternalForce, ExternalImpulse, Friction, LockedAxes,
+    ReadMassProperties, RigidBody, Velocity,
 };
 use bevy_reflect::Reflect;
 use bevy_time::{Fixed, Time};
@@ -20,6 +20,7 @@ use bevy_utils::HashMap;
 use input::check_resume;
 use level::{InLevel, LevelProps};
 use lifecycle::DeathEvent;
+use movement::{DesiredMove, MaxSpeed};
 use multiplayer::PlayerInputs;
 use physics::PhysicsPlugin;
 use status_effect::StatusEffects;
@@ -32,6 +33,7 @@ pub mod death_callback;
 pub mod input;
 pub mod level;
 pub mod lifecycle;
+pub mod movement;
 pub mod multiplayer;
 pub mod physics;
 pub mod player;
@@ -52,11 +54,6 @@ pub const FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
 pub const UP: Vec3 = Vec3::Y;
 
 pub const PLAYER_R: f32 = 1.0;
-const IMPULSE: f32 = 15.0;
-const DAMPING: Damping = Damping {
-    linear_damping: 5.0,
-    angular_damping: 0.0,
-};
 
 /// Represents the kind of entity this is; used, at least, for effects.
 ///
@@ -128,19 +125,6 @@ impl Energy {
         } else {
             false
         }
-    }
-}
-
-/// We currently move Characters by applying an impulse; this is the highest
-/// impulse they can use.
-#[derive(Component, Copy, Clone, Debug, Reflect)]
-pub struct MaxSpeed {
-    pub impulse: f32,
-}
-
-impl Default for MaxSpeed {
-    fn default() -> Self {
-        Self { impulse: IMPULSE }
     }
 }
 
@@ -221,7 +205,6 @@ struct Character {
     health: Health,
     energy: Energy,
     max_speed: MaxSpeed,
-    damping: Damping,
     friction: Friction,
     impulse: ExternalImpulse,
     force: ExternalForce,
@@ -229,6 +212,7 @@ struct Character {
     shootable: Shootable,
     cooldowns: Cooldowns,
     abilities: Abilities,
+    desired_movement: DesiredMove,
 }
 
 #[derive(Resource, Reflect, Default, Debug)]
@@ -310,6 +294,7 @@ impl Plugin for GamPlugin {
                     lifecycle::reset,
                     input::apply_inputs,
                     ai::simple::system_set(),
+                    movement::apply_movement,
                     // ability::grenade::grenade_land_system,
                     ability::bullet::bullet_kickback_system,
                     seeker_rocket::seeker_rocket_tracking,

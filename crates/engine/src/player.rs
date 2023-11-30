@@ -4,7 +4,7 @@ use bevy_rapier3d::prelude::{Collider, Friction, LockedAxes, RigidBody};
 
 use crate::{
     ability::Abilities, lifecycle::ENERGY_REGEN, Ally, Character, Cooldowns, Energy, Health, Kind,
-    Object, Player, Shootable, Target, DAMPING, PLAYER_R,
+    Object, Player, Shootable, Target, PLAYER_R,
 };
 
 #[derive(Debug, Component)]
@@ -30,12 +30,11 @@ impl PlayerInfo {
                             PLAYER_R,
                         ),
                         body: RigidBody::Dynamic,
-                        locked_axes: LockedAxes::ROTATION_LOCKED,
+                        locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
                         kind: Kind::Player,
                         ..Default::default()
                     },
                     max_speed: Default::default(),
-                    damping: DAMPING,
                     impulse: Default::default(),
                     force: Default::default(),
                     friction: Friction::default(),
@@ -43,6 +42,7 @@ impl PlayerInfo {
                     shootable: Shootable,
                     abilities: self.abilities.clone(),
                     cooldowns: Cooldowns::new(&self.abilities),
+                    desired_movement: Default::default(),
                 },
             ))
             .id();

@@ -17,7 +17,7 @@ use crate::{
     player::PlayerInfo,
     time::{Tick, TickCounter},
     Ai, Ally, Character, Cooldowns, Enemy, Energy, Health, Kind, NumAi, Object, Player, Shootable,
-    DAMPING, PLAYER_R,
+    PLAYER_R,
 };
 
 pub const DEATH_Y: f32 = -2.0;
@@ -110,7 +110,6 @@ fn spawn_enemies(commands: &mut Commands, num: usize, level: &LevelProps) {
                         ..Default::default()
                     },
                     max_speed: Default::default(),
-                    damping: DAMPING,
                     impulse: Default::default(),
                     force: Default::default(),
                     friction: Friction::default(),
@@ -118,6 +117,7 @@ fn spawn_enemies(commands: &mut Commands, num: usize, level: &LevelProps) {
                     shootable: Shootable,
                     cooldowns: Cooldowns::new(&abilities),
                     abilities,
+                    desired_movement: Default::default(),
                 },
                 Attitude::rand(level),
             ))
@@ -150,7 +150,6 @@ fn spawn_allies(commands: &mut Commands, num: usize, level: &LevelProps) {
                         ..Default::default()
                     },
                     max_speed: Default::default(),
-                    damping: DAMPING,
                     impulse: Default::default(),
                     force: Default::default(),
                     friction: Friction::default(),
@@ -158,6 +157,7 @@ fn spawn_allies(commands: &mut Commands, num: usize, level: &LevelProps) {
                     shootable: Shootable,
                     cooldowns: Cooldowns::new(&abilities),
                     abilities,
+                    desired_movement: Default::default(),
                 },
             ))
             .id();

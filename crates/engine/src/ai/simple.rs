@@ -8,16 +8,17 @@ use bevy_ecs::{
     system::{Commands, Query, Res},
 };
 use bevy_math::Vec3;
-use bevy_rapier3d::prelude::{ExternalImpulse, Velocity};
+use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 use rand::Rng;
 
 use crate::{
     ability::{properties::AbilityProps, Ability},
     level::LevelProps,
+    movement::DesiredMove,
     status_effect::StatusEffects,
     time::TickCounter,
-    Ai, Ally, Cooldowns, Enemy, Energy, MaxSpeed, Target, To2d, To3d, FORWARD, UP,
+    Ai, Ally, Cooldowns, Enemy, Energy, Target, To2d, FORWARD, UP,
 };
 
 #[derive(Component)]
@@ -49,11 +50,11 @@ pub fn system_set() -> SystemConfigs {
 }
 
 fn just_move_system(
-    mut query: Query<(&mut ExternalImpulse, &Transform, &MaxSpeed, &mut Attitude), With<Ai>>,
+    mut query: Query<(&mut DesiredMove, &Transform, &mut Attitude), With<Ai>>,
     level: Res<LevelProps>,
 ) {
-    for (mut impulse, transform, max_speed, mut attitude) in query.iter_mut() {
-        let target_vec = match *attitude {
+    for (mut desired_move, transform, mut attitude) in query.iter_mut() {
+        let dir = match *attitude {
             Attitude::Chase => transform.rotation * FORWARD,
             Attitude::RunAway => -(transform.rotation * FORWARD),
             Attitude::PickPoint(ref mut target) => {
@@ -64,7 +65,8 @@ fn just_move_system(
             }
         }
         .to_2d();
-        impulse.impulse = target_vec.normalize().to_3d(0.0) * max_speed.impulse;
+
+        desired_move.dir = dir;
     }
 }
 
