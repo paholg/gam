@@ -4,9 +4,8 @@ use bevy_ecs::{component::Component, system::Query};
 use bevy_math::Vec2;
 use bevy_rapier3d::prelude::{ExternalForce, ReadMassProperties, Velocity};
 use bevy_reflect::Reflect;
-use bevy_transform::components::Transform;
 
-use crate::{time::FREQUENCY, FootOffset, To2d, To3d};
+use crate::{time::FREQUENCY, To2d, To3d};
 
 /// The desired movement of an entity.
 ///
@@ -45,26 +44,14 @@ impl Default for MaxSpeed {
 pub fn apply_movement(
     mut query: Query<(
         &DesiredMove,
-        &Transform,
         &mut ExternalForce,
         &Velocity,
         &MaxSpeed,
         &ReadMassProperties,
-        &FootOffset,
     )>,
 ) {
-    for (desired, transform, mut force, velocity, max_speed, mass, foot_offset) in &mut query {
-        let y = transform.translation.y;
-        // TODO: Determine if on ground betterer.
-        let dir = if !desired.can_fly && (y + foot_offset.y < -0.1 || y + foot_offset.y > 0.1) {
-            // TODO: Falling things, right now, can just try to slow down their
-            // horizontal velocity. We'll want to replace this with something
-            // better.
-            -velocity.linvel.to_2d().normalize_or_zero()
-        } else {
-            desired.dir
-        };
-        let desired_v = max_speed.speed * dir;
+    for (desired, mut force, velocity, max_speed, mass) in &mut query {
+        let desired_v = max_speed.speed * desired.dir;
 
         let delta_v = desired_v - velocity.linvel.to_2d();
         let delta_a = delta_v * FREQUENCY;
