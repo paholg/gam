@@ -5,6 +5,7 @@ use std::{
 
 use bevy_ecs::system::{ResMut, Resource};
 use bevy_reflect::Reflect;
+use bevy_utils::Duration;
 use tracing::info;
 
 /// The timestep at which we run our game.
@@ -44,7 +45,8 @@ impl SubAssign for Tick {
 #[derive(Resource, Reflect)]
 pub struct TickCounter {
     pub tick: Tick,
-    since: Instant,
+    frame_begin: Instant,
+    accumulated_time: Duration,
 }
 
 impl Default for TickCounter {
@@ -59,7 +61,8 @@ impl TickCounter {
     pub fn new() -> Self {
         Self {
             tick: Tick(0),
-            since: Instant::now(),
+            frame_begin: Instant::now(),
+            accumulated_time: Duration::ZERO,
         }
     }
 
@@ -72,17 +75,22 @@ impl TickCounter {
     }
 }
 
+/// Note: This system should be run before any others.
 pub fn tick_counter(mut tick_counter: ResMut<TickCounter>) {
     tick_counter.tick.0 += 1;
+    tick_counter.frame_begin = Instant::now();
 }
 
+/// Note: This system should be run after all others.
 pub fn debug_tick_system(mut tick_counter: ResMut<TickCounter>) {
+    let frame_duration = tick_counter.frame_begin.elapsed();
+    tick_counter.accumulated_time += frame_duration;
+
     if tick_counter.diagnostic_iter() {
         let tick = tick_counter.tick;
 
-        let now = Instant::now();
-        let avg_dur = now.duration_since(tick_counter.since) / TickCounter::DIAGNOSTIC_ITERS;
-        tick_counter.since = now;
+        let avg_dur = tick_counter.accumulated_time / TickCounter::DIAGNOSTIC_ITERS;
+        tick_counter.accumulated_time = Duration::ZERO;
 
         info!(tick = tick.0, ?avg_dur, "Tick");
     }
