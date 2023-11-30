@@ -12,7 +12,7 @@ use crate::{
     multiplayer::{Action, PlayerInputs},
     status_effect::{StatusEffect, StatusEffects},
     time::TickCounter,
-    AppState, Cooldowns, Energy, FromPlane, MaxSpeed, Player, Target, ToPlane, UP,
+    AppState, Cooldowns, Energy, MaxSpeed, Player, Target, To2d, To3d, UP,
 };
 
 pub fn check_resume(
@@ -75,8 +75,8 @@ pub fn apply_inputs(
         // Targeting
         if let Some(cursor) = input.cursor() {
             target.0 = cursor;
-            if transform.translation.to_plane() != cursor {
-                transform.look_at(cursor.from_plane(0.0), UP);
+            if transform.translation.to_2d() != cursor {
+                transform.look_at(cursor.to_3d(0.0), UP);
             }
         }
 
@@ -105,7 +105,7 @@ pub fn apply_inputs(
         }
 
         // Movement
-        let dir = input.movement().clamp_length_max(1.0).from_plane(0.0);
+        let dir = input.movement().clamp_length_max(1.0).to_3d(0.0);
         let mut max_impulse = max_speed.impulse;
         if status_effects
             .effects

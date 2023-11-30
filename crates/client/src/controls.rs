@@ -11,7 +11,7 @@ use leafwing_input_manager::prelude::ActionState;
 use engine::{
     ability::ABILITY_Y,
     multiplayer::{Action, Input, PlayerInputs},
-    FromPlane, Player, ToPlane, UP,
+    Player, To2d, To3d, UP,
 };
 
 use crate::{
@@ -89,10 +89,10 @@ pub fn player_input(
     let cursor = match *camera_mode {
         CameraFollowMode::Mouse => {
             cursor_from_mouse(primary_window.single(), camera, camera_global_transform)
-                .unwrap_or(player_transform.translation.to_plane())
+                .unwrap_or(player_transform.translation.to_2d())
         }
         CameraFollowMode::Controller => {
-            player_transform.translation.to_plane() + controller_aim.xy() * MAX_RANGE
+            player_transform.translation.to_2d() + controller_aim.xy() * MAX_RANGE
         }
     };
 
@@ -102,8 +102,8 @@ pub fn player_input(
     // Update camera
     let camera_weight = 0.9;
     const CURSOR_WEIGHT: f32 = 0.33;
-    let look_at = cursor.from_plane(0.0) * CURSOR_WEIGHT
-        + player_transform.translation * (1.0 - CURSOR_WEIGHT);
+    let look_at =
+        cursor.to_3d(0.0) * CURSOR_WEIGHT + player_transform.translation * (1.0 - CURSOR_WEIGHT);
     let look_at = (camera_transform.translation - CAMERA_OFFSET) * camera_weight
         + look_at * (1.0 - camera_weight);
 
@@ -121,5 +121,5 @@ fn cursor_from_mouse(
     let ray = camera.viewport_to_world(camera_gt, cursor_window)?;
     let distance = ray.intersect_plane(ABILITY_Y, UP)?;
     let cursor = ray.get_point(distance);
-    Some(cursor.to_plane())
+    Some(cursor.to_2d())
 }

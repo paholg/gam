@@ -3,7 +3,7 @@ use bevy::prelude::{
     SpatialBundle, Transform, Update, With, Without,
 };
 use bevy_mod_raycast::prelude::{DeferredRaycastingPlugin, RaycastSource};
-use engine::{ability::ABILITY_Y, FromPlane, Player, Target, FORWARD, UP};
+use engine::{ability::ABILITY_Y, Player, Target, To3d, FORWARD, UP};
 
 use crate::{asset_handler::AssetHandler, in_plane};
 
@@ -39,7 +39,7 @@ fn draw_target_system(
                 PbrBundle {
                     material: asset_handler.target.cursor_material.clone(),
                     mesh: asset_handler.target.cursor_mesh.clone(),
-                    transform: in_plane().with_translation(target.0.from_plane(0.0)),
+                    transform: in_plane().with_translation(target.0.to_3d(0.0)),
                     ..Default::default()
                 },
                 CursorTarget,
@@ -58,7 +58,7 @@ fn update_target_system(
             let mut t = in_plane();
             let rotation = player_transform.rotation.inverse();
             t.rotate(rotation);
-            t.translation = rotation * (target.0.from_plane(0.01) - player_transform.translation);
+            t.translation = rotation * (target.0.to_3d(0.01) - player_transform.translation);
 
             *transform = t;
         }

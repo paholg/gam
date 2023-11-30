@@ -15,7 +15,7 @@ use crate::{
     death_callback::{DeathCallback, ExplosionCallback},
     level::InLevel,
     time::{Tick, TickCounter},
-    Health, Kind, Object, Target, ToPlane, FORWARD, PLAYER_R,
+    Health, Kind, Object, Target, To2d, FORWARD, PLAYER_R,
 };
 
 use super::{bullet::Bullet, properties::SeekerRocketProps, ABILITY_Y};
@@ -91,9 +91,9 @@ pub fn seeker_rocket_tracking(
         };
         let target = target.0;
 
-        let facing = transform.forward().to_plane();
+        let facing = transform.forward().to_2d();
 
-        let desired_rotation = facing.angle_between(target - transform.translation.to_plane());
+        let desired_rotation = facing.angle_between(target - transform.translation.to_2d());
         let rotation = desired_rotation.clamp(-rocket.turning_radius, rocket.turning_radius);
 
         transform.rotate_y(rotation);
