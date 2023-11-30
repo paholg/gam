@@ -340,7 +340,7 @@ fn draw_hyper_sprint_system(
     let effect = &mut assets.hyper_sprint.effect;
 
     for (sprint_transform, foot_offset) in query.iter() {
-        let mut transform = sprint_transform.clone();
+        let mut transform = *sprint_transform;
         transform.translation.y += foot_offset.y;
         effect.trigger(&mut commands, transform, &mut effects, &frame);
     }
