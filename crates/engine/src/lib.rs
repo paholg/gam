@@ -53,8 +53,10 @@ pub enum AppState {
 pub const FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
 pub const UP: Vec3 = Vec3::Y;
 
-pub const PLAYER_R: f32 = 1.0;
-pub const PLAYER_HEIGHT: f32 = 2.0;
+pub const PLAYER_R: f32 = 0.25;
+pub const PLAYER_HEIGHT: f32 = 0.75;
+pub const ABILITY_Y: Vec3 = Vec3::new(0.0, 0.4, 0.0);
+pub const PLAYER_ABILITY_COUNT: usize = 5;
 
 /// Represents the kind of entity this is; used, at least, for effects.
 ///

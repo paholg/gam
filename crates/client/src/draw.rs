@@ -201,7 +201,7 @@ fn draw_seeker_rocket_system(
                     mesh: assets.seeker_rocket.mesh.clone(),
                     ..Default::default()
                 },
-                Bar::<Energy>::new(0.3, Vec2::new(1.2, 0.3)),
+                Bar::<Energy>::new(0.1, Vec2::new(0.3, 0.08)),
                 in_plane(),
                 GlobalTransform::default(),
             ));

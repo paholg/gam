@@ -50,7 +50,6 @@ pub struct SeekerRocketAssets {
     pub mesh: Handle<Mesh>,
     pub material: Handle<StandardMaterial>,
     pub explosion_effect: ParticleEffectPool,
-    pub outline_mesh: Handle<Mesh>,
     pub outline_material: Handle<StandardMaterial>,
 }
 
@@ -182,7 +181,7 @@ pub fn asset_handler_setup(
         outline_mesh: meshes.add(
             HollowPolygon {
                 radius: props.frag_grenade.explosion_radius,
-                thickness: 0.25,
+                thickness: 0.06,
                 vertices: 60,
             }
             .into(),
@@ -209,7 +208,7 @@ pub fn asset_handler_setup(
         outline_mesh: meshes.add(
             HollowPolygon {
                 radius: props.heal_grenade.explosion_radius,
-                thickness: 0.25,
+                thickness: 0.06,
                 vertices: 60,
             }
             .into(),
@@ -235,14 +234,6 @@ pub fn asset_handler_setup(
             })
             .unwrap(),
         ),
-        outline_mesh: meshes.add(
-            HollowPolygon {
-                radius: props.seeker_rocket.explosion_radius,
-                thickness: 0.25,
-                vertices: 60,
-            }
-            .into(),
-        ),
         material: materials.add(seeker_rocket_material.clone()),
         outline_material: materials.add(seeker_rocket_material),
         explosion_effect: seeker_rocket_effect,
@@ -264,8 +255,8 @@ pub fn asset_handler_setup(
 
     let outline = meshes.add(
         HollowPolygon {
-            radius: 1.0,
-            thickness: 0.15,
+            radius: PLAYER_R,
+            thickness: 0.04,
             vertices: 30,
         }
         .into(),
@@ -321,9 +312,10 @@ pub fn asset_handler_setup(
         despawn_effect: death_effect,
     };
 
-    let mut target_material = outline_material;
-    target_material.base_color = Color::CRIMSON;
-    target_material.emissive = Color::CRIMSON;
+    let target_material = StandardMaterial {
+        emissive: Color::rgb_linear(10.0, 0.0, 0.1),
+        ..Default::default()
+    };
 
     let target_laser_material = StandardMaterial {
         emissive: Color::rgb_linear(10.0, 0.0, 0.1),
@@ -331,7 +323,7 @@ pub fn asset_handler_setup(
     };
     let laser_length = 100.0;
     let target = TargetAssets {
-        cursor_mesh: meshes.add(Circle::new(0.25).into()),
+        cursor_mesh: meshes.add(Circle::new(0.06).into()),
         cursor_material: materials.add(target_material),
         laser_mesh: meshes.add(
             Cylinder {
@@ -390,7 +382,7 @@ fn shot_effect(props: &GunProps) -> EffectAsset {
 
     let vel = SetVelocitySphereModifier {
         center: writer.lit(Vec3::ZERO).expr(),
-        speed: writer.lit(6.0).uniform(writer.lit(7.0)).expr(),
+        speed: writer.lit(1.5).uniform(writer.lit(2.0)).expr(),
     };
 
     let lifetime = SetAttributeModifier {
@@ -431,8 +423,8 @@ fn death_effect() -> EffectAsset {
     color_gradient1.add_key(1.0, Vec4::new(4.0, 4.0, 0.0, 0.0));
 
     let mut size_gradient1 = Gradient::new();
-    size_gradient1.add_key(0.0, Vec2::splat(0.2));
-    size_gradient1.add_key(0.3, Vec2::splat(0.3));
+    size_gradient1.add_key(0.0, Vec2::splat(0.05));
+    size_gradient1.add_key(0.3, Vec2::splat(0.07));
     size_gradient1.add_key(1.0, Vec2::splat(0.0));
 
     let spawner = Spawner::once(500.0.into(), true);
@@ -446,7 +438,7 @@ fn death_effect() -> EffectAsset {
 
     let vel = SetVelocitySphereModifier {
         center: writer.lit(Vec3::ZERO).expr(),
-        speed: writer.lit(6.0).uniform(writer.lit(7.0)).expr(),
+        speed: writer.lit(1.5).uniform(writer.lit(2.0)).expr(),
     };
 
     let lifetime = SetAttributeModifier {
@@ -488,8 +480,8 @@ fn frag_grenade_effect(props: &GrenadeProps) -> EffectAsset {
     color_gradient1.add_key(1.0, Vec4::new(0.0, 0.0, 0.0, 0.0));
 
     let mut size_gradient1 = Gradient::new();
-    size_gradient1.add_key(0.0, Vec2::splat(0.2));
-    size_gradient1.add_key(0.3, Vec2::splat(0.3));
+    size_gradient1.add_key(0.0, Vec2::splat(0.05));
+    size_gradient1.add_key(0.3, Vec2::splat(0.07));
     size_gradient1.add_key(1.0, Vec2::splat(0.0));
 
     let spawner = Spawner::once(500.0.into(), true);
@@ -503,7 +495,7 @@ fn frag_grenade_effect(props: &GrenadeProps) -> EffectAsset {
 
     let vel = SetVelocitySphereModifier {
         center: writer.lit(Vec3::ZERO).expr(),
-        speed: writer.lit(6.0).uniform(writer.lit(7.0)).expr(),
+        speed: writer.lit(1.5).uniform(writer.lit(2.0)).expr(),
     };
 
     let lifetime = SetAttributeModifier {
@@ -544,8 +536,8 @@ fn heal_grenade_effect(props: &GrenadeProps) -> EffectAsset {
     color_gradient1.add_key(1.0, Vec4::new(0.0, 0.0, 0.0, 0.0));
 
     let mut size_gradient1 = Gradient::new();
-    size_gradient1.add_key(0.0, Vec2::splat(0.2));
-    size_gradient1.add_key(0.3, Vec2::splat(0.3));
+    size_gradient1.add_key(0.0, Vec2::splat(0.05));
+    size_gradient1.add_key(0.3, Vec2::splat(0.07));
     size_gradient1.add_key(1.0, Vec2::splat(0.0));
 
     let spawner = Spawner::once(500.0.into(), true);
@@ -559,7 +551,7 @@ fn heal_grenade_effect(props: &GrenadeProps) -> EffectAsset {
 
     let vel = SetVelocitySphereModifier {
         center: writer.lit(Vec3::ZERO).expr(),
-        speed: writer.lit(6.0).uniform(writer.lit(7.0)).expr(),
+        speed: writer.lit(1.5).uniform(writer.lit(2.0)).expr(),
     };
 
     let lifetime = SetAttributeModifier {
@@ -601,8 +593,8 @@ fn seeker_rocket_effect(props: &SeekerRocketProps) -> EffectAsset {
     color_gradient1.add_key(1.0, Vec4::new(0.0, 0.0, 0.0, 0.0));
 
     let mut size_gradient1 = Gradient::new();
-    size_gradient1.add_key(0.0, Vec2::splat(0.2));
-    size_gradient1.add_key(0.3, Vec2::splat(0.3));
+    size_gradient1.add_key(0.0, Vec2::splat(0.05));
+    size_gradient1.add_key(0.3, Vec2::splat(0.07));
     size_gradient1.add_key(1.0, Vec2::splat(0.0));
 
     let spawner = Spawner::once(500.0.into(), true);
@@ -616,7 +608,7 @@ fn seeker_rocket_effect(props: &SeekerRocketProps) -> EffectAsset {
 
     let vel = SetVelocitySphereModifier {
         center: writer.lit(Vec3::ZERO).expr(),
-        speed: writer.lit(6.0).uniform(writer.lit(7.0)).expr(),
+        speed: writer.lit(1.5).uniform(writer.lit(2.0)).expr(),
     };
 
     let lifetime = SetAttributeModifier {
@@ -650,10 +642,10 @@ fn seeker_rocket_effect(props: &SeekerRocketProps) -> EffectAsset {
 }
 
 fn hyper_sprint_effect() -> EffectAsset {
-    let mut gradient = Gradient::new();
-    gradient.add_key(0.0, Vec4::splat(1.0));
-    gradient.add_key(0.5, Vec4::splat(1.0));
-    gradient.add_key(1.0, Vec4::new(1.0, 1.0, 1.0, 0.0));
+    let mut color_gradient = Gradient::new();
+    color_gradient.add_key(0.0, Vec4::splat(1.0));
+    color_gradient.add_key(0.5, Vec4::splat(1.0));
+    color_gradient.add_key(1.0, Vec4::new(1.0, 1.0, 1.0, 0.0));
 
     let spawner = Spawner::once(32.0.into(), true);
     let writer = ExprWriter::new();
@@ -668,7 +660,7 @@ fn hyper_sprint_effect() -> EffectAsset {
     let vel = SetVelocityCircleModifier {
         center: writer.lit(Vec3::ZERO).expr(),
         axis: writer.lit(Vec3::Y).expr(),
-        speed: writer.lit(2.0).uniform(writer.lit(3.0)).expr(),
+        speed: writer.lit(0.5).uniform(writer.lit(0.8)).expr(),
     };
 
     let lifetime = SetAttributeModifier {
@@ -681,7 +673,9 @@ fn hyper_sprint_effect() -> EffectAsset {
         .init(pos)
         .init(vel)
         .init(lifetime)
-        .render(ColorOverLifetimeModifier { gradient })
+        .render(ColorOverLifetimeModifier {
+            gradient: color_gradient,
+        })
         .render(SizeOverLifetimeModifier {
             gradient: Gradient::constant([0.2; 2].into()),
             screen_space_size: false,

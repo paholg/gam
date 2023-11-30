@@ -1,7 +1,7 @@
 use std::ops::Index;
 
 use bevy_ecs::{component::Component, entity::Entity, system::Commands};
-use bevy_math::{Quat, Vec3};
+use bevy_math::Quat;
 use bevy_rapier3d::prelude::Velocity;
 use bevy_reflect::Reflect;
 use bevy_transform::components::Transform;
@@ -26,9 +26,6 @@ pub mod bullet;
 pub mod grenade;
 pub mod properties;
 pub mod seeker_rocket;
-
-pub const ABILITY_Y: Vec3 = Vec3::new(0.0, 1.5, 0.0);
-pub const PLAYER_ABILITY_COUNT: usize = 5;
 
 #[derive(
     Debug,

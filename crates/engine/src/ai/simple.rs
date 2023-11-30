@@ -66,7 +66,8 @@ fn just_move_system(
                 *target - transform.translation
             }
         }
-        .to_2d();
+        .to_2d()
+        .normalize_or_zero();
 
         desired_move.dir = dir;
     }
