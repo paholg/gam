@@ -174,6 +174,7 @@ fn spawn_allies(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn reset(
     mut commands: Commands,
     enemy_query: Query<Entity, With<Enemy>>,
