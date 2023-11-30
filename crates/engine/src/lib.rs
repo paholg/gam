@@ -299,7 +299,7 @@ impl Plugin for GamPlugin {
         app.add_systems(Startup, level::test_level).add_systems(
             schedule.clone(),
             (
-                (time::tick_counter, time::debug_tick_system).in_set(GameSet::Timer),
+                time::tick_counter.in_set(GameSet::Timer),
                 physics.set1().in_set(GameSet::Physics1),
                 physics.set2().in_set(GameSet::Physics2),
                 physics.set3().in_set(GameSet::Physics3),
@@ -329,6 +329,7 @@ impl Plugin for GamPlugin {
                     // Put systems that despawn things at the end.
                     ability::bullet::bullet_despawn_system,
                     lifecycle::die,
+                    time::debug_tick_system,
                 )
                     .chain()
                     .in_set(GameSet::Despawn),
