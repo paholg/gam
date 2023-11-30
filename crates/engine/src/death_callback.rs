@@ -1,9 +1,11 @@
 use bevy_ecs::{
     component::Component,
-    system::{Commands, Query},
+    system::{Commands, Query, Res},
 };
 
-use bevy_rapier3d::prelude::{ActiveEvents, Collider, Sensor};
+use bevy_rapier3d::prelude::{
+    ActiveEvents, Collider, QueryFilter, QueryFilterFlags, RapierContext, Sensor,
+};
 use bevy_transform::components::Transform;
 
 use crate::{
@@ -60,12 +62,31 @@ impl ExplosionCallback {
 }
 
 pub fn explosion_collision_system(
-    explosion_q: Query<(&Explosion, &Colliding)>,
-    mut target_q: Query<&mut Health>,
+    rapier_context: Res<RapierContext>,
+    explosion_q: Query<(&Explosion, &Transform, &Colliding)>,
+    mut target_q: Query<(&Transform, &mut Health)>,
 ) {
-    for (explosion, colliding) in &explosion_q {
+    let query_filter = QueryFilter {
+        flags: QueryFilterFlags::ONLY_FIXED,
+        ..Default::default()
+    };
+    for (explosion, transform, colliding) in &explosion_q {
         for &target in &colliding.targets {
-            if let Ok(mut health) = target_q.get_mut(target) {
+            if let Ok((target_transform, mut health)) = target_q.get_mut(target) {
+                let origin = transform.translation;
+                let dir = target_transform.translation - origin;
+                let wall_collision =
+                    rapier_context.cast_ray(origin, dir, f32::MAX, true, query_filter);
+                if let Some((_entity, toi)) = wall_collision {
+                    let delta_wall = dir * toi;
+                    if delta_wall.length_squared() < dir.length_squared() {
+                        // There is a wall between us and the target!
+                        // TODO: We're just checking between the center of the
+                        // exploder and the target; we're going to miss some
+                        // explosions that should hit.
+                        continue;
+                    }
+                }
                 health.take(explosion.damage);
             }
         }

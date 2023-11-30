@@ -167,7 +167,11 @@ fn draw_grenade_outline_system(
                 .spawn(PbrBundle {
                     mesh,
                     material,
-                    transform: in_plane().with_translation(foot_offset.to_vec()),
+                    transform: in_plane().with_translation(Vec3::new(
+                        0.0,
+                        foot_offset.y + 0.01,
+                        0.0,
+                    )),
                     ..Default::default()
                 })
                 .id();
