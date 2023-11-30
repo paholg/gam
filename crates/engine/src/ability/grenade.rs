@@ -3,45 +3,49 @@ use std::f32::consts::PI;
 use bevy_ecs::{
     component::Component,
     entity::Entity,
-    event::{Event, EventWriter},
     system::{Commands, Query, Res},
 };
 
-use bevy_math::{Vec2, Vec3};
+use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{
-    Collider, ColliderMassProperties, LockedAxes, ReadMassProperties, Velocity,
+    Collider, ColliderMassProperties, Friction, LockedAxes, ReadMassProperties, Restitution,
+    Velocity,
 };
 use bevy_transform::components::{GlobalTransform, Transform};
-use nalgebra::ComplexField;
 
 use crate::{
     death_callback::{DeathCallback, ExplosionCallback},
     level::InLevel,
     physics::G,
     time::{Tick, TickCounter},
-    Health, Kind, Object, Target, To2d, To3d, FORWARD, PLAYER_R,
+    Health, Kind, Libm, Object, Target, To2d, To3d, FORWARD, PLAYER_R,
 };
 
-use super::properties::GrenadeProps;
+use super::{properties::GrenadeProps, ABILITY_Y};
 
 /// Calculate the initial velocity of a projectile thrown at 45 degrees up, so
 /// that it will land at target.
-// FIXME: This assumes the projectile starts and ends at Y=0.
-// This is not a good assumption.
-fn calculate_initial_vel(spawn: Vec2, target: Vec2) -> Velocity {
-    let dir_in_plane = target - spawn;
-    let dist = dir_in_plane.length();
+fn calculate_initial_vel(spawn: Vec3, target: Vec3) -> Velocity {
+    let dir_in_plane = target.to_2d() - spawn.to_2d();
+    let height_delta = target.y - spawn.y;
+    let dist_in_plane = dir_in_plane.length();
 
+    // TODO: These can all be constants at some point. Or generated with a proc-
+    // macro or build script.
+    // Or maybe we'll make "throw angle" customizable.
     let phi = PI / 12.0;
+    let cos_phi = Libm::cos(phi);
+    let cos_sq_phi = cos_phi * cos_phi;
+    let tan_phi = Libm::tan(phi);
 
-    // Recall: We use `ComplexField` for platform-independent determinism.
-    let sin2phi = ComplexField::sin(2.0 * phi);
-    let tan = ComplexField::tan(phi);
-    let v0 = (dist * G / sin2phi).sqrt();
+    let v0_sq = dist_in_plane * dist_in_plane * G
+        / (2.0 * cos_sq_phi * (dist_in_plane * tan_phi - height_delta));
+    let v0 = Libm::sqrt(v0_sq);
 
-    let y = dist * tan;
-    let dir = dir_in_plane.to_3d(y).normalize();
+    let dir = dir_in_plane.to_3d(dist_in_plane * tan_phi).normalize();
     let linvel = v0 * dir;
+
+    tracing::info!(?spawn, ?target, ?linvel);
 
     Velocity {
         linvel,
@@ -70,7 +74,6 @@ pub struct Grenade {
     #[allow(dead_code)]
     shooter: Entity,
     expiration: Tick,
-    radius: f32,
     pub kind: GrenadeKind,
 }
 
@@ -83,8 +86,8 @@ pub fn grenade(
     target: &Target,
 ) {
     let dir = transform.rotation * FORWARD;
-    let position = transform.translation + dir * (PLAYER_R + props.radius + 0.01);
-    let vel = calculate_initial_vel(position.to_2d(), target.0);
+    let position = transform.translation + dir * (PLAYER_R + props.radius + 0.01) + ABILITY_Y;
+    let vel = calculate_initial_vel(position, target.0.to_3d(props.radius));
 
     commands.spawn((
         Object {
@@ -102,8 +105,15 @@ pub fn grenade(
         Grenade {
             expiration: tick_counter.at(props.delay),
             shooter,
-            radius: props.radius,
             kind: props.kind,
+        },
+        Friction {
+            coefficient: 100.0,
+            ..Default::default()
+        },
+        Restitution {
+            coefficient: 0.0,
+            ..Default::default()
         },
         DeathCallback::Explosion(ExplosionCallback {
             damage: props.damage,
@@ -111,24 +121,6 @@ pub fn grenade(
         }),
         Health::new(props.health),
     ));
-}
-
-#[derive(Event)]
-pub struct GrenadeLandEvent {
-    pub entity: Entity,
-}
-
-pub fn grenade_land_system(
-    mut query: Query<(Entity, &Grenade, &mut Transform, &mut Velocity)>,
-    mut event_writer: EventWriter<GrenadeLandEvent>,
-) {
-    for (entity, grenade, mut transform, mut velocity) in &mut query {
-        if transform.translation.y < grenade.radius && velocity.linvel.y < 0.0 {
-            transform.translation.y = grenade.radius;
-            velocity.linvel = Vec3::ZERO;
-            event_writer.send(GrenadeLandEvent { entity });
-        }
-    }
 }
 
 pub fn grenade_explode_system(
