@@ -16,10 +16,10 @@ use crate::{
     level::InLevel,
     movement::DesiredMove,
     time::{Tick, TickCounter},
-    Energy, Health, Kind, Object, Target, To2d, FORWARD, PLAYER_R,
+    AbilityOffset, Energy, Health, Kind, Object, Target, To2d, FORWARD, PLAYER_R,
 };
 
-use super::{bullet::Bullet, properties::SeekerRocketProps, ABILITY_Y};
+use super::{bullet::Bullet, properties::SeekerRocketProps};
 
 #[derive(Component)]
 pub struct SeekerRocket {
@@ -37,17 +37,20 @@ pub fn seeker_rocket(
     transform: &Transform,
     velocity: &Velocity,
     shooter: Entity,
+    ability_offset: &AbilityOffset,
 ) {
     let mut rocket_transform = *transform;
     let dir = transform.rotation * FORWARD;
-    rocket_transform.translation =
-        transform.translation + dir * (PLAYER_R + props.capsule_length * 2.0) + ABILITY_Y;
+    rocket_transform.translation = transform.translation
+        + dir * (PLAYER_R + props.capsule_length * 2.0)
+        + ability_offset.to_vec();
 
     commands.spawn((
         Object {
             transform: rocket_transform,
             global_transform: GlobalTransform::default(),
             collider: Collider::capsule_z(props.capsule_length * 0.5, props.capsule_radius),
+            foot_offset: (-props.capsule_radius).into(),
             mass_props: ColliderMassProperties::Density(1.0),
             body: bevy_rapier3d::prelude::RigidBody::Dynamic,
             velocity: *velocity,
@@ -71,7 +74,10 @@ pub fn seeker_rocket(
             radius: props.explosion_radius,
         }),
         ExternalForce::default(),
-        DesiredMove::default(),
+        DesiredMove {
+            can_fly: true,
+            ..Default::default()
+        },
         ActiveEvents::COLLISION_EVENTS,
         TrackCollisions,
         Sensor,

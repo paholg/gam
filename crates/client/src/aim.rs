@@ -3,7 +3,7 @@ use bevy::prelude::{
     SpatialBundle, Transform, Update, With, Without,
 };
 use bevy_mod_raycast::prelude::{DeferredRaycastingPlugin, RaycastSource};
-use engine::{ability::ABILITY_Y, Player, Target, To3d, FORWARD, UP};
+use engine::{AbilityOffset, Player, Target, To3d, FORWARD, UP};
 
 use crate::{asset_handler::AssetHandler, in_plane};
 
@@ -72,18 +72,19 @@ struct LaserSight {
 
 fn draw_laser_system(
     mut commands: Commands,
-    query: Query<Entity, Added<Player>>,
+    query: Query<(Entity, &AbilityOffset), Added<Player>>,
     asset_handler: Res<AssetHandler>,
 ) {
-    for entity in &query {
-        let mut laser_transform = in_plane().with_translation(ABILITY_Y);
+    for (entity, ability_offset) in &query {
+        let mut laser_transform = in_plane().with_translation(ability_offset.to_vec());
         update_laser(asset_handler.target.laser_length, &mut laser_transform);
 
         let raycast = commands
             .spawn((
                 RaycastSource::<()>::new_transform_empty(),
                 SpatialBundle {
-                    transform: Transform::from_translation(ABILITY_Y).looking_to(FORWARD, UP),
+                    transform: Transform::from_translation(ability_offset.to_vec())
+                        .looking_to(FORWARD, UP),
                     ..Default::default()
                 },
             ))

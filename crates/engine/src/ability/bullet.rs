@@ -45,6 +45,7 @@ impl BulletSpawner {
                 )),
                 global_transform: GlobalTransform::default(),
                 collider: Collider::ball(self.radius),
+                foot_offset: (-self.radius).into(),
                 mass_props: ColliderMassProperties::Density(self.density),
                 body: RigidBody::Dynamic,
                 velocity: Velocity {

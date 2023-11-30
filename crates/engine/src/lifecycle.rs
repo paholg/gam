@@ -6,18 +6,18 @@ use bevy_ecs::{
 };
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
-use bevy_rapier3d::prelude::{Collider, Friction, LockedAxes, RigidBody};
-use bevy_transform::components::{GlobalTransform, Transform};
+use bevy_rapier3d::prelude::{Friction, LockedAxes, RigidBody};
+use bevy_transform::components::Transform;
 
 use crate::{
-    ability::{Abilities, Ability},
+    ability::{Abilities, Ability, ABILITY_Y},
     ai::simple::Attitude,
     death_callback::DeathCallback,
     level::LevelProps,
-    player::PlayerInfo,
+    player::{character_collider, PlayerInfo},
     time::{Tick, TickCounter},
-    Ai, Ally, Character, Cooldowns, Enemy, Energy, Health, Kind, NumAi, Object, Player, Shootable,
-    PLAYER_R,
+    Ai, Ally, Character, Cooldowns, Enemy, Energy, FootOffset, Health, Kind, NumAi, Object, Player,
+    Shootable, PLAYER_HEIGHT, PLAYER_R,
 };
 
 pub const DEATH_Y: f32 = -2.0;
@@ -28,9 +28,9 @@ pub struct DeathEvent {
     pub kind: Kind,
 }
 
-pub fn fall(mut query: Query<(&mut Health, &Transform)>) {
-    for (mut health, transform) in &mut query {
-        if transform.translation.y < DEATH_Y {
+pub fn fall(mut query: Query<(&mut Health, &Transform, &FootOffset)>) {
+    for (mut health, transform, foot_offset) in &mut query {
+        if transform.translation.y + foot_offset.y < DEATH_Y {
             health.die();
         }
     }
@@ -97,13 +97,11 @@ fn spawn_enemies(commands: &mut Commands, num: usize, level: &LevelProps) {
                     health: Health::new(10.0),
                     energy: Energy::new(5.0, 0.2),
                     object: Object {
-                        transform: Transform::from_translation(loc),
-                        global_transform: GlobalTransform::default(),
-                        collider: Collider::capsule(
-                            Vec3::new(0.0, PLAYER_R, 0.0),
-                            Vec3::new(0.0, 1.0 + PLAYER_R, 0.0),
-                            PLAYER_R,
+                        transform: Transform::from_translation(
+                            loc + Vec3::new(0.0, 0.5 * PLAYER_HEIGHT, 0.0),
                         ),
+                        collider: character_collider(PLAYER_R, PLAYER_HEIGHT),
+                        foot_offset: (-PLAYER_HEIGHT * 0.5).into(),
                         body: RigidBody::Dynamic,
                         locked_axes: LockedAxes::ROTATION_LOCKED,
                         kind: Kind::Enemy,
@@ -118,6 +116,7 @@ fn spawn_enemies(commands: &mut Commands, num: usize, level: &LevelProps) {
                     cooldowns: Cooldowns::new(&abilities),
                     abilities,
                     desired_movement: Default::default(),
+                    ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
                 },
                 Attitude::rand(level),
             ))
@@ -138,12 +137,11 @@ fn spawn_allies(commands: &mut Commands, num: usize, level: &LevelProps) {
                     health: Health::new(100.0),
                     energy: Energy::new(100.0, ENERGY_REGEN),
                     object: Object {
-                        transform: Transform::from_translation(loc),
-                        collider: Collider::capsule(
-                            Vec3::new(0.0, PLAYER_R, 0.0),
-                            Vec3::new(0.0, 1.0 + PLAYER_R, 0.0),
-                            PLAYER_R,
+                        transform: Transform::from_translation(
+                            loc + Vec3::new(0.0, 0.5 * PLAYER_HEIGHT, 0.0),
                         ),
+                        collider: character_collider(PLAYER_R, PLAYER_HEIGHT),
+                        foot_offset: (-PLAYER_HEIGHT * 0.5).into(),
                         body: RigidBody::Dynamic,
                         locked_axes: LockedAxes::ROTATION_LOCKED,
                         kind: Kind::Ally,
@@ -158,6 +156,7 @@ fn spawn_allies(commands: &mut Commands, num: usize, level: &LevelProps) {
                     cooldowns: Cooldowns::new(&abilities),
                     abilities,
                     desired_movement: Default::default(),
+                    ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
                 },
             ))
             .id();

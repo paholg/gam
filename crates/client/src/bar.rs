@@ -187,32 +187,48 @@ fn bar_add_system<T: Component + BarAssets + Default>(
     }
 }
 
+// We have a bit of a convoluted hierarchy here:
+// An entity has the quantity we care about, T; entity_q.
+// It has a child with graphics, including the Bar<T>; graphcs_q.
+// That has a child, with our transform; bar_q.
+// Finally, that has children, one of which we need to modify; fgbar_q.
 pub fn bar_update_system<T: Component + HasBar>(
-    q_parent: Query<(&Transform, &T, &Bar<T>), Without<BarMarker<T>>>,
-    mut q_bar: Query<(&Parent, &Children, &mut Transform), With<BarMarker<T>>>,
-    mut q_child: Query<
-        &mut Transform,
-        (With<BarChildMarker<T>>, Without<BarMarker<T>>, Without<T>),
+    entity_q: Query<(&Transform, &T), (Without<BarMarker<T>>, Without<BarChildMarker<T>>)>,
+    graphics_q: Query<(&Parent, &Bar<T>), (Without<BarMarker<T>>, Without<BarChildMarker<T>>)>,
+    mut bar_q: Query<
+        (&Parent, &Children, &mut Transform),
+        (With<BarMarker<T>>, Without<BarChildMarker<T>>),
     >,
+    mut fgbar_q: Query<&mut Transform, (With<BarChildMarker<T>>, Without<BarMarker<T>>)>,
 ) {
-    for (parent, children, mut transform) in &mut q_bar {
-        let Ok((parent_transform, value, bar)) = q_parent.get(parent.get()) else {
+    for (parent, children, mut transform) in &mut bar_q {
+        let Ok((grandparent, bar)) = graphics_q.get(parent.get()) else {
             tracing::warn!(
                 ?parent,
                 ?children,
                 ?transform,
-                "Could not get parent for bar."
+                "Could not get parent for bar"
             );
             continue;
         };
-        let percent = value.percent();
-        let rotation = parent_transform.rotation.inverse();
+
+        let Ok((entity_transform, quantity)) = entity_q.get(grandparent.get()) else {
+            tracing::warn!(
+                ?grandparent,
+                ?children,
+                ?transform,
+                "Could not get grandparent for bar"
+            );
+            continue;
+        };
+        let percent = quantity.percent();
+        let rotation = entity_transform.rotation.inverse();
         transform.rotation = rotation;
         transform.translation = rotation * bar.displacement;
 
-        // The bar is the first child, so we don't need to iterate over all of them.
+        // The foreground bar is the first child, so we don't need to iterate over all of them.
         if let Some(&child) = children.iter().next() {
-            if let Ok(mut bar_transform) = q_child.get_mut(child) {
+            if let Ok(mut bar_transform) = fgbar_q.get_mut(child) {
                 bar_transform.scale.x = percent * bar.size.x;
                 let offset = bar.size.x * 0.5 * (1.0 - percent);
                 bar_transform.translation = bar.displacement - Vec3::new(offset, 0.0, 0.0);

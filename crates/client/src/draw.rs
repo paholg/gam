@@ -21,7 +21,7 @@ use engine::{
     },
     level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
     lifecycle::{DeathEvent, DEATH_Y},
-    Ally, Enemy, Energy, Health, Kind, Player, UP,
+    Ally, Enemy, Energy, FootOffset, Health, Kind, Player, UP,
 };
 
 use crate::{asset_handler::AssetHandler, bar::Bar, in_plane, Config};
@@ -74,6 +74,8 @@ struct CharacterGraphics {
     inherited_visibility: InheritedVisibility,
     view_visibility: ViewVisibility,
     raycast: RaycastScene,
+    transform: Transform,
+    global_transform: GlobalTransform,
 }
 
 fn raycast_scene_system(
@@ -147,9 +149,9 @@ struct HasOutline;
 fn draw_grenade_outline_system(
     mut commands: Commands,
     assets: Res<AssetHandler>,
-    query: Query<(Entity, &Grenade, &Velocity), Without<HasOutline>>,
+    query: Query<(Entity, &Grenade, &Velocity, &FootOffset), Without<HasOutline>>,
 ) {
-    for (entity, grenade, velocity) in &query {
+    for (entity, grenade, velocity, foot_offset) in &query {
         if velocity.linvel.length_squared() < 0.1 * 0.1 {
             let (mesh, material) = match grenade.kind {
                 GrenadeKind::Frag => (
@@ -165,7 +167,7 @@ fn draw_grenade_outline_system(
                 .spawn(PbrBundle {
                     mesh,
                     material,
-                    transform: in_plane(),
+                    transform: in_plane().with_translation(foot_offset.to_vec()),
                     ..Default::default()
                 })
                 .id();
@@ -186,10 +188,7 @@ fn draw_seeker_rocket_system(
         let Some(mut ecmds) = commands.get_entity(entity) else {
             continue;
         };
-        ecmds.insert((
-            Bar::<Energy>::new(0.3, Vec2::new(1.2, 0.3)),
-            InheritedVisibility::default(),
-        ));
+        ecmds.insert((InheritedVisibility::default(),));
 
         ecmds.with_children(|builder| {
             builder.spawn((
@@ -198,6 +197,7 @@ fn draw_seeker_rocket_system(
                     mesh: assets.seeker_rocket.mesh.clone(),
                     ..Default::default()
                 },
+                Bar::<Energy>::new(0.3, Vec2::new(1.2, 0.3)),
                 in_plane(),
                 GlobalTransform::default(),
             ));
@@ -208,72 +208,84 @@ fn draw_seeker_rocket_system(
 fn draw_player_system(
     mut commands: Commands,
     assets: Res<AssetHandler>,
-    query: Query<Entity, Added<Player>>,
+    query: Query<(Entity, &FootOffset), Added<Player>>,
 ) {
-    for entity in query.iter() {
+    for (entity, foot_offset) in query.iter() {
         let outline = commands
             .spawn(PbrBundle {
                 mesh: assets.player.outline_mesh.clone(),
                 material: assets.player.outline_material.clone(),
-                transform: in_plane().with_translation(Vec3::new(0.0, 0.01, 0.0)),
+                transform: in_plane().with_translation(Vec3::new(0.0, foot_offset.y + 0.01, 0.0)),
+                ..Default::default()
+            })
+            .id();
+        let graphics = commands
+            .spawn(CharacterGraphics {
+                scene: assets.player.scene.clone(),
+                transform: Transform::from_translation(foot_offset.to_vec()),
                 ..Default::default()
             })
             .id();
         commands
             .entity(entity)
-            .insert(CharacterGraphics {
-                scene: assets.player.scene.clone(),
-                ..Default::default()
-            })
-            .push_children(&[outline]);
+            .insert(InheritedVisibility::default())
+            .push_children(&[outline, graphics]);
     }
 }
 
 fn draw_enemy_system(
     mut commands: Commands,
     assets: Res<AssetHandler>,
-    query: Query<Entity, Added<Enemy>>,
+    query: Query<(Entity, &FootOffset), Added<Enemy>>,
 ) {
-    for entity in query.iter() {
+    for (entity, foot_offset) in query.iter() {
         let outline = commands
             .spawn(PbrBundle {
                 mesh: assets.enemy.outline_mesh.clone(),
                 material: assets.enemy.outline_material.clone(),
-                transform: in_plane().with_translation(Vec3::new(0.0, 0.01, 0.0)),
+                transform: in_plane().with_translation(Vec3::new(0.0, foot_offset.y + 0.01, 0.0)),
+                ..Default::default()
+            })
+            .id();
+        let graphics = commands
+            .spawn(CharacterGraphics {
+                scene: assets.enemy.scene.clone(),
+                transform: Transform::from_translation(foot_offset.to_vec()),
                 ..Default::default()
             })
             .id();
         commands
             .entity(entity)
-            .insert((CharacterGraphics {
-                scene: assets.enemy.scene.clone(),
-                ..Default::default()
-            },))
-            .push_children(&[outline]);
+            .insert(InheritedVisibility::default())
+            .push_children(&[outline, graphics]);
     }
 }
 
 fn draw_ally_system(
     mut commands: Commands,
     assets: Res<AssetHandler>,
-    query: Query<Entity, (Added<Ally>, Without<Player>)>,
+    query: Query<(Entity, &FootOffset), (Added<Ally>, Without<Player>)>,
 ) {
-    for entity in query.iter() {
+    for (entity, foot_offset) in query.iter() {
         let outline = commands
             .spawn(PbrBundle {
                 mesh: assets.ally.outline_mesh.clone(),
                 material: assets.ally.outline_material.clone(),
-                transform: in_plane().with_translation(Vec3::new(0.0, 0.01, 0.0)),
+                transform: in_plane().with_translation(Vec3::new(0.0, foot_offset.y + 0.01, 0.0)),
+                ..Default::default()
+            })
+            .id();
+        let graphics = commands
+            .spawn(CharacterGraphics {
+                scene: assets.ally.scene.clone(),
+                transform: Transform::from_translation(foot_offset.to_vec()),
                 ..Default::default()
             })
             .id();
         commands
             .entity(entity)
-            .insert(CharacterGraphics {
-                scene: assets.ally.scene.clone(),
-                ..Default::default()
-            })
-            .push_children(&[outline]);
+            .insert(InheritedVisibility::default())
+            .push_children(&[outline, graphics]);
     }
 }
 
@@ -322,13 +334,15 @@ fn draw_hyper_sprint_system(
     mut commands: Commands,
     mut assets: ResMut<AssetHandler>,
     mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
-    query: Query<&Transform, (With<HyperSprinting>, Without<EffectSpawner>)>,
+    query: Query<(&Transform, &FootOffset), (With<HyperSprinting>, Without<EffectSpawner>)>,
     frame: Res<FrameCount>,
 ) {
     let effect = &mut assets.hyper_sprint.effect;
 
-    for &sprint_transform in query.iter() {
-        effect.trigger(&mut commands, sprint_transform, &mut effects, &frame);
+    for (sprint_transform, foot_offset) in query.iter() {
+        let mut transform = sprint_transform.clone();
+        transform.translation.y += foot_offset.y;
+        effect.trigger(&mut commands, transform, &mut effects, &frame);
     }
 }
 
@@ -344,6 +358,7 @@ fn draw_wall_system(
     });
     let short_wall_mat = materials.add(Color::ALICE_BLUE.into());
     let wall_mat = materials.add(Color::AQUAMARINE.into());
+    let tall_wall_mat = materials.add(Color::RED.into());
 
     for (entity, floor) in &query {
         let shape = shape::Box {
@@ -355,7 +370,9 @@ fn draw_wall_system(
             max_z: floor.dim.z * 0.5,
         };
 
-        let material = if floor.dim.y >= WALL_HEIGHT - DEATH_Y - 0.1 {
+        let material = if floor.dim.y >= WALL_HEIGHT - DEATH_Y + 0.1 {
+            tall_wall_mat.clone()
+        } else if floor.dim.y >= WALL_HEIGHT - DEATH_Y - 0.1 {
             wall_mat.clone()
         } else if floor.dim.y >= SHORT_WALL - DEATH_Y - 0.1 {
             short_wall_mat.clone()

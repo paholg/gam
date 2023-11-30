@@ -14,7 +14,7 @@ use crate::{
     multiplayer::{Action, PlayerInputs},
     status_effect::{StatusEffect, StatusEffects},
     time::TickCounter,
-    AppState, Cooldowns, Energy, Player, Target,
+    AbilityOffset, AppState, Cooldowns, Energy, Player, Target,
 };
 
 pub fn check_resume(
@@ -54,6 +54,7 @@ pub fn apply_inputs(
         &Abilities,
         &mut MaxSpeed,
         &mut DesiredMove,
+        &AbilityOffset,
     )>,
 ) {
     for (
@@ -68,6 +69,7 @@ pub fn apply_inputs(
         abilities,
         mut max_speed,
         mut desired_move,
+        ability_offset,
     ) in query.iter_mut()
     {
         let Some(input) = inputs.get(player) else {
@@ -95,6 +97,7 @@ pub fn apply_inputs(
                 velocity,
                 &mut status_effects,
                 &target,
+                ability_offset,
             );
             if fired {
                 abilities_not_fired.remove(&ability);

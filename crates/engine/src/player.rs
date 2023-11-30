@@ -1,10 +1,12 @@
 use bevy_ecs::{component::Component, system::Commands};
-use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{Collider, Friction, LockedAxes, RigidBody};
+use bevy_transform::components::Transform;
 
 use crate::{
-    ability::Abilities, lifecycle::ENERGY_REGEN, Ally, Character, Cooldowns, Energy, Health, Kind,
-    Object, Player, Shootable, Target, PLAYER_R,
+    ability::{Abilities, ABILITY_Y},
+    lifecycle::ENERGY_REGEN,
+    Ally, Character, Cooldowns, Energy, Health, Kind, Object, Player, Shootable, Target,
+    PLAYER_HEIGHT, PLAYER_R,
 };
 
 #[derive(Debug, Component)]
@@ -24,14 +26,12 @@ impl PlayerInfo {
                     health: Health::new(100.0),
                     energy: Energy::new(100.0, ENERGY_REGEN),
                     object: Object {
-                        collider: Collider::capsule(
-                            Vec3::new(0.0, PLAYER_R, 0.0),
-                            Vec3::new(0.0, 1.0 + PLAYER_R, 0.0),
-                            PLAYER_R,
-                        ),
+                        collider: character_collider(PLAYER_R, PLAYER_HEIGHT),
+                        foot_offset: (-PLAYER_HEIGHT * 0.5).into(),
                         body: RigidBody::Dynamic,
                         locked_axes: LockedAxes::ROTATION_LOCKED,
                         kind: Kind::Player,
+                        transform: Transform::from_xyz(0.0, PLAYER_HEIGHT * 0.5, 0.0),
                         ..Default::default()
                     },
                     max_speed: Default::default(),
@@ -43,9 +43,14 @@ impl PlayerInfo {
                     abilities: self.abilities.clone(),
                     cooldowns: Cooldowns::new(&self.abilities),
                     desired_movement: Default::default(),
+                    ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
                 },
             ))
             .id();
         tracing::debug!(?id, "Spawning player");
     }
+}
+
+pub fn character_collider(radius: f32, height: f32) -> Collider {
+    Collider::cylinder(height * 0.5, radius)
 }

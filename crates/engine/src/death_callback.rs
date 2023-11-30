@@ -42,6 +42,7 @@ impl ExplosionCallback {
             Object {
                 transform: *transform,
                 collider: Collider::ball(self.radius),
+                foot_offset: (-self.radius).into(),
                 body: bevy_rapier3d::prelude::RigidBody::KinematicPositionBased,
                 ..Default::default()
             },

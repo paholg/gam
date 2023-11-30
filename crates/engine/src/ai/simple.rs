@@ -19,7 +19,7 @@ use crate::{
     movement::DesiredMove,
     status_effect::StatusEffects,
     time::TickCounter,
-    Ai, Ally, Cooldowns, Enemy, Energy, Target, To2d, FORWARD,
+    AbilityOffset, Ai, Ally, Cooldowns, Enemy, Energy, Target, To2d, FORWARD,
 };
 
 #[derive(Component)]
@@ -121,13 +121,21 @@ fn stupid_gun_system(
             &Velocity,
             &Transform,
             &mut StatusEffects,
+            &AbilityOffset,
         ),
         With<Ai>,
     >,
     props: Res<AbilityProps>,
 ) {
-    for (entity, mut cooldowns, mut energy, velocity, transform, mut status_effects) in
-        q_ai.iter_mut()
+    for (
+        entity,
+        mut cooldowns,
+        mut energy,
+        velocity,
+        transform,
+        mut status_effects,
+        ability_offset,
+    ) in q_ai.iter_mut()
     {
         Ability::Gun.fire(
             &mut commands,
@@ -140,6 +148,7 @@ fn stupid_gun_system(
             velocity,
             &mut status_effects,
             &Target::default(),
+            ability_offset,
         );
     }
 }
