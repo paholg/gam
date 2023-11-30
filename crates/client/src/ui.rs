@@ -138,7 +138,7 @@ fn fps_track(mut fps: ResMut<FpsTracker>) {
     if fps.frame % 100 == 0 {
         let dur = fps.since.elapsed();
 
-        fps.fps = 100 as f32 / dur.as_secs_f32();
+        fps.fps = 100_f32 / dur.as_secs_f32();
         fps.since = Instant::now();
     }
 }
