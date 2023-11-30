@@ -30,7 +30,7 @@ impl PlayerInfo {
                             PLAYER_R,
                         ),
                         body: RigidBody::Dynamic,
-                        locked_axes: LockedAxes::ROTATION_LOCKED_X | LockedAxes::ROTATION_LOCKED_Z,
+                        locked_axes: LockedAxes::ROTATION_LOCKED,
                         kind: Kind::Player,
                         ..Default::default()
                     },
