@@ -19,7 +19,7 @@ use crate::{
     level::InLevel,
     physics::G,
     time::{Tick, TickCounter},
-    FromPlane, Health, Kind, Object, Target, ToPlane, FORWARD, PLAYER_R,
+    Health, Kind, Object, Target, To2d, To3d, FORWARD, PLAYER_R,
 };
 
 use super::properties::GrenadeProps;
@@ -40,7 +40,7 @@ fn calculate_initial_vel(spawn: Vec2, target: Vec2) -> Velocity {
     let v0 = (dist * G / sin2phi).sqrt();
 
     let y = dist * tan;
-    let dir = dir_in_plane.from_plane(y).normalize();
+    let dir = dir_in_plane.to_3d(y).normalize();
     let linvel = v0 * dir;
 
     Velocity {
@@ -84,7 +84,7 @@ pub fn grenade(
 ) {
     let dir = transform.rotation * FORWARD;
     let position = transform.translation + dir * (PLAYER_R + props.radius + 0.01);
-    let vel = calculate_initial_vel(position.to_plane(), target.0);
+    let vel = calculate_initial_vel(position.to_2d(), target.0);
 
     commands.spawn((
         Object {

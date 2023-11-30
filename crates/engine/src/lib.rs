@@ -453,12 +453,12 @@ impl PrettyPrint for GlobalTransform {
 /// Sometimes we want to work in a 2d plane, so functions like `Vec3::truncate`
 /// and `Vec2::extend` would be useful, except that Bevy and Rapier really want
 /// us to consider Y to be up, so the XZ plane in 3d becomes the XY plane in 2d.
-pub trait ToPlane {
-    fn to_plane(self) -> Vec2;
+pub trait To2d {
+    fn to_2d(self) -> Vec2;
 }
 
-impl ToPlane for Vec3 {
-    fn to_plane(self) -> Vec2 {
+impl To2d for Vec3 {
+    fn to_2d(self) -> Vec2 {
         Vec2::new(self.x, -self.z)
     }
 }
@@ -466,12 +466,12 @@ impl ToPlane for Vec3 {
 /// Sometimes we want to work in a 2d plane, so functions like `Vec3::truncate`
 /// and `Vec2::extend` would be useful, except that Bevy and Rapier really want
 /// us to consider Y to be up, so the XZ plane in 3d becomes the XY plane in 2d.
-pub trait FromPlane {
-    fn from_plane(self, y: f32) -> Vec3;
+pub trait To3d {
+    fn to_3d(self, y: f32) -> Vec3;
 }
 
-impl FromPlane for Vec2 {
-    fn from_plane(self, y: f32) -> Vec3 {
+impl To3d for Vec2 {
+    fn to_3d(self, y: f32) -> Vec3 {
         Vec3::new(self.x, y, -self.y)
     }
 }

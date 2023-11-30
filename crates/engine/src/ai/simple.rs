@@ -17,7 +17,7 @@ use crate::{
     level::LevelProps,
     status_effect::StatusEffects,
     time::TickCounter,
-    Ai, Ally, Cooldowns, Enemy, Energy, FromPlane, MaxSpeed, Target, ToPlane, FORWARD, UP,
+    Ai, Ally, Cooldowns, Enemy, Energy, MaxSpeed, Target, To2d, To3d, FORWARD, UP,
 };
 
 #[derive(Component)]
@@ -63,8 +63,8 @@ fn just_move_system(
                 *target - transform.translation
             }
         }
-        .to_plane();
-        impulse.impulse = target_vec.normalize().from_plane(0.0) * max_speed.impulse;
+        .to_2d();
+        impulse.impulse = target_vec.normalize().to_3d(0.0) * max_speed.impulse;
     }
 }
 
