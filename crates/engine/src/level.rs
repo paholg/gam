@@ -53,20 +53,13 @@ impl LevelProps {
                 flags: QueryFilterFlags::ONLY_FIXED,
                 ..Default::default()
             };
-            match rapier_context.cast_ray(
-                loc + Vec3::new(0.0, 0.1, 0.0),
-                -Vec3::Y,
-                0.2,
-                true,
-                filter,
-            ) {
-                Some((_entity, toi)) => {
-                    if toi > 0.0 {
-                        // There's ground beneath us, and we're not in a wall!
-                        return loc;
-                    }
+            if let Some((_entity, toi)) =
+                rapier_context.cast_ray(loc + Vec3::new(0.0, 0.1, 0.0), -Vec3::Y, 0.2, true, filter)
+            {
+                if toi > 0.0 {
+                    // There's ground beneath us, and we're not in a wall!
+                    return loc;
                 }
-                None => {}
             }
         }
     }
