@@ -45,6 +45,7 @@ impl SubAssign for Tick {
 #[derive(Resource, Reflect)]
 pub struct TickCounter {
     pub tick: Tick,
+    pub average_engine_frame: Duration,
     frame_begin: Instant,
     accumulated_time: Duration,
 }
@@ -56,13 +57,14 @@ impl Default for TickCounter {
 }
 
 impl TickCounter {
-    const DIAGNOSTIC_ITERS: u32 = 1_000;
+    pub const DIAGNOSTIC_ITERS: u32 = 1_000;
 
     pub fn new() -> Self {
         Self {
             tick: Tick(0),
             frame_begin: Instant::now(),
             accumulated_time: Duration::ZERO,
+            average_engine_frame: Duration::ZERO,
         }
     }
 
@@ -91,6 +93,7 @@ pub fn debug_tick_system(mut tick_counter: ResMut<TickCounter>) {
 
         let avg_dur = tick_counter.accumulated_time / TickCounter::DIAGNOSTIC_ITERS;
         tick_counter.accumulated_time = Duration::ZERO;
+        tick_counter.average_engine_frame = avg_dur;
 
         info!(tick = tick.0, ?avg_dur, "Tick");
     }

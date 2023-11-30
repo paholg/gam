@@ -18,10 +18,10 @@ use crate::{
     level::InLevel,
     physics::G,
     time::{Tick, TickCounter},
-    Health, Kind, Libm, Object, Target, To2d, To3d, FORWARD, PLAYER_R,
+    AbilityOffset, Health, Kind, Libm, Object, Target, To2d, To3d, FORWARD, PLAYER_R,
 };
 
-use super::{properties::GrenadeProps, ABILITY_Y};
+use super::properties::GrenadeProps;
 
 /// Calculate the initial velocity of a projectile thrown at 45 degrees up, so
 /// that it will land at target.
@@ -82,9 +82,11 @@ pub fn grenade(
     transform: &Transform,
     shooter: Entity,
     target: &Target,
+    ability_offset: &AbilityOffset,
 ) {
     let dir = transform.rotation * FORWARD;
-    let position = transform.translation + dir * (PLAYER_R + props.radius + 0.01) + ABILITY_Y;
+    let position =
+        transform.translation + dir * (PLAYER_R + props.radius + 0.01) + ability_offset.to_vec();
     let vel = calculate_initial_vel(position, target.0.to_3d(props.radius));
 
     commands.spawn((
@@ -92,6 +94,7 @@ pub fn grenade(
             transform: Transform::from_translation(position),
             global_transform: GlobalTransform::default(),
             collider: Collider::ball(props.radius),
+            foot_offset: (-props.radius).into(),
             mass_props: ColliderMassProperties::Density(1.0),
             body: bevy_rapier3d::prelude::RigidBody::Dynamic,
             velocity: vel,

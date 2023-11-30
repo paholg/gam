@@ -12,7 +12,7 @@ use tracing::warn;
 use crate::{
     status_effect::{StatusEffect, StatusEffects},
     time::TickCounter,
-    Cooldowns, Energy, Health, Target, FORWARD, PLAYER_R,
+    AbilityOffset, Cooldowns, Energy, Health, Target, FORWARD, PLAYER_R,
 };
 
 use self::{
@@ -96,6 +96,7 @@ impl Ability {
         velocity: &Velocity,
         status_effects: &mut StatusEffects,
         target: &Target,
+        ability_offset: &AbilityOffset,
     ) -> bool {
         let cooldown = match cooldowns.get_mut(self) {
             Some(cd) => cd,
@@ -121,6 +122,7 @@ impl Ability {
                 transform,
                 velocity,
                 entity,
+                ability_offset,
             ),
             Ability::Shotgun => shotgun(
                 commands,
@@ -129,6 +131,7 @@ impl Ability {
                 transform,
                 velocity,
                 entity,
+                ability_offset,
             ),
             Ability::FragGrenade => grenade(
                 commands,
@@ -137,6 +140,7 @@ impl Ability {
                 transform,
                 entity,
                 target,
+                ability_offset,
             ),
             Ability::HealGrenade => grenade(
                 commands,
@@ -145,6 +149,7 @@ impl Ability {
                 transform,
                 entity,
                 target,
+                ability_offset,
             ),
             Ability::SeekerRocket => seeker_rocket(
                 commands,
@@ -153,6 +158,7 @@ impl Ability {
                 transform,
                 velocity,
                 entity,
+                ability_offset,
             ),
         }
         true
@@ -202,9 +208,11 @@ fn gun(
     transform: &Transform,
     velocity: &Velocity,
     shooter: Entity,
+    ability_offset: &AbilityOffset,
 ) {
     let dir = transform.rotation * FORWARD;
-    let position = transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ABILITY_Y;
+    let position =
+        transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ability_offset.to_vec();
     let velocity = dir * props.speed + velocity.linvel;
     BulletSpawner {
         position,
@@ -228,6 +236,7 @@ fn shotgun(
     transform: &Transform,
     velocity: &Velocity,
     shooter: Entity,
+    ability_offset: &AbilityOffset,
 ) {
     for i in 0..props.n_pellets {
         let idx = i as f32;
@@ -235,7 +244,8 @@ fn shotgun(
         let relative_angle = (n_pellets * 0.5 - idx) / n_pellets * props.spread;
         let relative_angle = Quat::from_rotation_z(relative_angle);
         let dir = (transform.rotation * relative_angle) * FORWARD;
-        let position = transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ABILITY_Y;
+        let position =
+            transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ability_offset.to_vec();
         let velocity = dir * props.speed + velocity.linvel;
         BulletSpawner {
             position,

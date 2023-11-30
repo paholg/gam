@@ -1867,7 +1867,6 @@ dependencies = [
  "bytemuck",
  "image",
  "libm",
- "nalgebra",
  "rand",
  "serde",
  "smallvec",

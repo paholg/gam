@@ -54,6 +54,7 @@ pub const FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
 pub const UP: Vec3 = Vec3::Y;
 
 pub const PLAYER_R: f32 = 1.0;
+pub const PLAYER_HEIGHT: f32 = 2.0;
 
 /// Represents the kind of entity this is; used, at least, for effects.
 ///
@@ -185,11 +186,48 @@ impl Cooldowns {
     }
 }
 
+/// The offset from an object's transform, to its bottom.
+#[derive(Component, Default)]
+pub struct FootOffset {
+    pub y: f32,
+}
+
+impl FootOffset {
+    pub fn to_vec(&self) -> Vec3 {
+        Vec3::new(0.0, self.y, 0.0)
+    }
+}
+
+impl From<f32> for FootOffset {
+    fn from(y: f32) -> Self {
+        Self { y }
+    }
+}
+
+/// The offset from an object's transform, to where it spawns abilities.
+#[derive(Component)]
+pub struct AbilityOffset {
+    pub y: f32,
+}
+
+impl AbilityOffset {
+    pub fn to_vec(&self) -> Vec3 {
+        Vec3::new(0.0, self.y, 0.0)
+    }
+}
+
+impl From<f32> for AbilityOffset {
+    fn from(y: f32) -> Self {
+        Self { y }
+    }
+}
+
 #[derive(Bundle, Default)]
 pub struct Object {
     transform: Transform,
     global_transform: GlobalTransform,
     collider: Collider,
+    foot_offset: FootOffset,
     mass_props: ColliderMassProperties,
     body: RigidBody,
     velocity: Velocity,
@@ -213,6 +251,7 @@ struct Character {
     cooldowns: Cooldowns,
     abilities: Abilities,
     desired_movement: DesiredMove,
+    ability_offset: AbilityOffset,
 }
 
 #[derive(Resource, Reflect, Default, Debug)]
