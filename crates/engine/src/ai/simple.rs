@@ -14,11 +14,12 @@ use rand::Rng;
 
 use crate::{
     ability::{properties::AbilityProps, Ability},
+    face,
     level::LevelProps,
     movement::DesiredMove,
     status_effect::StatusEffects,
     time::TickCounter,
-    Ai, Ally, Cooldowns, Enemy, Energy, Target, To2d, FORWARD, UP,
+    Ai, Ally, Cooldowns, Enemy, Energy, Target, To2d, FORWARD,
 };
 
 #[derive(Component)]
@@ -85,7 +86,7 @@ fn point_to_closest<T: ReadOnlyWorldQuery, U: ReadOnlyWorldQuery>(
             let lead = (vel.linvel - velocity.linvel) * dt * 0.5; // Just partially lead for now
             let lead_translation = trans.translation + lead;
 
-            transform.look_at(lead_translation, UP);
+            face(&mut transform, lead_translation.to_2d());
         }
     }
 }

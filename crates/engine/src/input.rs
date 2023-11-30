@@ -9,11 +9,12 @@ use bevy_utils::HashSet;
 
 use crate::{
     ability::{properties::AbilityProps, Abilities},
+    face,
     movement::{DesiredMove, MaxSpeed},
     multiplayer::{Action, PlayerInputs},
     status_effect::{StatusEffect, StatusEffects},
     time::TickCounter,
-    AppState, Cooldowns, Energy, Player, Target, To2d, To3d, UP,
+    AppState, Cooldowns, Energy, Player, Target,
 };
 
 pub fn check_resume(
@@ -76,9 +77,7 @@ pub fn apply_inputs(
         // Targeting
         if let Some(cursor) = input.cursor() {
             target.0 = cursor;
-            if transform.translation.to_2d() != cursor {
-                transform.look_at(cursor.to_3d(0.0), UP);
-            }
+            face(&mut transform, cursor);
         }
 
         // Abilities
