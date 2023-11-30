@@ -5,8 +5,8 @@ use bevy_ecs::{
     system::{Commands, Query},
 };
 use bevy_rapier3d::prelude::{
-    ActiveEvents, Collider, ColliderMassProperties, Damping, ExternalImpulse, LockedAxes,
-    ReadMassProperties, Sensor, Velocity,
+    ActiveEvents, Collider, ColliderMassProperties, ExternalForce, LockedAxes, ReadMassProperties,
+    Sensor, Velocity,
 };
 use bevy_transform::components::{GlobalTransform, Transform};
 
@@ -14,6 +14,7 @@ use crate::{
     collision::{Colliding, TrackCollisions},
     death_callback::{DeathCallback, ExplosionCallback},
     level::InLevel,
+    movement::DesiredMove,
     time::{Tick, TickCounter},
     Health, Kind, Object, Target, To2d, FORWARD, PLAYER_R,
 };
@@ -25,7 +26,6 @@ pub struct SeekerRocket {
     pub shooter: Entity,
     pub expiration: Tick,
     pub radius: f32,
-    pub max_impulse: f32,
     pub turning_radius: f32,
 }
 
@@ -60,18 +60,15 @@ pub fn seeker_rocket(
             expiration: tick_counter.at(props.duration),
             shooter,
             radius: props.radius,
-            max_impulse: props.max_impulse,
             turning_radius: props.turning_radius,
         },
+        props.max_speed,
         DeathCallback::Explosion(ExplosionCallback {
             damage: props.damage,
             radius: props.explosion_radius,
         }),
-        Damping {
-            linear_damping: props.damping,
-            angular_damping: 0.0,
-        },
-        ExternalImpulse::default(),
+        ExternalForce::default(),
+        DesiredMove::default(),
         ActiveEvents::COLLISION_EVENTS,
         TrackCollisions,
         Sensor,
@@ -79,12 +76,12 @@ pub fn seeker_rocket(
 }
 
 pub fn seeker_rocket_tracking(
-    mut query: Query<(&SeekerRocket, &mut Transform, &mut ExternalImpulse)>,
+    mut query: Query<(&SeekerRocket, &mut Transform, &mut DesiredMove)>,
     target_query: Query<&Target>,
 ) {
-    for (rocket, mut transform, mut impulse) in query.iter_mut() {
-        // Set impulse whether or not we have a target.
-        impulse.impulse = transform.rotation * FORWARD * rocket.max_impulse;
+    for (rocket, mut transform, mut desired_move) in query.iter_mut() {
+        // Rockets always go forward.
+        desired_move.dir = (transform.rotation * FORWARD).to_2d();
 
         let Ok(target) = target_query.get(rocket.shooter) else {
             continue;
@@ -102,7 +99,8 @@ pub fn seeker_rocket_tracking(
 
 pub fn seeker_rocket_collision_system(
     mut rocket_q: Query<(&mut Health, &Colliding), With<SeekerRocket>>,
-    // For now, we explode rockets on contact with anything but a bullet. Should be smarter about this.
+    // TODO: For now, we explode rockets on contact with anything but a bullet.
+    // Let's be smarter about this.
     bullet_q: Query<(), (With<Bullet>, Without<SeekerRocket>)>,
 ) {
     for (mut health, colliding) in &mut rocket_q {

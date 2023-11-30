@@ -3,16 +3,17 @@ use bevy_ecs::{
     schedule::{NextState, State},
     system::{Commands, Query, Res, ResMut},
 };
-use bevy_rapier3d::prelude::{ExternalImpulse, Velocity};
+use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 use bevy_utils::HashSet;
 
 use crate::{
     ability::{properties::AbilityProps, Abilities},
+    movement::{DesiredMove, MaxSpeed},
     multiplayer::{Action, PlayerInputs},
     status_effect::{StatusEffect, StatusEffects},
     time::TickCounter,
-    AppState, Cooldowns, Energy, MaxSpeed, Player, Target, To2d, To3d, UP,
+    AppState, Cooldowns, Energy, Player, Target, To2d, To3d, UP,
 };
 
 pub fn check_resume(
@@ -50,8 +51,8 @@ pub fn apply_inputs(
         &Player,
         &mut Target,
         &Abilities,
-        &MaxSpeed,
-        &mut ExternalImpulse,
+        &mut MaxSpeed,
+        &mut DesiredMove,
     )>,
 ) {
     for (
@@ -64,8 +65,8 @@ pub fn apply_inputs(
         player,
         mut target,
         abilities,
-        max_speed,
-        mut impulse,
+        mut max_speed,
+        mut desired_move,
     ) in query.iter_mut()
     {
         let Some(input) = inputs.get(player) else {
@@ -105,15 +106,15 @@ pub fn apply_inputs(
         }
 
         // Movement
-        let dir = input.movement().clamp_length_max(1.0).to_3d(0.0);
-        let mut max_impulse = max_speed.impulse;
+        // TODO: Do this better
+        *max_speed = MaxSpeed::default();
         if status_effects
             .effects
             .contains(&StatusEffect::HyperSprinting)
         {
-            max_impulse *= props.hyper_sprint.factor;
+            *max_speed *= props.hyper_sprint.factor;
         }
-        impulse.impulse += dir * max_impulse;
+        desired_move.dir = input.movement().clamp_length_max(1.0);
 
         // Menu
         if buttons.contains(Action::Menu) {
