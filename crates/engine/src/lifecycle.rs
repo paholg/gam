@@ -6,7 +6,7 @@ use bevy_ecs::{
 };
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
-use bevy_rapier3d::prelude::{Friction, LockedAxes, RigidBody};
+use bevy_rapier3d::prelude::{Friction, LockedAxes, RapierContext, RigidBody};
 use bevy_transform::components::Transform;
 
 use crate::{
@@ -84,9 +84,14 @@ pub fn die(
 
 pub const ENERGY_REGEN: f32 = 0.5;
 
-fn spawn_enemies(commands: &mut Commands, num: usize, level: &LevelProps) {
+fn spawn_enemies(
+    commands: &mut Commands,
+    num: usize,
+    level: &LevelProps,
+    rapier_context: &RapierContext,
+) {
     for _ in 0..num {
-        let loc = level.point_in_plane();
+        let loc = level.point_in_plane(rapier_context);
         let abilities = Abilities::new(vec![Ability::Gun]);
 
         let id = commands
@@ -118,16 +123,21 @@ fn spawn_enemies(commands: &mut Commands, num: usize, level: &LevelProps) {
                     desired_movement: Default::default(),
                     ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
                 },
-                Attitude::rand(level),
+                Attitude::rand(level, rapier_context),
             ))
             .id();
         tracing::debug!(?id, "Spawning enemy");
     }
 }
 
-fn spawn_allies(commands: &mut Commands, num: usize, level: &LevelProps) {
+fn spawn_allies(
+    commands: &mut Commands,
+    num: usize,
+    level: &LevelProps,
+    rapier_context: &RapierContext,
+) {
     for _ in 0..num {
-        let loc = level.point_in_plane();
+        let loc = level.point_in_plane(rapier_context);
         let abilities = Abilities::new(vec![Ability::Gun]);
         let id = commands
             .spawn((
@@ -172,10 +182,11 @@ pub fn reset(
     player_info_query: Query<&PlayerInfo>,
     mut num_ai: ResMut<NumAi>,
     level: Res<LevelProps>,
+    rapier_context: Res<RapierContext>,
 ) {
     if enemy_query.iter().next().is_none() {
         num_ai.enemies += 1;
-        spawn_enemies(&mut commands, num_ai.enemies, &level);
+        spawn_enemies(&mut commands, num_ai.enemies, &level, &rapier_context);
     }
 
     if player_query.iter().next().is_none() {
@@ -186,6 +197,6 @@ pub fn reset(
     }
 
     if ally_query.iter().next().is_none() {
-        spawn_allies(&mut commands, num_ai.allies, &level);
+        spawn_allies(&mut commands, num_ai.allies, &level, &rapier_context);
     }
 }

@@ -8,7 +8,7 @@ use bevy_ecs::{
     system::{Commands, Query, Res},
 };
 use bevy_math::Vec3;
-use bevy_rapier3d::prelude::Velocity;
+use bevy_rapier3d::prelude::{RapierContext, Velocity};
 use bevy_transform::components::Transform;
 use rand::Rng;
 
@@ -30,12 +30,12 @@ pub enum Attitude {
 }
 
 impl Attitude {
-    pub fn rand(level: &LevelProps) -> Self {
+    pub fn rand(level: &LevelProps, rapier_context: &RapierContext) -> Self {
         let mut rng = rand::thread_rng();
         match rng.gen_range(0..3) {
             0 => Self::Chase,
             1 => Self::RunAway,
-            _ => Self::PickPoint(level.point_in_plane()),
+            _ => Self::PickPoint(level.point_in_plane(rapier_context)),
         }
     }
 }
@@ -53,6 +53,7 @@ pub fn system_set() -> SystemConfigs {
 fn just_move_system(
     mut query: Query<(&mut DesiredMove, &Transform, &mut Attitude), With<Ai>>,
     level: Res<LevelProps>,
+    rapier_context: Res<RapierContext>,
 ) {
     for (mut desired_move, transform, mut attitude) in query.iter_mut() {
         let dir = match *attitude {
@@ -60,7 +61,7 @@ fn just_move_system(
             Attitude::RunAway => -(transform.rotation * FORWARD),
             Attitude::PickPoint(ref mut target) => {
                 while transform.translation.distance_squared(*target) < 1.0 {
-                    *target = level.point_in_plane();
+                    *target = level.point_in_plane(&rapier_context);
                 }
                 *target - transform.translation
             }

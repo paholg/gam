@@ -6,7 +6,9 @@ use bevy_ecs::{
 };
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
-use bevy_rapier3d::prelude::{Collider, Friction, RigidBody};
+use bevy_rapier3d::prelude::{
+    Collider, Friction, QueryFilter, QueryFilterFlags, RapierContext, RigidBody,
+};
 use bevy_transform::components::{GlobalTransform, Transform};
 use rand::Rng;
 
@@ -40,11 +42,33 @@ impl Default for LevelProps {
 }
 
 impl LevelProps {
-    pub fn point_in_plane(&self) -> Vec3 {
+    pub fn point_in_plane(&self, rapier_context: &RapierContext) -> Vec3 {
         let mut rng = rand::thread_rng();
-        let x = rng.gen::<f32>() * (self.x - PLAYER_R) - (self.x - PLAYER_R) * 0.5;
-        let z = rng.gen::<f32>() * (self.z - PLAYER_R) - (self.z - PLAYER_R) * 0.5;
-        Vec3::new(x, 0.0, z)
+        loop {
+            let x = rng.gen::<f32>() * (self.x - PLAYER_R) - (self.x - PLAYER_R) * 0.5;
+            let z = rng.gen::<f32>() * (self.z - PLAYER_R) - (self.z - PLAYER_R) * 0.5;
+            let loc = Vec3::new(x, 0.0, z);
+
+            let filter = QueryFilter {
+                flags: QueryFilterFlags::ONLY_FIXED,
+                ..Default::default()
+            };
+            match rapier_context.cast_ray(
+                loc + Vec3::new(0.0, 0.1, 0.0),
+                -Vec3::Y,
+                0.2,
+                true,
+                filter,
+            ) {
+                Some((_entity, toi)) => {
+                    if toi > 0.0 {
+                        // There's ground beneath us, and we're not in a wall!
+                        return loc;
+                    }
+                }
+                None => {}
+            }
+        }
     }
 }
 
