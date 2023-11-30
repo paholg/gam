@@ -169,13 +169,16 @@ pub struct SeekerRocketProps {
     pub duration: Tick,
     pub damage: f32,
     pub explosion_radius: f32,
-    // Max turn per tick, in radians.
+    /// Max turn per tick, in radians.
     pub turning_radius: f32,
-    // Note: Shape is a capsule.
-    pub radius: f32,
-    pub length: f32,
+    pub capsule_radius: f32,
+    pub capsule_length: f32,
     pub health: f32,
     pub max_speed: MaxSpeed,
+    /// How much energy the rocket has.
+    pub energy: f32,
+    /// How much energy the rocket spends every frame to move.
+    pub energy_cost: f32,
 }
 
 impl Default for SeekerRocketProps {
@@ -186,14 +189,16 @@ impl Default for SeekerRocketProps {
             duration: Tick(300),
             damage: 8.0,
             explosion_radius: 3.0,
-            turning_radius: PI * 0.02,
-            radius: 0.3,
-            length: 0.6,
+            turning_radius: PI * 0.03,
+            capsule_radius: 0.3,
+            capsule_length: 0.6,
             health: 3.0,
             max_speed: MaxSpeed {
                 force: 20.0,
                 speed: 40.0,
             },
+            energy: 10.0,
+            energy_cost: 0.2,
         }
     }
 }

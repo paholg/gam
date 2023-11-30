@@ -3,8 +3,8 @@ use bevy::{
     prelude::{
         shape, Added, Assets, BuildChildren, Bundle, Color, Commands, Component, Entity,
         EventReader, GlobalTransform, Handle, InheritedVisibility, Mesh, Parent, PbrBundle, Plugin,
-        Query, Res, ResMut, SpotLight, SpotLightBundle, StandardMaterial, Transform, Update, Vec3,
-        ViewVisibility, Visibility, With, Without,
+        Query, Res, ResMut, SpotLight, SpotLightBundle, StandardMaterial, Transform, Update, Vec2,
+        Vec3, ViewVisibility, Visibility, With, Without,
     },
     scene::Scene,
 };
@@ -21,14 +21,10 @@ use engine::{
     },
     level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
     lifecycle::{DeathEvent, DEATH_Y},
-    Ally, Enemy, Kind, Player, UP,
+    Ally, Enemy, Energy, Health, Kind, Player, UP,
 };
 
-use crate::{
-    asset_handler::AssetHandler,
-    bar::{Energybar, Healthbar},
-    in_plane, Config,
-};
+use crate::{asset_handler::AssetHandler, bar::Bar, in_plane, Config};
 
 /// A plugin for spawning graphics for newly-created entities.
 pub struct DrawPlugin;
@@ -71,8 +67,8 @@ struct ObjectGraphics {
 
 #[derive(Bundle, Default)]
 struct CharacterGraphics {
-    healthbar: Healthbar,
-    energybar: Energybar,
+    healthbar: Bar<Health>,
+    energybar: Bar<Energy>,
     scene: Handle<Scene>,
     visibility: Visibility,
     inherited_visibility: InheritedVisibility,
@@ -190,7 +186,10 @@ fn draw_seeker_rocket_system(
         let Some(mut ecmds) = commands.get_entity(entity) else {
             continue;
         };
-        ecmds.insert(InheritedVisibility::default());
+        ecmds.insert((
+            Bar::<Energy>::new(0.3, Vec2::new(1.2, 0.3)),
+            InheritedVisibility::default(),
+        ));
 
         ecmds.with_children(|builder| {
             builder.spawn((

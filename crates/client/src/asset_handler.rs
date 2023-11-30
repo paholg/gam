@@ -22,11 +22,7 @@ use engine::{
     PLAYER_R,
 };
 
-use crate::{
-    bar::{Energybar, Healthbar},
-    particles::ParticleEffectPool,
-    shapes::HollowPolygon,
-};
+use crate::{particles::ParticleEffectPool, shapes::HollowPolygon};
 
 pub struct BarAssets {
     pub mesh: Handle<Mesh>,
@@ -117,7 +113,7 @@ pub fn asset_handler_setup(
     let healthbar = BarAssets {
         mesh: meshes.add(
             shape::Quad {
-                size: Healthbar::default().size,
+                size: Vec2::new(1.0, 1.0),
                 ..default()
             }
             .into(),
@@ -137,13 +133,7 @@ pub fn asset_handler_setup(
         ..Default::default()
     };
     let energybar = BarAssets {
-        mesh: meshes.add(
-            shape::Quad {
-                size: Energybar::default().size,
-                ..default()
-            }
-            .into(),
-        ),
+        mesh: healthbar.mesh.clone(),
         fg_material: materials.add(fg),
         bg_material: materials.add(bg),
     };
@@ -239,8 +229,8 @@ pub fn asset_handler_setup(
     let seeker_rocket = SeekerRocketAssets {
         mesh: meshes.add(
             Mesh::try_from(Capsule {
-                radius: props.seeker_rocket.radius,
-                depth: props.seeker_rocket.length,
+                radius: props.seeker_rocket.capsule_radius,
+                depth: props.seeker_rocket.capsule_length,
                 ..Default::default()
             })
             .unwrap(),
