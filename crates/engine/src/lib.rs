@@ -1,8 +1,6 @@
 use std::fmt;
 
-use ability::{
-    grenade::GrenadeLandEvent, properties::AbilityProps, seeker_rocket, Abilities, Ability,
-};
+use ability::{properties::AbilityProps, seeker_rocket, Abilities, Ability};
 use bevy_app::{App, FixedUpdate, Plugin, PostUpdate, Startup};
 use bevy_ecs::{
     bundle::Bundle,
@@ -39,6 +37,8 @@ pub mod physics;
 pub mod player;
 pub mod status_effect;
 pub mod time;
+
+pub type Libm = libm::Libm<f32>;
 
 #[derive(States, PartialEq, Eq, Debug, Copy, Clone, Hash, Default)]
 pub enum AppState {
@@ -274,8 +274,7 @@ impl Plugin for GamPlugin {
         // server does not need to generate them.
         // Note: If any events are needed by the server, don't use `add_event`. See
         // https://bevy-cheatbook.github.io/patterns/manual-event-clear.html
-        app.add_event::<GrenadeLandEvent>()
-            .add_event::<DeathEvent>();
+        app.add_event::<DeathEvent>();
 
         let physics = PhysicsPlugin::new();
 
@@ -311,7 +310,7 @@ impl Plugin for GamPlugin {
                     lifecycle::reset,
                     input::apply_inputs,
                     ai::simple::system_set(),
-                    ability::grenade::grenade_land_system,
+                    // ability::grenade::grenade_land_system,
                     ability::bullet::bullet_kickback_system,
                     seeker_rocket::seeker_rocket_tracking,
                     ability::grenade::grenade_explode_system,

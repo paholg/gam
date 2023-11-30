@@ -11,10 +11,11 @@ use bevy::{
 use bevy_hanabi::EffectSpawner;
 use bevy_kira_audio::{prelude::Volume, Audio, AudioControl};
 use bevy_mod_raycast::prelude::RaycastMesh;
+use bevy_rapier3d::prelude::Velocity;
 use engine::{
     ability::{
         bullet::Bullet,
-        grenade::{Grenade, GrenadeKind, GrenadeLandEvent},
+        grenade::{Grenade, GrenadeKind},
         seeker_rocket::SeekerRocket,
         HyperSprinting,
     },
@@ -144,36 +145,39 @@ fn draw_grenade_system(
     }
 }
 
+#[derive(Component)]
+struct HasOutline;
+
 fn draw_grenade_outline_system(
     mut commands: Commands,
     assets: Res<AssetHandler>,
-    query: Query<&Grenade>,
-    mut event_reader: EventReader<GrenadeLandEvent>,
+    query: Query<(Entity, &Grenade, &Velocity), Without<HasOutline>>,
 ) {
-    for event in event_reader.read() {
-        let entity = event.entity;
-        let Ok(grenade) = query.get(entity) else {
-            tracing::warn!(?entity, "Can't find grenade to outline.");
-            continue;
-        };
-        let (mesh, material) = match grenade.kind {
-            GrenadeKind::Frag => (
-                assets.frag_grenade.outline_mesh.clone(),
-                assets.frag_grenade.outline_material.clone(),
-            ),
-            GrenadeKind::Heal => (
-                assets.heal_grenade.outline_mesh.clone(),
-                assets.heal_grenade.outline_material.clone(),
-            ),
-        };
-        let outline_entity = commands
-            .spawn(PbrBundle {
-                mesh,
-                material,
-                ..Default::default()
-            })
-            .id();
-        commands.entity(entity).push_children(&[outline_entity]);
+    for (entity, grenade, velocity) in &query {
+        if velocity.linvel.length_squared() < 0.1 * 0.1 {
+            let (mesh, material) = match grenade.kind {
+                GrenadeKind::Frag => (
+                    assets.frag_grenade.outline_mesh.clone(),
+                    assets.frag_grenade.outline_material.clone(),
+                ),
+                GrenadeKind::Heal => (
+                    assets.heal_grenade.outline_mesh.clone(),
+                    assets.heal_grenade.outline_material.clone(),
+                ),
+            };
+            let outline_entity = commands
+                .spawn(PbrBundle {
+                    mesh,
+                    material,
+                    transform: in_plane(),
+                    ..Default::default()
+                })
+                .id();
+            commands
+                .entity(entity)
+                .insert(HasOutline)
+                .push_children(&[outline_entity]);
+        }
     }
 }
 
