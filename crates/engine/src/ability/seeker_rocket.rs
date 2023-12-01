@@ -15,7 +15,7 @@ use crate::{
     death_callback::{DeathCallback, ExplosionCallback},
     level::InLevel,
     movement::DesiredMove,
-    time::{Tick, TickCounter},
+    time::{Tick, TickCounter, TIMESTEP},
     AbilityOffset, Energy, Health, Kind, Object, Target, To2d, FORWARD, PLAYER_R,
 };
 
@@ -41,6 +41,8 @@ pub fn seeker_rocket(
 ) {
     let mut rocket_transform = *transform;
     let dir = transform.rotation * FORWARD;
+    // TODO: If the rocket spawns inside a wall, no one will be hurt by its
+    // explosion.
     rocket_transform.translation = transform.translation
         + dir * (PLAYER_R + props.capsule_length * 2.0)
         + ability_offset.to_vec();
@@ -118,22 +120,19 @@ pub fn seeker_rocket_tracking(
 }
 
 pub fn seeker_rocket_collision_system(
-    mut rocket_q: Query<(&mut Health, &Colliding), With<SeekerRocket>>,
+    mut rocket_q: Query<(&mut Health, &Colliding, &Velocity, &mut Transform), With<SeekerRocket>>,
     // TODO: For now, we explode rockets on contact with anything but a bullet.
     // Let's be smarter about this.
     bullet_q: Query<(), (With<Bullet>, Without<SeekerRocket>)>,
 ) {
-    for (mut health, colliding) in &mut rocket_q {
-        let mut die = false;
+    for (mut health, colliding, velocity, mut transform) in &mut rocket_q {
+        let should_die = colliding.targets.iter().any(|&t| bullet_q.get(t).is_err());
 
-        for &target in &colliding.targets {
-            if bullet_q.get(target).is_err() {
-                die = true;
-            }
-        }
-
-        if die {
+        if should_die {
             health.die();
+            // If a rocket hits a wall, it will be inside it when it explodes,
+            // damaging no one. So, we just move back a frame.
+            transform.translation -= velocity.linvel * TIMESTEP;
         }
     }
 }
