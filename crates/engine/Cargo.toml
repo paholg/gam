@@ -20,6 +20,7 @@ bevy_utils.workspace = true
 bevy_rapier3d.workspace = true
 bitmask-enum = "2.2.3"
 bytemuck = { version = "1.14.0", features = ["derive"] }
+oxidized_navigation = "0.8.0"
 # bincode = { version = "2.0.0-rc.2", features = ["serde"] }
 libm = "0.2.8"
 rand = "0.8"
