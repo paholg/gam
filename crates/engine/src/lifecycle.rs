@@ -11,7 +11,7 @@ use bevy_transform::components::Transform;
 
 use crate::{
     ability::{Abilities, Ability},
-    ai::simple::Attitude,
+    ai::simple::{Attitude, SimpleAi},
     death_callback::DeathCallback,
     level::LevelProps,
     player::{character_collider, PlayerInfo},
@@ -99,6 +99,7 @@ fn spawn_enemies(
             .spawn((
                 Enemy,
                 Ai,
+                SimpleAi,
                 Character {
                     health: Health::new(10.0),
                     energy: Energy::new(5.0, 0.2),
@@ -144,6 +145,7 @@ fn spawn_allies(
             .spawn((
                 Ally,
                 Ai,
+                SimpleAi,
                 Character {
                     health: Health::new(100.0),
                     energy: Energy::new(100.0, ENERGY_REGEN),

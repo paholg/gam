@@ -1,9 +1,7 @@
-use std::cmp::Ordering;
-
 use bevy_ecs::{
     component::Component,
     entity::Entity,
-    query::{ReadOnlyWorldQuery, With, Without},
+    query::With,
     schedule::{IntoSystemConfigs, SystemConfigs},
     system::{Commands, Query, Res},
 };
@@ -14,13 +12,17 @@ use rand::Rng;
 
 use crate::{
     ability::{properties::AbilityProps, Ability},
-    face,
     level::LevelProps,
     movement::DesiredMove,
     status_effect::StatusEffects,
     time::TickCounter,
-    AbilityOffset, Ai, Ally, Cooldowns, Enemy, Energy, Target, To2d, FORWARD,
+    AbilityOffset, Ai, Cooldowns, Energy, Target, To2d, FORWARD,
 };
+
+use super::{update_ally_orientation, update_enemy_orientation};
+
+#[derive(Component)]
+pub struct SimpleAi;
 
 #[derive(Component)]
 pub enum Attitude {
@@ -42,8 +44,8 @@ impl Attitude {
 
 pub fn system_set() -> SystemConfigs {
     (
-        update_enemy_orientation,
-        update_ally_orientation,
+        update_enemy_orientation::<SimpleAi>,
+        update_ally_orientation::<SimpleAi>,
         stupid_gun_system,
         just_move_system,
     )
@@ -51,7 +53,7 @@ pub fn system_set() -> SystemConfigs {
 }
 
 fn just_move_system(
-    mut query: Query<(&mut DesiredMove, &Transform, &mut Attitude), With<Ai>>,
+    mut query: Query<(&mut DesiredMove, &Transform, &mut Attitude), With<SimpleAi>>,
     level: Res<LevelProps>,
     rapier_context: Res<RapierContext>,
 ) {
@@ -71,44 +73,6 @@ fn just_move_system(
 
         desired_move.dir = dir;
     }
-}
-
-fn point_to_closest<T: ReadOnlyWorldQuery, U: ReadOnlyWorldQuery>(
-    mut query: Query<(&mut Transform, &Velocity), T>,
-    targets: Query<(&Transform, &Velocity), U>,
-    shot_speed: f32,
-) {
-    for (mut transform, velocity) in query.iter_mut() {
-        let closest_target = targets
-            .iter()
-            .map(|(t, v)| (t, v, transform.translation.distance(t.translation)))
-            .min_by(|(_, _, d1), (_, _, d2)| d1.partial_cmp(d2).unwrap_or(Ordering::Equal));
-        if let Some((trans, vel, dist)) = closest_target {
-            let dt = dist / shot_speed;
-            let lead = (vel.linvel - velocity.linvel) * dt * 0.5; // Just partially lead for now
-            let lead_translation = trans.translation + lead;
-
-            face(&mut transform, lead_translation.to_2d());
-        }
-    }
-}
-
-fn update_enemy_orientation(
-    ally_query: Query<(&Transform, &Velocity), (With<Ally>, Without<Enemy>)>,
-    enemy_query: Query<(&mut Transform, &Velocity), (With<Enemy>, With<Ai>, Without<Ally>)>,
-    props: Res<AbilityProps>,
-) {
-    let shot_speed = props.gun.speed;
-    point_to_closest(enemy_query, ally_query, shot_speed);
-}
-
-fn update_ally_orientation(
-    enemy_query: Query<(&Transform, &Velocity), (With<Enemy>, Without<Ally>)>,
-    ally_query: Query<(&mut Transform, &Velocity), (With<Ally>, With<Ai>, Without<Enemy>)>,
-    props: Res<AbilityProps>,
-) {
-    let shot_speed = props.gun.speed;
-    point_to_closest(ally_query, enemy_query, shot_speed);
 }
 
 fn stupid_gun_system(
