@@ -6,7 +6,9 @@ use bevy_ecs::{
 };
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
-use bevy_rapier3d::prelude::{Friction, LockedAxes, RapierContext, RigidBody};
+use bevy_rapier3d::prelude::{
+    CoefficientCombineRule, Friction, LockedAxes, RapierContext, RigidBody,
+};
 use bevy_transform::components::Transform;
 
 use crate::{
@@ -117,7 +119,10 @@ fn spawn_enemies(
                     max_speed: Default::default(),
                     impulse: Default::default(),
                     force: Default::default(),
-                    friction: Friction::default(),
+                    friction: Friction {
+                        coefficient: 0.0,
+                        combine_rule: CoefficientCombineRule::Min,
+                    },
                     status_effects: Default::default(),
                     shootable: Shootable,
                     cooldowns: Cooldowns::new(&abilities),
@@ -163,7 +168,10 @@ fn spawn_allies(
                     max_speed: Default::default(),
                     impulse: Default::default(),
                     force: Default::default(),
-                    friction: Friction::default(),
+                    friction: Friction {
+                        coefficient: 0.0,
+                        combine_rule: CoefficientCombineRule::Min,
+                    },
                     status_effects: Default::default(),
                     shootable: Shootable,
                     cooldowns: Cooldowns::new(&abilities),
