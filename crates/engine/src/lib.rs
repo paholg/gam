@@ -1,6 +1,7 @@
 use std::fmt;
 
 use ability::{properties::AbilityProps, seeker_rocket, Abilities, Ability};
+use ai::charge::ChargeAiPlugin;
 use bevy_app::{App, FixedUpdate, Plugin, PostUpdate, Startup};
 use bevy_ecs::{
     bundle::Bundle,
@@ -157,13 +158,25 @@ impl Player {
 #[derive(Component)]
 pub struct Ai;
 
+pub trait Faction: Component {
+    type Foe: Component;
+}
+
 /// Indicate this entity is on the enemy team.
 #[derive(Component)]
 pub struct Enemy;
 
+impl Faction for Enemy {
+    type Foe = Ally;
+}
+
 /// Indicate this entity is on the players' team.
 #[derive(Component)]
 pub struct Ally;
+
+impl Faction for Ally {
+    type Foe = Enemy;
+}
 
 /// Indicates that this entity can be hit by shots; think characters and walls.
 #[derive(Component, Default)]
@@ -185,6 +198,12 @@ impl Cooldowns {
 
     pub fn get_mut(&mut self, ability: &Ability) -> Option<&mut Tick> {
         self.map.get_mut(ability)
+    }
+
+    pub fn reset(&mut self) {
+        for tick in self.map.values_mut() {
+            *tick = Tick(0);
+        }
     }
 }
 
@@ -335,6 +354,7 @@ impl Plugin for GamPlugin {
                     lifecycle::reset,
                     input::apply_inputs,
                     ai::simple::system_set(),
+                    ai::charge::system_set(),
                     movement::apply_movement,
                     // ability::grenade::grenade_land_system,
                     ability::bullet::bullet_kickback_system,
@@ -371,8 +391,9 @@ impl Plugin for GamPlugin {
 
         // Plugins
         // Note: None of these plugins should include systems; any systems
-        // should be included manually below to ensure determinism.
-        app.add_plugins(physics);
+        // should be included manually to ensure determinism.
+        // TODO: The `ChargeAiPlugin` does include systems, that run on `Update`. We'll need to patch oxidized_navigation or use something else.`
+        app.add_plugins(physics).add_plugins(ChargeAiPlugin);
     }
 }
 

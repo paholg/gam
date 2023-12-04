@@ -8,6 +8,7 @@ use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{Collider, Friction, QueryFilter, RapierContext, RigidBody};
 use bevy_transform::components::{GlobalTransform, Transform};
+use oxidized_navigation::NavMeshAffector;
 use rand::Rng;
 
 use crate::{lifecycle::DEATH_Y, PLAYER_R};
@@ -96,6 +97,7 @@ impl FloorSpawner {
                 dim: self.dim,
                 loc: self.loc,
             },
+            NavMeshAffector,
         ));
     }
 }
@@ -106,7 +108,9 @@ const WALL_COLOR: [u8; 3] = [220, 110, 165];
 const SHORT_WALL_COLOR: [u8; 3] = [255, 200, 255];
 
 pub fn test_level(mut commands: Commands, mut props: ResMut<LevelProps>) {
-    let pixel = 0.25;
+    // TODO: This is currently a bit larger than PLAYER_R to give the ai some
+    // extra pathfinding room. But we should pathfind better instead.
+    let pixel = 0.30;
     let image = image::io::Reader::open("assets/levels/test2.png")
         .unwrap()
         .decode()

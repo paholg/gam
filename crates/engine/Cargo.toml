@@ -12,6 +12,7 @@ bevy_ecs.workspace = true
 bevy_hierarchy.workspace = true
 bevy_math.workspace = true
 bevy_reflect.workspace = true
+bevy_tasks.workspace = true
 bevy_time.workspace = true
 bevy_transform.workspace = true
 bevy_utils.workspace = true
@@ -20,8 +21,9 @@ bevy_utils.workspace = true
 bevy_rapier3d.workspace = true
 bitmask-enum = "2.2.3"
 bytemuck = { version = "1.14.0", features = ["derive"] }
-oxidized_navigation = "0.8.0"
+oxidized_navigation = { version = "0.8.0", features = ["rapier"] }
 # bincode = { version = "2.0.0-rc.2", features = ["serde"] }
+futures-lite = "2.1.0"
 libm = "0.2.8"
 rand = "0.8"
 serde = "1"

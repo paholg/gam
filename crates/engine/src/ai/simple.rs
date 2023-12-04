@@ -16,15 +16,24 @@ use crate::{
     movement::DesiredMove,
     status_effect::StatusEffects,
     time::TickCounter,
-    AbilityOffset, Ai, Cooldowns, Energy, Target, To2d, FORWARD,
+    AbilityOffset, Ally, Cooldowns, Enemy, Energy, Target, To2d, FORWARD,
 };
 
-use super::{update_ally_orientation, update_enemy_orientation};
+use super::update_target_system;
 
 #[derive(Component)]
-pub struct SimpleAi;
+pub struct SimpleAi {
+    attitude: Attitude,
+}
 
-#[derive(Component)]
+impl SimpleAi {
+    pub fn new(level: &LevelProps, rapier_context: &RapierContext) -> Self {
+        Self {
+            attitude: Attitude::rand(level, rapier_context),
+        }
+    }
+}
+
 pub enum Attitude {
     Chase,
     RunAway,
@@ -44,8 +53,8 @@ impl Attitude {
 
 pub fn system_set() -> SystemConfigs {
     (
-        update_enemy_orientation::<SimpleAi>,
-        update_ally_orientation::<SimpleAi>,
+        update_target_system::<Enemy, SimpleAi>,
+        update_target_system::<Ally, SimpleAi>,
         stupid_gun_system,
         just_move_system,
     )
@@ -53,12 +62,12 @@ pub fn system_set() -> SystemConfigs {
 }
 
 fn just_move_system(
-    mut query: Query<(&mut DesiredMove, &Transform, &mut Attitude), With<SimpleAi>>,
+    mut query: Query<(&mut DesiredMove, &Transform, &mut SimpleAi)>,
     level: Res<LevelProps>,
     rapier_context: Res<RapierContext>,
 ) {
-    for (mut desired_move, transform, mut attitude) in query.iter_mut() {
-        let dir = match *attitude {
+    for (mut desired_move, transform, mut ai) in query.iter_mut() {
+        let dir = match ai.attitude {
             Attitude::Chase => transform.rotation * FORWARD,
             Attitude::RunAway => -(transform.rotation * FORWARD),
             Attitude::PickPoint(ref mut target) => {
@@ -89,7 +98,7 @@ fn stupid_gun_system(
             &mut StatusEffects,
             &AbilityOffset,
         ),
-        With<Ai>,
+        With<SimpleAi>,
     >,
     props: Res<AbilityProps>,
 ) {
