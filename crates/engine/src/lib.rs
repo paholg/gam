@@ -360,9 +360,9 @@ impl Plugin for GamPlugin {
                     ability::bullet::bullet_kickback_system,
                     seeker_rocket::seeker_rocket_tracking,
                     ability::grenade::grenade_explode_system,
+                    death_callback::explosion_grow_system,
                     lifecycle::fall,
                     // Collisions
-                    collision::clear_colliding_system,
                     collision::collision_system,
                     ability::bullet::bullet_collision_system,
                     ability::seeker_rocket::seeker_rocket_collision_system,

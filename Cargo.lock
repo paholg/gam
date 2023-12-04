@@ -684,7 +684,7 @@ dependencies = [
  "bevy_log",
  "bevy_reflect",
  "bevy_utils",
- "smallvec",
+ "smallvec 1.11.1",
 ]
 
 [[package]]
@@ -867,7 +867,7 @@ dependencies = [
  "fixedbitset",
  "naga_oil",
  "radsort",
- "smallvec",
+ "smallvec 1.11.1",
  "thread_local",
 ]
 
@@ -955,7 +955,7 @@ dependencies = [
  "erased-serde",
  "glam",
  "serde",
- "smallvec",
+ "smallvec 1.11.1",
  "smol_str",
  "thiserror",
 ]
@@ -1011,7 +1011,7 @@ dependencies = [
  "naga_oil",
  "ruzstd",
  "serde",
- "smallvec",
+ "smallvec 1.11.1",
  "thiserror",
  "thread_local",
  "wasm-bindgen",
@@ -1169,7 +1169,7 @@ dependencies = [
  "bevy_window",
  "bytemuck",
  "serde",
- "smallvec",
+ "smallvec 1.11.1",
  "taffy",
  "thiserror",
 ]
@@ -1473,12 +1473,14 @@ dependencies = [
  "bevy_rapier3d",
  "directories",
  "engine",
+ "itertools 0.12.0",
  "iyes_progress",
  "leafwing-input-manager",
  "rand",
  "rust-i18n",
  "serde",
  "serde_json",
+ "smallvec 2.0.0-alpha.1",
  "subenum",
  "thiserror",
  "tracing",
@@ -1871,7 +1873,7 @@ dependencies = [
  "oxidized_navigation",
  "rand",
  "serde",
- "smallvec",
+ "smallvec 2.0.0-alpha.1",
  "strum",
  "tracing",
 ]
@@ -1918,7 +1920,7 @@ dependencies = [
  "lebe",
  "miniz_oxide",
  "rayon-core",
- "smallvec",
+ "smallvec 1.11.1",
  "zune-inflate",
 ]
 
@@ -2452,6 +2454,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25db6b064527c5d482d0423354fcd07a89a2dfe07b67892e62411946db7f07b0"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2585,7 +2596,7 @@ dependencies = [
  "bevy",
  "derive_more",
  "fixedbitset",
- "itertools",
+ "itertools 0.11.0",
  "leafwing_input_manager_macros",
  "once_cell",
  "petitset",
@@ -3167,7 +3178,7 @@ dependencies = [
  "bevy_rapier3d",
  "nalgebra",
  "parry3d",
- "smallvec",
+ "smallvec 1.11.1",
 ]
 
 [[package]]
@@ -3195,7 +3206,7 @@ dependencies = [
  "cfg-if",
  "libc",
  "redox_syscall 0.4.1",
- "smallvec",
+ "smallvec 1.11.1",
  "windows-targets 0.48.5",
 ]
 
@@ -3217,7 +3228,7 @@ dependencies = [
  "rustc-hash",
  "simba",
  "slab",
- "smallvec",
+ "smallvec 1.11.1",
  "spade",
 ]
 
@@ -3831,6 +3842,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "smallvec"
+version = "2.0.0-alpha.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2af12b8880f45a593fc99ac6d0a066f762861ea6822a6a6790fa1363d70a8089"
+
+[[package]]
 name = "smol_str"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3848,7 +3865,7 @@ dependencies = [
  "num-traits",
  "optional",
  "robust",
- "smallvec",
+ "smallvec 1.11.1",
 ]
 
 [[package]]
@@ -4204,7 +4221,7 @@ dependencies = [
  "once_cell",
  "regex",
  "sharded-slab",
- "smallvec",
+ "smallvec 1.11.1",
  "thread_local",
  "tracing",
  "tracing-core",
@@ -4444,7 +4461,7 @@ dependencies = [
  "parking_lot",
  "profiling",
  "raw-window-handle",
- "smallvec",
+ "smallvec 1.11.1",
  "static_assertions",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -4470,7 +4487,7 @@ dependencies = [
  "profiling",
  "raw-window-handle",
  "rustc-hash",
- "smallvec",
+ "smallvec 1.11.1",
  "thiserror",
  "web-sys",
  "wgpu-hal",
@@ -4510,7 +4527,7 @@ dependencies = [
  "raw-window-handle",
  "renderdoc-sys",
  "rustc-hash",
- "smallvec",
+ "smallvec 1.11.1",
  "thiserror",
  "wasm-bindgen",
  "web-sys",

@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use bevy_ecs::system::Resource;
 
-use crate::{movement::MaxSpeed, time::Tick};
+use crate::{death_callback::ExplosionKind, movement::MaxSpeed, time::Tick};
 
 use super::{grenade::GrenadeKind, Ability};
 
@@ -23,21 +23,31 @@ impl Default for AbilityProps {
                 cost: 20.0,
                 cooldown: Tick(30),
                 delay: Tick(120),
-                damage: 8.0,
-                explosion_radius: 1.5,
                 radius: 0.07,
                 kind: GrenadeKind::Frag,
                 health: 3.0,
+                explosion: ExplosionProps {
+                    min_radius: 0.9,
+                    max_radius: 1.8,
+                    duration: Tick(15),
+                    damage: 0.65,
+                    kind: ExplosionKind::FragGrenade,
+                },
             },
             heal_grenade: GrenadeProps {
                 cost: 50.0,
                 cooldown: Tick(30),
                 delay: Tick(120),
-                damage: -20.0,
-                explosion_radius: 1.0,
                 radius: 0.05,
                 kind: GrenadeKind::Heal,
                 health: 3.0,
+                explosion: ExplosionProps {
+                    min_radius: 0.6,
+                    max_radius: 1.2,
+                    duration: Tick(15),
+                    damage: -1.5,
+                    kind: ExplosionKind::HealGrenade,
+                },
             },
             hyper_sprint: Default::default(),
             gun: Default::default(),
@@ -155,11 +165,10 @@ pub struct GrenadeProps {
     pub cost: f32,
     pub cooldown: Tick,
     pub delay: Tick,
-    pub damage: f32,
-    pub explosion_radius: f32,
     pub radius: f32,
     pub kind: GrenadeKind,
     pub health: f32,
+    pub explosion: ExplosionProps,
 }
 
 #[derive(Debug)]
@@ -167,8 +176,6 @@ pub struct SeekerRocketProps {
     pub cost: f32,
     pub cooldown: Tick,
     pub duration: Tick,
-    pub damage: f32,
-    pub explosion_radius: f32,
     /// Max turn per tick, in radians.
     pub turning_radius: f32,
     pub capsule_radius: f32,
@@ -179,6 +186,7 @@ pub struct SeekerRocketProps {
     pub energy: f32,
     /// How much energy the rocket spends every frame to move.
     pub energy_cost: f32,
+    pub explosion: ExplosionProps,
 }
 
 impl Default for SeekerRocketProps {
@@ -187,8 +195,6 @@ impl Default for SeekerRocketProps {
             cost: 20.0,
             cooldown: Tick(30),
             duration: Tick(300),
-            damage: 8.0,
-            explosion_radius: 1.0,
             turning_radius: PI * 0.03,
             capsule_radius: 0.05,
             capsule_length: 0.14,
@@ -199,6 +205,22 @@ impl Default for SeekerRocketProps {
             },
             energy: 10.0,
             energy_cost: 0.2,
+            explosion: ExplosionProps {
+                min_radius: 0.6,
+                max_radius: 1.2,
+                duration: Tick(15),
+                damage: 0.65,
+                kind: ExplosionKind::SeekerRocket,
+            },
         }
     }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct ExplosionProps {
+    pub min_radius: f32,
+    pub max_radius: f32,
+    pub duration: Tick,
+    pub damage: f32,
+    pub kind: ExplosionKind,
 }

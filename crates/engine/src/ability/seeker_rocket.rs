@@ -72,8 +72,7 @@ pub fn seeker_rocket(
         },
         props.max_speed,
         DeathCallback::Explosion(ExplosionCallback {
-            damage: props.damage,
-            radius: props.explosion_radius,
+            props: props.explosion,
         }),
         ExternalForce::default(),
         DesiredMove {

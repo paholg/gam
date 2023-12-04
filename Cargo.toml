@@ -30,6 +30,7 @@ bevy_utils = "0.12"
 # For example, do ComplexField::sin(0.4) (where ComplexField is imported by use
 # nalgebra::ComplexField) instead of 0.4.sin()
 bevy_rapier3d = { version = "0.23", features = ["enhanced-determinism"] }
+smallvec = "2.0.0-alpha.1"
 tracing = "0.1.40"
 
 # Enable a small amount of optimization in debug mode
