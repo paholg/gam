@@ -9,8 +9,8 @@ use bevy_rapier3d::prelude::{
 use bevy_transform::components::Transform;
 
 use crate::{
+    ability::properties::ExplosionProps,
     collision::{Colliding, TrackCollisions},
-    time::Tick,
     Health, Object,
 };
 
@@ -29,13 +29,23 @@ impl DeathCallback {
 
 #[derive(Debug)]
 pub struct ExplosionCallback {
-    pub damage: f32,
-    pub radius: f32,
+    pub props: ExplosionProps,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub enum ExplosionKind {
+    FragGrenade,
+    HealGrenade,
+    SeekerRocket,
 }
 
 #[derive(Debug, Component)]
 pub struct Explosion {
     pub damage: f32,
+    pub min_radius: f32,
+    pub max_radius: f32,
+    pub growth_rate: f32,
+    pub kind: ExplosionKind,
 }
 
 impl ExplosionCallback {
@@ -43,21 +53,33 @@ impl ExplosionCallback {
         commands.spawn((
             Object {
                 transform: *transform,
-                collider: Collider::ball(self.radius),
-                foot_offset: (-self.radius).into(),
+                collider: Collider::ball(self.props.min_radius),
+                // Foot offset doesn't really make sense for an explosion, I think.
+                foot_offset: 0.0.into(),
                 body: bevy_rapier3d::prelude::RigidBody::KinematicPositionBased,
                 ..Default::default()
             },
             Sensor,
             Explosion {
-                damage: self.damage,
+                damage: self.props.damage,
+                min_radius: self.props.min_radius,
+                max_radius: self.props.max_radius,
+                growth_rate: (self.props.max_radius - self.props.min_radius)
+                    / self.props.duration.0 as f32,
+                kind: self.props.kind,
             },
             ActiveEvents::COLLISION_EVENTS,
             TrackCollisions,
-            // Zero health with 1 tick delay ensures an explosion lives for
-            // exactly 1 frame.
-            Health::new_with_delay(0.0, Tick(1)),
+            Health::new_with_delay(0.0, self.props.duration),
         ));
+    }
+}
+
+pub fn explosion_grow_system(mut explosion_q: Query<(&Explosion, &mut Collider)>) {
+    for (explosion, mut collider) in &mut explosion_q {
+        let mut ball = collider.as_ball_mut().unwrap();
+        let new_radius = ball.radius() + explosion.growth_rate;
+        ball.set_radius(new_radius);
     }
 }
 
@@ -66,7 +88,7 @@ pub fn explosion_collision_system(
     explosion_q: Query<(&Explosion, &Transform, &Colliding)>,
     mut target_q: Query<(&Transform, &mut Health)>,
 ) {
-    let query_filter = QueryFilter {
+    let wall_filter = QueryFilter {
         flags: QueryFilterFlags::ONLY_FIXED,
         ..Default::default()
     };
@@ -76,7 +98,7 @@ pub fn explosion_collision_system(
                 let origin = transform.translation;
                 let dir = target_transform.translation - origin;
                 let wall_collision =
-                    rapier_context.cast_ray(origin, dir, f32::MAX, true, query_filter);
+                    rapier_context.cast_ray(origin, dir, f32::MAX, true, wall_filter);
                 if let Some((_entity, toi)) = wall_collision {
                     let delta_wall = dir * toi;
                     if delta_wall.length_squared() < dir.length_squared() {

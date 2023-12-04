@@ -27,6 +27,7 @@ use self::{
 mod aim;
 mod asset_handler;
 mod bar;
+pub mod color_gradient;
 mod config;
 mod controls;
 mod draw;

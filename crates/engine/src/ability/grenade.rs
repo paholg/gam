@@ -117,8 +117,7 @@ pub fn grenade(
             ..Default::default()
         },
         DeathCallback::Explosion(ExplosionCallback {
-            damage: props.damage,
-            radius: props.explosion_radius,
+            props: props.explosion,
         }),
         Health::new(props.health),
     ));

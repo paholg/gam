@@ -11,7 +11,7 @@ use bevy::{
 use bevy_hanabi::EffectSpawner;
 use bevy_kira_audio::{prelude::Volume, Audio, AudioControl};
 use bevy_mod_raycast::prelude::RaycastMesh;
-use bevy_rapier3d::prelude::Velocity;
+use bevy_rapier3d::prelude::{Collider, Velocity};
 use engine::{
     ability::{
         bullet::Bullet,
@@ -20,13 +20,18 @@ use engine::{
         HyperSprinting,
     },
     ai::charge::HasPath,
+    death_callback::{Explosion, ExplosionKind},
     level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
     lifecycle::{DeathEvent, DEATH_Y},
     Ally, Enemy, Energy, FootOffset, Health, Kind, Player, UP,
 };
 use rand::{thread_rng, Rng};
 
-use crate::{asset_handler::AssetHandler, bar::Bar, in_plane, Config};
+use crate::{
+    asset_handler::{AssetHandler, ExplosionAssets},
+    bar::Bar,
+    in_plane, Config,
+};
 
 /// A plugin for spawning graphics for newly-created entities.
 pub struct DrawPlugin;
@@ -48,6 +53,8 @@ impl Plugin for DrawPlugin {
                 draw_hyper_sprint_system,
                 draw_wall_system,
                 draw_lights_system,
+                draw_explosion_system,
+                update_explosion_system,
             ),
         );
     }
@@ -307,32 +314,36 @@ fn draw_death_system(
     // TODO: Reset
     for death in event_reader.read() {
         let effect = match death.kind {
-            Kind::Other => continue,
-            Kind::Player => &mut assets.player.despawn_effect,
-            Kind::Enemy => &mut assets.enemy.despawn_effect,
-            Kind::Ally => &mut assets.ally.despawn_effect,
-            Kind::Bullet => &mut assets.shot.collision_effect,
-            Kind::FragGrenade => &mut assets.frag_grenade.explosion_effect,
-            Kind::HealGrenade => &mut assets.heal_grenade.explosion_effect,
-            Kind::SeekerRocket => &mut assets.seeker_rocket.explosion_effect,
+            Kind::Other => None,
+            Kind::Player => Some(&mut assets.player.despawn_effect),
+            Kind::Enemy => Some(&mut assets.enemy.despawn_effect),
+            Kind::Ally => Some(&mut assets.ally.despawn_effect),
+            Kind::Bullet => Some(&mut assets.shot.collision_effect),
+            Kind::FragGrenade => None,
+            Kind::HealGrenade => None,
+            Kind::SeekerRocket => None,
         };
 
-        effect.trigger(&mut commands, death.transform, &mut effects, &frame);
+        if let Some(effect) = effect {
+            effect.trigger(&mut commands, death.transform, &mut effects, &frame);
+        }
 
         let sound = match death.kind {
-            Kind::Bullet => assets.shot.despawn_sound.clone(),
-            Kind::Other => continue,
+            Kind::Other => None,
+            Kind::Bullet => Some(assets.shot.despawn_sound.clone()),
             Kind::Player
             | Kind::Enemy
             | Kind::Ally
             | Kind::FragGrenade
             | Kind::HealGrenade
-            | Kind::SeekerRocket => assets.player.despawn_sound.clone(),
+            | Kind::SeekerRocket => Some(assets.player.despawn_sound.clone()),
         };
 
-        audio
-            .play(sound)
-            .with_volume(Volume::Decibels(config.sound.effects_volume));
+        if let Some(sound) = sound {
+            audio
+                .play(sound)
+                .with_volume(Volume::Decibels(config.sound.effects_volume));
+        }
     }
 }
 
@@ -475,5 +486,74 @@ pub fn draw_pathfinding_system(
         }
 
         gizmos.linestrip(path, color);
+    }
+}
+
+#[derive(Component)]
+pub struct ExplosionGraphics;
+
+fn explosion_assets(assets: &AssetHandler, kind: ExplosionKind) -> &ExplosionAssets {
+    match kind {
+        ExplosionKind::FragGrenade => &assets.frag_grenade.explosion,
+        ExplosionKind::HealGrenade => &assets.heal_grenade.explosion,
+        ExplosionKind::SeekerRocket => &assets.seeker_rocket.explosion,
+    }
+}
+
+pub fn draw_explosion_system(
+    mut commands: Commands,
+    assets: Res<AssetHandler>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    query: Query<(Entity, &Explosion, &Collider), Added<Explosion>>,
+) {
+    for (entity, explosion, collider) in &query {
+        let explosion_assets = explosion_assets(&assets, explosion.kind);
+        let radius = collider.as_ball().unwrap().radius();
+
+        // Clone the material because we're going to mutate it. Probably we
+        // could do this better.
+        let material = materials.get(&explosion_assets.material).unwrap().clone();
+
+        commands
+            .entity(entity)
+            .insert(InheritedVisibility::default());
+        commands.entity(entity).with_children(|builder| {
+            builder.spawn((
+                ObjectGraphics {
+                    material: materials.add(material),
+                    mesh: explosion_assets.mesh.clone(),
+                    ..Default::default()
+                },
+                Transform::from_scale(Vec3::splat(radius)),
+                GlobalTransform::default(),
+                ExplosionGraphics,
+            ));
+        });
+    }
+}
+
+pub fn update_explosion_system(
+    assets: Res<AssetHandler>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut query: Query<(&Parent, &mut Transform, &Handle<StandardMaterial>), With<ExplosionGraphics>>,
+    parent_q: Query<(&Explosion, &Collider)>,
+) {
+    for (parent, mut transform, material) in &mut query {
+        let Ok((explosion, collider)) = parent_q.get(parent.get()) else {
+            tracing::warn!("ExplosionGraphics missing parent");
+            continue;
+        };
+        let radius = collider.as_ball().unwrap().radius();
+
+        let min_radius = explosion.min_radius;
+        let max_radius = explosion.max_radius;
+
+        let frac = (radius - min_radius) / (max_radius - min_radius);
+        let explosion_assets = explosion_assets(&assets, explosion.kind);
+
+        let color = explosion_assets.gradient.get(frac);
+        materials.get_mut(material).unwrap().emissive = color;
+
+        transform.scale = Vec3::splat(radius);
     }
 }
