@@ -38,6 +38,7 @@ mod world;
 
 pub use config::Config;
 pub use controls::ControlPlugin;
+pub use draw::draw_pathfinding_system;
 
 rust_i18n::i18n!("../../locales");
 

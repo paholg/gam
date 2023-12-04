@@ -31,7 +31,8 @@ fn main() {
     ))
     .insert_resource(
         bevy_mod_raycast::prelude::RaycastPluginState::<()>::default().with_debug_cursor(),
-    );
+    )
+    .add_systems(bevy::app::Update, client::draw_pathfinding_system);
 
     app.run();
 }

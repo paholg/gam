@@ -13,7 +13,7 @@ use bevy_transform::components::Transform;
 
 use crate::{
     ability::{Abilities, Ability},
-    ai::simple::{Attitude, SimpleAi},
+    ai::{charge::ChargeAi, AiTarget},
     death_callback::DeathCallback,
     level::LevelProps,
     player::{character_collider, PlayerInfo},
@@ -101,10 +101,11 @@ fn spawn_enemies(
             .spawn((
                 Enemy,
                 Ai,
-                SimpleAi,
+                ChargeAi::default(),
+                AiTarget::default(),
                 Character {
                     health: Health::new(10.0),
-                    energy: Energy::new(5.0, 0.2),
+                    energy: Energy::new(20.0, 0.2),
                     object: Object {
                         transform: Transform::from_translation(
                             loc + Vec3::new(0.0, 0.5 * PLAYER_HEIGHT, 0.0),
@@ -130,7 +131,6 @@ fn spawn_enemies(
                     desired_movement: Default::default(),
                     ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
                 },
-                Attitude::rand(level, rapier_context),
             ))
             .id();
         tracing::debug!(?id, "Spawning enemy");
@@ -150,7 +150,8 @@ fn spawn_allies(
             .spawn((
                 Ally,
                 Ai,
-                SimpleAi,
+                ChargeAi::default(),
+                AiTarget::default(),
                 Character {
                     health: Health::new(100.0),
                     energy: Energy::new(100.0, ENERGY_REGEN),
@@ -190,7 +191,7 @@ pub fn reset(
     mut commands: Commands,
     enemy_query: Query<Entity, With<Enemy>>,
     ally_query: Query<Entity, With<Ally>>,
-    player_query: Query<Entity, With<Player>>,
+    mut player_query: Query<(Entity, &mut Health, &mut Energy, &mut Cooldowns), With<Player>>,
     player_info_query: Query<&PlayerInfo>,
     mut num_ai: ResMut<NumAi>,
     level: Res<LevelProps>,
@@ -199,6 +200,12 @@ pub fn reset(
     if enemy_query.iter().next().is_none() {
         num_ai.enemies += 1;
         spawn_enemies(&mut commands, num_ai.enemies, &level, &rapier_context);
+
+        for (_entity, mut health, mut energy, mut cooldowns) in &mut player_query {
+            health.cur = health.max;
+            energy.cur = energy.max;
+            cooldowns.reset();
+        }
     }
 
     if player_query.iter().next().is_none() {

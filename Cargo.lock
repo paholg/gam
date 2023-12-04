@@ -242,7 +242,7 @@ dependencies = [
  "async-task",
  "concurrent-queue",
  "fastrand 2.0.1",
- "futures-lite",
+ "futures-lite 1.13.0",
  "slab",
 ]
 
@@ -255,7 +255,7 @@ dependencies = [
  "async-lock",
  "autocfg",
  "blocking",
- "futures-lite",
+ "futures-lite 1.13.0",
 ]
 
 [[package]]
@@ -406,7 +406,7 @@ dependencies = [
  "crossbeam-channel",
  "downcast-rs",
  "futures-io",
- "futures-lite",
+ "futures-lite 1.13.0",
  "js-sys",
  "parking_lot",
  "ron",
@@ -1002,7 +1002,7 @@ dependencies = [
  "codespan-reporting",
  "downcast-rs",
  "encase",
- "futures-lite",
+ "futures-lite 1.13.0",
  "hexasphere",
  "image",
  "js-sys",
@@ -1088,7 +1088,7 @@ dependencies = [
  "async-executor",
  "async-task",
  "concurrent-queue",
- "futures-lite",
+ "futures-lite 1.13.0",
  "wasm-bindgen-futures",
 ]
 
@@ -1360,7 +1360,7 @@ dependencies = [
  "async-task",
  "fastrand 2.0.1",
  "futures-io",
- "futures-lite",
+ "futures-lite 1.13.0",
  "piper",
  "tracing",
 ]
@@ -1479,7 +1479,6 @@ dependencies = [
  "rust-i18n",
  "serde",
  "serde_json",
- "strum",
  "subenum",
  "thiserror",
  "tracing",
@@ -1860,11 +1859,13 @@ dependencies = [
  "bevy_math",
  "bevy_rapier3d",
  "bevy_reflect",
+ "bevy_tasks",
  "bevy_time",
  "bevy_transform",
  "bevy_utils",
  "bitmask-enum",
  "bytemuck",
+ "futures-lite 2.1.0",
  "image",
  "libm",
  "oxidized_navigation",
@@ -2043,6 +2044,19 @@ dependencies = [
  "parking",
  "pin-project-lite",
  "waker-fn",
+]
+
+[[package]]
+name = "futures-lite"
+version = "2.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "aeee267a1883f7ebef3700f262d2d54de95dfaf38189015a74fdc4e0c7ad8143"
+dependencies = [
+ "fastrand 2.0.1",
+ "futures-core",
+ "futures-io",
+ "parking",
+ "pin-project-lite",
 ]
 
 [[package]]
@@ -3150,6 +3164,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6588a1cf7510571473f465b7bffda4a13a2feb93a594215665d0b7b0de19645"
 dependencies = [
  "bevy",
+ "bevy_rapier3d",
  "nalgebra",
  "parry3d",
  "smallvec",
