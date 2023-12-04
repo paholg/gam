@@ -20,7 +20,7 @@ impl Default for AbilityProps {
     fn default() -> Self {
         Self {
             frag_grenade: GrenadeProps {
-                cost: 20.0,
+                cost: 30.0,
                 cooldown: Tick(30),
                 delay: Tick(120),
                 radius: 0.07,
@@ -117,11 +117,11 @@ impl Default for GunProps {
     fn default() -> Self {
         Self {
             cost: 5.0,
-            cooldown: Tick(10),
+            cooldown: Tick(5),
             duration: Tick(600),
             speed: 12.0,
             radius: 0.03,
-            damage: 1.0,
+            damage: 2.0,
             bullet_health: 1.0,
             density: 100.0,
         }
@@ -192,7 +192,7 @@ pub struct SeekerRocketProps {
 impl Default for SeekerRocketProps {
     fn default() -> Self {
         Self {
-            cost: 20.0,
+            cost: 30.0,
             cooldown: Tick(30),
             duration: Tick(300),
             turning_radius: PI * 0.03,
