@@ -677,7 +677,7 @@ fn hyper_sprint_effect() -> EffectAsset {
             gradient: color_gradient,
         })
         .render(SizeOverLifetimeModifier {
-            gradient: Gradient::constant([0.2; 2].into()),
+            gradient: Gradient::constant([0.05; 2].into()),
             screen_space_size: false,
         })
 }

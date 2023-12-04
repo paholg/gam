@@ -1,5 +1,5 @@
 use bevy_ecs::{component::Component, system::Commands};
-use bevy_rapier3d::prelude::{Collider, Friction, LockedAxes, RigidBody};
+use bevy_rapier3d::prelude::{CoefficientCombineRule, Collider, Friction, LockedAxes, RigidBody};
 use bevy_transform::components::Transform;
 
 use crate::{
@@ -35,7 +35,10 @@ impl PlayerInfo {
                     max_speed: Default::default(),
                     impulse: Default::default(),
                     force: Default::default(),
-                    friction: Friction::default(),
+                    friction: Friction {
+                        coefficient: 0.0,
+                        combine_rule: CoefficientCombineRule::Min,
+                    },
                     status_effects: Default::default(),
                     shootable: Shootable,
                     abilities: self.abilities.clone(),
