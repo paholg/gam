@@ -18,12 +18,14 @@ use crate::{
 use self::{
     bullet::{Bullet, BulletSpawner},
     grenade::grenade,
+    neutrino_ball::neutrino_ball,
     properties::{AbilityProps, GunProps, ShotgunProps},
     seeker_rocket::seeker_rocket,
 };
 
 pub mod bullet;
 pub mod grenade;
+pub mod neutrino_ball;
 pub mod properties;
 pub mod seeker_rocket;
 
@@ -50,6 +52,7 @@ pub enum Ability {
     FragGrenade,
     HealGrenade,
     SeekerRocket,
+    NeutrinoBall,
 }
 
 #[derive(Debug, Component, Clone, Serialize, Deserialize)]
@@ -150,12 +153,19 @@ impl Ability {
             ),
             Ability::SeekerRocket => seeker_rocket(
                 commands,
-                tick_counter,
                 &props.seeker_rocket,
                 transform,
                 velocity,
                 entity,
                 ability_offset,
+            ),
+            Ability::NeutrinoBall => neutrino_ball(
+                commands,
+                &props.neutrino_ball,
+                transform,
+                velocity,
+                ability_offset,
+                tick_counter,
             ),
         }
         true
@@ -177,6 +187,7 @@ impl Ability {
             Ability::FragGrenade => (),
             Ability::HealGrenade => (),
             Ability::SeekerRocket => (),
+            Ability::NeutrinoBall => (),
         }
     }
 }

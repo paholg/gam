@@ -21,7 +21,7 @@ use leafwing_input_manager::{
 };
 use serde::{Deserialize, Serialize};
 use subenum::subenum;
-use tracing::{error, info, warn};
+use tracing::{error, info};
 
 // TODO: NAME THESE THINGS
 const ORG: &str = "Paho Corp";
@@ -118,10 +118,10 @@ fn default_controls() -> InputMap<UserAction> {
         .insert(GamepadButtonType::South, UserAction::Ability2)
         .insert(KeyCode::W, UserAction::Ability3)
         .insert(MouseButton::Other(8), UserAction::Ability3)
-        .insert(GamepadButtonType::RightTrigger, UserAction::Ability3)
+        .insert(GamepadButtonType::LeftTrigger, UserAction::Ability3)
         .insert(KeyCode::R, UserAction::Ability4)
         .insert(MouseButton::Other(9), UserAction::Ability4)
-        .insert(GamepadButtonType::LeftTrigger, UserAction::Ability4)
+        .insert(GamepadButtonType::RightTrigger, UserAction::Ability4)
         // Menu controls
         .insert(GamepadButtonType::LeftTrigger, UserAction::TabLeft)
         .insert(GamepadButtonType::RightTrigger, UserAction::TabRight)
@@ -138,6 +138,8 @@ fn default_controls() -> InputMap<UserAction> {
 }
 
 impl Config {
+    // TODO: We'll load config once we can change it in-game.
+    #[allow(unused)]
     fn load() -> Result<Self, Error> {
         let path = config_file()?;
         let contents = fs::read_to_string(&path)?;
@@ -156,17 +158,18 @@ impl Config {
     }
 
     pub fn new() -> Config {
-        match Self::load() {
-            Ok(config) => config,
-            Err(error) => {
-                warn!(?error, "Couldn't load config; using default");
-                let config = Config::default();
-                if let Err(error) = config.save() {
-                    warn!(?error, "Couldn't save new config!");
-                }
-                config
-            }
-        }
+        Config::default()
+        // match Self::load() {
+        //     Ok(config) => config,
+        //     Err(error) => {
+        //         warn!(?error, "Couldn't load config; using default");
+        //         let config = Config::default();
+        //         if let Err(error) = config.save() {
+        //             warn!(?error, "Couldn't save new config!");
+        //         }
+        //         config
+        //     }
+        // }
     }
 }
 
@@ -250,7 +253,7 @@ impl Default for PlayerConfig {
             Ability::Gun,
             Ability::SeekerRocket,
             Ability::HyperSprint,
-            Ability::HealGrenade,
+            Ability::NeutrinoBall,
             Ability::FragGrenade,
         ]);
         Self { abilities }

@@ -33,6 +33,7 @@ bevy = { workspace = true, default-features = false, features = [
   "default_font",
   "webgl2",
 ] }
+bevy-inspector-egui = "0.21"
 bevy-ui-navigation = "0.33.1"
 bevy_hanabi = { version = "0.8.0", default-features = false, features = ["3d"] }
 bevy_kira_audio = "0.18.0"

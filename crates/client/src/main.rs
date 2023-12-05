@@ -28,6 +28,7 @@ fn main() {
         bevy::diagnostic::LogDiagnosticsPlugin::default(),
         bevy::diagnostic::FrameTimeDiagnosticsPlugin::default(),
         bevy_rapier3d::render::RapierDebugRenderPlugin::default(),
+        bevy_inspector_egui::quick::WorldInspectorPlugin::new(),
     ))
     .insert_resource(
         bevy_mod_raycast::prelude::RaycastPluginState::<()>::default().with_debug_cursor(),

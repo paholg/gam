@@ -73,6 +73,7 @@ pub enum Kind {
     FragGrenade,
     HealGrenade,
     SeekerRocket,
+    NeutrinoBall,
 }
 
 #[derive(Component, Default, Reflect, Debug)]
@@ -208,7 +209,7 @@ impl Cooldowns {
 }
 
 /// The offset from an object's transform, to its bottom.
-#[derive(Component, Default)]
+#[derive(Component, Default, Clone, Copy)]
 pub struct FootOffset {
     pub y: f32,
 }
@@ -252,6 +253,7 @@ pub struct Object {
     mass_props: ColliderMassProperties,
     body: RigidBody,
     velocity: Velocity,
+    force: ExternalForce,
     locked_axes: LockedAxes,
     mass: ReadMassProperties,
     kind: Kind,
@@ -266,7 +268,6 @@ struct Character {
     max_speed: MaxSpeed,
     friction: Friction,
     impulse: ExternalImpulse,
-    force: ExternalForce,
     status_effects: StatusEffects,
     shootable: Shootable,
     cooldowns: Cooldowns,
@@ -357,22 +358,24 @@ impl Plugin for GamPlugin {
                     ai::charge::system_set(),
                     movement::apply_movement,
                     // ability::grenade::grenade_land_system,
-                    ability::bullet::bullet_kickback_system,
-                    seeker_rocket::seeker_rocket_tracking,
-                    ability::grenade::grenade_explode_system,
+                    ability::bullet::kickback_system,
+                    seeker_rocket::tracking_system,
+                    ability::grenade::explode_system,
                     death_callback::explosion_grow_system,
                     lifecycle::fall,
+                    ability::neutrino_ball::activation_system,
                     // Collisions
                     collision::collision_system,
-                    ability::bullet::bullet_collision_system,
-                    ability::seeker_rocket::seeker_rocket_collision_system,
+                    ability::bullet::collision_system,
+                    ability::seeker_rocket::collision_system,
+                    ability::neutrino_ball::collision_system,
                     death_callback::explosion_collision_system,
                 )
                     .chain()
                     .in_set(GameSet::Stuff),
                 (
                     // Put systems that despawn things at the end.
-                    ability::bullet::bullet_despawn_system,
+                    ability::bullet::despawn_system,
                     lifecycle::die,
                     time::debug_tick_system,
                 )

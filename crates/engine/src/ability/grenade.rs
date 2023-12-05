@@ -8,8 +8,8 @@ use bevy_ecs::{
 
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{
-    Collider, ColliderMassProperties, Friction, LockedAxes, ReadMassProperties, Restitution,
-    Velocity,
+    Collider, ColliderMassProperties, ExternalForce, Friction, LockedAxes, ReadMassProperties,
+    Restitution, Velocity,
 };
 use bevy_transform::components::{GlobalTransform, Transform};
 
@@ -18,7 +18,7 @@ use crate::{
     level::InLevel,
     physics::G,
     time::{Tick, TickCounter},
-    AbilityOffset, Health, Kind, Libm, Object, Target, To2d, To3d, FORWARD, PLAYER_R,
+    AbilityOffset, Health, Kind, Libm, Object, Shootable, Target, To2d, To3d, FORWARD, PLAYER_R,
 };
 
 use super::properties::GrenadeProps;
@@ -97,12 +97,14 @@ pub fn grenade(
             foot_offset: (-props.radius).into(),
             mass_props: ColliderMassProperties::Density(1.0),
             body: bevy_rapier3d::prelude::RigidBody::Dynamic,
+            force: ExternalForce::default(),
             velocity: vel,
             locked_axes: LockedAxes::ROTATION_LOCKED,
             mass: ReadMassProperties::default(),
             kind: props.kind.into(),
             in_level: InLevel,
         },
+        Shootable,
         Grenade {
             expiration: tick_counter.at(props.delay),
             shooter,
@@ -123,10 +125,7 @@ pub fn grenade(
     ));
 }
 
-pub fn grenade_explode_system(
-    mut query: Query<(&Grenade, &mut Health)>,
-    tick_counter: Res<TickCounter>,
-) {
+pub fn explode_system(mut query: Query<(&Grenade, &mut Health)>, tick_counter: Res<TickCounter>) {
     for (grenade, mut health) in &mut query {
         if grenade.expiration.before_now(&tick_counter) {
             health.die();

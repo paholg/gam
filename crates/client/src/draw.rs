@@ -16,10 +16,12 @@ use engine::{
     ability::{
         bullet::Bullet,
         grenade::{Grenade, GrenadeKind},
+        neutrino_ball::{NeutrinoBall, NeutrinoBallGravityField},
         seeker_rocket::SeekerRocket,
         HyperSprinting,
     },
     ai::charge::HasPath,
+    collision::TrackCollisions,
     death_callback::{Explosion, ExplosionKind},
     level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
     lifecycle::{DeathEvent, DEATH_Y},
@@ -49,6 +51,8 @@ impl Plugin for DrawPlugin {
                 draw_grenade_system,
                 draw_grenade_outline_system,
                 draw_seeker_rocket_system,
+                draw_neutrino_ball_system,
+                draw_neutrino_ball_outline_system,
                 draw_death_system,
                 draw_hyper_sprint_system,
                 draw_wall_system,
@@ -218,6 +222,62 @@ fn draw_seeker_rocket_system(
     }
 }
 
+fn draw_neutrino_ball_system(
+    mut commands: Commands,
+    assets: Res<AssetHandler>,
+    query: Query<Entity, Added<NeutrinoBall>>,
+) {
+    for entity in query.iter() {
+        let Some(mut ecmds) = commands.get_entity(entity) else {
+            continue;
+        };
+        ecmds.insert((InheritedVisibility::default(),));
+
+        ecmds.with_children(|builder| {
+            builder.spawn((
+                ObjectGraphics {
+                    material: assets.neutrino_ball.material.clone(),
+                    mesh: assets.neutrino_ball.mesh.clone(),
+                    ..Default::default()
+                },
+                Transform::IDENTITY,
+                GlobalTransform::default(),
+            ));
+        });
+    }
+}
+
+fn draw_neutrino_ball_outline_system(
+    mut commands: Commands,
+    assets: Res<AssetHandler>,
+    query: Query<
+        (Entity, &FootOffset),
+        (
+            Added<NeutrinoBallGravityField>,
+            Without<HasOutline>,
+            Added<TrackCollisions>,
+        ),
+    >,
+) {
+    for (entity, foot_offset) in &query {
+        commands
+            .entity(entity)
+            .insert(InheritedVisibility::default());
+        let outline_entity = commands
+            .spawn(PbrBundle {
+                mesh: assets.neutrino_ball.outline_mesh.clone(),
+                material: assets.neutrino_ball.outline_material.clone(),
+                transform: in_plane().with_translation(Vec3::new(0.0, foot_offset.y + 0.01, 0.0)),
+                ..Default::default()
+            })
+            .id();
+        commands
+            .entity(entity)
+            .insert(HasOutline)
+            .push_children(&[outline_entity]);
+    }
+}
+
 fn draw_player_system(
     mut commands: Commands,
     assets: Res<AssetHandler>,
@@ -322,6 +382,7 @@ fn draw_death_system(
             Kind::FragGrenade => None,
             Kind::HealGrenade => None,
             Kind::SeekerRocket => None,
+            Kind::NeutrinoBall => None,
         };
 
         if let Some(effect) = effect {
@@ -329,7 +390,7 @@ fn draw_death_system(
         }
 
         let sound = match death.kind {
-            Kind::Other => None,
+            Kind::Other | Kind::NeutrinoBall => None,
             Kind::Bullet => Some(assets.shot.despawn_sound.clone()),
             Kind::Player
             | Kind::Enemy

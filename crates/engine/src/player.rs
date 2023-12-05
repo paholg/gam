@@ -34,7 +34,6 @@ impl PlayerInfo {
                     },
                     max_speed: Default::default(),
                     impulse: Default::default(),
-                    force: Default::default(),
                     friction: Friction {
                         coefficient: 0.0,
                         combine_rule: CoefficientCombineRule::Min,

@@ -8,11 +8,7 @@ use bevy_rapier3d::prelude::{
 };
 use bevy_transform::components::Transform;
 
-use crate::{
-    ability::properties::ExplosionProps,
-    collision::{Colliding, TrackCollisions},
-    Health, Object,
-};
+use crate::{ability::properties::ExplosionProps, collision::TrackCollisions, Health, Object};
 
 #[derive(Debug, Component)]
 pub enum DeathCallback {
@@ -69,7 +65,7 @@ impl ExplosionCallback {
                 kind: self.props.kind,
             },
             ActiveEvents::COLLISION_EVENTS,
-            TrackCollisions,
+            TrackCollisions::default(),
             Health::new_with_delay(0.0, self.props.duration),
         ));
     }
@@ -85,7 +81,7 @@ pub fn explosion_grow_system(mut explosion_q: Query<(&Explosion, &mut Collider)>
 
 pub fn explosion_collision_system(
     rapier_context: Res<RapierContext>,
-    explosion_q: Query<(&Explosion, &Transform, &Colliding)>,
+    explosion_q: Query<(&Explosion, &Transform, &TrackCollisions)>,
     mut target_q: Query<(&Transform, &mut Health)>,
 ) {
     let wall_filter = QueryFilter {
