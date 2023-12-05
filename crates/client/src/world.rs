@@ -25,7 +25,11 @@ pub fn setup(
             }
             .into(),
         ),
-        material: materials.add(Color::BLACK.into()),
+        material: materials.add(StandardMaterial {
+            base_color: Color::BLACK,
+            unlit: true,
+            ..Default::default()
+        }),
         transform: in_plane().with_translation(Vec3::new(0.0, DEATH_Y, 0.0)),
         ..Default::default()
     });
