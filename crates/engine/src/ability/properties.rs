@@ -32,6 +32,7 @@ impl Default for AbilityProps {
                     max_radius: 1.8,
                     duration: Tick(15),
                     damage: 0.6,
+                    force: 8.0,
                     kind: ExplosionKind::FragGrenade,
                 },
             },
@@ -47,6 +48,7 @@ impl Default for AbilityProps {
                     max_radius: 1.2,
                     duration: Tick(15),
                     damage: -1.5,
+                    force: 0.0,
                     kind: ExplosionKind::HealGrenade,
                 },
             },
@@ -212,6 +214,7 @@ impl Default for SeekerRocketProps {
                 max_radius: 1.2,
                 duration: Tick(15),
                 damage: 0.6,
+                force: 6.0,
                 kind: ExplosionKind::SeekerRocket,
             },
         }
@@ -224,6 +227,7 @@ pub struct ExplosionProps {
     pub max_radius: f32,
     pub duration: Tick,
     pub damage: f32,
+    pub force: f32,
     pub kind: ExplosionKind,
 }
 
