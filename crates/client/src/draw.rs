@@ -521,22 +521,61 @@ fn draw_wall_system(
             .entity(entity)
             .insert(InheritedVisibility::default());
 
-        let wall = commands
-            .spawn((
-                PbrBundle {
-                    mesh: assets.wall.shape.clone(),
-                    material: kind.opaque(&assets),
-                    transform: Transform::from_scale(floor.dim),
-                    ..Default::default()
-                },
-                kind,
-                RaycastMesh::<()>::default(),
-            ))
-            .id();
-        if kind.is_wall() {
-            commands.entity(wall).insert(Wall);
-        }
-        commands.entity(entity).push_children(&[wall]);
+        // We want to chunk walls into a "floor" section and a "wall" section, so
+        // we're only making the part above the floor transparent when it's
+        // blocking a character.
+        let props = if kind.is_wall() {
+            let mut floor_scale = floor.dim;
+            floor_scale.y = -DEATH_Y;
+
+            let mut wall_scale = floor.dim;
+            wall_scale.y = floor.dim.y + DEATH_Y;
+            vec![
+                (
+                    Transform::from_scale(floor_scale).with_translation(Vec3::new(
+                        0.0,
+                        -wall_scale.y * 0.5,
+                        0.0,
+                    )),
+                    WallKind::Floor,
+                ),
+                (
+                    Transform::from_scale(wall_scale).with_translation(Vec3::new(
+                        0.0,
+                        floor_scale.y * 0.5,
+                        0.0,
+                    )),
+                    kind,
+                ),
+            ]
+        } else {
+            vec![(Transform::from_scale(floor.dim), kind)]
+        };
+
+        let ids = props
+            .into_iter()
+            .map(|(transform, kind)| {
+                let wall = commands
+                    .spawn((
+                        PbrBundle {
+                            mesh: assets.wall.shape.clone(),
+                            material: kind.opaque(&assets),
+                            transform,
+                            ..Default::default()
+                        },
+                        kind,
+                    ))
+                    .id();
+                if kind.is_wall() {
+                    commands
+                        .entity(wall)
+                        .insert((Wall, RaycastMesh::<()>::default()));
+                }
+                wall
+            })
+            .collect::<Vec<_>>();
+
+        commands.entity(entity).push_children(&ids);
     }
 }
 

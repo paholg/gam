@@ -42,7 +42,7 @@ impl WallAssets {
         let tall_wall_color = Color::RED;
 
         let trans = |color: Color| StandardMaterial {
-            base_color: color.with_a(0.7),
+            base_color: color.with_a(0.5),
             alpha_mode: AlphaMode::Blend,
             ..Default::default()
         };
@@ -51,6 +51,7 @@ impl WallAssets {
             shape: meshes.add(shape::Box::new(1.0, 1.0, 1.0).into()),
             floor: materials.add(StandardMaterial {
                 base_color: Color::rgb(0.0, 0.6, 0.1),
+                perceptual_roughness: 0.8,
                 ..Default::default()
             }),
             short_wall: materials.add(short_wall_color.into()),
