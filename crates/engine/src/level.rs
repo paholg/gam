@@ -11,7 +11,7 @@ use bevy_transform::components::{GlobalTransform, Transform};
 use oxidized_navigation::NavMeshAffector;
 use rand::Rng;
 
-use crate::{lifecycle::DEATH_Y, PLAYER_R};
+use crate::{lifecycle::DEATH_Y, Shootable, PLAYER_R};
 
 /// A market to indicate that an entity is part of a level, and should be
 /// deleted when it ends.
@@ -93,6 +93,7 @@ impl FloorSpawner {
             GlobalTransform::default(),
             Friction::default(),
             InLevel,
+            Shootable,
             Floor {
                 dim: self.dim,
                 loc: self.loc,

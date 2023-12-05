@@ -47,3 +47,10 @@ codegen-units = 1
 
 [workspace.lints.clippy]
 type_complexity = "allow"
+
+# Workaround for compiler error.
+# https://github.com/jakobhellermann/bevy-inspector-egui/issues/163
+[profile.dev.package."bevy-inspector-egui"]
+opt-level = 1
+[profile.release.package."bevy-inspector-egui"]
+opt-level = 1

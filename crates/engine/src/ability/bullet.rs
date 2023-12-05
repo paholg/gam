@@ -1,21 +1,21 @@
 use bevy_ecs::{
     component::Component,
     entity::Entity,
-    query::{Added, Without},
+    query::{Added, With, Without},
     system::{Commands, Query, Res},
 };
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{
-    ActiveEvents, Ccd, Collider, ColliderMassProperties, LockedAxes, ReadMassProperties, RigidBody,
-    Sensor, Velocity,
+    ActiveEvents, Ccd, Collider, ColliderMassProperties, ExternalForce, LockedAxes,
+    ReadMassProperties, RigidBody, Sensor, Velocity,
 };
 use bevy_transform::components::{GlobalTransform, Transform};
 
 use crate::{
-    collision::{Colliding, TrackCollisions},
+    collision::TrackCollisions,
     level::InLevel,
     time::{Tick, TickCounter},
-    Health, Kind, Object,
+    Health, Kind, Object, Shootable,
 };
 
 pub struct BulletSpawner {
@@ -48,6 +48,7 @@ impl BulletSpawner {
                 foot_offset: (-self.radius).into(),
                 mass_props: ColliderMassProperties::Density(self.density),
                 body: RigidBody::Dynamic,
+                force: ExternalForce::default(),
                 velocity: Velocity {
                     linvel: self.velocity,
                     angvel: Vec3::ZERO,
@@ -58,7 +59,7 @@ impl BulletSpawner {
                 in_level: InLevel,
             },
             ActiveEvents::COLLISION_EVENTS,
-            TrackCollisions,
+            TrackCollisions::default(),
             Sensor,
             Ccd::enabled(),
             self.health,
@@ -68,7 +69,7 @@ impl BulletSpawner {
 }
 
 // FIXME: Currently, this registers bullet mass as 0.
-pub fn bullet_kickback_system(
+pub fn kickback_system(
     bullet_q: Query<(&Velocity, &ReadMassProperties, &Bullet), Added<Bullet>>,
     mut shooter_q: Query<(&mut Velocity, &ReadMassProperties), Without<Bullet>>,
 ) {
@@ -80,7 +81,7 @@ pub fn bullet_kickback_system(
     }
 }
 
-pub fn bullet_despawn_system(
+pub fn despawn_system(
     mut commands: Commands,
     tick_counter: Res<TickCounter>,
     mut query: Query<(Entity, &mut Bullet)>,
@@ -92,20 +93,24 @@ pub fn bullet_despawn_system(
     }
 }
 
-pub fn bullet_collision_system(
+pub fn collision_system(
     mut bullet_q: Query<(
         &mut Health,
         &Bullet,
         &ReadMassProperties,
         &Velocity,
-        &Colliding,
+        &TrackCollisions,
     )>,
     mut health_q: Query<&mut Health, Without<Bullet>>,
     mut momentum_q: Query<(&mut Velocity, &ReadMassProperties), Without<Bullet>>,
+    shootable_q: Query<(), With<Shootable>>,
 ) {
     for (mut health, bullet, bullet_mass, bullet_velocity, colliding) in &mut bullet_q {
-        health.die();
+        let mut should_die = false;
         for &target in &colliding.targets {
+            if shootable_q.get(target).is_ok() {
+                should_die = true;
+            }
             if let Ok(mut health) = health_q.get_mut(target) {
                 health.take(bullet.damage);
             }
@@ -115,6 +120,9 @@ pub fn bullet_collision_system(
                 velocity.linvel =
                     bullet_mass.mass * bullet_velocity.linvel / mass.mass + velocity.linvel;
             }
+        }
+        if should_die {
+            health.die();
         }
     }
 }

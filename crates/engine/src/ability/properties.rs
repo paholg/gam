@@ -14,6 +14,7 @@ pub struct AbilityProps {
     pub frag_grenade: GrenadeProps,
     pub heal_grenade: GrenadeProps,
     pub seeker_rocket: SeekerRocketProps,
+    pub neutrino_ball: NeutrinoBallProps,
 }
 
 impl Default for AbilityProps {
@@ -27,10 +28,10 @@ impl Default for AbilityProps {
                 kind: GrenadeKind::Frag,
                 health: 3.0,
                 explosion: ExplosionProps {
-                    min_radius: 0.9,
+                    min_radius: 0.3,
                     max_radius: 1.8,
                     duration: Tick(15),
-                    damage: 0.65,
+                    damage: 0.6,
                     kind: ExplosionKind::FragGrenade,
                 },
             },
@@ -42,7 +43,7 @@ impl Default for AbilityProps {
                 kind: GrenadeKind::Heal,
                 health: 3.0,
                 explosion: ExplosionProps {
-                    min_radius: 0.6,
+                    min_radius: 0.2,
                     max_radius: 1.2,
                     duration: Tick(15),
                     damage: -1.5,
@@ -53,6 +54,7 @@ impl Default for AbilityProps {
             gun: Default::default(),
             shotgun: Default::default(),
             seeker_rocket: Default::default(),
+            neutrino_ball: Default::default(),
         }
     }
 }
@@ -67,6 +69,7 @@ impl AbilityProps {
             Ability::FragGrenade => self.frag_grenade.cooldown,
             Ability::HealGrenade => self.heal_grenade.cooldown,
             Ability::SeekerRocket => self.seeker_rocket.cooldown,
+            Ability::NeutrinoBall => self.neutrino_ball.cooldown,
         }
     }
 
@@ -79,6 +82,7 @@ impl AbilityProps {
             Ability::FragGrenade => self.frag_grenade.cost,
             Ability::HealGrenade => self.heal_grenade.cost,
             Ability::SeekerRocket => self.seeker_rocket.cost,
+            Ability::NeutrinoBall => self.neutrino_ball.cost,
         }
     }
 }
@@ -175,7 +179,6 @@ pub struct GrenadeProps {
 pub struct SeekerRocketProps {
     pub cost: f32,
     pub cooldown: Tick,
-    pub duration: Tick,
     /// Max turn per tick, in radians.
     pub turning_radius: f32,
     pub capsule_radius: f32,
@@ -194,7 +197,6 @@ impl Default for SeekerRocketProps {
         Self {
             cost: 30.0,
             cooldown: Tick(30),
-            duration: Tick(300),
             turning_radius: PI * 0.03,
             capsule_radius: 0.05,
             capsule_length: 0.14,
@@ -206,10 +208,10 @@ impl Default for SeekerRocketProps {
             energy: 10.0,
             energy_cost: 0.2,
             explosion: ExplosionProps {
-                min_radius: 0.6,
+                min_radius: 0.2,
                 max_radius: 1.2,
                 duration: Tick(15),
-                damage: 0.65,
+                damage: 0.6,
                 kind: ExplosionKind::SeekerRocket,
             },
         }
@@ -223,4 +225,39 @@ pub struct ExplosionProps {
     pub duration: Tick,
     pub damage: f32,
     pub kind: ExplosionKind,
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct NeutrinoBallProps {
+    pub cost: f32,
+    pub cooldown: Tick,
+    pub radius: f32,
+    pub effect_radius: f32,
+    pub duration: Tick,
+    pub activation_delay: Tick,
+    pub speed: f32,
+    pub surface_a: f32,
+}
+
+impl Default for NeutrinoBallProps {
+    fn default() -> Self {
+        Self {
+            cost: 50.0,
+            cooldown: Tick(30),
+            radius: 0.3,
+            effect_radius: 2.0,
+            duration: Tick(360),
+            activation_delay: Tick(45),
+            speed: 3.0,
+            surface_a: 200.0,
+        }
+    }
+}
+
+impl NeutrinoBallProps {
+    /// The acceleration due to this ball will be the result value, divided by
+    /// distance squared.
+    pub fn accel_numerator(&self) -> f32 {
+        self.surface_a * self.radius * self.radius
+    }
 }

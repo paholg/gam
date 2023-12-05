@@ -49,8 +49,14 @@ pub struct GrenadeAssets {
 pub struct SeekerRocketAssets {
     pub mesh: Handle<Mesh>,
     pub material: Handle<StandardMaterial>,
-    pub outline_material: Handle<StandardMaterial>,
     pub explosion: ExplosionAssets,
+}
+
+pub struct NeutrinoBallAssets {
+    pub mesh: Handle<Mesh>,
+    pub material: Handle<StandardMaterial>,
+    pub outline_mesh: Handle<Mesh>,
+    pub outline_material: Handle<StandardMaterial>,
 }
 
 pub struct TargetAssets {
@@ -115,6 +121,7 @@ pub struct AssetHandler {
     pub frag_grenade: GrenadeAssets,
     pub heal_grenade: GrenadeAssets,
     pub seeker_rocket: SeekerRocketAssets,
+    pub neutrino_ball: NeutrinoBallAssets,
     pub hyper_sprint: HyperSprintAssets,
     pub player: CharacterAssets,
     pub ally: CharacterAssets,
@@ -277,7 +284,6 @@ pub fn asset_handler_setup(
             .unwrap(),
         ),
         material: materials.add(seeker_rocket_material.clone()),
-        outline_material: materials.add(seeker_rocket_material),
         explosion: ExplosionAssets::new(
             &mut meshes,
             &mut materials,
@@ -287,6 +293,31 @@ pub fn asset_handler_setup(
                 (1.0, Color::rgba(0.5, 0.05, 0.5, 0.8)),
             ]),
         ),
+    };
+
+    let neutrino_ball_material = StandardMaterial {
+        base_color: Color::BLACK,
+        unlit: true,
+        ..Default::default()
+    };
+    let neutrino_ball = NeutrinoBallAssets {
+        mesh: meshes.add(
+            Mesh::try_from(Icosphere {
+                radius: props.neutrino_ball.radius,
+                ..Default::default()
+            })
+            .unwrap(),
+        ),
+        material: materials.add(neutrino_ball_material.clone()),
+        outline_mesh: meshes.add(
+            HollowPolygon {
+                radius: props.neutrino_ball.effect_radius,
+                thickness: 0.06,
+                vertices: 60,
+            }
+            .into(),
+        ),
+        outline_material: materials.add(neutrino_ball_material),
     };
 
     let effect = effects.add(hyper_sprint_effect());
@@ -396,6 +427,7 @@ pub fn asset_handler_setup(
         frag_grenade,
         heal_grenade,
         seeker_rocket,
+        neutrino_ball,
         hyper_sprint,
         player,
         ally,

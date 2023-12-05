@@ -11,20 +11,21 @@ use bevy_rapier3d::prelude::{
 use bevy_transform::components::{GlobalTransform, Transform};
 
 use crate::{
-    collision::{Colliding, TrackCollisions},
+    collision::TrackCollisions,
     death_callback::{DeathCallback, ExplosionCallback},
     level::InLevel,
     movement::DesiredMove,
-    time::{Tick, TickCounter, TIMESTEP},
-    AbilityOffset, Energy, Health, Kind, Object, Target, To2d, FORWARD, PLAYER_R,
+    time::TIMESTEP,
+    AbilityOffset, Energy, Health, Kind, Object, Shootable, Target, To2d, FORWARD, PLAYER_R,
 };
 
-use super::{bullet::Bullet, properties::SeekerRocketProps};
+use super::{
+    bullet::Bullet, neutrino_ball::NeutrinoBallGravityField, properties::SeekerRocketProps,
+};
 
 #[derive(Component)]
 pub struct SeekerRocket {
     pub shooter: Entity,
-    pub expiration: Tick,
     pub radius: f32,
     pub turning_radius: f32,
     pub energy_cost: f32,
@@ -32,7 +33,6 @@ pub struct SeekerRocket {
 
 pub fn seeker_rocket(
     commands: &mut Commands,
-    tick_counter: &TickCounter,
     props: &SeekerRocketProps,
     transform: &Transform,
     velocity: &Velocity,
@@ -55,6 +55,7 @@ pub fn seeker_rocket(
             foot_offset: (-props.capsule_radius).into(),
             mass_props: ColliderMassProperties::Density(1.0),
             body: bevy_rapier3d::prelude::RigidBody::Dynamic,
+            force: ExternalForce::default(),
             velocity: *velocity,
             locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Y,
             mass: ReadMassProperties::default(),
@@ -64,28 +65,27 @@ pub fn seeker_rocket(
         Health::new(props.health),
         Energy::new(props.energy, 0.0),
         SeekerRocket {
-            expiration: tick_counter.at(props.duration),
             shooter,
             radius: props.capsule_radius,
             turning_radius: props.turning_radius,
             energy_cost: props.energy_cost,
         },
+        Shootable,
         props.max_speed,
         DeathCallback::Explosion(ExplosionCallback {
             props: props.explosion,
         }),
-        ExternalForce::default(),
         DesiredMove {
             can_fly: true,
             ..Default::default()
         },
         ActiveEvents::COLLISION_EVENTS,
-        TrackCollisions,
+        TrackCollisions::default(),
         Sensor,
     ));
 }
 
-pub fn seeker_rocket_tracking(
+pub fn tracking_system(
     mut query: Query<(
         &SeekerRocket,
         &mut Transform,
@@ -118,14 +118,22 @@ pub fn seeker_rocket_tracking(
     }
 }
 
-pub fn seeker_rocket_collision_system(
-    mut rocket_q: Query<(&mut Health, &Colliding, &Velocity, &mut Transform), With<SeekerRocket>>,
-    // TODO: For now, we explode rockets on contact with anything but a bullet.
+pub fn collision_system(
+    mut rocket_q: Query<
+        (&mut Health, &TrackCollisions, &Velocity, &mut Transform),
+        With<SeekerRocket>,
+    >,
+    // TODO: For now, we explode rockets on contact with anything but a bullet or neutrino ball fields.
     // Let's be smarter about this.
     bullet_q: Query<(), (With<Bullet>, Without<SeekerRocket>)>,
+    neutrino_q: Query<(), (With<NeutrinoBallGravityField>, Without<SeekerRocket>)>,
 ) {
     for (mut health, colliding, velocity, mut transform) in &mut rocket_q {
-        let should_die = colliding.targets.iter().any(|&t| bullet_q.get(t).is_err());
+        let should_die = !colliding.targets.is_empty()
+            && colliding
+                .targets
+                .iter()
+                .any(|&t| bullet_q.get(t).is_err() && neutrino_q.get(t).is_err());
 
         if should_die {
             health.die();
