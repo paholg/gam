@@ -582,15 +582,10 @@ fn update_wall_system(
             let hb_bottom = hb.loc.y + hb.size.y * 0.5;
 
             // Check if this bar is being blocked visually by this wall.
-            if hb_left < wall_right
+            hb_left < wall_right
                 && hb_right > wall_left
                 && hb_bottom > wall_top
                 && hb_bottom < wall_top + DELTA_Y
-            {
-                true
-            } else {
-                false
-            }
         }) {
             *material = kind.trans(&assets);
         } else {
