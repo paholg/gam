@@ -246,10 +246,10 @@ impl Default for NeutrinoBallProps {
             cooldown: Tick(30),
             radius: 0.3,
             effect_radius: 2.0,
-            duration: Tick(360),
+            duration: Tick(240),
             activation_delay: Tick(45),
             speed: 3.0,
-            surface_a: 200.0,
+            surface_a: 300.0,
         }
     }
 }

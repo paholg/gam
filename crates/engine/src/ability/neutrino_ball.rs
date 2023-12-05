@@ -100,7 +100,7 @@ pub fn activation_system(
                         NeutrinoBallGravityField {
                             accel_numerator: ball.accel_numerator,
                         },
-                        foot_offset.clone(),
+                        *foot_offset,
                         TransformBundle::default(),
                         ActiveEvents::COLLISION_EVENTS,
                         TrackCollisions::default(),

@@ -12,7 +12,7 @@ use bevy_transform::components::{GlobalTransform, Transform};
 
 use crate::{
     collision::TrackCollisions,
-    death_callback::{DeathCallback, ExplosionCallback},
+    death_callback::{DeathCallback, Explosion, ExplosionCallback},
     level::InLevel,
     movement::DesiredMove,
     time::TIMESTEP,
@@ -123,17 +123,19 @@ pub fn collision_system(
         (&mut Health, &TrackCollisions, &Velocity, &mut Transform),
         With<SeekerRocket>,
     >,
-    // TODO: For now, we explode rockets on contact with anything but a bullet or neutrino ball fields.
-    // Let's be smarter about this.
+    // TODO: For now, we have various collisions we don't want to trigger an
+    // explosion. We should set up a better filter system.
     bullet_q: Query<(), (With<Bullet>, Without<SeekerRocket>)>,
     neutrino_q: Query<(), (With<NeutrinoBallGravityField>, Without<SeekerRocket>)>,
+    explosion_q: Query<(), (With<Explosion>, Without<SeekerRocket>)>,
 ) {
     for (mut health, colliding, velocity, mut transform) in &mut rocket_q {
         let should_die = !colliding.targets.is_empty()
-            && colliding
-                .targets
-                .iter()
-                .any(|&t| bullet_q.get(t).is_err() && neutrino_q.get(t).is_err());
+            && colliding.targets.iter().any(|&t| {
+                bullet_q.get(t).is_err()
+                    && neutrino_q.get(t).is_err()
+                    && explosion_q.get(t).is_err()
+            });
 
         if should_die {
             health.die();

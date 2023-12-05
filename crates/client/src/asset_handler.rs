@@ -229,8 +229,9 @@ pub fn asset_handler_setup(
             &mut materials,
             ColorGradient::new([
                 (0.0, Color::rgba(5.0, 1.2, 0.0, 0.2)),
-                (0.8, Color::rgba(10.0, 2.5, 0.0, 0.2)),
-                (1.0, Color::rgba(0.0, 0.0, 0.0, 0.8)),
+                (0.5, Color::rgba(10.0, 2.5, 0.0, 0.2)),
+                (0.8, Color::rgba(0.2, 0.2, 0.2, 0.2)),
+                (1.0, Color::rgba(0.0, 0.0, 0.0, 0.1)),
             ]),
         ),
     };
@@ -263,8 +264,9 @@ pub fn asset_handler_setup(
             &mut materials,
             ColorGradient::new([
                 (0.0, Color::rgba(0.0, 5.0, 0.0, 0.2)),
-                (0.8, Color::rgba(0.0, 10.0, 0.0, 0.2)),
-                (1.0, Color::rgba(0.0, 0.0, 0.0, 0.8)),
+                (0.5, Color::rgba(0.0, 10.0, 0.0, 0.2)),
+                (0.8, Color::rgba(0.2, 0.2, 0.2, 0.2)),
+                (1.0, Color::rgba(0.0, 0.0, 0.0, 0.1)),
             ]),
         ),
     };
@@ -289,8 +291,9 @@ pub fn asset_handler_setup(
             &mut materials,
             ColorGradient::new([
                 (0.0, Color::rgba(5.0, 0.1, 5.0, 0.2)),
-                (0.8, Color::rgba(10.0, 0.1, 10.0, 0.2)),
-                (1.0, Color::rgba(0.5, 0.05, 0.5, 0.8)),
+                (0.5, Color::rgba(10.0, 0.1, 10.0, 0.2)),
+                (0.8, Color::rgba(0.2, 0.2, 0.2, 0.2)),
+                (1.0, Color::rgba(0.0, 0.0, 0.0, 0.1)),
             ]),
         ),
     };
