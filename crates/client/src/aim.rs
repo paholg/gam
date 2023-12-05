@@ -1,6 +1,9 @@
-use bevy::prelude::{
-    Added, BuildChildren, Commands, Component, Entity, Parent, PbrBundle, Plugin, Query, Res,
-    SpatialBundle, Transform, Update, With, Without,
+use bevy::{
+    pbr::{NotShadowCaster, NotShadowReceiver},
+    prelude::{
+        Added, BuildChildren, Commands, Component, Entity, Parent, PbrBundle, Plugin, Query, Res,
+        SpatialBundle, Transform, Update, With, Without,
+    },
 };
 use bevy_mod_raycast::prelude::{DeferredRaycastingPlugin, RaycastSource};
 use engine::{AbilityOffset, Player, Target, To3d, FORWARD, UP};
@@ -42,6 +45,8 @@ fn draw_target_system(
                     transform: in_plane().with_translation(target.0.to_3d(0.0)),
                     ..Default::default()
                 },
+                NotShadowCaster,
+                NotShadowReceiver,
                 CursorTarget,
             ))
             .id();
@@ -97,6 +102,8 @@ fn draw_laser_system(
                     transform: laser_transform,
                     ..Default::default()
                 },
+                NotShadowCaster,
+                NotShadowReceiver,
                 LaserSight { raycast },
             ))
             .id();

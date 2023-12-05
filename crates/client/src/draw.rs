@@ -1,10 +1,11 @@
 use bevy::{
     core::FrameCount,
+    pbr::{NotShadowCaster, NotShadowReceiver},
     prelude::{
-        shape, Added, Assets, BuildChildren, Bundle, Color, Commands, Component, Entity,
-        EventReader, Gizmos, GlobalTransform, Handle, InheritedVisibility, Mesh, Parent, PbrBundle,
-        Plugin, Query, Res, ResMut, SpotLight, SpotLightBundle, StandardMaterial, Transform,
-        Update, Vec2, Vec3, ViewVisibility, Visibility, With, Without,
+        Added, Assets, BuildChildren, Bundle, Color, Commands, Component, Entity, EventReader,
+        Gizmos, GlobalTransform, Handle, InheritedVisibility, Mesh, Parent, PbrBundle, Plugin,
+        Query, Res, ResMut, SpotLight, SpotLightBundle, StandardMaterial, Transform, Update, Vec2,
+        Vec3, ViewVisibility, Visibility, With, Without,
     },
     scene::Scene,
 };
@@ -25,7 +26,7 @@ use engine::{
     death_callback::{Explosion, ExplosionKind},
     level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
     lifecycle::{DeathEvent, DEATH_Y},
-    Ally, Enemy, Energy, FootOffset, Health, Kind, Player, UP,
+    Ally, Enemy, Energy, FootOffset, Health, Kind, Player, To2d, UP,
 };
 use rand::{thread_rng, Rng};
 
@@ -56,6 +57,7 @@ impl Plugin for DrawPlugin {
                 draw_death_system,
                 draw_hyper_sprint_system,
                 draw_wall_system,
+                update_wall_system,
                 draw_lights_system,
                 draw_explosion_system,
                 update_explosion_system,
@@ -177,16 +179,20 @@ fn draw_grenade_outline_system(
                 ),
             };
             let outline_entity = commands
-                .spawn(PbrBundle {
-                    mesh,
-                    material,
-                    transform: in_plane().with_translation(Vec3::new(
-                        0.0,
-                        foot_offset.y + 0.01,
-                        0.0,
-                    )),
-                    ..Default::default()
-                })
+                .spawn((
+                    PbrBundle {
+                        mesh,
+                        material,
+                        transform: in_plane().with_translation(Vec3::new(
+                            0.0,
+                            foot_offset.y + 0.01,
+                            0.0,
+                        )),
+                        ..Default::default()
+                    },
+                    NotShadowCaster,
+                    NotShadowReceiver,
+                ))
                 .id();
             commands
                 .entity(entity)
@@ -264,12 +270,20 @@ fn draw_neutrino_ball_outline_system(
             .entity(entity)
             .insert(InheritedVisibility::default());
         let outline_entity = commands
-            .spawn(PbrBundle {
-                mesh: assets.neutrino_ball.outline_mesh.clone(),
-                material: assets.neutrino_ball.outline_material.clone(),
-                transform: in_plane().with_translation(Vec3::new(0.0, foot_offset.y + 0.01, 0.0)),
-                ..Default::default()
-            })
+            .spawn((
+                PbrBundle {
+                    mesh: assets.neutrino_ball.outline_mesh.clone(),
+                    material: assets.neutrino_ball.outline_material.clone(),
+                    transform: in_plane().with_translation(Vec3::new(
+                        0.0,
+                        foot_offset.y + 0.01,
+                        0.0,
+                    )),
+                    ..Default::default()
+                },
+                NotShadowCaster,
+                NotShadowReceiver,
+            ))
             .id();
         commands
             .entity(entity)
@@ -285,12 +299,20 @@ fn draw_player_system(
 ) {
     for (entity, foot_offset) in query.iter() {
         let outline = commands
-            .spawn(PbrBundle {
-                mesh: assets.player.outline_mesh.clone(),
-                material: assets.player.outline_material.clone(),
-                transform: in_plane().with_translation(Vec3::new(0.0, foot_offset.y + 0.01, 0.0)),
-                ..Default::default()
-            })
+            .spawn((
+                PbrBundle {
+                    mesh: assets.player.outline_mesh.clone(),
+                    material: assets.player.outline_material.clone(),
+                    transform: in_plane().with_translation(Vec3::new(
+                        0.0,
+                        foot_offset.y + 0.01,
+                        0.0,
+                    )),
+                    ..Default::default()
+                },
+                NotShadowCaster,
+                NotShadowReceiver,
+            ))
             .id();
         let graphics = commands
             .spawn(CharacterGraphics {
@@ -313,12 +335,20 @@ fn draw_enemy_system(
 ) {
     for (entity, foot_offset) in query.iter() {
         let outline = commands
-            .spawn(PbrBundle {
-                mesh: assets.enemy.outline_mesh.clone(),
-                material: assets.enemy.outline_material.clone(),
-                transform: in_plane().with_translation(Vec3::new(0.0, foot_offset.y + 0.01, 0.0)),
-                ..Default::default()
-            })
+            .spawn((
+                PbrBundle {
+                    mesh: assets.enemy.outline_mesh.clone(),
+                    material: assets.enemy.outline_material.clone(),
+                    transform: in_plane().with_translation(Vec3::new(
+                        0.0,
+                        foot_offset.y + 0.01,
+                        0.0,
+                    )),
+                    ..Default::default()
+                },
+                NotShadowCaster,
+                NotShadowReceiver,
+            ))
             .id();
         let graphics = commands
             .spawn(CharacterGraphics {
@@ -341,12 +371,20 @@ fn draw_ally_system(
 ) {
     for (entity, foot_offset) in query.iter() {
         let outline = commands
-            .spawn(PbrBundle {
-                mesh: assets.ally.outline_mesh.clone(),
-                material: assets.ally.outline_material.clone(),
-                transform: in_plane().with_translation(Vec3::new(0.0, foot_offset.y + 0.01, 0.0)),
-                ..Default::default()
-            })
+            .spawn((
+                PbrBundle {
+                    mesh: assets.ally.outline_mesh.clone(),
+                    material: assets.ally.outline_material.clone(),
+                    transform: in_plane().with_translation(Vec3::new(
+                        0.0,
+                        foot_offset.y + 0.01,
+                        0.0,
+                    )),
+                    ..Default::default()
+                },
+                NotShadowCaster,
+                NotShadowReceiver,
+            ))
             .id();
         let graphics = commands
             .spawn(CharacterGraphics {
@@ -424,38 +462,58 @@ fn draw_hyper_sprint_system(
     }
 }
 
+#[derive(Component, Copy, Clone)]
+enum WallKind {
+    Floor,
+    Short,
+    Standard,
+    Tall,
+}
+
+impl WallKind {
+    fn opaque(&self, assets: &AssetHandler) -> Handle<StandardMaterial> {
+        match self {
+            WallKind::Floor => assets.wall.floor.clone(),
+            WallKind::Short => assets.wall.short_wall.clone(),
+            WallKind::Standard => assets.wall.wall.clone(),
+            WallKind::Tall => assets.wall.tall_wall.clone(),
+        }
+    }
+
+    fn trans(&self, assets: &AssetHandler) -> Handle<StandardMaterial> {
+        match self {
+            WallKind::Floor => assets.wall.floor.clone(), // no trans floor
+            WallKind::Short => assets.wall.short_wall_trans.clone(),
+            WallKind::Standard => assets.wall.wall_trans.clone(),
+            WallKind::Tall => assets.wall.tall_wall_trans.clone(),
+        }
+    }
+
+    fn is_wall(&self) -> bool {
+        match self {
+            WallKind::Floor => false,
+            WallKind::Short | WallKind::Standard | WallKind::Tall => true,
+        }
+    }
+}
+
+#[derive(Component)]
+struct Wall;
+
 fn draw_wall_system(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    assets: Res<AssetHandler>,
     query: Query<(Entity, &Floor), Added<Floor>>,
 ) {
-    let floor_mat = materials.add(StandardMaterial {
-        base_color: Color::rgba(0.6, 0.8, 0.2, 0.8),
-        ..Default::default()
-    });
-    let short_wall_mat = materials.add(Color::ALICE_BLUE.into());
-    let wall_mat = materials.add(Color::AQUAMARINE.into());
-    let tall_wall_mat = materials.add(Color::RED.into());
-
     for (entity, floor) in &query {
-        let shape = shape::Box {
-            min_x: -floor.dim.x * 0.5,
-            max_x: floor.dim.x * 0.5,
-            min_y: -floor.dim.y * 0.5,
-            max_y: floor.dim.y * 0.5,
-            min_z: -floor.dim.z * 0.5,
-            max_z: floor.dim.z * 0.5,
-        };
-
-        let material = if floor.dim.y >= WALL_HEIGHT - DEATH_Y + 0.1 {
-            tall_wall_mat.clone()
+        let kind = if floor.dim.y >= WALL_HEIGHT - DEATH_Y + 0.1 {
+            WallKind::Tall
         } else if floor.dim.y >= WALL_HEIGHT - DEATH_Y - 0.1 {
-            wall_mat.clone()
+            WallKind::Standard
         } else if floor.dim.y >= SHORT_WALL - DEATH_Y - 0.1 {
-            short_wall_mat.clone()
+            WallKind::Short
         } else {
-            floor_mat.clone()
+            WallKind::Floor
         };
 
         // First add InheritedVisibility to our entity to make bevy happy.
@@ -466,14 +524,78 @@ fn draw_wall_system(
         let wall = commands
             .spawn((
                 PbrBundle {
-                    mesh: meshes.add(shape.into()),
-                    material,
+                    mesh: assets.wall.shape.clone(),
+                    material: kind.opaque(&assets),
+                    transform: Transform::from_scale(floor.dim),
                     ..Default::default()
                 },
+                kind,
                 RaycastMesh::<()>::default(),
             ))
             .id();
+        if kind.is_wall() {
+            commands.entity(wall).insert(Wall);
+        }
         commands.entity(entity).push_children(&[wall]);
+    }
+}
+
+fn update_wall_system(
+    assets: Res<AssetHandler>,
+    mut query: Query<
+        (
+            &mut Handle<StandardMaterial>,
+            &Transform,
+            &GlobalTransform,
+            &WallKind,
+        ),
+        With<Wall>,
+    >,
+    healthbar_q: Query<(&GlobalTransform, &Bar<Health>)>,
+) {
+    const DELTA_Y: f32 = 1.3;
+
+    struct BarInfo {
+        loc: Vec2,
+        size: Vec2,
+    }
+
+    let healthbars = healthbar_q
+        .iter()
+        .map(|(gt, bar)| BarInfo {
+            loc: gt.compute_transform().translation.to_2d(),
+            size: bar.size,
+        })
+        .collect::<Vec<_>>();
+    // TODO: This is really inefficient.
+    for (mut material, transform, global_transform, kind) in &mut query {
+        let loc = global_transform.compute_transform().translation.to_2d();
+        let shape = transform.scale.to_2d();
+
+        let wall_left = loc.x - shape.x * 0.5;
+        let wall_right = loc.x + shape.x * 0.5;
+        let wall_top = loc.y + shape.y * 0.5;
+
+        if healthbars.iter().any(|hb| {
+            let hb_left = hb.loc.x - hb.size.x * 0.5;
+            let hb_right = hb.loc.x + hb.size.x * 0.5;
+            let hb_bottom = hb.loc.y + hb.size.y * 0.5;
+
+            // Check if this bar is being blocked visually by this wall.
+            if hb_left < wall_right
+                && hb_right > wall_left
+                && hb_bottom > wall_top
+                && hb_bottom < wall_top + DELTA_Y
+            {
+                true
+            } else {
+                false
+            }
+        }) {
+            *material = kind.trans(&assets);
+        } else {
+            *material = kind.opaque(&assets);
+        }
     }
 }
 
@@ -481,27 +603,42 @@ fn draw_lights_system(mut commands: Commands, level: Res<LevelProps>, query: Que
     if query.iter().next().is_some() {
         return;
     }
-    let step_size = 20.0;
-    let xmin = (-level.x * 0.5 / step_size).round() as i32;
-    let xmax = -xmin;
-    let zmin = (-level.z * 0.5 / step_size).round() as i32;
-    let zmax = -zmin;
+    let altitude = 10.0;
+    let spacing = 15.0;
 
-    for x in xmin..=xmax {
-        for z in zmin..=zmax {
-            let x = x as f32 * step_size;
-            let z = z as f32 * step_size;
+    let nx = (level.x / spacing).ceil().max(1.0) as usize;
+    let nz = (level.z / spacing).ceil().max(1.0) as usize;
+
+    let offset = |n| {
+        if n % 2 == 0 {
+            let offset = ((n as f32) * 0.5 - 1.0) * spacing + spacing * 0.5;
+            -offset
+        } else {
+            let offset = (n as f32 - 1.0) * 0.5 * spacing;
+            -offset
+        }
+    };
+
+    let xoffset = offset(nx);
+    let zoffset = offset(nz);
+
+    for x in 0..nx {
+        for z in 0..nz {
+            let x = (x as f32) * spacing + xoffset;
+            let z = (z as f32) * spacing + zoffset;
 
             // Offset the light a bit, for more interesting shadows.
-            let t =
-                Transform::from_xyz(x - step_size, 20.0, z).looking_at(Vec3::new(x, 0.0, z), UP);
+            let t = Transform::from_xyz(x - spacing * 0.5, altitude, z - spacing)
+                .looking_at(Vec3::new(x, 0.0, z), UP);
 
             commands.spawn((
                 SpotLightBundle {
                     spot_light: SpotLight {
                         shadows_enabled: true,
-                        range: 40.0,
-                        intensity: 8000.0,
+                        range: 30.0,
+                        intensity: 4000.0,
+                        outer_angle: std::f32::consts::FRAC_PI_3,
+                        inner_angle: 0.0,
                         ..Default::default()
                     },
                     transform: t,

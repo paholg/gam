@@ -44,7 +44,7 @@ impl Plugin for ChargeAiPlugin {
             world_half_extents: extents * 0.5,
             world_bottom_bound: DEATH_Y,
             max_traversable_slope_radians: 1.0,
-            walkable_height: 10,
+            walkable_height: u16::MAX,
             walkable_radius: 2,
             step_height: 1,
             min_region_area: 100,

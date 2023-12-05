@@ -3,7 +3,7 @@ use bevy::{
     prelude::{
         default,
         shape::{self, Capsule, Circle, Cylinder, Icosphere},
-        AssetServer, Assets, Color, Commands, Handle, Mesh, Res, ResMut, Resource,
+        AlphaMode, AssetServer, Assets, Color, Commands, Handle, Mesh, Res, ResMut, Resource,
         StandardMaterial, Vec2, Vec3, Vec4,
     },
     scene::Scene,
@@ -23,6 +23,45 @@ use engine::{
 };
 
 use crate::{color_gradient::ColorGradient, particles::ParticleEffectPool, shapes::HollowPolygon};
+
+pub struct WallAssets {
+    pub shape: Handle<Mesh>,
+    pub floor: Handle<StandardMaterial>,
+    pub short_wall: Handle<StandardMaterial>,
+    pub wall: Handle<StandardMaterial>,
+    pub tall_wall: Handle<StandardMaterial>,
+    pub short_wall_trans: Handle<StandardMaterial>,
+    pub wall_trans: Handle<StandardMaterial>,
+    pub tall_wall_trans: Handle<StandardMaterial>,
+}
+
+impl WallAssets {
+    pub fn new(meshes: &mut Assets<Mesh>, materials: &mut Assets<StandardMaterial>) -> Self {
+        let short_wall_color = Color::ALICE_BLUE;
+        let wall_color = Color::AQUAMARINE;
+        let tall_wall_color = Color::RED;
+
+        let trans = |color: Color| StandardMaterial {
+            base_color: color.with_a(0.7),
+            alpha_mode: AlphaMode::Blend,
+            ..Default::default()
+        };
+
+        WallAssets {
+            shape: meshes.add(shape::Box::new(1.0, 1.0, 1.0).into()),
+            floor: materials.add(StandardMaterial {
+                base_color: Color::rgb(0.0, 0.6, 0.1),
+                ..Default::default()
+            }),
+            short_wall: materials.add(short_wall_color.into()),
+            wall: materials.add(wall_color.into()),
+            tall_wall: materials.add(tall_wall_color.into()),
+            short_wall_trans: materials.add(trans(short_wall_color)),
+            wall_trans: materials.add(trans(wall_color)),
+            tall_wall_trans: materials.add(trans(tall_wall_color)),
+        }
+    }
+}
 
 pub struct BarAssets {
     pub mesh: Handle<Mesh>,
@@ -105,7 +144,7 @@ impl ExplosionAssets {
             material: materials.add(StandardMaterial {
                 base_color: Color::rgba(0.0, 0.0, 0.0, 0.5),
                 emissive: initial_color,
-                alpha_mode: bevy::prelude::AlphaMode::Blend,
+                alpha_mode: AlphaMode::Blend,
                 ..Default::default()
             }),
         }
@@ -128,6 +167,7 @@ pub struct AssetHandler {
     pub enemy: CharacterAssets,
     pub music: Handle<LoadedFolder>,
     pub target: TargetAssets,
+    pub wall: WallAssets,
 }
 
 pub fn asset_handler_setup(
@@ -436,6 +476,7 @@ pub fn asset_handler_setup(
         ally,
         enemy,
         target,
+        wall: WallAssets::new(&mut meshes, &mut materials),
     };
     commands.insert_resource(asset_handler);
 }

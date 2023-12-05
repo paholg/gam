@@ -28,7 +28,7 @@ pub const WALL_HEIGHT: f32 = 0.6;
 const WALL_WIDTH: f32 = 0.3;
 pub const SHORT_WALL: f32 = 0.25;
 
-#[derive(Resource)]
+#[derive(Resource, Debug)]
 pub struct LevelProps {
     pub x: f32,
     pub z: f32,
