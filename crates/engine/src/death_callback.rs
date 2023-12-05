@@ -4,11 +4,13 @@ use bevy_ecs::{
 };
 
 use bevy_rapier3d::prelude::{
-    ActiveEvents, Collider, QueryFilter, QueryFilterFlags, RapierContext, Sensor,
+    ActiveEvents, Collider, ExternalForce, QueryFilter, QueryFilterFlags, RapierContext, Sensor,
 };
 use bevy_transform::components::Transform;
 
-use crate::{ability::properties::ExplosionProps, collision::TrackCollisions, Health, Object};
+use crate::{
+    ability::properties::ExplosionProps, collision::TrackCollisions, Health, Object, To2d, To3d,
+};
 
 #[derive(Debug, Component)]
 pub enum DeathCallback {
@@ -38,10 +40,24 @@ pub enum ExplosionKind {
 #[derive(Debug, Component)]
 pub struct Explosion {
     pub damage: f32,
+    pub force: f32,
     pub min_radius: f32,
     pub max_radius: f32,
     pub growth_rate: f32,
     pub kind: ExplosionKind,
+}
+
+impl From<ExplosionProps> for Explosion {
+    fn from(props: ExplosionProps) -> Self {
+        Self {
+            damage: props.damage,
+            force: props.force,
+            min_radius: props.min_radius,
+            max_radius: props.max_radius,
+            growth_rate: (props.max_radius - props.min_radius) / props.duration.0 as f32,
+            kind: props.kind,
+        }
+    }
 }
 
 impl ExplosionCallback {
@@ -55,15 +71,8 @@ impl ExplosionCallback {
                 body: bevy_rapier3d::prelude::RigidBody::KinematicPositionBased,
                 ..Default::default()
             },
+            Explosion::from(self.props),
             Sensor,
-            Explosion {
-                damage: self.props.damage,
-                min_radius: self.props.min_radius,
-                max_radius: self.props.max_radius,
-                growth_rate: (self.props.max_radius - self.props.min_radius)
-                    / self.props.duration.0 as f32,
-                kind: self.props.kind,
-            },
             ActiveEvents::COLLISION_EVENTS,
             TrackCollisions::default(),
             Health::new_with_delay(0.0, self.props.duration),
@@ -82,7 +91,7 @@ pub fn explosion_grow_system(mut explosion_q: Query<(&Explosion, &mut Collider)>
 pub fn explosion_collision_system(
     rapier_context: Res<RapierContext>,
     explosion_q: Query<(&Explosion, &Transform, &TrackCollisions)>,
-    mut target_q: Query<(&Transform, &mut Health)>,
+    mut target_q: Query<(&Transform, &mut Health, &mut ExternalForce)>,
 ) {
     let wall_filter = QueryFilter {
         flags: QueryFilterFlags::ONLY_FIXED,
@@ -90,7 +99,7 @@ pub fn explosion_collision_system(
     };
     for (explosion, transform, colliding) in &explosion_q {
         for &target in &colliding.targets {
-            if let Ok((target_transform, mut health)) = target_q.get_mut(target) {
+            if let Ok((target_transform, mut health, mut force)) = target_q.get_mut(target) {
                 let origin = transform.translation;
                 let dir = target_transform.translation - origin;
                 let wall_collision =
@@ -106,6 +115,10 @@ pub fn explosion_collision_system(
                     }
                 }
                 health.take(explosion.damage);
+                let dir = (target_transform.translation.to_2d() - transform.translation.to_2d())
+                    .normalize_or_zero()
+                    .to_3d(0.0);
+                force.force += dir * explosion.force;
             }
         }
     }
