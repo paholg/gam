@@ -22,8 +22,7 @@ use crate::{
     Shootable, ABILITY_Y, PLAYER_HEIGHT, PLAYER_R,
 };
 
-// TODO: Once we figure out getting stuck on walls, make this larger.
-pub const DEATH_Y: f32 = -0.5;
+pub const DEATH_Y: f32 = -2.0;
 
 #[derive(Debug, Event)]
 pub struct DeathEvent {

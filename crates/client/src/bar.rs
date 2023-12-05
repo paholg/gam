@@ -1,9 +1,13 @@
 use std::marker::PhantomData;
 
-use bevy::prelude::{
-    Added, BuildChildren, Bundle, Children, Commands, Component, Entity, GlobalTransform, Handle,
-    InheritedVisibility, IntoSystemConfigs, Mesh, Parent, PbrBundle, Plugin, Query, Res,
-    StandardMaterial, Transform, Update, Vec2, Vec3, ViewVisibility, Visibility, With, Without,
+use bevy::{
+    pbr::{NotShadowCaster, NotShadowReceiver},
+    prelude::{
+        Added, BuildChildren, Bundle, Children, Commands, Component, Entity, GlobalTransform,
+        Handle, InheritedVisibility, IntoSystemConfigs, Mesh, Parent, PbrBundle, Plugin, Query,
+        Res, StandardMaterial, Transform, Update, Vec2, Vec3, ViewVisibility, Visibility, With,
+        Without,
+    },
 };
 use engine::{Energy, Health};
 use tracing::warn;
@@ -167,17 +171,23 @@ fn bar_add_system<T: Component + BarAssets + Default>(
                     ..Default::default()
                 },
                 BarChildMarker::<T>::default(),
+                NotShadowCaster,
+                NotShadowReceiver,
             ))
             .id();
         let background = commands
-            .spawn(PbrBundle {
-                material: bg,
-                mesh,
-                transform: in_plane()
-                    .with_translation(bar.displacement - Vec3::new(0.0, BAR_OFFSET_Y, 0.0))
-                    .with_scale(bar.size.extend(1.0)),
-                ..Default::default()
-            })
+            .spawn((
+                PbrBundle {
+                    material: bg,
+                    mesh,
+                    transform: in_plane()
+                        .with_translation(bar.displacement - Vec3::new(0.0, BAR_OFFSET_Y, 0.0))
+                        .with_scale(bar.size.extend(1.0)),
+                    ..Default::default()
+                },
+                NotShadowCaster,
+                NotShadowReceiver,
+            ))
             .id();
         let bundle = commands.spawn(BarBundle::<T>::default()).id();
         commands
