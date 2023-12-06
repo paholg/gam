@@ -121,6 +121,7 @@ pub fn collision_system(
                     bullet_mass.mass * bullet_velocity.linvel / mass.mass + velocity.linvel;
             }
         }
+
         if should_die {
             health.die();
         }

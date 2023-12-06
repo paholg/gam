@@ -15,6 +15,7 @@ pub struct AbilityProps {
     pub heal_grenade: GrenadeProps,
     pub seeker_rocket: SeekerRocketProps,
     pub neutrino_ball: NeutrinoBallProps,
+    pub transport: TransportProps,
 }
 
 impl Default for AbilityProps {
@@ -57,6 +58,7 @@ impl Default for AbilityProps {
             shotgun: Default::default(),
             seeker_rocket: Default::default(),
             neutrino_ball: Default::default(),
+            transport: Default::default(),
         }
     }
 }
@@ -72,6 +74,7 @@ impl AbilityProps {
             Ability::HealGrenade => self.heal_grenade.cooldown,
             Ability::SeekerRocket => self.seeker_rocket.cooldown,
             Ability::NeutrinoBall => self.neutrino_ball.cooldown,
+            Ability::Transport => self.transport.cooldown,
         }
     }
 
@@ -85,6 +88,7 @@ impl AbilityProps {
             Ability::HealGrenade => self.heal_grenade.cost,
             Ability::SeekerRocket => self.seeker_rocket.cost,
             Ability::NeutrinoBall => self.neutrino_ball.cost,
+            Ability::Transport => self.transport.cost,
         }
     }
 }
@@ -204,7 +208,7 @@ impl Default for SeekerRocketProps {
             capsule_length: 0.14,
             health: 3.0,
             max_speed: MaxSpeed {
-                force: 3.0,
+                accel: 1800.0,
                 speed: 8.0,
             },
             energy: 10.0,
@@ -251,7 +255,7 @@ impl Default for NeutrinoBallProps {
             radius: 0.3,
             effect_radius: 2.0,
             duration: Tick(240),
-            activation_delay: Tick(45),
+            activation_delay: Tick(30),
             speed: 3.0,
             surface_a: 300.0,
         }
@@ -263,5 +267,30 @@ impl NeutrinoBallProps {
     /// distance squared.
     pub fn accel_numerator(&self) -> f32 {
         self.surface_a * self.radius * self.radius
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct TransportProps {
+    pub cost: f32,
+    pub cooldown: Tick,
+    pub radius: f32,
+    pub height: f32,
+    pub accel: f32,
+    pub speed: f32,
+    pub delay: Tick,
+}
+
+impl Default for TransportProps {
+    fn default() -> Self {
+        Self {
+            cost: 40.0,
+            cooldown: Tick(90),
+            radius: 0.5,
+            height: 2.0,
+            accel: 10.0,
+            speed: 3.0,
+            delay: Tick(90),
+        }
     }
 }

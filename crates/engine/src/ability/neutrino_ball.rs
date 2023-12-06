@@ -85,12 +85,11 @@ pub fn activation_system(
     mut commands: Commands,
     tick_counter: Res<TickCounter>,
     mut neutrino_q: Query<
-        (Entity, &mut NeutrinoBall, &FootOffset),
+        (Entity, &NeutrinoBall, &FootOffset),
         Without<NeutrinoBallGravityFieldSpawned>,
     >,
 ) {
-    for (entity, mut ball, foot_offset) in &mut neutrino_q {
-        ball.activation_time -= Tick(1);
+    for (entity, ball, foot_offset) in &mut neutrino_q {
         if ball.activation_time.before_now(&tick_counter) {
             commands
                 .entity(entity)
@@ -127,15 +126,13 @@ pub fn collision_system(
                 // tracing::warn!(?target, "Neutrino ball hit target, but not in query");
                 continue;
             };
-            let transform = global_transform.compute_transform();
-            let d2 = transform
-                .translation
-                .distance_squared(target_transform.translation);
+            let translation = global_transform.translation();
+            let d2 = translation.distance_squared(target_transform.translation);
 
             let a = field.accel_numerator / d2;
             let f = mass.mass * a;
 
-            let mut dir = (transform.translation - target_transform.translation).normalize();
+            let mut dir = (translation - target_transform.translation).normalize();
             // Let's keep it from letting you fly up, for now.
             dir.y = 0.0;
 

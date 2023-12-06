@@ -19,6 +19,7 @@ use engine::{
         grenade::{Grenade, GrenadeKind},
         neutrino_ball::{NeutrinoBall, NeutrinoBallGravityField},
         seeker_rocket::SeekerRocket,
+        transport::TransportBeam,
         HyperSprinting,
     },
     ai::charge::HasPath,
@@ -26,7 +27,8 @@ use engine::{
     death_callback::{Explosion, ExplosionKind},
     level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
     lifecycle::{DeathEvent, DEATH_Y},
-    Ally, Enemy, Energy, FootOffset, Health, Kind, Player, To2d, UP,
+    time::TickCounter,
+    Ally, Enemy, Energy, FootOffset, Health, Kind, Player, To2d, To3d, UP,
 };
 use rand::{thread_rng, Rng};
 
@@ -61,6 +63,8 @@ impl Plugin for DrawPlugin {
                 draw_lights_system,
                 draw_explosion_system,
                 update_explosion_system,
+                draw_transport_system,
+                update_transport_system,
             ),
         );
     }
@@ -417,10 +421,11 @@ fn draw_death_system(
             Kind::Enemy => Some(&mut assets.enemy.despawn_effect),
             Kind::Ally => Some(&mut assets.ally.despawn_effect),
             Kind::Bullet => Some(&mut assets.shot.collision_effect),
-            Kind::FragGrenade => None,
-            Kind::HealGrenade => None,
-            Kind::SeekerRocket => None,
-            Kind::NeutrinoBall => None,
+            Kind::FragGrenade
+            | Kind::HealGrenade
+            | Kind::SeekerRocket
+            | Kind::NeutrinoBall
+            | Kind::TransportBeam => None,
         };
 
         if let Some(effect) = effect {
@@ -428,7 +433,7 @@ fn draw_death_system(
         }
 
         let sound = match death.kind {
-            Kind::Other | Kind::NeutrinoBall => None,
+            Kind::Other | Kind::NeutrinoBall | Kind::TransportBeam => None,
             Kind::Bullet => Some(assets.shot.despawn_sound.clone()),
             Kind::Player
             | Kind::Enemy
@@ -602,13 +607,13 @@ fn update_wall_system(
     let healthbars = healthbar_q
         .iter()
         .map(|(gt, bar)| BarInfo {
-            loc: gt.compute_transform().translation.to_2d(),
+            loc: gt.translation().to_2d(),
             size: bar.size,
         })
         .collect::<Vec<_>>();
     // TODO: This is really inefficient.
     for (mut material, transform, global_transform, kind) in &mut query {
-        let loc = global_transform.compute_transform().translation.to_2d();
+        let loc = global_transform.translation().to_2d();
         let shape = transform.scale.to_2d();
 
         let wall_left = loc.x - shape.x * 0.5;
@@ -787,5 +792,109 @@ pub fn update_explosion_system(
         materials.get_mut(material).unwrap().emissive = color;
 
         transform.scale = Vec3::splat(radius);
+    }
+}
+
+#[derive(Component)]
+pub struct TransportSenderGraphics {
+    receiver: Entity,
+}
+
+#[derive(Component)]
+pub struct TransportReceiverGraphics;
+
+pub fn draw_transport_system(
+    mut commands: Commands,
+    assets: Res<AssetHandler>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    query: Query<(Entity, &TransportBeam, &Transform), Added<TransportBeam>>,
+) {
+    for (entity, beam, transform) in &query {
+        // Clone the material because we're going to mutate it. Probably we
+        // could do this better.
+        let mat = materials.get(&assets.transport.material).unwrap().clone();
+        let material = materials.add(mat);
+
+        commands
+            .entity(entity)
+            .insert(InheritedVisibility::default());
+        commands.entity(entity).with_children(|builder| {
+            let receiver = builder
+                .spawn((
+                    ObjectGraphics {
+                        material: material.clone(),
+                        mesh: assets.transport.mesh.clone(),
+                        ..Default::default()
+                    },
+                    Transform::from_scale(Vec3::new(beam.radius, 0.0, beam.radius))
+                        .with_translation(beam.destination.to_3d(0.0) - transform.translation),
+                    GlobalTransform::default(),
+                    TransportReceiverGraphics,
+                    NotShadowReceiver,
+                ))
+                .id();
+
+            builder.spawn((
+                ObjectGraphics {
+                    material,
+                    mesh: assets.transport.mesh.clone(),
+                    ..Default::default()
+                },
+                Transform::from_scale(Vec3::new(beam.radius, 0.0, beam.radius))
+                    .with_translation(Vec3::new(0.0, beam.height, 0.0)),
+                GlobalTransform::default(),
+                TransportSenderGraphics { receiver },
+                NotShadowReceiver,
+            ));
+        });
+    }
+}
+
+pub fn update_transport_system(
+    assets: Res<AssetHandler>,
+    tick_counter: Res<TickCounter>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut sender_q: Query<(
+        &Parent,
+        &mut Transform,
+        &Handle<StandardMaterial>,
+        &TransportSenderGraphics,
+    )>,
+    mut receiver_q: Query<
+        &mut Transform,
+        (
+            With<TransportReceiverGraphics>,
+            Without<TransportSenderGraphics>,
+        ),
+    >,
+    parent_q: Query<
+        (&Transform, &TransportBeam),
+        (
+            Without<TransportSenderGraphics>,
+            Without<TransportReceiverGraphics>,
+        ),
+    >,
+) {
+    for (parent, mut transform, material, sender) in &mut sender_q {
+        let Ok((parent_transform, beam)) = parent_q.get(parent.get()) else {
+            tracing::warn!("TransportSenderGraphics missing parent");
+            continue;
+        };
+
+        let frac =
+            (tick_counter.at(beam.delay) - beam.activation_time).0 as f32 / beam.delay.0 as f32;
+
+        let color = assets.transport.gradient.get(frac);
+        materials.get_mut(material).unwrap().base_color = color;
+        transform.scale.y = frac * beam.height;
+        transform.translation.y = beam.height - (frac * beam.height * 0.5);
+
+        let Ok(mut receiver_transform) = receiver_q.get_mut(sender.receiver) else {
+            tracing::warn!("Transport sender with no receiver");
+            continue;
+        };
+        receiver_transform.scale.y = frac * beam.height;
+        receiver_transform.translation =
+            beam.destination.to_3d(frac * beam.height * 0.5) - parent_transform.translation;
     }
 }

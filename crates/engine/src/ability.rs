@@ -21,6 +21,7 @@ use self::{
     neutrino_ball::neutrino_ball,
     properties::{AbilityProps, GunProps, ShotgunProps},
     seeker_rocket::seeker_rocket,
+    transport::transport,
 };
 
 pub mod bullet;
@@ -28,6 +29,7 @@ pub mod grenade;
 pub mod neutrino_ball;
 pub mod properties;
 pub mod seeker_rocket;
+pub mod transport;
 
 #[derive(
     Debug,
@@ -53,6 +55,7 @@ pub enum Ability {
     HealGrenade,
     SeekerRocket,
     NeutrinoBall,
+    Transport,
 }
 
 #[derive(Debug, Component, Clone, Serialize, Deserialize)]
@@ -167,6 +170,14 @@ impl Ability {
                 ability_offset,
                 tick_counter,
             ),
+            Ability::Transport => transport(
+                commands,
+                entity,
+                &props.transport,
+                transform,
+                target,
+                tick_counter,
+            ),
         }
         true
     }
@@ -178,16 +189,17 @@ impl Ability {
         status_effects: &mut StatusEffects,
     ) {
         match self {
-            Ability::None => (),
             Ability::HyperSprint => {
                 hyper_sprint_disable(commands, entity, status_effects);
             }
-            Ability::Gun => (),
-            Ability::Shotgun => (),
-            Ability::FragGrenade => (),
-            Ability::HealGrenade => (),
-            Ability::SeekerRocket => (),
-            Ability::NeutrinoBall => (),
+            Ability::None
+            | Ability::Gun
+            | Ability::Shotgun
+            | Ability::FragGrenade
+            | Ability::HealGrenade
+            | Ability::SeekerRocket
+            | Ability::NeutrinoBall
+            | Ability::Transport => (),
         }
     }
 }
