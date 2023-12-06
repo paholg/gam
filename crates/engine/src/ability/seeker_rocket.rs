@@ -1,7 +1,7 @@
 use bevy_ecs::{
     component::Component,
     entity::Entity,
-    query::{With, Without},
+    query::With,
     system::{Commands, Query},
 };
 use bevy_rapier3d::prelude::{
@@ -12,16 +12,14 @@ use bevy_transform::components::{GlobalTransform, Transform};
 
 use crate::{
     collision::TrackCollisions,
-    death_callback::{DeathCallback, Explosion, ExplosionCallback},
+    death_callback::{DeathCallback, ExplosionCallback},
     level::InLevel,
     movement::DesiredMove,
     time::TIMESTEP,
     AbilityOffset, Energy, Health, Kind, Object, Shootable, Target, To2d, FORWARD, PLAYER_R,
 };
 
-use super::{
-    bullet::Bullet, neutrino_ball::NeutrinoBallGravityField, properties::SeekerRocketProps,
-};
+use super::properties::SeekerRocketProps;
 
 #[derive(Component)]
 pub struct SeekerRocket {
@@ -123,21 +121,16 @@ pub fn collision_system(
         (&mut Health, &TrackCollisions, &Velocity, &mut Transform),
         With<SeekerRocket>,
     >,
-    // TODO: For now, we have various collisions we don't want to trigger an
-    // explosion. We should set up a better filter system.
-    bullet_q: Query<(), (With<Bullet>, Without<SeekerRocket>)>,
-    neutrino_q: Query<(), (With<NeutrinoBallGravityField>, Without<SeekerRocket>)>,
-    explosion_q: Query<(), (With<Explosion>, Without<SeekerRocket>)>,
+    shootable_q: Query<(), With<Shootable>>,
 ) {
     for (mut health, colliding, velocity, mut transform) in &mut rocket_q {
-        let should_die = !colliding.targets.is_empty()
-            && colliding.targets.iter().any(|&t| {
-                bullet_q.get(t).is_err()
-                    && neutrino_q.get(t).is_err()
-                    && explosion_q.get(t).is_err()
-            });
+        let should_live = colliding.targets.is_empty()
+            || colliding
+                .targets
+                .iter()
+                .all(|&t| shootable_q.get(t).is_err());
 
-        if should_die {
+        if !should_live {
             health.die();
             // If a rocket hits a wall, it will be inside it when it explodes,
             // damaging no one. So, we just move back a frame.

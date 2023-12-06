@@ -1,5 +1,5 @@
 use std::{
-    ops::{Mul, SubAssign},
+    ops::{Mul, Sub, SubAssign},
     time::Instant,
 };
 
@@ -36,9 +36,17 @@ impl From<u32> for Tick {
     }
 }
 
+impl Sub for Tick {
+    type Output = Tick;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Self(self.0.saturating_sub(rhs.0))
+    }
+}
+
 impl SubAssign for Tick {
     fn sub_assign(&mut self, rhs: Self) {
-        self.0 = self.0.saturating_sub(rhs.0);
+        *self = *self - rhs;
     }
 }
 

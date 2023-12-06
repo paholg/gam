@@ -74,6 +74,7 @@ pub enum Kind {
     HealGrenade,
     SeekerRocket,
     NeutrinoBall,
+    TransportBeam,
 }
 
 #[derive(Component, Default, Reflect, Debug)]
@@ -349,27 +350,38 @@ impl Plugin for GamPlugin {
                 physics.set3().in_set(GameSet::Physics3),
                 (
                     // Note: Most things should go here.
-                    clear_forces,
-                    clear_impulses,
-                    energy_regen,
-                    lifecycle::reset,
-                    input::apply_inputs,
-                    ai::simple::system_set(),
-                    ai::charge::system_set(),
+                    (
+                        // Initial frame resets.
+                        clear_forces,
+                        clear_impulses,
+                        energy_regen,
+                        lifecycle::reset,
+                    ),
+                    (
+                        // Inputs
+                        input::apply_inputs,
+                        ai::simple::system_set(),
+                        ai::charge::system_set(),
+                    ),
+                    // Misc; categorize futher?
                     movement::apply_movement,
-                    // ability::grenade::grenade_land_system,
                     ability::bullet::kickback_system,
                     seeker_rocket::tracking_system,
                     ability::grenade::explode_system,
                     death_callback::explosion_grow_system,
-                    lifecycle::fall,
                     ability::neutrino_ball::activation_system,
-                    // Collisions
-                    collision::collision_system,
-                    ability::bullet::collision_system,
-                    ability::seeker_rocket::collision_system,
-                    ability::neutrino_ball::collision_system,
-                    death_callback::explosion_collision_system,
+                    ability::transport::move_system,
+                    ability::transport::activation_system,
+                    lifecycle::fall,
+                    (
+                        // Collisions
+                        collision::collision_system,
+                        ability::bullet::collision_system,
+                        ability::seeker_rocket::collision_system,
+                        ability::neutrino_ball::collision_system,
+                        ability::transport::collision_system,
+                        death_callback::explosion_collision_system,
+                    ),
                 )
                     .chain()
                     .in_set(GameSet::Stuff),

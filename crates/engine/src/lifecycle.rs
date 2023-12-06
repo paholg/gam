@@ -1,7 +1,7 @@
 use bevy_ecs::{
     entity::Entity,
     event::{Event, EventWriter},
-    query::{With, Without},
+    query::With,
     system::{Commands, Query, Res, ResMut},
 };
 use bevy_hierarchy::DespawnRecursiveExt;
@@ -38,20 +38,26 @@ pub fn fall(mut query: Query<(&mut Health, &Transform, &FootOffset)>) {
     }
 }
 
-// TODO: Use `Option<&DeathCallback>` instead of two queries.
 pub fn die(
     mut commands: Commands,
-    mut without_callback_q: Query<(Entity, &mut Health, &Transform, &Kind), Without<DeathCallback>>,
-    mut with_callback_q: Query<(Entity, &mut Health, &Transform, &Kind, &DeathCallback)>,
+    mut query: Query<(
+        Entity,
+        &mut Health,
+        &Transform,
+        &Kind,
+        Option<&DeathCallback>,
+    )>,
     mut event_writer: EventWriter<DeathEvent>,
     tick_counter: Res<TickCounter>,
 ) {
-    let events = without_callback_q
-        .iter_mut()
-        .filter_map(|(entity, mut health, &transform, &kind)| {
+    let events = query.iter_mut().filter_map(
+        |(entity, mut health, &transform, &kind, callback)| {
             if health.cur <= 0.0 {
                 if health.death_delay == Tick(0) {
                     tracing::debug!(tick = ?tick_counter.tick, ?entity, ?health, ?transform, "DEATH");
+                    if let Some(callback) = callback {
+                        callback.call(&mut commands, &transform);
+                    }
                     commands.entity(entity).despawn_recursive();
                     Some(DeathEvent { transform, kind })
                 } else {
@@ -61,27 +67,9 @@ pub fn die(
             } else {
                 None
             }
-        });
+        },
+    );
     event_writer.send_batch(events);
-
-    let more_events =
-        with_callback_q
-            .iter_mut()
-            .filter_map(|(entity, mut health, &transform, &kind, callback)| {
-                if health.cur <= 0.0 {
-                    if health.death_delay == Tick(0) {
-                        tracing::debug!(tick = ?tick_counter.tick, ?entity, ?health, ?transform, "DEATH WITH CALLBACK");
-                        callback.call(&mut commands, &transform);
-                        commands.entity(entity).despawn_recursive();
-                        Some(DeathEvent { transform, kind })
-                    } else { health.death_delay -= Tick(1);
-                        None
-                    }
-                } else {
-                    None
-                }
-            });
-    event_writer.send_batch(more_events);
 }
 
 pub const ENERGY_REGEN: f32 = 0.5;

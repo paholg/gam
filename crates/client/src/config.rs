@@ -252,7 +252,7 @@ impl Default for PlayerConfig {
         let abilities = Abilities::new(vec![
             Ability::Gun,
             Ability::SeekerRocket,
-            Ability::HyperSprint,
+            Ability::Transport,
             Ability::NeutrinoBall,
             Ability::FragGrenade,
         ]);

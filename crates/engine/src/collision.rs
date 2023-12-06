@@ -2,6 +2,9 @@ use bevy_ecs::{component::Component, entity::Entity, event::EventReader, system:
 use bevy_rapier3d::prelude::CollisionEvent;
 use smallvec::SmallVec;
 
+/// Any entity with this component and `ActiveEvents::COLLISION_EVENTS` will be
+/// updated every frame with its collision targets. It will also need to be a
+/// `RigidBody::Dynamic`.
 #[derive(Debug, Component, Default)]
 pub struct TrackCollisions {
     pub targets: SmallVec<Entity, 4>,
