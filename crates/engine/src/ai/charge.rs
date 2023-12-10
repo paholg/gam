@@ -15,8 +15,7 @@ use crate::{
     ability::{properties::AbilityProps, Ability},
     level::Floor,
     movement::DesiredMove,
-    status_effect::StatusEffects,
-    time::TickCounter,
+    time::FrameCounter,
     AbilityOffset, Ally, Cooldowns, Enemy, Energy, Faction, Target, To2d, To3d,
 };
 
@@ -107,29 +106,20 @@ fn check_obstructions<T: Faction>(
 
 fn gun_system(
     mut commands: Commands,
-    tick_counter: Res<TickCounter>,
+    tick_counter: Res<FrameCounter>,
     mut ai_q: Query<(
         Entity,
         &mut Cooldowns,
         &mut Energy,
         &Velocity,
         &Transform,
-        &mut StatusEffects,
         &AbilityOffset,
         &ChargeAi,
     )>,
     props: Res<AbilityProps>,
 ) {
-    for (
-        entity,
-        mut cooldowns,
-        mut energy,
-        velocity,
-        transform,
-        mut status_effects,
-        ability_offset,
-        ai,
-    ) in ai_q.iter_mut()
+    for (entity, mut cooldowns, mut energy, velocity, transform, ability_offset, ai) in
+        ai_q.iter_mut()
     {
         if !ai.gun_obstruction {
             Ability::Gun.fire(
@@ -141,7 +131,6 @@ fn gun_system(
                 &mut cooldowns,
                 transform,
                 velocity,
-                &mut status_effects,
                 &Target::default(),
                 ability_offset,
             );

@@ -24,8 +24,8 @@ use lifecycle::DeathEvent;
 use movement::{DesiredMove, MaxSpeed};
 use multiplayer::PlayerInputs;
 use physics::PhysicsPlugin;
-use status_effect::StatusEffects;
-use time::{Tick, TickCounter, FREQUENCY};
+use status_effect::StatusBundle;
+use time::{Dur, Frame, FrameCounter, FREQUENCY};
 
 pub mod ability;
 pub mod ai;
@@ -82,15 +82,15 @@ pub enum Kind {
 pub struct Health {
     pub cur: f32,
     pub max: f32,
-    pub death_delay: Tick,
+    pub death_delay: Dur,
 }
 
 impl Health {
     pub fn new(max: f32) -> Self {
-        Self::new_with_delay(max, Tick(0))
+        Self::new_with_delay(max, Dur::new(0))
     }
 
-    pub fn new_with_delay(max: f32, death_delay: Tick) -> Self {
+    pub fn new_with_delay(max: f32, death_delay: Dur) -> Self {
         Self {
             cur: max,
             max,
@@ -187,25 +187,25 @@ pub struct Shootable;
 
 #[derive(Component, Reflect, Default)]
 pub struct Cooldowns {
-    map: HashMap<Ability, Tick>,
+    map: HashMap<Ability, Frame>,
 }
 
 impl Cooldowns {
     pub fn new(abilities: &Abilities) -> Self {
         let cooldowns = abilities
             .iter()
-            .map(|ability| (ability, Tick::default()))
+            .map(|ability| (ability, Frame::default()))
             .collect();
         Self { map: cooldowns }
     }
 
-    pub fn get_mut(&mut self, ability: &Ability) -> Option<&mut Tick> {
+    pub fn get_mut(&mut self, ability: &Ability) -> Option<&mut Frame> {
         self.map.get_mut(ability)
     }
 
     pub fn reset(&mut self) {
         for tick in self.map.values_mut() {
-            *tick = Tick(0);
+            *tick = Frame::default();
         }
     }
 }
@@ -260,6 +260,7 @@ pub struct Object {
     mass: ReadMassProperties,
     kind: Kind,
     in_level: InLevel,
+    statuses: StatusBundle,
 }
 
 #[derive(Bundle)]
@@ -270,7 +271,6 @@ struct Character {
     max_speed: MaxSpeed,
     friction: Friction,
     impulse: ExternalImpulse,
-    status_effects: StatusEffects,
     shootable: Shootable,
     cooldowns: Cooldowns,
     abilities: Abilities,
@@ -306,7 +306,7 @@ impl Plugin for GamPlugin {
 
         // Resources
         app.insert_resource(Time::<Fixed>::from_hz(FREQUENCY as f64))
-            .insert_resource(TickCounter::new())
+            .insert_resource(FrameCounter::new())
             .insert_resource(AbilityProps::default())
             .insert_resource(NumAi {
                 enemies: 0,
@@ -345,7 +345,7 @@ impl Plugin for GamPlugin {
         app.add_systems(Startup, level::test_level).add_systems(
             schedule.clone(),
             (
-                time::tick_counter.in_set(GameSet::Timer),
+                time::frame_counter.in_set(GameSet::Timer),
                 physics.set1().in_set(GameSet::Physics1),
                 physics.set2().in_set(GameSet::Physics2),
                 physics.set3().in_set(GameSet::Physics3),
@@ -391,7 +391,7 @@ impl Plugin for GamPlugin {
                     // Put systems that despawn things at the end.
                     ability::bullet::despawn_system,
                     lifecycle::die,
-                    time::debug_tick_system,
+                    time::debug_frame_system,
                 )
                     .chain()
                     .in_set(GameSet::Despawn),

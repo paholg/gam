@@ -17,7 +17,8 @@ use crate::{
     death_callback::{DeathCallback, ExplosionCallback},
     level::InLevel,
     physics::G,
-    time::{Tick, TickCounter},
+    status_effect::StatusBundle,
+    time::{Frame, FrameCounter},
     AbilityOffset, Health, Kind, Libm, Object, Shootable, Target, To2d, To3d, FORWARD, PLAYER_R,
 };
 
@@ -71,13 +72,13 @@ pub struct Grenade {
     // TODO: Use this field
     #[allow(dead_code)]
     shooter: Entity,
-    expiration: Tick,
+    expires_at: Frame,
     pub kind: GrenadeKind,
 }
 
 pub fn grenade(
     commands: &mut Commands,
-    tick_counter: &TickCounter,
+    tick_counter: &FrameCounter,
     props: &GrenadeProps,
     transform: &Transform,
     shooter: Entity,
@@ -103,10 +104,11 @@ pub fn grenade(
             mass: ReadMassProperties::default(),
             kind: props.kind.into(),
             in_level: InLevel,
+            statuses: StatusBundle::default(),
         },
         Shootable,
         Grenade {
-            expiration: tick_counter.at(props.delay),
+            expires_at: tick_counter.at(props.delay),
             shooter,
             kind: props.kind,
         },
@@ -125,9 +127,9 @@ pub fn grenade(
     ));
 }
 
-pub fn explode_system(mut query: Query<(&Grenade, &mut Health)>, tick_counter: Res<TickCounter>) {
+pub fn explode_system(mut query: Query<(&Grenade, &mut Health)>, tick_counter: Res<FrameCounter>) {
     for (grenade, mut health) in &mut query {
-        if grenade.expiration.before_now(&tick_counter) {
+        if grenade.expires_at.before_now(&tick_counter) {
             health.die();
         }
     }

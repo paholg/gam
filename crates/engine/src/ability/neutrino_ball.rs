@@ -17,7 +17,8 @@ use bevy_transform::{
 use crate::{
     collision::TrackCollisions,
     level::InLevel,
-    time::{Tick, TickCounter},
+    status_effect::StatusBundle,
+    time::{Frame, FrameCounter},
     AbilityOffset, FootOffset, Health, Kind, Object, Shootable, FORWARD, PLAYER_R,
 };
 
@@ -28,7 +29,7 @@ pub struct NeutrinoBall {
     pub accel_numerator: f32,
     pub radius: f32,
     pub effect_radius: f32,
-    pub activation_time: Tick,
+    pub activates_at: Frame,
 }
 
 pub fn neutrino_ball(
@@ -37,7 +38,7 @@ pub fn neutrino_ball(
     transform: &Transform,
     velocity: &Velocity,
     ability_offset: &AbilityOffset,
-    tick_counter: &TickCounter,
+    counter: &FrameCounter,
 ) {
     let mut ball_transform = *transform;
     let dir = transform.rotation * FORWARD;
@@ -61,12 +62,13 @@ pub fn neutrino_ball(
             mass: ReadMassProperties::default(),
             kind: Kind::NeutrinoBall,
             in_level: InLevel,
+            statuses: StatusBundle::default(),
         },
         NeutrinoBall {
             accel_numerator: props.accel_numerator(),
             radius: props.radius,
             effect_radius: props.effect_radius,
-            activation_time: tick_counter.at(props.activation_delay),
+            activates_at: counter.at(props.activation_delay),
         },
         Health::new_with_delay(0.0, props.duration),
         Shootable,
@@ -83,14 +85,14 @@ pub struct NeutrinoBallGravityField {
 
 pub fn activation_system(
     mut commands: Commands,
-    tick_counter: Res<TickCounter>,
+    tick_counter: Res<FrameCounter>,
     mut neutrino_q: Query<
         (Entity, &NeutrinoBall, &FootOffset),
         Without<NeutrinoBallGravityFieldSpawned>,
     >,
 ) {
     for (entity, ball, foot_offset) in &mut neutrino_q {
-        if ball.activation_time.before_now(&tick_counter) {
+        if ball.activates_at.before_now(&tick_counter) {
             commands
                 .entity(entity)
                 .insert(NeutrinoBallGravityFieldSpawned)
