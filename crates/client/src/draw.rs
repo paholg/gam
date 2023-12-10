@@ -25,6 +25,7 @@ use engine::{
     death_callback::{Explosion, ExplosionKind},
     level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
     lifecycle::{DeathEvent, DEATH_Y},
+    status_effect::TimeDilation,
     time::FrameCounter,
     Ally, Enemy, Energy, FootOffset, Health, Kind, Player, To2d, To3d, UP,
 };
@@ -54,7 +55,6 @@ impl Plugin for DrawPlugin {
                 draw_neutrino_ball_system,
                 draw_neutrino_ball_outline_system,
                 draw_death_system,
-                // draw_hyper_sprint_system,
                 draw_wall_system,
                 update_wall_system,
                 draw_lights_system,
@@ -62,6 +62,7 @@ impl Plugin for DrawPlugin {
                 update_explosion_system,
                 draw_transport_system,
                 update_transport_system,
+                draw_time_dilation_system,
             ),
         );
     }
@@ -448,21 +449,26 @@ fn draw_death_system(
     }
 }
 
-// fn draw_hyper_sprint_system(
-//     mut commands: Commands,
-//     mut assets: ResMut<AssetHandler>,
-//     mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
-//     query: Query<(&Transform, &FootOffset), (With<HyperSprinting>, Without<EffectSpawner>)>,
-//     frame: Res<FrameCount>,
-// ) {
-//     let effect = &mut assets.hyper_sprint.effect;
+fn draw_time_dilation_system(
+    mut commands: Commands,
+    mut assets: ResMut<AssetHandler>,
+    mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
+    query: Query<(&Transform, &FootOffset, &TimeDilation), Without<EffectSpawner>>,
+    frame: Res<FrameCount>,
+) {
+    let effect = &mut assets.time_dilation.fast_effect;
 
-//     for (sprint_transform, foot_offset) in query.iter() {
-//         let mut transform = *sprint_transform;
-//         transform.translation.y += foot_offset.y;
-//         effect.trigger(&mut commands, transform, &mut effects, &frame);
-//     }
-// }
+    for (transform, foot_offset, time_dilation) in query.iter() {
+        // TODO: Add an effect for slow things.
+        if time_dilation.factor() <= 1.0 {
+            continue;
+        }
+        let mut effect_transform = *transform;
+        effect_transform.translation.y += foot_offset.y;
+        // TODO: Change the affect based on how big the effect is.
+        effect.trigger(&mut commands, effect_transform, &mut effects, &frame);
+    }
+}
 
 #[derive(Component, Copy, Clone)]
 enum WallKind {

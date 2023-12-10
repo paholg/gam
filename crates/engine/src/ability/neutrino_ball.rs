@@ -17,7 +17,7 @@ use bevy_transform::{
 use crate::{
     collision::TrackCollisions,
     level::InLevel,
-    status_effect::StatusBundle,
+    status_effect::{StatusBundle, TimeDilation},
     time::{Frame, FrameCounter},
     AbilityOffset, FootOffset, Health, Kind, Object, Shootable, FORWARD, PLAYER_R,
 };
@@ -119,11 +119,16 @@ pub fn collision_system(
         &GlobalTransform,
         &TrackCollisions,
     )>,
-    mut target_q: Query<(&mut ExternalForce, &Transform, &ReadMassProperties)>,
+    mut target_q: Query<(
+        &mut ExternalForce,
+        &Transform,
+        &ReadMassProperties,
+        &TimeDilation,
+    )>,
 ) {
     for (field, global_transform, colliding) in &neutrino_q {
         for &target in &colliding.targets {
-            let Ok((mut force, target_transform, mass)) = target_q.get_mut(target) else {
+            let Ok((mut force, target_transform, mass, dilation)) = target_q.get_mut(target) else {
                 // TODO: Exclude `Floor` before this.
                 // tracing::warn!(?target, "Neutrino ball hit target, but not in query");
                 continue;
@@ -138,7 +143,7 @@ pub fn collision_system(
             // Let's keep it from letting you fly up, for now.
             dir.y = 0.0;
 
-            force.force += f * dir;
+            force.force += f * dilation.factor() * dir;
         }
     }
 }

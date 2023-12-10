@@ -1,8 +1,14 @@
 #![allow(unused)]
-use bevy_ecs::{bundle::Bundle, component::Component};
+use std::{fmt, ops::Mul};
+
+use bevy_ecs::{bundle::Bundle, component::Component, system::Query};
+use bevy_rapier3d::prelude::ReadMassProperties;
 use smallvec::SmallVec;
 
-use crate::time::Dur;
+use crate::{time::Dur, Libm};
+
+const TEMP_LOSS_FACTOR: f32 = 0.1;
+const CHARGE_LOSS_FACTOR: f32 = 0.1;
 
 /// Various status affects that might be on all entities in the world.
 #[derive(Bundle, Debug, Default)]
@@ -14,16 +20,33 @@ pub struct StatusBundle {
 }
 
 #[derive(Debug)]
-pub struct Effect {
-    duration: Dur,
+struct Effect {
     amount: f32,
+    duration: Dur,
 }
 
 impl Effect {
-    pub fn new(duration: Dur, amount: f32) -> Self {
-        Self { duration, amount }
+    fn tick(&mut self) {
+        self.duration.reduce_one();
     }
 }
+
+pub trait StatusEffect: Component + fmt::Debug {
+    fn tick(&mut self);
+}
+
+pub fn status_effect_system<S: StatusEffect>(mut query: Query<&mut S>) {
+    for mut effect in &mut query {
+        effect.tick();
+    }
+}
+
+/// Amount of heat energy an effect applies to an entity.
+///
+/// This is not in joules, but some abstract unit. Can be negative, to cool
+/// things.
+#[derive(Debug)]
+pub struct Heat(f32);
 
 /// Temperature is measured as an abstract effect, rather than a number in
 /// degress or Kelvin.
@@ -37,7 +60,25 @@ impl Effect {
 #[derive(Component, Debug, Default)]
 pub struct Temperature {
     val: f32,
-    effects: SmallVec<Effect, 8>,
+}
+
+impl Temperature {
+    pub fn heat(&mut self, mass: f32, heat: Heat) {
+        // TODO: Should different objects have different specific heats, or is
+        // that too complicated?
+        self.val += heat.0 / mass;
+    }
+}
+
+impl StatusEffect for Temperature {
+    // TODO: Introduce actual affects.
+    fn tick(&mut self) {
+        // Newton's law of coooling status that heat loss is directly
+        // propotional between the difference in temperatures between an entity
+        // and the environment. So let's try that.
+        let delta = TEMP_LOSS_FACTOR * self.val;
+        self.val -= delta;
+    }
 }
 
 /// Charge is measured as an abstract effect, rather than a unit in electrons or
@@ -55,11 +96,59 @@ pub struct Charge {
     val: f32,
 }
 
+impl StatusEffect for Charge {
+    fn tick(&mut self) {
+        // TODO: How should charge decay? Let's just do it like temperature for
+        // now.
+        let delta = CHARGE_LOSS_FACTOR * self.val;
+        self.val -= delta;
+    }
+}
+
 /// TimeDilation is measured in the abstract, where 0.0 is "normal" time,
-/// negative is slower, positive is faster.
+///
+/// Multiple time dilation effects can be in place at the same time; we take the
+/// sum and perform some math to achieve a factor that can be multiplied by
+/// time-things.
+// TODO: We currently only account for time dilation when
 #[derive(Component, Debug, Default)]
 pub struct TimeDilation {
     val: f32,
+    effects: SmallVec<Effect, 2>,
+}
+
+impl TimeDilation {
+    pub fn add_effect(&mut self, amount: f32, duration: Dur) {
+        // We'll just add the effect, it will take place next frame.
+        self.effects.push(Effect { duration, amount });
+    }
+
+    /// Return the speed-up or slow-down factor, where 1.0 is "normal" speed,
+    /// 0.0 is stopped, 2.0 is double speed, etc.
+    pub fn factor(&self) -> f32 {
+        if self.val != 1.0 {
+            tracing::info!("factor: {}", self.val);
+        }
+        self.val
+    }
+}
+
+impl StatusEffect for TimeDilation {
+    fn tick(&mut self) {
+        // TODO: Should this be sum? product? something else?
+        let effect: f32 = self.effects.iter().map(|e| e.amount).sum();
+
+        self.effects.iter_mut().for_each(Effect::tick);
+        self.effects.retain(|e| e.duration.is_positive());
+
+        // Let's do exponential for < 0, linear for > 0 for now. Figure out
+        // something that makes sense later.
+        self.val = if effect.is_sign_negative() {
+            Libm::exp(effect)
+        } else {
+            effect + 1.0
+        };
+    }
 }
 
 /// Phased is a boolean condition.
@@ -71,4 +160,22 @@ pub struct TimeDilation {
 #[derive(Component, Debug, Default)]
 pub struct Phased {
     val: bool,
+    duration: Dur,
+}
+
+impl Phased {
+    fn toggle(&mut self) {
+        self.val = !self.val
+    }
+}
+
+impl StatusEffect for Phased {
+    fn tick(&mut self) {
+        if self.duration.is_positive() {
+            self.duration.reduce_one();
+            if self.duration.is_zero() {
+                self.toggle();
+            }
+        }
+    }
 }

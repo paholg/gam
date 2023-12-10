@@ -107,8 +107,8 @@ pub struct TargetAssets {
     pub laser_length: f32,
 }
 
-pub struct HyperSprintAssets {
-    pub effect: ParticleEffectPool,
+pub struct TimeDilationAssets {
+    pub fast_effect: ParticleEffectPool,
 }
 
 pub struct CharacterAssets {
@@ -196,7 +196,7 @@ pub struct AssetHandler {
     pub heal_grenade: GrenadeAssets,
     pub seeker_rocket: SeekerRocketAssets,
     pub neutrino_ball: NeutrinoBallAssets,
-    pub hyper_sprint: HyperSprintAssets,
+    pub time_dilation: TimeDilationAssets,
     pub player: CharacterAssets,
     pub ally: CharacterAssets,
     pub enemy: CharacterAssets,
@@ -402,8 +402,8 @@ pub fn asset_handler_setup(
     let effect = effects.add(hyper_sprint_effect());
     let hyper_sprint_effect = ParticleEffectBundle::new(effect).into();
 
-    let hyper_sprint = HyperSprintAssets {
-        effect: hyper_sprint_effect,
+    let hyper_sprint = TimeDilationAssets {
+        fast_effect: hyper_sprint_effect,
     };
 
     let robot = asset_server.load("models/temp/robot1.glb#Scene0");
@@ -507,7 +507,7 @@ pub fn asset_handler_setup(
         heal_grenade,
         seeker_rocket,
         neutrino_ball,
-        hyper_sprint,
+        time_dilation: hyper_sprint,
         player,
         ally,
         enemy,

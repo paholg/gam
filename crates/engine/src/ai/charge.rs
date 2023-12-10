@@ -15,6 +15,7 @@ use crate::{
     ability::{properties::AbilityProps, Ability},
     level::Floor,
     movement::DesiredMove,
+    status_effect::TimeDilation,
     time::FrameCounter,
     AbilityOffset, Ally, Cooldowns, Enemy, Energy, Faction, Target, To2d, To3d,
 };
@@ -115,11 +116,20 @@ fn gun_system(
         &Transform,
         &AbilityOffset,
         &ChargeAi,
+        &mut TimeDilation,
     )>,
     props: Res<AbilityProps>,
 ) {
-    for (entity, mut cooldowns, mut energy, velocity, transform, ability_offset, ai) in
-        ai_q.iter_mut()
+    for (
+        entity,
+        mut cooldowns,
+        mut energy,
+        velocity,
+        transform,
+        ability_offset,
+        ai,
+        mut time_dilation,
+    ) in ai_q.iter_mut()
     {
         if !ai.gun_obstruction {
             Ability::Gun.fire(
@@ -133,6 +143,7 @@ fn gun_system(
                 velocity,
                 &Target::default(),
                 ability_offset,
+                &mut time_dilation,
             );
         }
     }
