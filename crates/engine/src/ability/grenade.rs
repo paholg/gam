@@ -13,6 +13,7 @@ use bevy_rapier3d::prelude::{
 use bevy_transform::components::Transform;
 
 use crate::{
+    collision::TrackCollisionBundle,
     death_callback::{DeathCallback, ExplosionCallback},
     level::InLevel,
     physics::G,
@@ -102,6 +103,7 @@ pub fn grenade(
             kind: props.kind.into(),
             in_level: InLevel,
             statuses: StatusBundle::default(),
+            collisions: TrackCollisionBundle::off(),
         },
         Shootable,
         Grenade {

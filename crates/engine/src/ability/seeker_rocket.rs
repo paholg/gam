@@ -4,11 +4,11 @@ use bevy_ecs::{
     query::With,
     system::{Commands, Query},
 };
-use bevy_rapier3d::prelude::{ActiveEvents, Collider, ExternalForce, LockedAxes, Sensor, Velocity};
+use bevy_rapier3d::prelude::{Collider, ExternalForce, LockedAxes, Sensor, Velocity};
 use bevy_transform::components::Transform;
 
 use crate::{
-    collision::TrackCollisions,
+    collision::{TrackCollisionBundle, TrackCollisions},
     death_callback::{DeathCallback, ExplosionCallback},
     level::InLevel,
     movement::DesiredMove,
@@ -57,6 +57,7 @@ pub fn seeker_rocket(
             kind: Kind::SeekerRocket,
             in_level: InLevel,
             statuses: StatusBundle::default(),
+            collisions: TrackCollisionBundle::on(),
         },
         Health::new(props.health),
         Energy::new(props.energy, 0.0),
@@ -75,8 +76,6 @@ pub fn seeker_rocket(
             can_fly: true,
             ..Default::default()
         },
-        ActiveEvents::COLLISION_EVENTS,
-        TrackCollisions::default(),
         Sensor,
     ));
 }

@@ -6,13 +6,12 @@ use bevy_ecs::{
 };
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{
-    ActiveEvents, Ccd, Collider, ExternalForce, LockedAxes, ReadMassProperties, RigidBody, Sensor,
-    Velocity,
+    Ccd, Collider, ExternalForce, LockedAxes, ReadMassProperties, RigidBody, Sensor, Velocity,
 };
 use bevy_transform::components::Transform;
 
 use crate::{
-    collision::TrackCollisions,
+    collision::{TrackCollisionBundle, TrackCollisions},
     level::InLevel,
     status_effect::{StatusBundle, TimeDilation},
     time::Dur,
@@ -55,9 +54,8 @@ impl BulletSpawner {
                 kind: Kind::Bullet,
                 in_level: InLevel,
                 statuses: StatusBundle::default(),
+                collisions: TrackCollisionBundle::on(),
             },
-            ActiveEvents::COLLISION_EVENTS,
-            TrackCollisions::default(),
             Sensor,
             Ccd::enabled(),
             self.health,

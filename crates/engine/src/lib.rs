@@ -21,6 +21,7 @@ use bevy_transform::{
     TransformBundle,
 };
 use bevy_utils::HashMap;
+use collision::TrackCollisionBundle;
 use input::check_resume;
 use level::{InLevel, LevelProps};
 use lifecycle::DeathEvent;
@@ -28,7 +29,8 @@ use movement::{DesiredMove, MaxSpeed};
 use multiplayer::PlayerInputs;
 use physics::PhysicsPlugin;
 use status_effect::{
-    charge_tick, phased_tick, temperature_tick, time_dilation_tick, StatusBundle, TimeDilation,
+    charge::charge_tick, phased::phased_tick, temperature::temperature_tick,
+    time_dilation::time_dilation_tick, StatusBundle, TimeDilation,
 };
 use time::{Dur, FrameCounter, FREQUENCY};
 
@@ -293,6 +295,7 @@ pub struct Object {
     kind: Kind,
     in_level: InLevel,
     statuses: StatusBundle,
+    collisions: TrackCollisionBundle,
 }
 
 #[derive(Bundle)]

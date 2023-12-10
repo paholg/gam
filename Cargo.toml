@@ -7,28 +7,23 @@ members = [
 resolver = "2"
 
 [workspace.dependencies]
-bevy = { version = "0.12", default-features = false }
-bevy_app = "0.12"
-bevy_core = "0.12"
-bevy_diagnostic = "0.12"
-bevy_ecs = "0.12"
-bevy_hierarchy = "0.12"
-bevy_internal = "0.12"
-bevy_log = "0.12"
-bevy_math = "0.12"
-bevy_reflect = "0.12"
-bevy_tasks = "0.12"
-bevy_time = "0.12"
-bevy_transform = "0.12"
-bevy_utils = "0.12"
+# Bevy crates
+bevy = { version = "0.12.1", default-features = false }
+bevy_app = "0.12.1"
+bevy_core = "0.12.1"
+bevy_diagnostic = "0.12.1"
+bevy_ecs = "0.12.1"
+bevy_hierarchy = "0.12.1"
+bevy_internal = "0.12.1"
+bevy_log = "0.12.1"
+bevy_math = "0.12.1"
+bevy_reflect = "0.12.1"
+bevy_tasks = "0.12.1"
+bevy_time = "0.12.1"
+bevy_transform = "0.12.1"
+bevy_utils = "0.12.1"
 
-# Note on enhanced-determinism:
-# If some of the values used to initialized Rapier structures are computed using
-# floating points functions (sin, cos, tan, etc.) other than addition/
-# subtraction/multiplication/division, then you need to make sure the functions
-# being used originate from the ComplexField or RealField traits from nalgebra.
-# For example, do ComplexField::sin(0.4) (where ComplexField is imported by use
-# nalgebra::ComplexField) instead of 0.4.sin()
+# Non-bevy crates
 bevy_rapier3d = { version = "0.23", features = ["enhanced-determinism"] }
 smallvec = "2.0.0-alpha.1"
 tracing = "0.1.40"
@@ -47,10 +42,3 @@ codegen-units = 1
 
 [workspace.lints.clippy]
 type_complexity = "allow"
-
-# Workaround for compiler error.
-# https://github.com/jakobhellermann/bevy-inspector-egui/issues/163
-[profile.dev.package."bevy-inspector-egui"]
-opt-level = 1
-[profile.release.package."bevy-inspector-egui"]
-opt-level = 1
