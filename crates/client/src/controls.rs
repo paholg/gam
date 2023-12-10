@@ -3,6 +3,7 @@ use bevy::{
         Camera, EventReader, GlobalTransform, Plugin, Query, Res, ResMut, Resource, Transform,
         Update, Vec2, With, Without,
     },
+    time::Time,
     window::{CursorMoved, PrimaryWindow, Window},
 };
 
@@ -49,6 +50,7 @@ pub fn player_input(
     mut camera_query: Query<(&Camera, &GlobalTransform, &mut Transform)>,
     mut camera_mode: ResMut<CameraFollowMode>,
     cursor_events: EventReader<CursorMoved>,
+    time: Res<Time>,
 ) {
     let player = *player;
     let filtered_query = player_query.iter().find(|tuple| *tuple.0 == player);
@@ -99,6 +101,7 @@ pub fn player_input(
     player_inputs.insert(player, input);
 
     // Update camera
+    const CAMERA_SPEED: f32 = 10.0;
     let camera_weight = 0.9;
     const CURSOR_WEIGHT: f32 = 0.33;
     let look_at =
@@ -106,8 +109,14 @@ pub fn player_input(
     let look_at = (camera_transform.translation - CAMERA_OFFSET) * camera_weight
         + look_at * (1.0 - camera_weight);
 
-    *camera_transform =
+    let desired_transform =
         Transform::from_translation(CAMERA_OFFSET + look_at).looking_at(look_at, UP);
+
+    let delta = desired_transform.translation - camera_transform.translation;
+    let max = delta.length();
+
+    camera_transform.translation +=
+        (delta.normalize_or_zero() * CAMERA_SPEED * time.delta_seconds()).clamp_length_max(max);
 }
 
 fn cursor_from_mouse(
