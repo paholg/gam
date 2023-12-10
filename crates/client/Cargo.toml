@@ -39,6 +39,7 @@ bevy_hanabi = { version = "0.8.0", default-features = false, features = ["3d"] }
 bevy_kira_audio = "0.18.0"
 bevy_mod_raycast = "0.16.0"
 bevy_rapier3d.workspace = true
+clap = { version = "4.4.11", features = ["derive"] }
 directories = "5"
 itertools = "0.12"
 iyes_progress = { version = "0.10.0", features = ["assets"] }
@@ -51,9 +52,6 @@ smallvec.workspace = true
 subenum = "1.1.1"
 thiserror = "1"
 tracing.workspace = true
-
-[features]
-debug = []
 
 [lints]
 workspace = true

@@ -12,7 +12,7 @@ use bevy::{
 use engine::{time::TickCounter, NumAi};
 use rust_i18n::t;
 
-const TEXT_COLOR: Color = Color::rgb(0.8, 0.8, 0.8);
+pub const TEXT_COLOR: Color = Color::rgb(0.8, 0.8, 0.8);
 
 pub struct HudPlugin;
 
@@ -27,19 +27,25 @@ impl Plugin for HudPlugin {
     }
 }
 
+#[derive(Component)]
+pub struct Hud;
+
 fn persistent_ui_setup(mut commands: Commands) {
     commands
-        .spawn((NodeBundle {
-            style: Style {
-                width: Val::Px(600.0),
-                height: Val::Px(20.0),
-                align_items: AlignItems::Start,
-                justify_content: JustifyContent::Start,
-                flex_direction: FlexDirection::Column,
+        .spawn((
+            NodeBundle {
+                style: Style {
+                    width: Val::Px(600.0),
+                    height: Val::Px(20.0),
+                    align_items: AlignItems::Start,
+                    justify_content: JustifyContent::Start,
+                    flex_direction: FlexDirection::Column,
+                    ..Default::default()
+                },
                 ..Default::default()
             },
-            ..Default::default()
-        },))
+            Hud,
+        ))
         .with_children(|parent| {
             parent.spawn((
                 TextBundle::from_section(

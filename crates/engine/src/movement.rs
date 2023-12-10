@@ -44,7 +44,7 @@ impl MulAssign<f32> for MaxSpeed {
 impl Default for MaxSpeed {
     fn default() -> Self {
         Self {
-            accel: 20.0,
+            accel: 10.0,
             speed: 5.0,
         }
     }

@@ -13,12 +13,12 @@ use bevy_transform::components::Transform;
 
 use crate::{
     ability::{Abilities, Ability},
-    ai::{charge::ChargeAi, AiTarget},
+    ai::{charge::ChargeAi, AiBundle},
     death_callback::DeathCallback,
     level::LevelProps,
     player::{character_collider, PlayerInfo},
     time::{Tick, TickCounter},
-    Ai, Ally, Character, Cooldowns, Enemy, Energy, FootOffset, Health, Kind, NumAi, Object, Player,
+    Ally, Character, Cooldowns, Enemy, Energy, FootOffset, Health, Kind, NumAi, Object, Player,
     Shootable, ABILITY_Y, PLAYER_HEIGHT, PLAYER_R,
 };
 
@@ -87,9 +87,7 @@ fn spawn_enemies(
         let id = commands
             .spawn((
                 Enemy,
-                Ai,
-                ChargeAi::default(),
-                AiTarget::default(),
+                AiBundle::<ChargeAi>::default(),
                 Character {
                     health: Health::new(10.0),
                     energy: Energy::new(20.0, 0.2),
@@ -135,9 +133,7 @@ fn spawn_allies(
         let id = commands
             .spawn((
                 Ally,
-                Ai,
-                ChargeAi::default(),
-                AiTarget::default(),
+                AiBundle::<ChargeAi>::default(),
                 Character {
                     health: Health::new(100.0),
                     energy: Energy::new(100.0, ENERGY_REGEN),

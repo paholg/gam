@@ -2,10 +2,10 @@ use bevy::{
     core::FrameCount,
     pbr::{NotShadowCaster, NotShadowReceiver},
     prelude::{
-        Added, Assets, BuildChildren, Bundle, Color, Commands, Component, Entity, EventReader,
-        Gizmos, GlobalTransform, Handle, InheritedVisibility, Mesh, Parent, PbrBundle, Plugin,
-        Query, Res, ResMut, SpotLight, SpotLightBundle, StandardMaterial, Transform, Update, Vec2,
-        Vec3, ViewVisibility, Visibility, With, Without,
+        Added, Assets, BuildChildren, Bundle, Commands, Component, Entity, EventReader,
+        GlobalTransform, Handle, InheritedVisibility, Mesh, Parent, PbrBundle, Plugin, Query, Res,
+        ResMut, SpotLight, SpotLightBundle, StandardMaterial, Transform, Update, Vec2, Vec3,
+        ViewVisibility, Visibility, With, Without,
     },
     scene::Scene,
 };
@@ -22,7 +22,6 @@ use engine::{
         transport::TransportBeam,
         HyperSprinting,
     },
-    ai::charge::HasPath,
     collision::TrackCollisions,
     death_callback::{Explosion, ExplosionKind},
     level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
@@ -30,7 +29,6 @@ use engine::{
     time::TickCounter,
     Ally, Enemy, Energy, FootOffset, Health, Kind, Player, To2d, To3d, UP,
 };
-use rand::{thread_rng, Rng};
 
 use crate::{
     asset_handler::{AssetHandler, ExplosionAssets},
@@ -686,43 +684,6 @@ fn draw_lights_system(mut commands: Commands, level: Res<LevelProps>, query: Que
                 InLevel,
             ));
         }
-    }
-}
-
-fn rand_color() -> Color {
-    let mut rng = thread_rng();
-
-    let mut gen = || rng.gen_range(0.0..=1.0);
-
-    Color::rgb(gen(), gen(), gen())
-}
-
-#[derive(Component)]
-pub struct PathColor {
-    color: Color,
-}
-
-pub fn draw_pathfinding_system(
-    mut commands: Commands,
-    query: Query<(Entity, &HasPath, Option<&PathColor>)>,
-    mut gizmos: Gizmos,
-) {
-    for (entity, path, color) in &query {
-        let color = match color {
-            Some(color) => color.color,
-            None => {
-                let color = rand_color();
-                commands.entity(entity).insert(PathColor { color });
-                color
-            }
-        };
-
-        let mut path = path.path.clone();
-        for v in &mut path {
-            v.y = 0.1;
-        }
-
-        gizmos.linestrip(path, color);
     }
 }
 
