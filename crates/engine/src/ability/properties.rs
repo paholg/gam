@@ -239,12 +239,12 @@ impl Default for NeutrinoBallProps {
         Self {
             cost: 50.0,
             cooldown: Dur::new(30),
-            radius: 0.3,
-            effect_radius: 2.0,
+            radius: 1.0,
+            effect_radius: 3.0,
             duration: Dur::new(240),
             activation_delay: Dur::new(30),
             speed: 3.0,
-            surface_a: 300.0,
+            surface_a: 30.0,
         }
     }
 }
@@ -300,7 +300,7 @@ pub struct SpeedUpProps {
 impl Default for SpeedUpProps {
     fn default() -> Self {
         Self {
-            cost: 1.0,
+            cost: 2.0,
             cooldown: Dur::new(1),
             duration: Dur::new(1),
             amount: 1.0,

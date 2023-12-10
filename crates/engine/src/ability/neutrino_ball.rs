@@ -1,24 +1,20 @@
 use bevy_ecs::{
     component::Component,
     entity::Entity,
-    query::Without,
+    query::{With, Without},
     system::{Commands, Query},
 };
-use bevy_hierarchy::BuildChildren;
 use bevy_rapier3d::prelude::{
-    ActiveEvents, Collider, ExternalForce, LockedAxes, ReadMassProperties, Sensor, Velocity,
+    Collider, ExternalForce, LockedAxes, ReadMassProperties, Sensor, Velocity,
 };
-use bevy_transform::{
-    components::{GlobalTransform, Transform},
-    TransformBundle,
-};
+use bevy_transform::components::Transform;
 
 use crate::{
     collision::{TrackCollisionBundle, TrackCollisions},
     level::InLevel,
     status_effect::{StatusBundle, TimeDilation},
     time::Dur,
-    AbilityOffset, FootOffset, Health, Kind, MassBundle, Object, Shootable, FORWARD, PLAYER_R,
+    FootOffset, Health, Kind, Libm, MassBundle, Object, FORWARD, PLAYER_R,
 };
 
 use super::properties::NeutrinoBallProps;
@@ -26,6 +22,7 @@ use super::properties::NeutrinoBallProps;
 #[derive(Component)]
 pub struct NeutrinoBall {
     pub accel_numerator: f32,
+    pub surface_a: f32,
     pub radius: f32,
     pub effect_radius: f32,
     pub activates_in: Dur,
@@ -36,21 +33,22 @@ pub fn neutrino_ball(
     props: &NeutrinoBallProps,
     transform: &Transform,
     velocity: &Velocity,
-    ability_offset: &AbilityOffset,
+    foot_offset: &FootOffset,
 ) {
     let mut ball_transform = *transform;
     let dir = transform.rotation * FORWARD;
 
+    // Let's spawn this one at the caster's feet.
     ball_transform.translation =
-        transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ability_offset.to_vec();
+        transform.translation + dir * (PLAYER_R + props.radius) + foot_offset.to_vec();
 
     let ball_velocity = velocity.linvel + dir * props.speed;
 
     commands.spawn((
         Object {
             transform: ball_transform.into(),
-            collider: Collider::ball(props.radius),
-            foot_offset: (-props.radius).into(),
+            collider: Collider::ball(props.effect_radius),
+            foot_offset: (0.0).into(),
             mass: MassBundle::new(props.mass()),
             body: bevy_rapier3d::prelude::RigidBody::Dynamic,
             force: ExternalForce::default(),
@@ -59,62 +57,39 @@ pub fn neutrino_ball(
             kind: Kind::NeutrinoBall,
             in_level: InLevel,
             statuses: StatusBundle::default(),
-            collisions: TrackCollisionBundle::off(),
+            collisions: TrackCollisionBundle::on(),
         },
         NeutrinoBall {
             accel_numerator: props.accel_numerator(),
+            surface_a: props.surface_a,
             radius: props.radius,
             effect_radius: props.effect_radius,
             activates_in: props.activation_delay,
         },
         Health::new_with_delay(0.0, props.duration),
-        Shootable,
+        Sensor,
     ));
 }
 
 #[derive(Component)]
-pub struct NeutrinoBallGravityFieldSpawned;
-
-#[derive(Component)]
-pub struct NeutrinoBallGravityField {
-    accel_numerator: f32,
-}
+pub struct NeutrinoBallActivated;
 
 pub fn activation_system(
     mut commands: Commands,
     mut neutrino_q: Query<
-        (Entity, &mut NeutrinoBall, &FootOffset, &TimeDilation),
-        Without<NeutrinoBallGravityFieldSpawned>,
+        (Entity, &mut NeutrinoBall, &TimeDilation),
+        Without<NeutrinoBallActivated>,
     >,
 ) {
-    for (entity, mut ball, foot_offset, time_dilation) in &mut neutrino_q {
+    for (entity, mut ball, time_dilation) in &mut neutrino_q {
         if ball.activates_in.tick(time_dilation) {
-            commands
-                .entity(entity)
-                .insert(NeutrinoBallGravityFieldSpawned)
-                .with_children(|builder| {
-                    builder.spawn((
-                        NeutrinoBallGravityField {
-                            accel_numerator: ball.accel_numerator,
-                        },
-                        *foot_offset,
-                        TransformBundle::default(),
-                        ActiveEvents::COLLISION_EVENTS,
-                        TrackCollisions::default(),
-                        Collider::ball(ball.effect_radius),
-                        Sensor,
-                    ));
-                });
+            commands.entity(entity).insert(NeutrinoBallActivated);
         }
     }
 }
 
 pub fn collision_system(
-    neutrino_q: Query<(
-        &NeutrinoBallGravityField,
-        &GlobalTransform,
-        &TrackCollisions,
-    )>,
+    neutrino_q: Query<(&NeutrinoBall, &Transform, &TrackCollisions), With<NeutrinoBallActivated>>,
     mut target_q: Query<(
         &mut ExternalForce,
         &Transform,
@@ -122,7 +97,7 @@ pub fn collision_system(
         &TimeDilation,
     )>,
 ) {
-    for (field, global_transform, colliding) in &neutrino_q {
+    for (ball, transform, colliding) in &neutrino_q {
         for &target in &colliding.targets {
             let Ok((mut force, target_transform, mass, dilation)) = target_q.get_mut(target) else {
                 // TODO: Exclude `Floor` before this. Or maybe it doesn't
@@ -130,11 +105,18 @@ pub fn collision_system(
                 // tracing::warn!(?target, "Neutrino ball hit target, but not in query");
                 continue;
             };
-            let translation = global_transform.translation();
+            let translation = transform.translation;
             let d2 = translation.distance_squared(target_transform.translation);
 
-            let a = field.accel_numerator / d2;
-            // TODO: Make ball no longer a collider, and use Gauss' law.
+            let a = if d2 < ball.radius * ball.radius {
+                // Per Gauss' law, if inside the ball's radius, gravity linearly
+                // decreases as we approach the center.
+                let d = Libm::sqrt(d2);
+                let factor = d / ball.radius;
+                factor * ball.surface_a
+            } else {
+                ball.accel_numerator / d2
+            };
             let f = mass.mass * a;
 
             let mut dir = (translation - target_transform.translation).normalize();

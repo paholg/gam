@@ -16,7 +16,7 @@ use crate::{
     level::Floor,
     movement::DesiredMove,
     status_effect::TimeDilation,
-    AbilityOffset, Ally, Cooldowns, Enemy, Energy, Faction, Target, To2d, To3d,
+    AbilityOffset, Ally, Cooldowns, Enemy, Energy, Faction, FootOffset, Target, To2d, To3d,
 };
 
 use super::{
@@ -46,7 +46,7 @@ impl Ai for ChargeAi {
 impl Default for ChargeAi {
     fn default() -> Self {
         let mut rng = thread_rng();
-        let desired_range = rng.gen_range(0.0..=6.0);
+        let desired_range = rng.gen_range(0.0..=4.0);
         Self {
             desired_range_squared: desired_range * desired_range,
             target_dist_squared: 3.0 * 3.0,
@@ -113,6 +113,7 @@ fn gun_system(
         &Velocity,
         &Transform,
         &AbilityOffset,
+        &FootOffset,
         &ChargeAi,
         &mut TimeDilation,
     )>,
@@ -125,6 +126,7 @@ fn gun_system(
         velocity,
         transform,
         ability_offset,
+        foot_offset,
         ai,
         mut time_dilation,
     ) in ai_q.iter_mut()
@@ -140,6 +142,7 @@ fn gun_system(
                 velocity,
                 &Target::default(),
                 ability_offset,
+                foot_offset,
                 &mut time_dilation,
             );
         }
