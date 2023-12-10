@@ -244,7 +244,7 @@ impl Default for NeutrinoBallProps {
             duration: Dur::new(240),
             activation_delay: Dur::new(30),
             speed: 3.0,
-            surface_a: 30.0,
+            surface_a: 35.0,
         }
     }
 }
