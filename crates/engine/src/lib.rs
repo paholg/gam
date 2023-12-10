@@ -1,7 +1,7 @@
 use std::fmt;
 
 use ability::{properties::AbilityProps, seeker_rocket, Abilities, Ability};
-use ai::charge::ChargeAiPlugin;
+use ai::pathfind::PathfindPlugin;
 use bevy_app::{App, FixedUpdate, Plugin, PostUpdate, Startup};
 use bevy_ecs::{
     bundle::Bundle,
@@ -31,6 +31,7 @@ pub mod ability;
 pub mod ai;
 pub mod collision;
 pub mod death_callback;
+pub mod debug;
 pub mod input;
 pub mod level;
 pub mod lifecycle;
@@ -360,7 +361,7 @@ impl Plugin for GamPlugin {
                     (
                         // Inputs
                         input::apply_inputs,
-                        ai::simple::system_set(),
+                        ai::pathfind::poll_pathfinding_system,
                         ai::charge::system_set(),
                     ),
                     // Misc; categorize futher?
@@ -373,6 +374,7 @@ impl Plugin for GamPlugin {
                     ability::transport::move_system,
                     ability::transport::activation_system,
                     lifecycle::fall,
+                    ai::pathfind::pathfinding_system,
                     (
                         // Collisions
                         collision::collision_system,
@@ -408,7 +410,7 @@ impl Plugin for GamPlugin {
         // Note: None of these plugins should include systems; any systems
         // should be included manually to ensure determinism.
         // TODO: The `ChargeAiPlugin` does include systems, that run on `Update`. We'll need to patch oxidized_navigation or use something else.`
-        app.add_plugins(physics).add_plugins(ChargeAiPlugin);
+        app.add_plugins(physics).add_plugins(PathfindPlugin);
     }
 }
 

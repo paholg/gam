@@ -288,7 +288,7 @@ impl Default for TransportProps {
             cooldown: Tick(90),
             radius: 0.5,
             height: 2.0,
-            accel: 10.0,
+            accel: 100.0,
             speed: 3.0,
             delay: Tick(90),
         }

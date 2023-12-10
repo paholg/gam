@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 
 use bevy_ecs::{
+    bundle::Bundle,
     component::Component,
     entity::Entity,
     query::{With, Without},
@@ -11,44 +12,74 @@ use bevy_transform::components::Transform;
 
 use crate::{ability::properties::AbilityProps, face, Faction, Target, To2d};
 
+use self::pathfind::HasPath;
+
 pub mod charge;
-pub mod simple;
+pub mod pathfind;
+
+pub trait Ai: Component {
+    /// A measure of how "smart" this ai is, from 0.0 to 1.0.
+    fn intelligence(&self) -> f32;
+}
+
+#[derive(Bundle, Default)]
+pub struct AiBundle<A: Ai + Default> {
+    ai: A,
+    target: AiTarget,
+    path: HasPath,
+}
 
 #[derive(Component, Default)]
 pub struct AiTarget {
+    pub entity: Option<Entity>,
     /// Location of the target. This is not necessarily the entity's location,
     /// but more like where the Ai's cursor would be.
     pub loc: Target,
-    pub entity: Option<Entity>,
 }
 
-/// Note: This updates the ai to aim at its nearest foe. For now, it partially
-/// leads based on `gun` speed.
-fn update_target_system<T: Faction, Ai: Component>(
-    mut ai_q: Query<
-        (&mut Transform, &Velocity, &mut AiTarget),
-        (With<T>, Without<T::Foe>, With<Ai>),
-    >,
-    target_q: Query<(Entity, &Transform, &Velocity), (With<T::Foe>, Without<T>)>,
+fn target_closest_system<T: Faction, A: Ai>(
+    mut ai_q: Query<(&Transform, &mut AiTarget), (With<T>, With<A>)>,
+    target_q: Query<(Entity, &Transform), (With<T::Foe>, Without<T>)>,
+) {
+    for (transform, mut target) in &mut ai_q {
+        if target.entity.and_then(|e| target_q.get(e).ok()).is_some() {
+            // We already have a target, and it still exists.
+            continue;
+        }
+        let closest_target = target_q
+            .iter()
+            .map(|(e, t)| (e, transform.translation.distance_squared(t.translation)))
+            .min_by(|(_, d1), (_, d2)| d1.partial_cmp(d2).unwrap_or(Ordering::Equal));
+        if let Some((entity, _distance)) = closest_target {
+            target.entity = Some(entity);
+        }
+    }
+}
+
+/// Note: This updates the ai to aim at its nearest foe. For now, it leads based
+/// on gun speed and intelligence factor.
+fn update_target_system<T: Faction, A: Ai>(
+    mut ai_q: Query<(&mut Transform, &Velocity, &mut AiTarget, &A), (With<T>, Without<T::Foe>)>,
+    target_q: Query<(&Transform, &Velocity), (With<T::Foe>, Without<T>)>,
     props: Res<AbilityProps>,
 ) {
     let shot_speed = props.gun.speed;
 
-    for (mut transform, velocity, mut target) in ai_q.iter_mut() {
-        let closest_target = target_q
-            .iter()
-            .map(|(e, t, v)| (e, t, v, transform.translation.distance(t.translation)))
-            .min_by(|(_, _, _, d1), (_, _, _, d2)| d1.partial_cmp(d2).unwrap_or(Ordering::Equal));
-        if let Some((target_entity, target_transform, target_velocity, target_distance)) =
-            closest_target
-        {
-            let dt = target_distance / shot_speed;
-            let lead = (target_velocity.linvel - velocity.linvel) * dt * 0.5; // Just partially lead for now
-            let lead_translation = (target_transform.translation + lead).to_2d();
+    for (mut transform, velocity, mut target, ai) in ai_q.iter_mut() {
+        let Some((target_transform, target_velocity)) =
+            target.entity.and_then(|e| target_q.get(e).ok())
+        else {
+            continue;
+        };
 
-            face(&mut transform, lead_translation);
-            target.loc.0 = lead_translation;
-            target.entity = Some(target_entity);
-        }
+        let dt = transform.translation.distance(target_transform.translation) / shot_speed;
+
+        // Let's use the ai's intelligence factor to determine how much it should lead.
+        let lead_factor = ai.intelligence();
+        let lead = (target_velocity.linvel - velocity.linvel) * dt * lead_factor;
+        let lead_translation = (target_transform.translation + lead).to_2d();
+
+        face(&mut transform, lead_translation);
+        target.loc.0 = lead_translation;
     }
 }

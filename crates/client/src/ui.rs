@@ -8,7 +8,7 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::config::{MenuAction, UserAction};
 
-mod hud;
+pub mod hud;
 
 pub struct UiPlugin;
 
