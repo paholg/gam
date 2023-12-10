@@ -4,8 +4,8 @@ use bevy_ecs::{
 };
 
 use bevy_rapier3d::prelude::{
-    Collider, ExternalForce, LockedAxes, QueryFilter, QueryFilterFlags,
-    RapierContext, Sensor, Velocity,
+    Collider, ExternalForce, LockedAxes, QueryFilter, QueryFilterFlags, RapierContext, Sensor,
+    Velocity,
 };
 use bevy_transform::components::Transform;
 
