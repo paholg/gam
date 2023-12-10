@@ -9,7 +9,8 @@ use bevy_rapier3d::prelude::{
 use bevy_transform::components::Transform;
 
 use crate::{
-    ability::properties::ExplosionProps, collision::TrackCollisions, Health, Object, To2d, To3d,
+    ability::properties::ExplosionProps, collision::TrackCollisions, status_effect::TimeDilation,
+    Health, Object, To2d, To3d,
 };
 
 #[derive(Debug, Component)]
@@ -91,7 +92,7 @@ pub fn explosion_grow_system(mut explosion_q: Query<(&Explosion, &mut Collider)>
 pub fn explosion_collision_system(
     rapier_context: Res<RapierContext>,
     explosion_q: Query<(&Explosion, &Transform, &TrackCollisions)>,
-    mut target_q: Query<(&Transform, &mut Health, &mut ExternalForce)>,
+    mut target_q: Query<(&Transform, &mut Health, &mut ExternalForce, &TimeDilation)>,
 ) {
     let wall_filter = QueryFilter {
         flags: QueryFilterFlags::ONLY_FIXED,
@@ -99,7 +100,9 @@ pub fn explosion_collision_system(
     };
     for (explosion, transform, colliding) in &explosion_q {
         for &target in &colliding.targets {
-            if let Ok((target_transform, mut health, mut force)) = target_q.get_mut(target) {
+            if let Ok((target_transform, mut health, mut force, dilation)) =
+                target_q.get_mut(target)
+            {
                 let origin = transform.translation;
                 let dir = target_transform.translation - origin;
                 let wall_collision =
@@ -114,7 +117,7 @@ pub fn explosion_collision_system(
                         continue;
                     }
                 }
-                health.take(explosion.damage);
+                health.take(explosion.damage, dilation);
                 let dir = (target_transform.translation.to_2d() - transform.translation.to_2d())
                     .normalize_or_zero()
                     .to_3d(0.0);

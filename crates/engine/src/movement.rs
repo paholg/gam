@@ -6,6 +6,7 @@ use bevy_rapier3d::prelude::Velocity;
 use bevy_reflect::Reflect;
 
 use crate::{
+    status_effect::TimeDilation,
     time::{FREQUENCY, TIMESTEP},
     To2d, To3d,
 };
@@ -50,12 +51,13 @@ impl Default for MaxSpeed {
     }
 }
 
-pub fn apply_movement(mut query: Query<(&DesiredMove, &mut Velocity, &MaxSpeed)>) {
-    for (desired, mut velocity, max_speed) in &mut query {
-        let desired_v = max_speed.speed * desired.dir;
+pub fn apply_movement(mut query: Query<(&DesiredMove, &mut Velocity, &MaxSpeed, &TimeDilation)>) {
+    for (desired, mut velocity, max_speed, time_dilation) in &mut query {
+        let factor = time_dilation.factor();
+        let desired_v = max_speed.speed * desired.dir * factor;
 
         let desired_delta_v = desired_v - velocity.linvel.to_2d();
-        let delta_a = (desired_delta_v * FREQUENCY).clamp_length_max(max_speed.accel);
+        let delta_a = (desired_delta_v * FREQUENCY).clamp_length_max(max_speed.accel * factor);
 
         velocity.linvel += (delta_a * TIMESTEP).to_3d(0.0);
     }

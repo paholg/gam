@@ -8,7 +8,6 @@ use super::{grenade::GrenadeKind, Ability};
 
 #[derive(Debug, Resource)]
 pub struct AbilityProps {
-    pub hyper_sprint: HyperSprintProps,
     pub gun: GunProps,
     pub shotgun: ShotgunProps,
     pub frag_grenade: GrenadeProps,
@@ -16,6 +15,7 @@ pub struct AbilityProps {
     pub seeker_rocket: SeekerRocketProps,
     pub neutrino_ball: NeutrinoBallProps,
     pub transport: TransportProps,
+    pub speed_up: SpeedUpProps,
 }
 
 impl Default for AbilityProps {
@@ -53,12 +53,12 @@ impl Default for AbilityProps {
                     kind: ExplosionKind::HealGrenade,
                 },
             },
-            hyper_sprint: Default::default(),
             gun: Default::default(),
             shotgun: Default::default(),
             seeker_rocket: Default::default(),
             neutrino_ball: Default::default(),
             transport: Default::default(),
+            speed_up: SpeedUpProps::default(),
         }
     }
 }
@@ -74,6 +74,7 @@ impl AbilityProps {
             Ability::SeekerRocket => self.seeker_rocket.cooldown,
             Ability::NeutrinoBall => self.neutrino_ball.cooldown,
             Ability::Transport => self.transport.cooldown,
+            Ability::SpeedUp => self.speed_up.cooldown,
         }
     }
 
@@ -87,24 +88,7 @@ impl AbilityProps {
             Ability::SeekerRocket => self.seeker_rocket.cost,
             Ability::NeutrinoBall => self.neutrino_ball.cost,
             Ability::Transport => self.transport.cost,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct HyperSprintProps {
-    pub cost: f32,
-    /// Speed multiplication factor.
-    pub factor: f32,
-    pub cooldown: Dur,
-}
-
-impl Default for HyperSprintProps {
-    fn default() -> Self {
-        Self {
-            cost: 2.0,
-            factor: 1.8,
-            cooldown: Dur::new(0),
+            Ability::SpeedUp => self.speed_up.cost,
         }
     }
 }
@@ -289,6 +273,25 @@ impl Default for TransportProps {
             accel: 100.0,
             speed: 3.0,
             delay: Dur::new(90),
+        }
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct SpeedUpProps {
+    pub cost: f32,
+    pub cooldown: Dur,
+    pub duration: Dur,
+    pub amount: f32,
+}
+
+impl Default for SpeedUpProps {
+    fn default() -> Self {
+        Self {
+            cost: 2.0,
+            cooldown: Dur::new(1),
+            duration: Dur::new(1),
+            amount: 1.0,
         }
     }
 }

@@ -14,7 +14,7 @@ use bevy_transform::components::{GlobalTransform, Transform};
 use crate::{
     collision::TrackCollisions,
     level::InLevel,
-    status_effect::StatusBundle,
+    status_effect::{StatusBundle, TimeDilation},
     time::{Frame, FrameCounter},
     Health, Kind, Object, Shootable,
 };
@@ -103,7 +103,7 @@ pub fn collision_system(
         &Velocity,
         &TrackCollisions,
     )>,
-    mut health_q: Query<&mut Health, Without<Bullet>>,
+    mut health_q: Query<(&mut Health, &TimeDilation), Without<Bullet>>,
     mut momentum_q: Query<(&mut Velocity, &ReadMassProperties), Without<Bullet>>,
     shootable_q: Query<(), With<Shootable>>,
 ) {
@@ -113,8 +113,8 @@ pub fn collision_system(
             if shootable_q.get(target).is_ok() {
                 should_die = true;
             }
-            if let Ok(mut health) = health_q.get_mut(target) {
-                health.take(bullet.damage);
+            if let Ok((mut health, dilation)) = health_q.get_mut(target) {
+                health.take(bullet.damage, dilation);
             }
 
             if let Ok((mut velocity, mass)) = momentum_q.get_mut(target) {

@@ -10,7 +10,8 @@ use strum::{Display, EnumIter};
 use tracing::warn;
 
 use crate::{
-    time::FrameCounter, AbilityOffset, Cooldowns, Energy, Health, Target, FORWARD, PLAYER_R,
+    status_effect::TimeDilation, time::FrameCounter, AbilityOffset, Cooldowns, Energy, Health,
+    Target, FORWARD, PLAYER_R,
 };
 
 use self::{
@@ -19,6 +20,7 @@ use self::{
     neutrino_ball::neutrino_ball,
     properties::{AbilityProps, GunProps, ShotgunProps},
     seeker_rocket::seeker_rocket,
+    speed_up::speed_up,
     transport::transport,
 };
 
@@ -27,6 +29,7 @@ pub mod grenade;
 pub mod neutrino_ball;
 pub mod properties;
 pub mod seeker_rocket;
+pub mod speed_up;
 pub mod transport;
 
 #[derive(
@@ -53,6 +56,7 @@ pub enum Ability {
     SeekerRocket,
     NeutrinoBall,
     Transport,
+    SpeedUp,
 }
 
 #[derive(Debug, Component, Clone, Serialize, Deserialize)]
@@ -96,7 +100,10 @@ impl Ability {
         velocity: &Velocity,
         target: &Target,
         ability_offset: &AbilityOffset,
+        time_dilation: &mut TimeDilation,
     ) -> bool {
+        // TODO: Account for time dilation for cooldowns. We might have to tick
+        // them down each frame.
         let cooldown = match cooldowns.get_mut(self) {
             Some(cd) => cd,
             None => {
@@ -173,6 +180,7 @@ impl Ability {
                 target,
                 tick_counter,
             ),
+            Ability::SpeedUp => speed_up(&props.speed_up, time_dilation),
         }
         true
     }

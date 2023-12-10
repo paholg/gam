@@ -11,8 +11,8 @@ use bevy_ecs::{
 };
 use bevy_math::{Quat, Vec2, Vec3};
 use bevy_rapier3d::prelude::{
-    Collider, ColliderMassProperties, ExternalForce, ExternalImpulse, Friction, LockedAxes,
-    ReadMassProperties, RigidBody, Velocity,
+    Collider, ColliderMassProperties, ExternalForce, Friction, LockedAxes, ReadMassProperties,
+    RigidBody, Velocity,
 };
 use bevy_reflect::Reflect;
 use bevy_time::{Fixed, Time};
@@ -24,7 +24,9 @@ use lifecycle::DeathEvent;
 use movement::{DesiredMove, MaxSpeed};
 use multiplayer::PlayerInputs;
 use physics::PhysicsPlugin;
-use status_effect::StatusBundle;
+use status_effect::{
+    status_effect_system, Charge, Phased, StatusBundle, Temperature, TimeDilation,
+};
 use time::{Dur, Frame, FrameCounter, FREQUENCY};
 
 pub mod ability;
@@ -98,10 +100,11 @@ impl Health {
         }
     }
 
-    pub fn take(&mut self, dmg: f32) {
+    pub fn take(&mut self, dmg: f32, time_dilation: &TimeDilation) {
         // Note: Damage can be negative (for healing) so we need to clamp by
         // both min (0) and max.
-        self.cur = (self.cur - dmg).clamp(0.0, self.max);
+        let damage = dmg * time_dilation.factor();
+        self.cur = (self.cur - damage).clamp(0.0, self.max);
     }
 
     pub fn die(&mut self) {
@@ -270,7 +273,6 @@ struct Character {
     energy: Energy,
     max_speed: MaxSpeed,
     friction: Friction,
-    impulse: ExternalImpulse,
     shootable: Shootable,
     cooldowns: Cooldowns,
     abilities: Abilities,
@@ -353,8 +355,11 @@ impl Plugin for GamPlugin {
                     // Note: Most things should go here.
                     (
                         // Initial frame resets.
+                        status_effect_system::<Temperature>,
+                        status_effect_system::<Charge>,
+                        status_effect_system::<TimeDilation>,
+                        status_effect_system::<Phased>,
                         clear_forces,
-                        clear_impulses,
                         energy_regen,
                         lifecycle::reset,
                     ),
@@ -422,9 +427,9 @@ pub fn game_paused(state: Res<State<AppState>>) -> bool {
     state.get() != &AppState::Running
 }
 
-pub fn energy_regen(mut query: Query<&mut Energy>) {
-    for mut energy in &mut query {
-        energy.cur += energy.regen;
+pub fn energy_regen(mut query: Query<(&mut Energy, &TimeDilation)>) {
+    for (mut energy, dilation) in &mut query {
+        energy.cur += energy.regen * dilation.factor();
         energy.cur = energy.cur.min(energy.max);
     }
 }
@@ -432,12 +437,6 @@ pub fn energy_regen(mut query: Query<&mut Energy>) {
 pub fn clear_forces(mut query: Query<&mut ExternalForce>) {
     for mut force in &mut query {
         *force = ExternalForce::default();
-    }
-}
-
-pub fn clear_impulses(mut query: Query<&mut ExternalImpulse>) {
-    for mut impulse in &mut query {
-        impulse.reset();
     }
 }
 

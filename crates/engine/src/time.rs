@@ -36,6 +36,10 @@ impl Dur {
         self.0 == 0
     }
 
+    pub fn is_positive(self) -> bool {
+        self.0 > 0
+    }
+
     pub fn reduce_one(&mut self) {
         self.0 = self.0.saturating_sub(1);
     }

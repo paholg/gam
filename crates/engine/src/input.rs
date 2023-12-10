@@ -12,6 +12,7 @@ use crate::{
     face,
     movement::DesiredMove,
     multiplayer::{Action, PlayerInputs},
+    status_effect::TimeDilation,
     time::FrameCounter,
     AbilityOffset, AppState, Cooldowns, Energy, Player, Target,
 };
@@ -52,6 +53,7 @@ pub fn apply_inputs(
         &Abilities,
         &mut DesiredMove,
         &AbilityOffset,
+        &mut TimeDilation,
     )>,
 ) {
     for (
@@ -65,6 +67,7 @@ pub fn apply_inputs(
         abilities,
         mut desired_move,
         ability_offset,
+        mut time_dilation,
     ) in query.iter_mut()
     {
         let Some(input) = inputs.get(player) else {
@@ -92,6 +95,7 @@ pub fn apply_inputs(
                 velocity,
                 &target,
                 ability_offset,
+                &mut time_dilation,
             );
             if fired {
                 abilities_not_fired.remove(&ability);

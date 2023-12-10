@@ -103,7 +103,6 @@ fn spawn_enemies(
                         ..Default::default()
                     },
                     max_speed: Default::default(),
-                    impulse: Default::default(),
                     friction: Friction {
                         coefficient: 0.0,
                         combine_rule: CoefficientCombineRule::Min,
@@ -148,7 +147,6 @@ fn spawn_allies(
                         ..Default::default()
                     },
                     max_speed: Default::default(),
-                    impulse: Default::default(),
                     friction: Friction {
                         coefficient: 0.0,
                         combine_rule: CoefficientCombineRule::Min,
