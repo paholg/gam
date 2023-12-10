@@ -184,18 +184,17 @@ fn move_system<T: Faction>(
             if final_dest.to_2d().distance_squared(target_loc) > ai.ai.target_dist_squared {
                 // Target has moved too far; recompute path.
                 Task::Pathfind
-            } else if loc.distance_squared(target_loc) < ai.ai.desired_range_squared {
+            } else if loc.distance_squared(target_loc) < ai.ai.desired_range_squared
+                && !ai.ai.gun_obstruction
+            {
                 Task::Stop
             } else {
                 Task::Move
             }
         } else {
-            // We don't have a destination.
-            if loc.distance_squared(target_loc) < ai.ai.desired_range_squared {
-                Task::Stop
-            } else {
-                Task::Pathfind
-            }
+            // We don't have a destination. We should always have one just in
+            // case.
+            Task::Pathfind
         };
 
         match task {
