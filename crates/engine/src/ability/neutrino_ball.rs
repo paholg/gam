@@ -14,7 +14,7 @@ use bevy_transform::{
 };
 
 use crate::{
-    collision::TrackCollisions,
+    collision::{TrackCollisionBundle, TrackCollisions},
     level::InLevel,
     status_effect::{StatusBundle, TimeDilation},
     time::Dur,
@@ -59,6 +59,7 @@ pub fn neutrino_ball(
             kind: Kind::NeutrinoBall,
             in_level: InLevel,
             statuses: StatusBundle::default(),
+            collisions: TrackCollisionBundle::off(),
         },
         NeutrinoBall {
             accel_numerator: props.accel_numerator(),
@@ -124,7 +125,8 @@ pub fn collision_system(
     for (field, global_transform, colliding) in &neutrino_q {
         for &target in &colliding.targets {
             let Ok((mut force, target_transform, mass, dilation)) = target_q.get_mut(target) else {
-                // TODO: Exclude `Floor` before this.
+                // TODO: Exclude `Floor` before this. Or maybe it doesn't
+                // matter.
                 // tracing::warn!(?target, "Neutrino ball hit target, but not in query");
                 continue;
             };
@@ -132,6 +134,7 @@ pub fn collision_system(
             let d2 = translation.distance_squared(target_transform.translation);
 
             let a = field.accel_numerator / d2;
+            // TODO: Make ball no longer a collider, and use Gauss' law.
             let f = mass.mass * a;
 
             let mut dir = (translation - target_transform.translation).normalize();

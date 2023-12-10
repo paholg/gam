@@ -4,14 +4,17 @@ use bevy_ecs::{
 };
 
 use bevy_rapier3d::prelude::{
-    ActiveEvents, Collider, ExternalForce, LockedAxes, QueryFilter, QueryFilterFlags,
+    Collider, ExternalForce, LockedAxes, QueryFilter, QueryFilterFlags,
     RapierContext, Sensor, Velocity,
 };
 use bevy_transform::components::Transform;
 
 use crate::{
-    ability::properties::ExplosionProps, collision::TrackCollisions, level::InLevel,
-    status_effect::TimeDilation, Health, Kind, MassBundle, Object, To2d, To3d,
+    ability::properties::ExplosionProps,
+    collision::{TrackCollisionBundle, TrackCollisions},
+    level::InLevel,
+    status_effect::TimeDilation,
+    Health, Kind, MassBundle, Object, To2d, To3d,
 };
 
 #[derive(Debug, Component)]
@@ -78,11 +81,10 @@ impl ExplosionCallback {
                 kind: Kind::Other,
                 in_level: InLevel,
                 statuses: crate::status_effect::StatusBundle::default(),
+                collisions: TrackCollisionBundle::on(),
             },
             Explosion::from(self.props),
             Sensor,
-            ActiveEvents::COLLISION_EVENTS,
-            TrackCollisions::default(),
             Health::new_with_delay(0.0, self.props.duration),
         ));
     }

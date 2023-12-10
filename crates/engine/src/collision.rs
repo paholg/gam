@@ -1,6 +1,30 @@
-use bevy_ecs::{component::Component, entity::Entity, event::EventReader, system::Query};
-use bevy_rapier3d::prelude::CollisionEvent;
+use bevy_ecs::{
+    bundle::Bundle, component::Component, entity::Entity, event::EventReader, system::Query,
+};
+use bevy_rapier3d::prelude::{ActiveEvents, CollisionEvent};
 use smallvec::SmallVec;
+
+#[derive(Bundle)]
+pub struct TrackCollisionBundle {
+    active_events: ActiveEvents,
+    track_collisions: TrackCollisions,
+}
+
+impl TrackCollisionBundle {
+    pub fn on() -> Self {
+        Self {
+            active_events: ActiveEvents::COLLISION_EVENTS,
+            track_collisions: TrackCollisions::default(),
+        }
+    }
+
+    pub fn off() -> Self {
+        Self {
+            active_events: ActiveEvents::empty(),
+            track_collisions: TrackCollisions::default(),
+        }
+    }
+}
 
 /// Any entity with this component and `ActiveEvents::COLLISION_EVENTS` will be
 /// updated every frame with its collision targets. It will also need to be a

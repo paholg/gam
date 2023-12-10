@@ -14,6 +14,7 @@ use bevy_transform::components::Transform;
 use crate::{
     ability::{Abilities, Ability},
     ai::{charge::ChargeAi, AiBundle},
+    collision::TrackCollisionBundle,
     death_callback::DeathCallback,
     level::{InLevel, LevelProps},
     player::{character_collider, PlayerInfo},
@@ -103,6 +104,7 @@ fn spawn_enemies(
                         force: ExternalForce::default(),
                         in_level: InLevel,
                         statuses: StatusBundle::default(),
+                        collisions: TrackCollisionBundle::off(),
                     },
                     max_speed: Default::default(),
                     friction: Friction {
@@ -152,6 +154,7 @@ fn spawn_allies(
                         force: ExternalForce::default(),
                         in_level: InLevel,
                         statuses: StatusBundle::default(),
+                        collisions: TrackCollisionBundle::off(),
                     },
                     max_speed: Default::default(),
                     friction: Friction {
