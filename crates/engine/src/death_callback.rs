@@ -4,13 +4,14 @@ use bevy_ecs::{
 };
 
 use bevy_rapier3d::prelude::{
-    ActiveEvents, Collider, ExternalForce, QueryFilter, QueryFilterFlags, RapierContext, Sensor,
+    ActiveEvents, Collider, ExternalForce, LockedAxes, QueryFilter, QueryFilterFlags,
+    RapierContext, Sensor, Velocity,
 };
 use bevy_transform::components::Transform;
 
 use crate::{
-    ability::properties::ExplosionProps, collision::TrackCollisions, status_effect::TimeDilation,
-    Health, Object, To2d, To3d,
+    ability::properties::ExplosionProps, collision::TrackCollisions, level::InLevel,
+    status_effect::TimeDilation, Health, Kind, MassBundle, Object, To2d, To3d,
 };
 
 #[derive(Debug, Component)]
@@ -65,12 +66,18 @@ impl ExplosionCallback {
     pub fn call(&self, commands: &mut Commands, transform: &Transform) {
         commands.spawn((
             Object {
-                transform: *transform,
+                transform: (*transform).into(),
                 collider: Collider::ball(self.props.min_radius),
                 // Foot offset doesn't really make sense for an explosion, I think.
                 foot_offset: 0.0.into(),
                 body: bevy_rapier3d::prelude::RigidBody::KinematicPositionBased,
-                ..Default::default()
+                mass: MassBundle::new(0.0),
+                velocity: Velocity::zero(),
+                force: ExternalForce::default(),
+                locked_axes: LockedAxes::empty(),
+                kind: Kind::Other,
+                in_level: InLevel,
+                statuses: crate::status_effect::StatusBundle::default(),
             },
             Explosion::from(self.props),
             Sensor,

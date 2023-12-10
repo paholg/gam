@@ -4,11 +4,8 @@ use bevy_ecs::{
     query::With,
     system::{Commands, Query},
 };
-use bevy_rapier3d::prelude::{
-    ActiveEvents, Collider, ColliderMassProperties, ExternalForce, LockedAxes, ReadMassProperties,
-    Sensor, Velocity,
-};
-use bevy_transform::components::{GlobalTransform, Transform};
+use bevy_rapier3d::prelude::{ActiveEvents, Collider, ExternalForce, LockedAxes, Sensor, Velocity};
+use bevy_transform::components::Transform;
 
 use crate::{
     collision::TrackCollisions,
@@ -17,7 +14,8 @@ use crate::{
     movement::DesiredMove,
     status_effect::StatusBundle,
     time::TIMESTEP,
-    AbilityOffset, Energy, Health, Kind, Object, Shootable, Target, To2d, FORWARD, PLAYER_R,
+    AbilityOffset, Energy, Health, Kind, MassBundle, Object, Shootable, Target, To2d, FORWARD,
+    PLAYER_R,
 };
 
 use super::properties::SeekerRocketProps;
@@ -48,16 +46,14 @@ pub fn seeker_rocket(
 
     commands.spawn((
         Object {
-            transform: rocket_transform,
-            global_transform: GlobalTransform::default(),
+            transform: rocket_transform.into(),
             collider: Collider::capsule_z(props.capsule_length * 0.5, props.capsule_radius),
             foot_offset: (-props.capsule_radius).into(),
-            mass_props: ColliderMassProperties::Density(1.0),
+            mass: MassBundle::new(props.mass),
             body: bevy_rapier3d::prelude::RigidBody::Dynamic,
             force: ExternalForce::default(),
             velocity: *velocity,
             locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Y,
-            mass: ReadMassProperties::default(),
             kind: Kind::SeekerRocket,
             in_level: InLevel,
             statuses: StatusBundle::default(),

@@ -8,10 +8,9 @@ use bevy_ecs::{
 
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{
-    Collider, ColliderMassProperties, ExternalForce, Friction, LockedAxes, ReadMassProperties,
-    Restitution, Velocity,
+    Collider, ExternalForce, Friction, LockedAxes, Restitution, Velocity,
 };
-use bevy_transform::components::{GlobalTransform, Transform};
+use bevy_transform::components::Transform;
 
 use crate::{
     death_callback::{DeathCallback, ExplosionCallback},
@@ -19,7 +18,8 @@ use crate::{
     physics::G,
     status_effect::{StatusBundle, TimeDilation},
     time::Dur,
-    AbilityOffset, Health, Kind, Libm, Object, Shootable, Target, To2d, To3d, FORWARD, PLAYER_R,
+    AbilityOffset, Health, Kind, Libm, MassBundle, Object, Shootable, Target, To2d, To3d, FORWARD,
+    PLAYER_R,
 };
 
 use super::properties::GrenadeProps;
@@ -91,16 +91,14 @@ pub fn grenade(
 
     commands.spawn((
         Object {
-            transform: Transform::from_translation(position),
-            global_transform: GlobalTransform::default(),
+            transform: Transform::from_translation(position).into(),
             collider: Collider::ball(props.radius),
             foot_offset: (-props.radius).into(),
-            mass_props: ColliderMassProperties::Density(1.0),
+            mass: MassBundle::new(props.mass),
             body: bevy_rapier3d::prelude::RigidBody::Dynamic,
             force: ExternalForce::default(),
             velocity: vel,
             locked_axes: LockedAxes::ROTATION_LOCKED,
-            mass: ReadMassProperties::default(),
             kind: props.kind.into(),
             in_level: InLevel,
             statuses: StatusBundle::default(),

@@ -178,7 +178,7 @@ fn gun(
         position,
         velocity,
         radius: props.radius,
-        density: props.density,
+        mass: props.mass,
         bullet: Bullet {
             shooter,
             expires_in: props.duration,
@@ -210,7 +210,7 @@ fn shotgun(
             position,
             velocity,
             radius: props.radius,
-            density: props.density,
+            mass: props.mass,
             bullet: Bullet {
                 shooter,
                 expires_in: props.duration,

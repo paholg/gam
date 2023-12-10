@@ -16,7 +16,10 @@ use bevy_rapier3d::prelude::{
 };
 use bevy_reflect::Reflect;
 use bevy_time::{Fixed, Time};
-use bevy_transform::components::{GlobalTransform, Transform};
+use bevy_transform::{
+    components::{GlobalTransform, Transform},
+    TransformBundle,
+};
 use bevy_utils::HashMap;
 use input::check_resume;
 use level::{InLevel, LevelProps};
@@ -59,6 +62,7 @@ pub const UP: Vec3 = Vec3::Y;
 
 pub const PLAYER_R: f32 = 0.25;
 pub const PLAYER_HEIGHT: f32 = 0.75;
+pub const PLAYER_MASS: f32 = 15.0;
 pub const ABILITY_Y: Vec3 = Vec3::new(0.0, 0.4, 0.0);
 pub const PLAYER_ABILITY_COUNT: usize = 5;
 
@@ -261,18 +265,31 @@ impl From<f32> for AbilityOffset {
     }
 }
 
-#[derive(Bundle, Default)]
+#[derive(Bundle)]
+pub struct MassBundle {
+    collider_mass_props: ColliderMassProperties,
+    read_mass_props: ReadMassProperties,
+}
+
+impl MassBundle {
+    pub fn new(mass: f32) -> Self {
+        Self {
+            collider_mass_props: ColliderMassProperties::Mass(mass),
+            read_mass_props: ReadMassProperties::default(),
+        }
+    }
+}
+
+#[derive(Bundle)]
 pub struct Object {
-    transform: Transform,
-    global_transform: GlobalTransform,
+    transform: TransformBundle,
     collider: Collider,
     foot_offset: FootOffset,
-    mass_props: ColliderMassProperties,
+    mass: MassBundle,
     body: RigidBody,
     velocity: Velocity,
     force: ExternalForce,
     locked_axes: LockedAxes,
-    mass: ReadMassProperties,
     kind: Kind,
     in_level: InLevel,
     statuses: StatusBundle,

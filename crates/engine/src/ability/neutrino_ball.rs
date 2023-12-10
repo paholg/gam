@@ -6,8 +6,7 @@ use bevy_ecs::{
 };
 use bevy_hierarchy::BuildChildren;
 use bevy_rapier3d::prelude::{
-    ActiveEvents, Collider, ColliderMassProperties, ExternalForce, LockedAxes, ReadMassProperties,
-    Sensor, Velocity,
+    ActiveEvents, Collider, ExternalForce, LockedAxes, ReadMassProperties, Sensor, Velocity,
 };
 use bevy_transform::{
     components::{GlobalTransform, Transform},
@@ -19,7 +18,7 @@ use crate::{
     level::InLevel,
     status_effect::{StatusBundle, TimeDilation},
     time::Dur,
-    AbilityOffset, FootOffset, Health, Kind, Object, Shootable, FORWARD, PLAYER_R,
+    AbilityOffset, FootOffset, Health, Kind, MassBundle, Object, Shootable, FORWARD, PLAYER_R,
 };
 
 use super::properties::NeutrinoBallProps;
@@ -49,16 +48,14 @@ pub fn neutrino_ball(
 
     commands.spawn((
         Object {
-            transform: ball_transform,
-            global_transform: GlobalTransform::default(),
+            transform: ball_transform.into(),
             collider: Collider::ball(props.radius),
             foot_offset: (-props.radius).into(),
-            mass_props: ColliderMassProperties::Density(100_000.0),
+            mass: MassBundle::new(props.mass()),
             body: bevy_rapier3d::prelude::RigidBody::Dynamic,
             force: ExternalForce::default(),
             velocity: Velocity::linear(ball_velocity),
             locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Y,
-            mass: ReadMassProperties::default(),
             kind: Kind::NeutrinoBall,
             in_level: InLevel,
             statuses: StatusBundle::default(),
