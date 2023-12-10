@@ -288,7 +288,7 @@ pub struct SpeedUpProps {
 impl Default for SpeedUpProps {
     fn default() -> Self {
         Self {
-            cost: 2.0,
+            cost: 1.0,
             cooldown: Dur::new(1),
             duration: Dur::new(1),
             amount: 1.0,

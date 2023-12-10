@@ -39,7 +39,7 @@ impl PlayerInfo {
                     },
                     shootable: Shootable,
                     abilities: self.abilities.clone(),
-                    cooldowns: Cooldowns::new(&self.abilities),
+                    cooldowns: Cooldowns::new(),
                     desired_movement: Default::default(),
                     ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
                 },

@@ -1,5 +1,5 @@
 use std::{
-    ops::{Add, Div, Sub},
+    ops::{Div, Sub},
     time::Instant,
 };
 
@@ -7,6 +7,8 @@ use bevy_ecs::system::{ResMut, Resource};
 use bevy_reflect::Reflect;
 use bevy_utils::Duration;
 use tracing::info;
+
+use crate::status_effect::TimeDilation;
 
 /// The timestep at which we run our game.
 pub const FREQUENCY: f32 = 60.0;
@@ -24,56 +26,26 @@ impl Frame {
 }
 
 /// Represents a duration in ticks rather than time.
-#[derive(Default, Debug, Copy, Clone, Reflect, PartialEq, Eq)]
-pub struct Dur(u32);
+#[derive(Default, Debug, Copy, Clone, Reflect, PartialEq)]
+pub struct Dur(f32);
 
 impl Dur {
     pub fn new(ticks: u32) -> Self {
-        Self(ticks)
+        Self(ticks as f32)
     }
 
-    pub fn is_zero(self) -> bool {
-        self.0 == 0
+    pub fn is_done(self, time_dilation: &TimeDilation) -> bool {
+        self.0.round() * time_dilation.factor() <= 0.0
     }
 
     pub fn is_positive(self) -> bool {
-        self.0 > 0
+        self.0.is_sign_positive()
     }
 
-    pub fn reduce_one(&mut self) {
-        self.0 = self.0.saturating_sub(1);
-    }
-}
-
-impl Add<Dur> for Frame {
-    type Output = Frame;
-
-    fn add(self, rhs: Dur) -> Self::Output {
-        Frame(self.0.wrapping_add(rhs.0))
-    }
-}
-
-impl Sub<Dur> for Frame {
-    type Output = Frame;
-
-    fn sub(self, rhs: Dur) -> Self::Output {
-        Frame(self.0.wrapping_sub(rhs.0))
-    }
-}
-
-impl Sub<Frame> for Frame {
-    type Output = Dur;
-
-    fn sub(self, rhs: Frame) -> Self::Output {
-        Dur(self.0.wrapping_sub(rhs.0))
-    }
-}
-
-impl Div<Dur> for Dur {
-    type Output = f32;
-
-    fn div(self, rhs: Dur) -> Self::Output {
-        self.0 as f32 / rhs.0 as f32
+    /// Tick down this duration, returning `true` if it has finished.
+    pub fn tick(&mut self, time_dilation: &TimeDilation) -> bool {
+        self.0 = (self.0 - time_dilation.factor()).max(0.0);
+        self.is_done(time_dilation)
     }
 }
 
@@ -81,7 +53,23 @@ impl Div<Dur> for f32 {
     type Output = f32;
 
     fn div(self, rhs: Dur) -> Self::Output {
-        self / rhs.0 as f32
+        self / rhs.0
+    }
+}
+
+impl Div<Dur> for Dur {
+    type Output = f32;
+
+    fn div(self, rhs: Dur) -> Self::Output {
+        self.0 / rhs.0
+    }
+}
+
+impl Sub<Frame> for Frame {
+    type Output = Dur;
+
+    fn sub(self, rhs: Frame) -> Self::Output {
+        Dur(self.0.wrapping_sub(rhs.0) as f32)
     }
 }
 
@@ -116,7 +104,8 @@ impl FrameCounter {
     }
 
     pub fn at(&self, dur: Dur) -> Frame {
-        self.frame + dur
+        let frame = self.frame.0 + dur.0.round() as u32;
+        Frame(frame)
     }
 }
 

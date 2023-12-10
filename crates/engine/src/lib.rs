@@ -25,9 +25,9 @@ use movement::{DesiredMove, MaxSpeed};
 use multiplayer::PlayerInputs;
 use physics::PhysicsPlugin;
 use status_effect::{
-    status_effect_system, Charge, Phased, StatusBundle, Temperature, TimeDilation,
+    charge_tick, phased_tick, temperature_tick, time_dilation_tick, StatusBundle, TimeDilation,
 };
-use time::{Dur, Frame, FrameCounter, FREQUENCY};
+use time::{Dur, FrameCounter, FREQUENCY};
 
 pub mod ability;
 pub mod ai;
@@ -190,26 +190,38 @@ pub struct Shootable;
 
 #[derive(Component, Reflect, Default)]
 pub struct Cooldowns {
-    map: HashMap<Ability, Frame>,
+    map: HashMap<Ability, Dur>,
 }
 
 impl Cooldowns {
-    pub fn new(abilities: &Abilities) -> Self {
-        let cooldowns = abilities
-            .iter()
-            .map(|ability| (ability, Frame::default()))
-            .collect();
-        Self { map: cooldowns }
+    pub fn new() -> Self {
+        Self {
+            map: HashMap::default(),
+        }
     }
 
-    pub fn get_mut(&mut self, ability: &Ability) -> Option<&mut Frame> {
-        self.map.get_mut(ability)
+    pub fn is_available(&self, ability: &Ability, time_dilation: &TimeDilation) -> bool {
+        match self.map.get(ability) {
+            Some(dur) => dur.is_done(time_dilation),
+            None => true,
+        }
+    }
+
+    pub fn set(&mut self, ability: Ability, cooldown: Dur) {
+        self.map.insert(ability, cooldown);
     }
 
     pub fn reset(&mut self) {
-        for tick in self.map.values_mut() {
-            *tick = Frame::default();
+        self.map.clear();
+    }
+}
+
+pub fn cooldown_system(mut query: Query<(&mut Cooldowns, &TimeDilation)>) {
+    for (mut cd, time_dilation) in &mut query {
+        for (_ability, dur) in cd.map.iter_mut() {
+            dur.tick(time_dilation);
         }
+        cd.map.retain(|_ability, dur| !dur.is_done(time_dilation));
     }
 }
 
@@ -355,12 +367,13 @@ impl Plugin for GamPlugin {
                     // Note: Most things should go here.
                     (
                         // Initial frame resets.
-                        status_effect_system::<Temperature>,
-                        status_effect_system::<Charge>,
-                        status_effect_system::<TimeDilation>,
-                        status_effect_system::<Phased>,
+                        temperature_tick,
+                        charge_tick,
+                        time_dilation_tick,
+                        phased_tick,
                         clear_forces,
                         energy_regen,
+                        cooldown_system,
                         lifecycle::reset,
                     ),
                     (

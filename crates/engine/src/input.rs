@@ -13,7 +13,6 @@ use crate::{
     movement::DesiredMove,
     multiplayer::{Action, PlayerInputs},
     status_effect::TimeDilation,
-    time::FrameCounter,
     AbilityOffset, AppState, Cooldowns, Energy, Player, Target,
 };
 
@@ -38,7 +37,6 @@ pub fn check_resume(
 pub fn apply_inputs(
     inputs: Res<PlayerInputs>,
     mut commands: Commands,
-    tick_counter: Res<FrameCounter>,
     props: Res<AbilityProps>,
     state: Res<State<AppState>>,
     mut next_state: ResMut<NextState<AppState>>,
@@ -86,7 +84,6 @@ pub fn apply_inputs(
         for ability in buttons.abilities_fired(abilities) {
             let fired = ability.fire(
                 &mut commands,
-                &tick_counter,
                 &props,
                 entity,
                 &mut energy,

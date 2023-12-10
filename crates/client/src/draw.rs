@@ -26,7 +26,6 @@ use engine::{
     level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
     lifecycle::{DeathEvent, DEATH_Y},
     status_effect::TimeDilation,
-    time::FrameCounter,
     Ally, Enemy, Energy, FootOffset, Health, Kind, Player, To2d, To3d, UP,
 };
 
@@ -818,7 +817,6 @@ pub fn draw_transport_system(
 
 pub fn update_transport_system(
     assets: Res<AssetHandler>,
-    counter: Res<FrameCounter>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut sender_q: Query<(
         &Parent,
@@ -847,8 +845,7 @@ pub fn update_transport_system(
             continue;
         };
 
-        let dur_left = counter.at(beam.delay) - beam.activation_time;
-        let frac = dur_left / beam.delay;
+        let frac = beam.activates_in / beam.delay;
 
         let color = assets.transport.gradient.get(frac);
         materials.get_mut(material).unwrap().base_color = color;

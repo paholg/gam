@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use bevy_ecs::{
     component::Component,
     entity::Entity,
-    system::{Commands, Query, Res},
+    system::{Commands, Query},
 };
 
 use bevy_math::Vec3;
@@ -17,8 +17,8 @@ use crate::{
     death_callback::{DeathCallback, ExplosionCallback},
     level::InLevel,
     physics::G,
-    status_effect::StatusBundle,
-    time::{Frame, FrameCounter},
+    status_effect::{StatusBundle, TimeDilation},
+    time::Dur,
     AbilityOffset, Health, Kind, Libm, Object, Shootable, Target, To2d, To3d, FORWARD, PLAYER_R,
 };
 
@@ -72,13 +72,12 @@ pub struct Grenade {
     // TODO: Use this field
     #[allow(dead_code)]
     shooter: Entity,
-    expires_at: Frame,
+    expires_in: Dur,
     pub kind: GrenadeKind,
 }
 
 pub fn grenade(
     commands: &mut Commands,
-    tick_counter: &FrameCounter,
     props: &GrenadeProps,
     transform: &Transform,
     shooter: Entity,
@@ -108,7 +107,7 @@ pub fn grenade(
         },
         Shootable,
         Grenade {
-            expires_at: tick_counter.at(props.delay),
+            expires_in: props.delay,
             shooter,
             kind: props.kind,
         },
@@ -127,9 +126,9 @@ pub fn grenade(
     ));
 }
 
-pub fn explode_system(mut query: Query<(&Grenade, &mut Health)>, tick_counter: Res<FrameCounter>) {
-    for (grenade, mut health) in &mut query {
-        if grenade.expires_at.before_now(&tick_counter) {
+pub fn explode_system(mut query: Query<(&mut Grenade, &mut Health, &TimeDilation)>) {
+    for (mut grenade, mut health, dilation) in &mut query {
+        if grenade.expires_in.tick(dilation) {
             health.die();
         }
     }

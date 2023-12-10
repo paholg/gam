@@ -2,7 +2,7 @@ use bevy_ecs::{
     component::Component,
     entity::Entity,
     query::{With, Without},
-    system::{Commands, Query, Res},
+    system::{Commands, Query},
 };
 use bevy_math::Vec2;
 use bevy_rapier3d::prelude::{ActiveEvents, Collider, LockedAxes, RigidBody, Sensor, Velocity};
@@ -12,7 +12,8 @@ use crate::{
     collision::TrackCollisions,
     level::{Floor, InLevel},
     movement::{DesiredMove, MaxSpeed},
-    time::{Dur, Frame, FrameCounter},
+    status_effect::TimeDilation,
+    time::Dur,
     Health, Kind, Target, To2d, To3d,
 };
 
@@ -22,7 +23,7 @@ use super::properties::TransportProps;
 pub struct TransportBeam {
     pub target: Entity,
     pub delay: Dur,
-    pub activation_time: Frame,
+    pub activates_in: Dur,
     pub radius: f32,
     pub height: f32,
     pub destination: Vec2,
@@ -34,7 +35,6 @@ pub fn transport(
     props: &TransportProps,
     transform: &Transform,
     target: &Target,
-    tick_counter: &FrameCounter,
 ) {
     let mut transform = Transform::from_translation(transform.translation);
     transform.translation.y = 0.0;
@@ -49,7 +49,7 @@ pub fn transport(
         TransportBeam {
             target: entity,
             delay: props.delay,
-            activation_time: tick_counter.at(props.delay),
+            activates_in: props.delay,
             radius: props.radius,
             height: props.height,
             destination: target.0,
@@ -88,11 +88,11 @@ pub struct ActiveTransportBeam;
 
 pub fn activation_system(
     mut commands: Commands,
-    query: Query<(Entity, &TransportBeam), Without<ActiveTransportBeam>>,
-    tick_counter: Res<FrameCounter>,
+    mut query: Query<(Entity, &mut TransportBeam), Without<ActiveTransportBeam>>,
 ) {
-    for (entity, beam) in &query {
-        if beam.activation_time.before_now(&tick_counter) {
+    for (entity, mut beam) in &mut query {
+        // A transport beam originates from the ship above, so it doesn't dilate.
+        if beam.activates_in.tick(&TimeDilation::NONE) {
             commands
                 .entity(entity)
                 .insert((Health::new(0.0), ActiveTransportBeam));

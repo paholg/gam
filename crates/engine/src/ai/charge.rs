@@ -16,7 +16,6 @@ use crate::{
     level::Floor,
     movement::DesiredMove,
     status_effect::TimeDilation,
-    time::FrameCounter,
     AbilityOffset, Ally, Cooldowns, Enemy, Energy, Faction, Target, To2d, To3d,
 };
 
@@ -107,7 +106,6 @@ fn check_obstructions<T: Faction>(
 
 fn gun_system(
     mut commands: Commands,
-    tick_counter: Res<FrameCounter>,
     mut ai_q: Query<(
         Entity,
         &mut Cooldowns,
@@ -134,7 +132,6 @@ fn gun_system(
         if !ai.gun_obstruction {
             Ability::Gun.fire(
                 &mut commands,
-                &tick_counter,
                 &props,
                 entity,
                 &mut energy,
