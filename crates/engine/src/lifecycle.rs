@@ -7,7 +7,7 @@ use bevy_ecs::{
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{
-    CoefficientCombineRule, Friction, LockedAxes, RapierContext, RigidBody,
+    CoefficientCombineRule, ExternalForce, Friction, LockedAxes, RapierContext, RigidBody, Velocity,
 };
 use bevy_transform::components::Transform;
 
@@ -15,12 +15,12 @@ use crate::{
     ability::{Abilities, Ability},
     ai::{charge::ChargeAi, AiBundle},
     death_callback::DeathCallback,
-    level::LevelProps,
+    level::{InLevel, LevelProps},
     player::{character_collider, PlayerInfo},
-    status_effect::TimeDilation,
+    status_effect::{StatusBundle, TimeDilation},
     time::FrameCounter,
-    Ally, Character, Cooldowns, Enemy, Energy, FootOffset, Health, Kind, NumAi, Object, Player,
-    Shootable, ABILITY_Y, PLAYER_HEIGHT, PLAYER_R,
+    Ally, Character, Cooldowns, Enemy, Energy, FootOffset, Health, Kind, MassBundle, NumAi, Object,
+    Player, Shootable, ABILITY_Y, PLAYER_HEIGHT, PLAYER_MASS, PLAYER_R,
 };
 
 pub const DEATH_Y: f32 = -2.0;
@@ -91,13 +91,18 @@ fn spawn_enemies(
                     object: Object {
                         transform: Transform::from_translation(
                             loc + Vec3::new(0.0, 0.5 * PLAYER_HEIGHT, 0.0),
-                        ),
+                        )
+                        .into(),
                         collider: character_collider(PLAYER_R, PLAYER_HEIGHT),
                         foot_offset: (-PLAYER_HEIGHT * 0.5).into(),
                         body: RigidBody::Dynamic,
                         locked_axes: LockedAxes::ROTATION_LOCKED,
                         kind: Kind::Enemy,
-                        ..Default::default()
+                        mass: MassBundle::new(PLAYER_MASS),
+                        velocity: Velocity::zero(),
+                        force: ExternalForce::default(),
+                        in_level: InLevel,
+                        statuses: StatusBundle::default(),
                     },
                     max_speed: Default::default(),
                     friction: Friction {
@@ -135,13 +140,18 @@ fn spawn_allies(
                     object: Object {
                         transform: Transform::from_translation(
                             loc + Vec3::new(0.0, 0.5 * PLAYER_HEIGHT, 0.0),
-                        ),
+                        )
+                        .into(),
                         collider: character_collider(PLAYER_R, PLAYER_HEIGHT),
                         foot_offset: (-PLAYER_HEIGHT * 0.5).into(),
                         body: RigidBody::Dynamic,
                         locked_axes: LockedAxes::ROTATION_LOCKED,
                         kind: Kind::Ally,
-                        ..Default::default()
+                        mass: MassBundle::new(PLAYER_MASS),
+                        velocity: Velocity::zero(),
+                        force: ExternalForce::default(),
+                        in_level: InLevel,
+                        statuses: StatusBundle::default(),
                     },
                     max_speed: Default::default(),
                     friction: Friction {

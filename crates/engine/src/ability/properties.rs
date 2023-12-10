@@ -33,9 +33,10 @@ impl Default for AbilityProps {
                     max_radius: 1.8,
                     duration: Dur::new(15),
                     damage: 0.6,
-                    force: 8.0,
+                    force: 400.0,
                     kind: ExplosionKind::FragGrenade,
                 },
+                mass: 1.5,
             },
             heal_grenade: GrenadeProps {
                 cost: 50.0,
@@ -52,6 +53,7 @@ impl Default for AbilityProps {
                     force: 0.0,
                     kind: ExplosionKind::HealGrenade,
                 },
+                mass: 1.0,
             },
             gun: Default::default(),
             shotgun: Default::default(),
@@ -101,7 +103,7 @@ pub struct GunProps {
     pub speed: f32,
     pub radius: f32,
     pub damage: f32,
-    pub density: f32,
+    pub mass: f32,
     pub bullet_health: f32,
 }
 
@@ -115,7 +117,7 @@ impl Default for GunProps {
             radius: 0.03,
             damage: 2.0,
             bullet_health: 1.0,
-            density: 100.0,
+            mass: 0.25,
         }
     }
 }
@@ -131,7 +133,7 @@ pub struct ShotgunProps {
     pub n_pellets: usize,
     /// Spread angle in radians.
     pub spread: f32,
-    pub density: f32,
+    pub mass: f32,
     pub bullet_health: f32,
 }
 
@@ -147,7 +149,7 @@ impl Default for ShotgunProps {
             bullet_health: 1.0,
             n_pellets: 8,
             spread: PI * 0.125,
-            density: 100.0,
+            mass: 0.25,
         }
     }
 }
@@ -161,6 +163,7 @@ pub struct GrenadeProps {
     pub kind: GrenadeKind,
     pub health: f32,
     pub explosion: ExplosionProps,
+    pub mass: f32,
 }
 
 #[derive(Debug)]
@@ -178,6 +181,7 @@ pub struct SeekerRocketProps {
     /// How much energy the rocket spends every frame to move.
     pub energy_cost: f32,
     pub explosion: ExplosionProps,
+    pub mass: f32,
 }
 
 impl Default for SeekerRocketProps {
@@ -200,9 +204,10 @@ impl Default for SeekerRocketProps {
                 max_radius: 1.2,
                 duration: Dur::new(15),
                 damage: 0.6,
-                force: 6.0,
+                force: 300.0,
                 kind: ExplosionKind::SeekerRocket,
             },
+            mass: 2.0,
         }
     }
 }
@@ -249,6 +254,13 @@ impl NeutrinoBallProps {
     /// distance squared.
     pub fn accel_numerator(&self) -> f32 {
         self.surface_a * self.radius * self.radius
+    }
+
+    pub fn mass(&self) -> f32 {
+        const G: f32 = 6.674e-11;
+        // Rather than setting the mass, it's more convenient to set the surface
+        // gravity and compute the mass.
+        self.accel_numerator() / G
     }
 }
 

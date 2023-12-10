@@ -1,10 +1,13 @@
 use bevy_ecs::{component::Component, system::Commands};
-use bevy_rapier3d::prelude::{CoefficientCombineRule, Collider, Friction, LockedAxes, RigidBody};
+use bevy_rapier3d::prelude::{
+    CoefficientCombineRule, Collider, ExternalForce, Friction, LockedAxes, RigidBody, Velocity,
+};
 use bevy_transform::components::Transform;
 
 use crate::{
-    ability::Abilities, lifecycle::ENERGY_REGEN, Ally, Character, Cooldowns, Energy, Health, Kind,
-    Object, Player, Shootable, Target, ABILITY_Y, PLAYER_HEIGHT, PLAYER_R,
+    ability::Abilities, level::InLevel, lifecycle::ENERGY_REGEN, status_effect::StatusBundle, Ally,
+    Character, Cooldowns, Energy, Health, Kind, MassBundle, Object, Player, Shootable, Target,
+    ABILITY_Y, PLAYER_HEIGHT, PLAYER_MASS, PLAYER_R,
 };
 
 #[derive(Debug, Component)]
@@ -29,8 +32,12 @@ impl PlayerInfo {
                         body: RigidBody::Dynamic,
                         locked_axes: LockedAxes::ROTATION_LOCKED,
                         kind: Kind::Player,
-                        transform: Transform::from_xyz(0.0, PLAYER_HEIGHT * 0.5, 0.0),
-                        ..Default::default()
+                        transform: Transform::from_xyz(0.0, PLAYER_HEIGHT * 0.5, 0.0).into(),
+                        mass: MassBundle::new(PLAYER_MASS),
+                        velocity: Velocity::zero(),
+                        force: ExternalForce::default(),
+                        in_level: InLevel,
+                        statuses: StatusBundle::default(),
                     },
                     max_speed: Default::default(),
                     friction: Friction {
