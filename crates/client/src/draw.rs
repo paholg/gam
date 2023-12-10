@@ -20,13 +20,12 @@ use engine::{
         neutrino_ball::{NeutrinoBall, NeutrinoBallGravityField},
         seeker_rocket::SeekerRocket,
         transport::TransportBeam,
-        HyperSprinting,
     },
     collision::TrackCollisions,
     death_callback::{Explosion, ExplosionKind},
     level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
     lifecycle::{DeathEvent, DEATH_Y},
-    time::TickCounter,
+    time::FrameCounter,
     Ally, Enemy, Energy, FootOffset, Health, Kind, Player, To2d, To3d, UP,
 };
 
@@ -55,7 +54,7 @@ impl Plugin for DrawPlugin {
                 draw_neutrino_ball_system,
                 draw_neutrino_ball_outline_system,
                 draw_death_system,
-                draw_hyper_sprint_system,
+                // draw_hyper_sprint_system,
                 draw_wall_system,
                 update_wall_system,
                 draw_lights_system,
@@ -449,21 +448,21 @@ fn draw_death_system(
     }
 }
 
-fn draw_hyper_sprint_system(
-    mut commands: Commands,
-    mut assets: ResMut<AssetHandler>,
-    mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
-    query: Query<(&Transform, &FootOffset), (With<HyperSprinting>, Without<EffectSpawner>)>,
-    frame: Res<FrameCount>,
-) {
-    let effect = &mut assets.hyper_sprint.effect;
+// fn draw_hyper_sprint_system(
+//     mut commands: Commands,
+//     mut assets: ResMut<AssetHandler>,
+//     mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
+//     query: Query<(&Transform, &FootOffset), (With<HyperSprinting>, Without<EffectSpawner>)>,
+//     frame: Res<FrameCount>,
+// ) {
+//     let effect = &mut assets.hyper_sprint.effect;
 
-    for (sprint_transform, foot_offset) in query.iter() {
-        let mut transform = *sprint_transform;
-        transform.translation.y += foot_offset.y;
-        effect.trigger(&mut commands, transform, &mut effects, &frame);
-    }
-}
+//     for (sprint_transform, foot_offset) in query.iter() {
+//         let mut transform = *sprint_transform;
+//         transform.translation.y += foot_offset.y;
+//         effect.trigger(&mut commands, transform, &mut effects, &frame);
+//     }
+// }
 
 #[derive(Component, Copy, Clone)]
 enum WallKind {
@@ -813,7 +812,7 @@ pub fn draw_transport_system(
 
 pub fn update_transport_system(
     assets: Res<AssetHandler>,
-    tick_counter: Res<TickCounter>,
+    counter: Res<FrameCounter>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut sender_q: Query<(
         &Parent,
@@ -842,8 +841,8 @@ pub fn update_transport_system(
             continue;
         };
 
-        let frac =
-            (tick_counter.at(beam.delay) - beam.activation_time).0 as f32 / beam.delay.0 as f32;
+        let dur_left = counter.at(beam.delay) - beam.activation_time;
+        let frac = dur_left / beam.delay;
 
         let color = assets.transport.gradient.get(frac);
         materials.get_mut(material).unwrap().base_color = color;

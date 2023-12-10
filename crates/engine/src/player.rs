@@ -38,7 +38,6 @@ impl PlayerInfo {
                         coefficient: 0.0,
                         combine_rule: CoefficientCombineRule::Min,
                     },
-                    status_effects: Default::default(),
                     shootable: Shootable,
                     abilities: self.abilities.clone(),
                     cooldowns: Cooldowns::new(&self.abilities),

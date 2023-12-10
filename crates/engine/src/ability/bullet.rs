@@ -14,7 +14,8 @@ use bevy_transform::components::{GlobalTransform, Transform};
 use crate::{
     collision::TrackCollisions,
     level::InLevel,
-    time::{Tick, TickCounter},
+    status_effect::StatusBundle,
+    time::{Frame, FrameCounter},
     Health, Kind, Object, Shootable,
 };
 
@@ -30,7 +31,7 @@ pub struct BulletSpawner {
 #[derive(Component)]
 pub struct Bullet {
     pub shooter: Entity,
-    pub duration: Tick,
+    pub expires_at: Frame,
     pub damage: f32,
 }
 
@@ -57,6 +58,7 @@ impl BulletSpawner {
                 mass: ReadMassProperties::default(),
                 kind: Kind::Bullet,
                 in_level: InLevel,
+                statuses: StatusBundle::default(),
             },
             ActiveEvents::COLLISION_EVENTS,
             TrackCollisions::default(),
@@ -83,11 +85,11 @@ pub fn kickback_system(
 
 pub fn despawn_system(
     mut commands: Commands,
-    tick_counter: Res<TickCounter>,
+    tick_counter: Res<FrameCounter>,
     mut query: Query<(Entity, &mut Bullet)>,
 ) {
     for (entity, shot) in query.iter_mut() {
-        if shot.duration.before_now(&tick_counter) {
+        if shot.expires_at.before_now(&tick_counter) {
             commands.entity(entity).despawn();
         }
     }

@@ -54,7 +54,7 @@ impl From<ExplosionProps> for Explosion {
             force: props.force,
             min_radius: props.min_radius,
             max_radius: props.max_radius,
-            growth_rate: (props.max_radius - props.min_radius) / props.duration.0 as f32,
+            growth_rate: (props.max_radius - props.min_radius) / props.duration,
             kind: props.kind,
         }
     }

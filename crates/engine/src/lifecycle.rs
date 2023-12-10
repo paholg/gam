@@ -17,7 +17,7 @@ use crate::{
     death_callback::DeathCallback,
     level::LevelProps,
     player::{character_collider, PlayerInfo},
-    time::{Tick, TickCounter},
+    time::FrameCounter,
     Ally, Character, Cooldowns, Enemy, Energy, FootOffset, Health, Kind, NumAi, Object, Player,
     Shootable, ABILITY_Y, PLAYER_HEIGHT, PLAYER_R,
 };
@@ -48,20 +48,20 @@ pub fn die(
         Option<&DeathCallback>,
     )>,
     mut event_writer: EventWriter<DeathEvent>,
-    tick_counter: Res<TickCounter>,
+    tick_counter: Res<FrameCounter>,
 ) {
     let events = query.iter_mut().filter_map(
         |(entity, mut health, &transform, &kind, callback)| {
             if health.cur <= 0.0 {
-                if health.death_delay == Tick(0) {
-                    tracing::debug!(tick = ?tick_counter.tick, ?entity, ?health, ?transform, "DEATH");
+                if health.death_delay.is_zero() {
+                    tracing::debug!(tick = ?tick_counter.frame, ?entity, ?health, ?transform, "DEATH");
                     if let Some(callback) = callback {
                         callback.call(&mut commands, &transform);
                     }
                     commands.entity(entity).despawn_recursive();
                     Some(DeathEvent { transform, kind })
                 } else {
-                    health.death_delay -= Tick(1);
+                    health.death_delay.reduce_one();
                     None
                 }
             } else {
@@ -108,7 +108,6 @@ fn spawn_enemies(
                         coefficient: 0.0,
                         combine_rule: CoefficientCombineRule::Min,
                     },
-                    status_effects: Default::default(),
                     shootable: Shootable,
                     cooldowns: Cooldowns::new(&abilities),
                     abilities,
@@ -154,7 +153,6 @@ fn spawn_allies(
                         coefficient: 0.0,
                         combine_rule: CoefficientCombineRule::Min,
                     },
-                    status_effects: Default::default(),
                     shootable: Shootable,
                     cooldowns: Cooldowns::new(&abilities),
                     abilities,

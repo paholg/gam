@@ -12,7 +12,7 @@ use crate::{
     collision::TrackCollisions,
     level::{Floor, InLevel},
     movement::{DesiredMove, MaxSpeed},
-    time::{Tick, TickCounter},
+    time::{Dur, Frame, FrameCounter},
     Health, Kind, Target, To2d, To3d,
 };
 
@@ -21,8 +21,8 @@ use super::properties::TransportProps;
 #[derive(Component)]
 pub struct TransportBeam {
     pub target: Entity,
-    pub delay: Tick,
-    pub activation_time: Tick,
+    pub delay: Dur,
+    pub activation_time: Frame,
     pub radius: f32,
     pub height: f32,
     pub destination: Vec2,
@@ -34,7 +34,7 @@ pub fn transport(
     props: &TransportProps,
     transform: &Transform,
     target: &Target,
-    tick_counter: &TickCounter,
+    tick_counter: &FrameCounter,
 ) {
     let mut transform = Transform::from_translation(transform.translation);
     transform.translation.y = 0.0;
@@ -89,7 +89,7 @@ pub struct ActiveTransportBeam;
 pub fn activation_system(
     mut commands: Commands,
     query: Query<(Entity, &TransportBeam), Without<ActiveTransportBeam>>,
-    tick_counter: Res<TickCounter>,
+    tick_counter: Res<FrameCounter>,
 ) {
     for (entity, beam) in &query {
         if beam.activation_time.before_now(&tick_counter) {

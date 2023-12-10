@@ -15,6 +15,7 @@ use crate::{
     death_callback::{DeathCallback, ExplosionCallback},
     level::InLevel,
     movement::DesiredMove,
+    status_effect::StatusBundle,
     time::TIMESTEP,
     AbilityOffset, Energy, Health, Kind, Object, Shootable, Target, To2d, FORWARD, PLAYER_R,
 };
@@ -59,6 +60,7 @@ pub fn seeker_rocket(
             mass: ReadMassProperties::default(),
             kind: Kind::SeekerRocket,
             in_level: InLevel,
+            statuses: StatusBundle::default(),
         },
         Health::new(props.health),
         Energy::new(props.energy, 0.0),

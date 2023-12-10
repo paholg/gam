@@ -10,9 +10,7 @@ use strum::{Display, EnumIter};
 use tracing::warn;
 
 use crate::{
-    status_effect::{StatusEffect, StatusEffects},
-    time::TickCounter,
-    AbilityOffset, Cooldowns, Energy, Health, Target, FORWARD, PLAYER_R,
+    time::FrameCounter, AbilityOffset, Cooldowns, Energy, Health, Target, FORWARD, PLAYER_R,
 };
 
 use self::{
@@ -48,7 +46,6 @@ pub mod transport;
 pub enum Ability {
     #[default]
     None,
-    HyperSprint,
     Gun,
     Shotgun,
     FragGrenade,
@@ -90,14 +87,13 @@ impl Ability {
     pub fn fire(
         &self,
         commands: &mut Commands,
-        tick_counter: &TickCounter,
+        tick_counter: &FrameCounter,
         props: &AbilityProps,
         entity: Entity,
         energy: &mut Energy,
         cooldowns: &mut Cooldowns,
         transform: &Transform,
         velocity: &Velocity,
-        status_effects: &mut StatusEffects,
         target: &Target,
         ability_offset: &AbilityOffset,
     ) -> bool {
@@ -117,7 +113,6 @@ impl Ability {
 
         match self {
             Ability::None => (),
-            Ability::HyperSprint => hyper_sprint(commands, entity, status_effects),
             Ability::Gun => gun(
                 commands,
                 tick_counter,
@@ -181,49 +176,11 @@ impl Ability {
         }
         true
     }
-
-    pub fn unfire(
-        &self,
-        commands: &mut Commands,
-        entity: Entity,
-        status_effects: &mut StatusEffects,
-    ) {
-        match self {
-            Ability::HyperSprint => {
-                hyper_sprint_disable(commands, entity, status_effects);
-            }
-            Ability::None
-            | Ability::Gun
-            | Ability::Shotgun
-            | Ability::FragGrenade
-            | Ability::HealGrenade
-            | Ability::SeekerRocket
-            | Ability::NeutrinoBall
-            | Ability::Transport => (),
-        }
-    }
-}
-
-#[derive(Component, Hash)]
-pub struct HyperSprinting;
-
-fn hyper_sprint(commands: &mut Commands, entity: Entity, status_effects: &mut StatusEffects) {
-    commands.entity(entity).insert(HyperSprinting);
-    status_effects.effects.insert(StatusEffect::HyperSprinting);
-}
-
-fn hyper_sprint_disable(
-    commands: &mut Commands,
-    entity: Entity,
-    status_effects: &mut StatusEffects,
-) {
-    status_effects.effects.remove(&StatusEffect::HyperSprinting);
-    commands.entity(entity).remove::<HyperSprinting>();
 }
 
 fn gun(
     commands: &mut Commands,
-    tick_counter: &TickCounter,
+    counter: &FrameCounter,
     props: &GunProps,
     transform: &Transform,
     velocity: &Velocity,
@@ -241,7 +198,7 @@ fn gun(
         density: props.density,
         bullet: Bullet {
             shooter,
-            duration: tick_counter.at(props.duration),
+            expires_at: counter.at(props.duration),
             damage: props.damage,
         },
         health: Health::new(props.bullet_health),
@@ -251,7 +208,7 @@ fn gun(
 
 fn shotgun(
     commands: &mut Commands,
-    tick_counter: &TickCounter,
+    tick_counter: &FrameCounter,
     props: &ShotgunProps,
     transform: &Transform,
     velocity: &Velocity,
@@ -274,7 +231,7 @@ fn shotgun(
             density: props.density,
             bullet: Bullet {
                 shooter,
-                duration: tick_counter.at(props.duration),
+                expires_at: tick_counter.at(props.duration),
                 damage: props.damage,
             },
             health: Health::new(props.bullet_health),

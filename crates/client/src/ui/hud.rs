@@ -9,7 +9,7 @@ use bevy::{
     ui::{AlignItems, FlexDirection, JustifyContent, Style, Val},
 };
 
-use engine::{time::TickCounter, NumAi};
+use engine::{time::FrameCounter, NumAi};
 use rust_i18n::t;
 
 pub const TEXT_COLOR: Color = Color::rgb(0.8, 0.8, 0.8);
@@ -98,7 +98,10 @@ fn render_score(score: usize) -> String {
 #[derive(Component)]
 struct FrameTime;
 
-fn frame_time_update(tick_counter: Res<TickCounter>, mut query: Query<&mut Text, With<FrameTime>>) {
+fn frame_time_update(
+    tick_counter: Res<FrameCounter>,
+    mut query: Query<&mut Text, With<FrameTime>>,
+) {
     let mut text = query.single_mut();
     text.sections[0].value = render_frame_time(tick_counter.average_engine_frame);
 }
