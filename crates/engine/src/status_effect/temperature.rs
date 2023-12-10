@@ -1,8 +1,12 @@
-use bevy_ecs::{component::Component, system::Query};
+use bevy_ecs::{component::Component, system::Query, world::Mut};
+
+use crate::{time::TIMESTEP, Health};
 
 use super::TimeDilation;
 
-const TEMP_LOSS_FACTOR: f32 = 0.1;
+const TEMP_LOSS_FACTOR: f32 = 1.0 * TIMESTEP;
+
+const FIRE_DAMAGE_FACTOR: f32 = 1.0 * TIMESTEP;
 
 /// Amount of heat energy an effect applies to an entity.
 ///
@@ -10,6 +14,12 @@ const TEMP_LOSS_FACTOR: f32 = 0.1;
 /// things.
 #[derive(Debug)]
 pub struct Heat(f32);
+
+impl Heat {
+    pub fn new(amount: f32) -> Self {
+        Self(amount)
+    }
+}
 
 /// Temperature is measured as an abstract effect, rather than a number in
 /// degress or Kelvin.
@@ -32,18 +42,29 @@ impl Temperature {
         self.val += heat.0 / mass;
     }
 
-    // TODO: Introduce actual affects.
-    fn tick(&mut self, time_dilation: &TimeDilation) {
-        // Newton's law of coooling status that heat loss is directly
-        // propotional between the difference in temperatures between an entity
-        // and the environment. So let's try that.
-        let delta = TEMP_LOSS_FACTOR * self.val * time_dilation.factor();
-        self.val -= delta;
+    fn tick(&mut self, time_dilation: &TimeDilation, mut health: Mut<'_, Health>) {
+        if self.val > 0.0 {
+            let dmg = self.val * FIRE_DAMAGE_FACTOR;
+            health.take(dmg, time_dilation);
+        } else if self.val < 0.0 {
+            // TODO: WHAT DO WHEN COLD?
+        }
+
+        if self.val.abs() < 0.1 {
+            // Let's just zero-out near zero values.
+            self.val = 0.0
+        } else {
+            // Newton's law of coooling status that heat loss is directly
+            // propotional between the difference in temperatures between an entity
+            // and the environment. So let's try that.
+            let delta = TEMP_LOSS_FACTOR * self.val * time_dilation.factor();
+            self.val -= delta;
+        }
     }
 }
 
-pub fn temperature_tick(mut query: Query<(&mut Temperature, &TimeDilation)>) {
-    for (mut temp, dilation) in &mut query {
-        temp.tick(dilation);
+pub fn temperature_tick(mut query: Query<(&mut Temperature, &TimeDilation, &mut Health)>) {
+    for (mut temp, dilation, health) in &mut query {
+        temp.tick(dilation, health);
     }
 }
