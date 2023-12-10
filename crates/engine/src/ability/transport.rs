@@ -5,16 +5,16 @@ use bevy_ecs::{
     system::{Commands, Query},
 };
 use bevy_math::Vec2;
-use bevy_rapier3d::prelude::{ActiveEvents, Collider, LockedAxes, RigidBody, Sensor, Velocity};
+use bevy_rapier3d::prelude::{Collider, ExternalForce, LockedAxes, RigidBody, Sensor, Velocity};
 use bevy_transform::{components::Transform, TransformBundle};
 
 use crate::{
-    collision::TrackCollisions,
+    collision::{TrackCollisionBundle, TrackCollisions},
     level::{Floor, InLevel},
     movement::{DesiredMove, MaxSpeed},
-    status_effect::TimeDilation,
+    status_effect::{StatusBundle, TimeDilation},
     time::Dur,
-    Health, Kind, Target, To2d, To3d,
+    Health, Kind, MassBundle, Object, Target, To2d, To3d,
 };
 
 use super::properties::TransportProps;
@@ -39,13 +39,20 @@ pub fn transport(
     let mut transform = Transform::from_translation(transform.translation);
     transform.translation.y = 0.0;
     commands.spawn((
-        TransformBundle::from_transform(transform),
-        Collider::cylinder(props.height * 0.5, props.radius),
-        RigidBody::Dynamic,
-        Kind::TransportBeam,
-        LockedAxes::TRANSLATION_LOCKED_Y,
-        Velocity::default(),
-        InLevel,
+        Object {
+            transform: TransformBundle::from_transform(transform),
+            collider: Collider::cylinder(props.height * 0.5, props.radius),
+            body: RigidBody::Dynamic,
+            kind: Kind::TransportBeam,
+            locked_axes: LockedAxes::TRANSLATION_LOCKED_Y,
+            velocity: Velocity::default(),
+            in_level: InLevel,
+            foot_offset: 0.0.into(),
+            mass: MassBundle::new(10_000.0),
+            force: ExternalForce::default(),
+            statuses: StatusBundle::default(),
+            collisions: TrackCollisionBundle::on(),
+        },
         TransportBeam {
             target: entity,
             delay: props.delay,
@@ -63,8 +70,6 @@ pub fn transport(
             can_fly: true,
         },
         Sensor,
-        TrackCollisions::default(),
-        ActiveEvents::COLLISION_EVENTS,
     ));
 }
 

@@ -833,7 +833,7 @@ pub fn update_transport_system(
             continue;
         };
 
-        let frac = beam.activates_in / beam.delay;
+        let frac = 1.0 - beam.activates_in / beam.delay;
 
         let color = assets.transport.gradient.get(frac);
         materials.get_mut(material).unwrap().base_color = color;
