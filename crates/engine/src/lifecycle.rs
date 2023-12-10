@@ -17,6 +17,7 @@ use crate::{
     death_callback::DeathCallback,
     level::LevelProps,
     player::{character_collider, PlayerInfo},
+    status_effect::TimeDilation,
     time::FrameCounter,
     Ally, Character, Cooldowns, Enemy, Energy, FootOffset, Health, Kind, NumAi, Object, Player,
     Shootable, ABILITY_Y, PLAYER_HEIGHT, PLAYER_R,
@@ -46,24 +47,20 @@ pub fn die(
         &Transform,
         &Kind,
         Option<&DeathCallback>,
+        &TimeDilation,
     )>,
     mut event_writer: EventWriter<DeathEvent>,
     tick_counter: Res<FrameCounter>,
 ) {
     let events = query.iter_mut().filter_map(
-        |(entity, mut health, &transform, &kind, callback)| {
-            if health.cur <= 0.0 {
-                if health.death_delay.is_zero() {
-                    tracing::debug!(tick = ?tick_counter.frame, ?entity, ?health, ?transform, "DEATH");
-                    if let Some(callback) = callback {
-                        callback.call(&mut commands, &transform);
-                    }
-                    commands.entity(entity).despawn_recursive();
-                    Some(DeathEvent { transform, kind })
-                } else {
-                    health.death_delay.reduce_one();
-                    None
+        |(entity, mut health, &transform, &kind, callback, time_dilation)| {
+            if health.cur <= 0.0 && health.death_delay.tick(time_dilation) {
+                tracing::debug!(tick = ?tick_counter.frame, ?entity, ?health, ?transform, "DEATH");
+                if let Some(callback) = callback {
+                    callback.call(&mut commands, &transform);
                 }
+                commands.entity(entity).despawn_recursive();
+                Some(DeathEvent { transform, kind })
             } else {
                 None
             }
@@ -108,7 +105,7 @@ fn spawn_enemies(
                         combine_rule: CoefficientCombineRule::Min,
                     },
                     shootable: Shootable,
-                    cooldowns: Cooldowns::new(&abilities),
+                    cooldowns: Cooldowns::new(),
                     abilities,
                     desired_movement: Default::default(),
                     ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
@@ -152,7 +149,7 @@ fn spawn_allies(
                         combine_rule: CoefficientCombineRule::Min,
                     },
                     shootable: Shootable,
-                    cooldowns: Cooldowns::new(&abilities),
+                    cooldowns: Cooldowns::new(),
                     abilities,
                     desired_movement: Default::default(),
                     ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),

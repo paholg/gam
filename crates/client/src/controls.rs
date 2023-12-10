@@ -42,6 +42,7 @@ pub enum CameraFollowMode {
 
 const MAX_RANGE: f32 = 7.0;
 
+#[allow(clippy::too_many_arguments)]
 pub fn player_input(
     player: Res<Player>,
     mut player_inputs: ResMut<PlayerInputs>,

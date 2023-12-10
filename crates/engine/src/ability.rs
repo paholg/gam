@@ -7,11 +7,10 @@ use bevy_reflect::Reflect;
 use bevy_transform::components::Transform;
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter};
-use tracing::warn;
 
 use crate::{
-    status_effect::TimeDilation, time::FrameCounter, AbilityOffset, Cooldowns, Energy, Health,
-    Target, FORWARD, PLAYER_R,
+    status_effect::TimeDilation, AbilityOffset, Cooldowns, Energy, Health, Target, FORWARD,
+    PLAYER_R,
 };
 
 use self::{
@@ -91,7 +90,6 @@ impl Ability {
     pub fn fire(
         &self,
         commands: &mut Commands,
-        tick_counter: &FrameCounter,
         props: &AbilityProps,
         entity: Entity,
         energy: &mut Energy,
@@ -102,18 +100,8 @@ impl Ability {
         ability_offset: &AbilityOffset,
         time_dilation: &mut TimeDilation,
     ) -> bool {
-        // TODO: Account for time dilation for cooldowns. We might have to tick
-        // them down each frame.
-        let cooldown = match cooldowns.get_mut(self) {
-            Some(cd) => cd,
-            None => {
-                warn!("Tried to use an ability that we don't have a cooldown for");
-                return false;
-            }
-        };
-
-        if cooldown.before_now(tick_counter) && energy.try_use(props.cost(self)) {
-            *cooldown = tick_counter.at(props.cooldown(self));
+        if cooldowns.is_available(self, time_dilation) && energy.try_use(props.cost(self)) {
+            cooldowns.set(*self, props.cooldown(self));
         } else {
             return false;
         }
@@ -122,7 +110,6 @@ impl Ability {
             Ability::None => (),
             Ability::Gun => gun(
                 commands,
-                tick_counter,
                 &props.gun,
                 transform,
                 velocity,
@@ -131,7 +118,6 @@ impl Ability {
             ),
             Ability::Shotgun => shotgun(
                 commands,
-                tick_counter,
                 &props.shotgun,
                 transform,
                 velocity,
@@ -140,7 +126,6 @@ impl Ability {
             ),
             Ability::FragGrenade => grenade(
                 commands,
-                tick_counter,
                 &props.frag_grenade,
                 transform,
                 entity,
@@ -149,7 +134,6 @@ impl Ability {
             ),
             Ability::HealGrenade => grenade(
                 commands,
-                tick_counter,
                 &props.heal_grenade,
                 transform,
                 entity,
@@ -170,16 +154,8 @@ impl Ability {
                 transform,
                 velocity,
                 ability_offset,
-                tick_counter,
             ),
-            Ability::Transport => transport(
-                commands,
-                entity,
-                &props.transport,
-                transform,
-                target,
-                tick_counter,
-            ),
+            Ability::Transport => transport(commands, entity, &props.transport, transform, target),
             Ability::SpeedUp => speed_up(&props.speed_up, time_dilation),
         }
         true
@@ -188,7 +164,6 @@ impl Ability {
 
 fn gun(
     commands: &mut Commands,
-    counter: &FrameCounter,
     props: &GunProps,
     transform: &Transform,
     velocity: &Velocity,
@@ -206,7 +181,7 @@ fn gun(
         density: props.density,
         bullet: Bullet {
             shooter,
-            expires_at: counter.at(props.duration),
+            expires_in: props.duration,
             damage: props.damage,
         },
         health: Health::new(props.bullet_health),
@@ -216,7 +191,6 @@ fn gun(
 
 fn shotgun(
     commands: &mut Commands,
-    tick_counter: &FrameCounter,
     props: &ShotgunProps,
     transform: &Transform,
     velocity: &Velocity,
@@ -239,7 +213,7 @@ fn shotgun(
             density: props.density,
             bullet: Bullet {
                 shooter,
-                expires_at: tick_counter.at(props.duration),
+                expires_in: props.duration,
                 damage: props.damage,
             },
             health: Health::new(props.bullet_health),

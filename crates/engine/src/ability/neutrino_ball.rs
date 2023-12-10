@@ -2,7 +2,7 @@ use bevy_ecs::{
     component::Component,
     entity::Entity,
     query::Without,
-    system::{Commands, Query, Res},
+    system::{Commands, Query},
 };
 use bevy_hierarchy::BuildChildren;
 use bevy_rapier3d::prelude::{
@@ -18,7 +18,7 @@ use crate::{
     collision::TrackCollisions,
     level::InLevel,
     status_effect::{StatusBundle, TimeDilation},
-    time::{Frame, FrameCounter},
+    time::Dur,
     AbilityOffset, FootOffset, Health, Kind, Object, Shootable, FORWARD, PLAYER_R,
 };
 
@@ -29,7 +29,7 @@ pub struct NeutrinoBall {
     pub accel_numerator: f32,
     pub radius: f32,
     pub effect_radius: f32,
-    pub activates_at: Frame,
+    pub activates_in: Dur,
 }
 
 pub fn neutrino_ball(
@@ -38,7 +38,6 @@ pub fn neutrino_ball(
     transform: &Transform,
     velocity: &Velocity,
     ability_offset: &AbilityOffset,
-    counter: &FrameCounter,
 ) {
     let mut ball_transform = *transform;
     let dir = transform.rotation * FORWARD;
@@ -68,7 +67,7 @@ pub fn neutrino_ball(
             accel_numerator: props.accel_numerator(),
             radius: props.radius,
             effect_radius: props.effect_radius,
-            activates_at: counter.at(props.activation_delay),
+            activates_in: props.activation_delay,
         },
         Health::new_with_delay(0.0, props.duration),
         Shootable,
@@ -85,14 +84,13 @@ pub struct NeutrinoBallGravityField {
 
 pub fn activation_system(
     mut commands: Commands,
-    tick_counter: Res<FrameCounter>,
     mut neutrino_q: Query<
-        (Entity, &NeutrinoBall, &FootOffset),
+        (Entity, &mut NeutrinoBall, &FootOffset, &TimeDilation),
         Without<NeutrinoBallGravityFieldSpawned>,
     >,
 ) {
-    for (entity, ball, foot_offset) in &mut neutrino_q {
-        if ball.activates_at.before_now(&tick_counter) {
+    for (entity, mut ball, foot_offset, time_dilation) in &mut neutrino_q {
+        if ball.activates_in.tick(time_dilation) {
             commands
                 .entity(entity)
                 .insert(NeutrinoBallGravityFieldSpawned)

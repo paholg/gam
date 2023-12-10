@@ -81,26 +81,31 @@ impl ExplosionCallback {
     }
 }
 
-pub fn explosion_grow_system(mut explosion_q: Query<(&Explosion, &mut Collider)>) {
-    for (explosion, mut collider) in &mut explosion_q {
+pub fn explosion_grow_system(mut explosion_q: Query<(&Explosion, &mut Collider, &TimeDilation)>) {
+    for (explosion, mut collider, time_dilation) in &mut explosion_q {
         let mut ball = collider.as_ball_mut().unwrap();
-        let new_radius = ball.radius() + explosion.growth_rate;
+        let new_radius = ball.radius() + explosion.growth_rate * time_dilation.factor();
         ball.set_radius(new_radius);
     }
 }
 
 pub fn explosion_collision_system(
     rapier_context: Res<RapierContext>,
-    explosion_q: Query<(&Explosion, &Transform, &TrackCollisions)>,
+    explosion_q: Query<(&Explosion, &Transform, &TrackCollisions, &TimeDilation)>,
     mut target_q: Query<(&Transform, &mut Health, &mut ExternalForce, &TimeDilation)>,
 ) {
     let wall_filter = QueryFilter {
         flags: QueryFilterFlags::ONLY_FIXED,
         ..Default::default()
     };
-    for (explosion, transform, colliding) in &explosion_q {
+    for (explosion, transform, colliding, dilation) in &explosion_q {
+        // Dilated explosions have their lifetimes and grow rates affected, so
+        // their damage should be to. This way, a full explosion always does a
+        // constant damage.
+        let explosion_damage = explosion.damage * dilation.factor();
+        let explosion_force = explosion.force * dilation.factor();
         for &target in &colliding.targets {
-            if let Ok((target_transform, mut health, mut force, dilation)) =
+            if let Ok((target_transform, mut health, mut force, target_dilation)) =
                 target_q.get_mut(target)
             {
                 let origin = transform.translation;
@@ -117,11 +122,11 @@ pub fn explosion_collision_system(
                         continue;
                     }
                 }
-                health.take(explosion.damage, dilation);
+                health.take(explosion_damage, target_dilation);
                 let dir = (target_transform.translation.to_2d() - transform.translation.to_2d())
                     .normalize_or_zero()
                     .to_3d(0.0);
-                force.force += dir * explosion.force;
+                force.force += dir * explosion_force;
             }
         }
     }

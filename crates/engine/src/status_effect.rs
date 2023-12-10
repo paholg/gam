@@ -25,22 +25,6 @@ struct Effect {
     duration: Dur,
 }
 
-impl Effect {
-    fn tick(&mut self) {
-        self.duration.reduce_one();
-    }
-}
-
-pub trait StatusEffect: Component + fmt::Debug {
-    fn tick(&mut self);
-}
-
-pub fn status_effect_system<S: StatusEffect>(mut query: Query<&mut S>) {
-    for mut effect in &mut query {
-        effect.tick();
-    }
-}
-
 /// Amount of heat energy an effect applies to an entity.
 ///
 /// This is not in joules, but some abstract unit. Can be negative, to cool
@@ -68,16 +52,20 @@ impl Temperature {
         // that too complicated?
         self.val += heat.0 / mass;
     }
-}
 
-impl StatusEffect for Temperature {
     // TODO: Introduce actual affects.
-    fn tick(&mut self) {
+    fn tick(&mut self, time_dilation: &TimeDilation) {
         // Newton's law of coooling status that heat loss is directly
         // propotional between the difference in temperatures between an entity
         // and the environment. So let's try that.
-        let delta = TEMP_LOSS_FACTOR * self.val;
+        let delta = TEMP_LOSS_FACTOR * self.val * time_dilation.factor();
         self.val -= delta;
+    }
+}
+
+pub fn temperature_tick(mut query: Query<(&mut Temperature, &TimeDilation)>) {
+    for (mut temp, dilation) in &mut query {
+        temp.tick(dilation);
     }
 }
 
@@ -96,12 +84,18 @@ pub struct Charge {
     val: f32,
 }
 
-impl StatusEffect for Charge {
-    fn tick(&mut self) {
+impl Charge {
+    fn tick(&mut self, time_dilation: &TimeDilation) {
         // TODO: How should charge decay? Let's just do it like temperature for
         // now.
-        let delta = CHARGE_LOSS_FACTOR * self.val;
+        let delta = CHARGE_LOSS_FACTOR * self.val * time_dilation.factor();
         self.val -= delta;
+    }
+}
+
+pub fn charge_tick(mut query: Query<(&mut Charge, &TimeDilation)>) {
+    for (mut charge, dilation) in &mut query {
+        charge.tick(dilation);
     }
 }
 
@@ -129,6 +123,11 @@ impl Default for TimeDilation {
 }
 
 impl TimeDilation {
+    pub const NONE: TimeDilation = TimeDilation {
+        val: 1.0,
+        effects: SmallVec::new(),
+    };
+
     pub fn add_effect(&mut self, amount: f32, duration: Dur) {
         // We'll just add the effect, it will take place next frame.
         self.effects.push(Effect { duration, amount });
@@ -139,15 +138,16 @@ impl TimeDilation {
     pub fn factor(&self) -> f32 {
         self.val
     }
-}
 
-impl StatusEffect for TimeDilation {
     fn tick(&mut self) {
         // TODO: Should this be sum? product? something else?
         let effect: f32 = self.effects.iter().map(|e| e.amount).sum();
 
-        self.effects.iter_mut().for_each(Effect::tick);
-        self.effects.retain(|e| e.duration.is_positive());
+        // Things might get weird if time dilation affected how long time
+        // dilation effects last. For now at least, they will always tick at the
+        // "normal" rate.
+        self.effects
+            .retain(|e| !e.duration.tick(&TimeDilation::NONE));
 
         // Let's do exponential for < 0, linear for > 0 for now. Figure out
         // something that makes sense later.
@@ -156,6 +156,12 @@ impl StatusEffect for TimeDilation {
         } else {
             effect + 1.0
         };
+    }
+}
+
+pub fn time_dilation_tick(mut query: Query<(&mut TimeDilation)>) {
+    for (mut dilation) in &mut query {
+        dilation.tick();
     }
 }
 
@@ -175,15 +181,19 @@ impl Phased {
     fn toggle(&mut self) {
         self.val = !self.val
     }
-}
 
-impl StatusEffect for Phased {
-    fn tick(&mut self) {
-        if self.duration.is_positive() {
-            self.duration.reduce_one();
-            if self.duration.is_zero() {
+    fn tick(&mut self, time_dilation: &TimeDilation) {
+        if !self.duration.is_done(time_dilation) {
+            self.duration.tick(time_dilation);
+            if self.duration.is_done(time_dilation) {
                 self.toggle();
             }
         }
+    }
+}
+
+pub fn phased_tick(mut query: Query<(&mut Phased, &TimeDilation)>) {
+    for (mut phased, dilation) in &mut query {
+        phased.tick(dilation);
     }
 }

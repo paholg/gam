@@ -2,7 +2,7 @@ use bevy_ecs::{
     component::Component,
     entity::Entity,
     query::{Added, With, Without},
-    system::{Commands, Query, Res},
+    system::{Commands, Query},
 };
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{
@@ -15,7 +15,7 @@ use crate::{
     collision::TrackCollisions,
     level::InLevel,
     status_effect::{StatusBundle, TimeDilation},
-    time::{Frame, FrameCounter},
+    time::Dur,
     Health, Kind, Object, Shootable,
 };
 
@@ -31,7 +31,7 @@ pub struct BulletSpawner {
 #[derive(Component)]
 pub struct Bullet {
     pub shooter: Entity,
-    pub expires_at: Frame,
+    pub expires_in: Dur,
     pub damage: f32,
 }
 
@@ -85,11 +85,10 @@ pub fn kickback_system(
 
 pub fn despawn_system(
     mut commands: Commands,
-    tick_counter: Res<FrameCounter>,
-    mut query: Query<(Entity, &mut Bullet)>,
+    mut query: Query<(Entity, &mut Bullet, &TimeDilation)>,
 ) {
-    for (entity, shot) in query.iter_mut() {
-        if shot.expires_at.before_now(&tick_counter) {
+    for (entity, mut shot, time_dilation) in query.iter_mut() {
+        if shot.expires_in.tick(time_dilation) {
             commands.entity(entity).despawn();
         }
     }
