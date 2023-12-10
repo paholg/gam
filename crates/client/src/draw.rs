@@ -17,11 +17,10 @@ use engine::{
     ability::{
         bullet::Bullet,
         grenade::{Grenade, GrenadeKind},
-        neutrino_ball::{NeutrinoBall, NeutrinoBallGravityField},
+        neutrino_ball::{NeutrinoBall, NeutrinoBallActivated},
         seeker_rocket::SeekerRocket,
         transport::TransportBeam,
     },
-    collision::TrackCollisions,
     death_callback::{Explosion, ExplosionKind},
     level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
     lifecycle::{DeathEvent, DEATH_Y},
@@ -257,39 +256,28 @@ fn draw_neutrino_ball_system(
 fn draw_neutrino_ball_outline_system(
     mut commands: Commands,
     assets: Res<AssetHandler>,
-    query: Query<
-        (Entity, &FootOffset),
-        (
-            Added<NeutrinoBallGravityField>,
-            Without<HasOutline>,
-            Added<TrackCollisions>,
-        ),
-    >,
+    query: Query<(Entity, &FootOffset), (Added<NeutrinoBallActivated>, Without<HasOutline>)>,
 ) {
     for (entity, foot_offset) in &query {
         commands
             .entity(entity)
-            .insert(InheritedVisibility::default());
-        let outline_entity = commands
-            .spawn((
-                PbrBundle {
-                    mesh: assets.neutrino_ball.outline_mesh.clone(),
-                    material: assets.neutrino_ball.outline_material.clone(),
-                    transform: in_plane().with_translation(Vec3::new(
-                        0.0,
-                        foot_offset.y + 0.01,
-                        0.0,
-                    )),
-                    ..Default::default()
-                },
-                NotShadowCaster,
-                NotShadowReceiver,
-            ))
-            .id();
-        commands
-            .entity(entity)
             .insert(HasOutline)
-            .push_children(&[outline_entity]);
+            .with_children(|builder| {
+                builder.spawn((
+                    PbrBundle {
+                        mesh: assets.neutrino_ball.outline_mesh.clone(),
+                        material: assets.neutrino_ball.outline_material.clone(),
+                        transform: in_plane().with_translation(Vec3::new(
+                            0.0,
+                            foot_offset.y + 0.01,
+                            0.0,
+                        )),
+                        ..Default::default()
+                    },
+                    NotShadowCaster,
+                    NotShadowReceiver,
+                ));
+            });
     }
 }
 

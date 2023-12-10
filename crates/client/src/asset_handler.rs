@@ -375,8 +375,9 @@ pub fn asset_handler_setup(
     };
 
     let neutrino_ball_material = StandardMaterial {
-        base_color: Color::BLACK,
+        base_color: Color::rgba(0.0, 0.0, 0.0, 0.5),
         unlit: true,
+        alpha_mode: AlphaMode::Blend,
         ..Default::default()
     };
     let neutrino_ball = NeutrinoBallAssets {

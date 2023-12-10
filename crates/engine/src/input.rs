@@ -13,7 +13,7 @@ use crate::{
     movement::DesiredMove,
     multiplayer::{Action, PlayerInputs},
     status_effect::TimeDilation,
-    AbilityOffset, AppState, Cooldowns, Energy, Player, Target,
+    AbilityOffset, AppState, Cooldowns, Energy, FootOffset, Player, Target,
 };
 
 pub fn check_resume(
@@ -51,6 +51,7 @@ pub fn apply_inputs(
         &Abilities,
         &mut DesiredMove,
         &AbilityOffset,
+        &FootOffset,
         &mut TimeDilation,
     )>,
 ) {
@@ -65,6 +66,7 @@ pub fn apply_inputs(
         abilities,
         mut desired_move,
         ability_offset,
+        foot_offset,
         mut time_dilation,
     ) in query.iter_mut()
     {
@@ -92,6 +94,7 @@ pub fn apply_inputs(
                 velocity,
                 &target,
                 ability_offset,
+                foot_offset,
                 &mut time_dilation,
             );
             if fired {

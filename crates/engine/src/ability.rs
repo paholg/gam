@@ -9,8 +9,8 @@ use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter};
 
 use crate::{
-    status_effect::TimeDilation, AbilityOffset, Cooldowns, Energy, Health, Target, FORWARD,
-    PLAYER_R,
+    status_effect::TimeDilation, AbilityOffset, Cooldowns, Energy, FootOffset, Health, Target,
+    FORWARD, PLAYER_R,
 };
 
 use self::{
@@ -98,6 +98,7 @@ impl Ability {
         velocity: &Velocity,
         target: &Target,
         ability_offset: &AbilityOffset,
+        foot_offset: &FootOffset,
         time_dilation: &mut TimeDilation,
     ) -> bool {
         if cooldowns.is_available(self, time_dilation) && energy.try_use(props.cost(self)) {
@@ -153,7 +154,7 @@ impl Ability {
                 &props.neutrino_ball,
                 transform,
                 velocity,
-                ability_offset,
+                foot_offset,
             ),
             Ability::Transport => transport(commands, entity, &props.transport, transform, target),
             Ability::SpeedUp => speed_up(&props.speed_up, time_dilation),
