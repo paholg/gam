@@ -105,16 +105,27 @@ impl StatusEffect for Charge {
     }
 }
 
-/// TimeDilation is measured in the abstract, where 0.0 is "normal" time,
+/// TimeDilation represents a factor that we multiply "time" values by, such as
+/// speed, energy regen, and duration. It is also a factor in how much damage
+/// you take.
 ///
 /// Multiple time dilation effects can be in place at the same time; we take the
 /// sum and perform some math to achieve a factor that can be multiplied by
 /// time-things.
-// TODO: We currently only account for time dilation when
-#[derive(Component, Debug, Default)]
+// TODO: We currently only account for time dilation for move speed and damage.
+#[derive(Component, Debug)]
 pub struct TimeDilation {
     val: f32,
     effects: SmallVec<Effect, 2>,
+}
+
+impl Default for TimeDilation {
+    fn default() -> Self {
+        Self {
+            val: 1.0,
+            effects: Default::default(),
+        }
+    }
 }
 
 impl TimeDilation {
@@ -126,9 +137,6 @@ impl TimeDilation {
     /// Return the speed-up or slow-down factor, where 1.0 is "normal" speed,
     /// 0.0 is stopped, 2.0 is double speed, etc.
     pub fn factor(&self) -> f32 {
-        if self.val != 1.0 {
-            tracing::info!("factor: {}", self.val);
-        }
         self.val
     }
 }
