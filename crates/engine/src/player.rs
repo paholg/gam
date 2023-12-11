@@ -6,8 +6,8 @@ use bevy_transform::components::Transform;
 
 use crate::{
     ability::Abilities, collision::TrackCollisionBundle, level::InLevel, lifecycle::ENERGY_REGEN,
-    status_effect::StatusBundle, Ally, Character, Cooldowns, Energy, Health, Kind, MassBundle,
-    Object, Player, Shootable, Target, ABILITY_Y, PLAYER_HEIGHT, PLAYER_MASS, PLAYER_R,
+    status_effect::StatusBundle, Ally, Character, CharacterMarker, Cooldowns, Energy, Health, Kind,
+    MassBundle, Object, Player, Shootable, Target, ABILITY_Y, PLAYER_HEIGHT, PLAYER_MASS, PLAYER_R,
 };
 
 #[derive(Debug, Component)]
@@ -50,6 +50,7 @@ impl PlayerInfo {
                     cooldowns: Cooldowns::new(),
                     desired_movement: Default::default(),
                     ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
+                    marker: CharacterMarker,
                 },
             ))
             .id();
