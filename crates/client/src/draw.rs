@@ -29,7 +29,7 @@ use engine::{
 };
 
 use crate::{
-    asset_handler::{AssetHandler, ExplosionAssets},
+    asset_handler::{explosion::ExplosionAssets, AssetHandler},
     bar::Bar,
     in_plane, Config,
 };
@@ -46,7 +46,7 @@ impl Plugin for DrawPlugin {
                 draw_player_system,
                 draw_enemy_system,
                 draw_ally_system,
-                draw_shot_system,
+                draw_bullet_system,
                 draw_grenade_system,
                 draw_grenade_outline_system,
                 draw_seeker_rocket_system,
@@ -114,7 +114,7 @@ fn raycast_scene_system(
     }
 }
 
-fn draw_shot_system(
+fn draw_bullet_system(
     mut commands: Commands,
     assets: Res<AssetHandler>,
     query: Query<Entity, Added<Bullet>>,
@@ -124,8 +124,8 @@ fn draw_shot_system(
             continue;
         };
         ecmds.insert(ObjectGraphics {
-            material: assets.shot.material.clone(),
-            mesh: assets.shot.mesh.clone(),
+            material: assets.bullet.material.clone(),
+            mesh: assets.bullet.mesh.clone(),
             ..Default::default()
         });
     }
@@ -287,33 +287,30 @@ fn draw_player_system(
     query: Query<(Entity, &FootOffset), Added<Player>>,
 ) {
     for (entity, foot_offset) in query.iter() {
-        let outline = commands
-            .spawn((
-                PbrBundle {
-                    mesh: assets.player.outline_mesh.clone(),
-                    material: assets.player.outline_material.clone(),
-                    transform: in_plane().with_translation(Vec3::new(
-                        0.0,
-                        foot_offset.y + 0.01,
-                        0.0,
-                    )),
-                    ..Default::default()
-                },
-                NotShadowCaster,
-                NotShadowReceiver,
-            ))
-            .id();
-        let graphics = commands
-            .spawn(CharacterGraphics {
-                scene: assets.player.scene.clone(),
-                transform: Transform::from_translation(foot_offset.to_vec()),
-                ..Default::default()
-            })
-            .id();
         commands
             .entity(entity)
             .insert(InheritedVisibility::default())
-            .push_children(&[outline, graphics]);
+            .with_children(|builder| {
+                builder.spawn((
+                    PbrBundle {
+                        mesh: assets.player.outline_mesh.clone(),
+                        material: assets.player.outline_material.clone(),
+                        transform: in_plane().with_translation(Vec3::new(
+                            0.0,
+                            foot_offset.y + 0.01,
+                            0.0,
+                        )),
+                        ..Default::default()
+                    },
+                    NotShadowCaster,
+                    NotShadowReceiver,
+                ));
+                builder.spawn(CharacterGraphics {
+                    scene: assets.player.scene.clone(),
+                    transform: Transform::from_translation(foot_offset.to_vec()),
+                    ..Default::default()
+                });
+            });
     }
 }
 
@@ -405,7 +402,7 @@ fn draw_death_system(
             Kind::Player => Some(&mut assets.player.despawn_effect),
             Kind::Enemy => Some(&mut assets.enemy.despawn_effect),
             Kind::Ally => Some(&mut assets.ally.despawn_effect),
-            Kind::Bullet => Some(&mut assets.shot.collision_effect),
+            Kind::Bullet => Some(&mut assets.bullet.collision_effect),
             Kind::FragGrenade
             | Kind::HealGrenade
             | Kind::SeekerRocket
@@ -419,7 +416,7 @@ fn draw_death_system(
 
         let sound = match death.kind {
             Kind::Other | Kind::NeutrinoBall | Kind::TransportBeam => None,
-            Kind::Bullet => Some(assets.shot.despawn_sound.clone()),
+            Kind::Bullet => Some(assets.bullet.despawn_sound.clone()),
             Kind::Player
             | Kind::Enemy
             | Kind::Ally
@@ -849,3 +846,6 @@ pub fn update_transport_system(
             beam.destination.to_3d(frac * beam.height * 0.5) - parent_transform.translation;
     }
 }
+
+#[derive(Component)]
+pub struct TemperatureGlow;
