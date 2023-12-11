@@ -8,19 +8,6 @@ const TEMP_LOSS_FACTOR: f32 = 1.0 * TIMESTEP;
 
 const FIRE_DAMAGE_FACTOR: f32 = 1.0 * TIMESTEP;
 
-/// Amount of heat energy an effect applies to an entity.
-///
-/// This is not in joules, but some abstract unit. Can be negative, to cool
-/// things.
-#[derive(Debug)]
-pub struct Heat(f32);
-
-impl Heat {
-    pub fn new(amount: f32) -> Self {
-        Self(amount)
-    }
-}
-
 /// Temperature is measured as an abstract effect, rather than a number in
 /// degress or Kelvin.
 ///
@@ -36,10 +23,11 @@ pub struct Temperature {
 }
 
 impl Temperature {
-    pub fn heat(&mut self, mass: f32, heat: Heat) {
+    pub fn heat(&mut self, heat: f32) {
         // TODO: Should different objects have different specific heats, or is
-        // that too complicated?
-        self.val += heat.0 / mass;
+        // that too complicated? Should mass affect temperature increase due to
+        // heat?
+        self.val += heat;
     }
 
     fn tick(&mut self, time_dilation: &TimeDilation, mut health: Mut<'_, Health>) {
@@ -60,6 +48,10 @@ impl Temperature {
             let delta = TEMP_LOSS_FACTOR * self.val * time_dilation.factor();
             self.val -= delta;
         }
+    }
+
+    pub fn val(&self) -> f32 {
+        self.val
     }
 }
 
