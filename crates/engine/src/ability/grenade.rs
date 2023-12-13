@@ -17,7 +17,7 @@ use crate::{
     death_callback::{DeathCallback, ExplosionCallback},
     level::InLevel,
     physics::G,
-    status_effect::{StatusBundle, TimeDilation},
+    status_effect::{StatusProps, TimeDilation},
     time::Dur,
     AbilityOffset, Health, Kind, Libm, MassBundle, Object, Shootable, Target, To2d, To3d, FORWARD,
     PLAYER_R,
@@ -102,7 +102,11 @@ pub fn grenade(
             locked_axes: LockedAxes::ROTATION_LOCKED,
             kind: props.kind.into(),
             in_level: InLevel,
-            statuses: StatusBundle::default(),
+            statuses: StatusProps {
+                thermal_mass: 1.0,
+                capacitance: 1.0,
+            }
+            .into(),
             collisions: TrackCollisionBundle::off(),
         },
         Shootable,

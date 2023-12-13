@@ -6,7 +6,7 @@ use bevy_transform::components::Transform;
 
 use crate::{
     ability::Abilities, collision::TrackCollisionBundle, level::InLevel, lifecycle::ENERGY_REGEN,
-    status_effect::StatusBundle, Ally, Character, CharacterMarker, Cooldowns, Energy, Health, Kind,
+    status_effect::StatusProps, Ally, Character, CharacterMarker, Cooldowns, Energy, Health, Kind,
     MassBundle, Object, Player, Shootable, Target, ABILITY_Y, PLAYER_HEIGHT, PLAYER_MASS, PLAYER_R,
 };
 
@@ -37,7 +37,11 @@ impl PlayerInfo {
                         velocity: Velocity::zero(),
                         force: ExternalForce::default(),
                         in_level: InLevel,
-                        statuses: StatusBundle::default(),
+                        statuses: StatusProps {
+                            thermal_mass: 1.0,
+                            capacitance: 1.0,
+                        }
+                        .into(),
                         collisions: TrackCollisionBundle::off(),
                     },
                     max_speed: Default::default(),

@@ -17,41 +17,39 @@ const FIRE_DAMAGE_FACTOR: f32 = 1.0 * TIMESTEP;
 /// (same for cold). Things should slowly return to 0.0 over time.
 ///
 /// Probably mass also affects how hard it is to change something's temperature.
-#[derive(Component, Debug, Default)]
+#[derive(Component, Debug)]
 pub struct Temperature {
-    val: f32,
+    pub temp: f32,
+    /// A thermal_mass of 1.0 means that 1.0 unit of heat causes 1.0 unit of
+    /// temperature gain. Higher thermal mass means less temperature gain/loss.
+    pub thermal_mass: f32,
 }
 
 impl Temperature {
     pub fn heat(&mut self, heat: f32) {
-        // TODO: Should different objects have different specific heats, or is
-        // that too complicated? Should mass affect temperature increase due to
-        // heat?
-        self.val += heat;
+        self.temp += heat / self.thermal_mass;
     }
 
     fn tick(&mut self, time_dilation: &TimeDilation, mut health: Mut<'_, Health>) {
-        if self.val > 0.0 {
-            let dmg = self.val * FIRE_DAMAGE_FACTOR;
+        if self.temp > 0.0 {
+            let dmg = self.temp * FIRE_DAMAGE_FACTOR;
             health.take(dmg, time_dilation);
-        } else if self.val < 0.0 {
+        } else if self.temp < 0.0 {
             // TODO: WHAT DO WHEN COLD?
+            // Cold lowers your acceleration, increases your max speed, and
+            // gives vulnerability to blunt & piercing damage.
         }
 
-        if self.val.abs() < 0.1 {
+        if self.temp.abs() < 0.1 {
             // Let's just zero-out near zero values.
-            self.val = 0.0
+            self.temp = 0.0
         } else {
             // Newton's law of coooling status that heat loss is directly
             // propotional between the difference in temperatures between an entity
             // and the environment. So let's try that.
-            let delta = TEMP_LOSS_FACTOR * self.val * time_dilation.factor();
-            self.val -= delta;
+            let delta = TEMP_LOSS_FACTOR * self.temp * time_dilation.factor();
+            self.temp -= delta;
         }
-    }
-
-    pub fn val(&self) -> f32 {
-        self.val
     }
 }
 

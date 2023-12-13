@@ -12,7 +12,7 @@ use bevy_transform::components::Transform;
 use crate::{
     collision::{TrackCollisionBundle, TrackCollisions},
     level::InLevel,
-    status_effect::{StatusBundle, TimeDilation},
+    status_effect::{StatusProps, TimeDilation},
     time::Dur,
     FootOffset, Health, Kind, Libm, MassBundle, Object, FORWARD, PLAYER_R,
 };
@@ -56,7 +56,11 @@ pub fn neutrino_ball(
             locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Y,
             kind: Kind::NeutrinoBall,
             in_level: InLevel,
-            statuses: StatusBundle::default(),
+            statuses: StatusProps {
+                thermal_mass: 1.0,
+                capacitance: 1.0,
+            }
+            .into(),
             collisions: TrackCollisionBundle::on(),
         },
         NeutrinoBall {

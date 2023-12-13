@@ -18,7 +18,7 @@ use crate::{
     death_callback::DeathCallback,
     level::{InLevel, LevelProps},
     player::{character_collider, PlayerInfo},
-    status_effect::{StatusBundle, TimeDilation},
+    status_effect::{StatusProps, TimeDilation},
     time::FrameCounter,
     Ally, Character, CharacterMarker, Cooldowns, Enemy, Energy, FootOffset, Health, Kind,
     MassBundle, NumAi, Object, Player, Shootable, ABILITY_Y, PLAYER_HEIGHT, PLAYER_MASS, PLAYER_R,
@@ -103,7 +103,11 @@ fn spawn_enemies(
                         velocity: Velocity::zero(),
                         force: ExternalForce::default(),
                         in_level: InLevel,
-                        statuses: StatusBundle::default(),
+                        statuses: StatusProps {
+                            thermal_mass: 1.0,
+                            capacitance: 1.0,
+                        }
+                        .into(),
                         collisions: TrackCollisionBundle::off(),
                     },
                     max_speed: Default::default(),
@@ -154,7 +158,11 @@ fn spawn_allies(
                         velocity: Velocity::zero(),
                         force: ExternalForce::default(),
                         in_level: InLevel,
-                        statuses: StatusBundle::default(),
+                        statuses: StatusProps {
+                            thermal_mass: 1.0,
+                            capacitance: 1.0,
+                        }
+                        .into(),
                         collisions: TrackCollisionBundle::off(),
                     },
                     max_speed: Default::default(),

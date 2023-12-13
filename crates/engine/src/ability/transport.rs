@@ -12,7 +12,7 @@ use crate::{
     collision::{TrackCollisionBundle, TrackCollisions},
     level::{Floor, InLevel},
     movement::{DesiredMove, MaxSpeed},
-    status_effect::{StatusBundle, TimeDilation},
+    status_effect::{StatusProps, TimeDilation},
     time::Dur,
     Health, Kind, MassBundle, Object, Target, To2d, To3d,
 };
@@ -50,7 +50,11 @@ pub fn transport(
             foot_offset: 0.0.into(),
             mass: MassBundle::new(10_000.0),
             force: ExternalForce::default(),
-            statuses: StatusBundle::default(),
+            statuses: StatusProps {
+                thermal_mass: 1.0,
+                capacitance: 1.0,
+            }
+            .into(),
             collisions: TrackCollisionBundle::on(),
         },
         TransportBeam {
