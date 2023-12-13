@@ -19,7 +19,7 @@ struct Args {
     raycast_cursor: bool,
     /// Whether to show the egui inspector
     #[arg(long)]
-    egui: bool,
+    inspector: bool,
     /// Whether to show rapier colliders
     #[arg(long)]
     rapier: bool,
@@ -70,7 +70,7 @@ fn debug_stuff(app: &mut App, args: &Args) {
             bevy_mod_raycast::prelude::RaycastPluginState::<()>::default().with_debug_cursor(),
         );
     }
-    if args.all || args.egui {
+    if args.all || args.inspector {
         app.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
     }
     if args.all || args.rapier {
