@@ -13,7 +13,7 @@ use crate::{
     ability::properties::ExplosionProps,
     collision::{TrackCollisionBundle, TrackCollisions},
     level::InLevel,
-    status_effect::TimeDilation,
+    status_effect::{StatusProps, TimeDilation},
     Health, Kind, MassBundle, Object, To2d, To3d,
 };
 
@@ -68,6 +68,8 @@ impl From<ExplosionProps> for Explosion {
 impl ExplosionCallback {
     pub fn call(&self, commands: &mut Commands, transform: &Transform) {
         commands.spawn((
+            // TODO: This should not be an Object, a lot of these things don't
+            // make sense.
             Object {
                 transform: (*transform).into(),
                 collider: Collider::ball(self.props.min_radius),
@@ -80,7 +82,11 @@ impl ExplosionCallback {
                 locked_axes: LockedAxes::empty(),
                 kind: Kind::Other,
                 in_level: InLevel,
-                statuses: crate::status_effect::StatusBundle::default(),
+                statuses: StatusProps {
+                    thermal_mass: 1.0,
+                    capacitance: 1.0,
+                }
+                .into(),
                 collisions: TrackCollisionBundle::on(),
             },
             Explosion::from(self.props),

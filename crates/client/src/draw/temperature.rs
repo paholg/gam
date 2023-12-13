@@ -58,8 +58,7 @@ pub fn update_temperature_system(
 
         // Temperature can be anything, we need to map it to [0, 1] for our
         // gradient.
-        let gradient_val = (temperature.val() * 0.03).tanh() * 0.5 + 0.5;
-        tracing::info!(%gradient_val, temp = %temperature.val());
+        let gradient_val = (temperature.temp * 0.03).tanh() * 0.5 + 0.5;
 
         let color = assets.temperature.gradient.get(gradient_val);
 

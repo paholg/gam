@@ -12,7 +12,7 @@ use crate::{
     death_callback::{DeathCallback, ExplosionCallback},
     level::InLevel,
     movement::DesiredMove,
-    status_effect::StatusBundle,
+    status_effect::StatusProps,
     time::TIMESTEP,
     AbilityOffset, Energy, Health, Kind, MassBundle, Object, Shootable, Target, To2d, FORWARD,
     PLAYER_R,
@@ -56,7 +56,11 @@ pub fn seeker_rocket(
             locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Y,
             kind: Kind::SeekerRocket,
             in_level: InLevel,
-            statuses: StatusBundle::default(),
+            statuses: StatusProps {
+                thermal_mass: 1.0,
+                capacitance: 1.0,
+            }
+            .into(),
             collisions: TrackCollisionBundle::on(),
         },
         Health::new(props.health),
