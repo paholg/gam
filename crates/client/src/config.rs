@@ -6,7 +6,7 @@ use bevy::{
         Added, Commands, Entity, GamepadButtonType, KeyCode, MouseButton, Plugin, Query, Res,
         Resource, Update,
     },
-    reflect::TypePath,
+    reflect::Reflect,
 };
 use bevy_ui_navigation::{events::ScopeDirection, prelude::NavRequest};
 use directories::ProjectDirs;
@@ -261,18 +261,18 @@ impl Default for PlayerConfig {
 }
 
 #[derive(
-    Debug,
-    TypePath,
+    Actionlike,
     Clone,
     Copy,
-    PartialEq,
-    Eq,
-    PartialOrd,
-    Ord,
-    Hash,
-    Serialize,
+    Debug,
     Deserialize,
-    Actionlike,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Reflect,
+    Serialize,
 )]
 #[subenum(GameAction, MenuAction)]
 pub enum UserAction {
