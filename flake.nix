@@ -28,7 +28,7 @@
 
       toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
 
-      runtimeInputs = with pkgs; [vulkan-loader];
+      runtimeInputs = with pkgs; [vulkan-loader udev alsa-lib];
       x11Inputs = with pkgs; [
         xorg.libXcursor
         xorg.libXi
@@ -42,7 +42,7 @@
         udev
         alsa-lib
       ];
-      nativeBuildInputs = with pkgs; [pkg-config];
+      nativeBuildInputs = with pkgs; [pkg-config rust-analyzer];
       rustPkgs = pkgs.rustBuilder.makePackageSet {
         packageFun = import ./Cargo.nix;
         rustToolchain = toolchain;
