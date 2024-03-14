@@ -4,8 +4,8 @@ use bevy::{
     core_pipeline::bloom::BloomSettings,
     math::primitives::Rectangle,
     prelude::{
-        Assets, Camera, Camera3dBundle, Color, Commands, Mesh, PbrBundle,
-        PerspectiveProjection, ResMut, StandardMaterial, Transform, Vec3,
+        Assets, Camera, Camera3dBundle, Color, Commands, Mesh, PbrBundle, PerspectiveProjection,
+        ResMut, StandardMaterial, Transform, Vec3,
     },
 };
 use engine::{lifecycle::DEATH_Y, UP};
