@@ -35,7 +35,7 @@
         udev
         alsa-lib
       ];
-      nativeBuildInputs = with pkgs; [pkg-config rust-analyzer just];
+      nativeBuildInputs = with pkgs; [pkg-config];
       # rustPkgs = pkgs.rustBuilder.makePackageSet {
       #   packageFun = import ./Cargo.nix;
       #   rustToolchain = rust_toolchain;
@@ -56,7 +56,7 @@
       };
 
       devShell.${system} = pkgs.mkShell {
-        packages = [];
+        packages = with pkgs; [just rust-analyzer];
         buildInputs = buildInputs ++ runtimeInputs ++ x11Inputs ++ waylandInputs;
         nativeBuildInputs = nativeBuildInputs;
 

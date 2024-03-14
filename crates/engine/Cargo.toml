@@ -18,20 +18,20 @@ bevy_transform.workspace = true
 bevy_utils.workspace = true
 
 # Other crates
+# bincode = { version = "2.0.0-rc.2", features = ["serde"] }
 bevy_rapier3d.workspace = true
 bitmask-enum = "2.2.3"
 bytemuck = { version = "1.14.0", features = ["derive"] }
-oxidized_navigation = { version = "0.8.0", features = ["rapier"] }
-# bincode = { version = "2.0.0-rc.2", features = ["serde"] }
 futures-lite = "2.1.0"
+image = "0.24.7"
 libm = "0.2.8"
+oxidized_navigation = { version = "0.8.0", features = ["rapier"] }
 rand = "0.8"
 serde = "1"
 smallvec.workspace = true
 strum = { version = "0.25.0", features = ["derive"] }
+subenum.workspace = true
 tracing.workspace = true
-# typed-builder = "0.11"
-image = "0.24.7"
 
 [lints]
 workspace = true

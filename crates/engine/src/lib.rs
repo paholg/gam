@@ -1,6 +1,10 @@
 use std::fmt;
 
-use ability::{properties::AbilityProps, seeker_rocket, Abilities, Ability};
+use ability::{
+    cooldown::{global_cooldown_system, Cooldown},
+    properties::AbilityProps,
+    seeker_rocket, AbilityMap, Left, Right,
+};
 use ai::pathfind::PathfindPlugin;
 use bevy_app::{App, FixedUpdate, Plugin, PostUpdate, Startup};
 use bevy_ecs::{
@@ -20,7 +24,6 @@ use bevy_transform::{
     components::{GlobalTransform, Transform},
     TransformBundle,
 };
-use bevy_utils::HashMap;
 use collision::TrackCollisionBundle;
 use input::check_resume;
 use level::{InLevel, LevelProps};
@@ -194,43 +197,6 @@ impl Faction for Ally {
 #[derive(Component, Default)]
 pub struct Shootable;
 
-#[derive(Component, Reflect, Default)]
-pub struct Cooldowns {
-    map: HashMap<Ability, Dur>,
-}
-
-impl Cooldowns {
-    pub fn new() -> Self {
-        Self {
-            map: HashMap::default(),
-        }
-    }
-
-    pub fn is_available(&self, ability: &Ability, time_dilation: &TimeDilation) -> bool {
-        match self.map.get(ability) {
-            Some(dur) => dur.is_done(time_dilation),
-            None => true,
-        }
-    }
-
-    pub fn set(&mut self, ability: Ability, cooldown: Dur) {
-        self.map.insert(ability, cooldown);
-    }
-
-    pub fn reset(&mut self) {
-        self.map.clear();
-    }
-}
-
-pub fn cooldown_system(mut query: Query<(&mut Cooldowns, &TimeDilation)>) {
-    for (mut cd, time_dilation) in &mut query {
-        for (_ability, dur) in cd.map.iter_mut() {
-            dur.tick(time_dilation);
-        }
-        cd.map.retain(|_ability, dur| !dur.is_done(time_dilation));
-    }
-}
-
 /// The offset from an object's transform, to its bottom.
 #[derive(Component, Default, Clone, Copy)]
 pub struct FootOffset {
@@ -309,8 +275,7 @@ struct Character {
     max_speed: MaxSpeed,
     friction: Friction,
     shootable: Shootable,
-    cooldowns: Cooldowns,
-    abilities: Abilities,
+    global_cooldown: Cooldown,
     desired_movement: DesiredMove,
     ability_offset: AbilityOffset,
     marker: CharacterMarker,
@@ -351,6 +316,7 @@ impl Plugin for GamPlugin {
                 allies: 0,
             })
             .insert_resource(PlayerInputs::default())
+            .insert_resource(AbilityMap::default())
             .insert_resource(LevelProps::default());
 
         // Events
@@ -380,7 +346,11 @@ impl Plugin for GamPlugin {
         );
 
         // Systems in order
-        app.add_systems(Startup, level::test_level).add_systems(
+        app.add_systems(
+            Startup,
+            (level::test_level, ability::setup, ability::gun::setup),
+        )
+        .add_systems(
             schedule.clone(),
             (
                 time::frame_counter.in_set(GameSet::Timer),
@@ -397,7 +367,9 @@ impl Plugin for GamPlugin {
                         phased_tick,
                         clear_forces,
                         energy_regen,
-                        cooldown_system,
+                        global_cooldown_system,
+                        ability::gun::cooldown_system::<Left>,
+                        ability::gun::cooldown_system::<Right>,
                         lifecycle::reset,
                     ),
                     (
@@ -406,17 +378,19 @@ impl Plugin for GamPlugin {
                         ai::pathfind::poll_pathfinding_system,
                         ai::charge::system_set(),
                     ),
-                    // Misc; categorize futher?
-                    movement::apply_movement,
-                    ability::bullet::kickback_system,
-                    seeker_rocket::tracking_system,
-                    ability::grenade::explode_system,
-                    death_callback::explosion_grow_system,
-                    ability::neutrino_ball::activation_system,
-                    ability::transport::move_system,
-                    ability::transport::activation_system,
-                    lifecycle::fall,
-                    ai::pathfind::pathfinding_system,
+                    (
+                        // Misc; categorize futher?
+                        movement::apply_movement,
+                        ability::bullet::kickback_system,
+                        seeker_rocket::tracking_system,
+                        ability::grenade::explode_system,
+                        death_callback::explosion_grow_system,
+                        ability::neutrino_ball::activation_system,
+                        ability::transport::move_system,
+                        ability::transport::activation_system,
+                        lifecycle::fall,
+                        ai::pathfind::pathfinding_system,
+                    ),
                     (
                         // Collisions
                         collision::collision_system,

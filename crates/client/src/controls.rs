@@ -69,7 +69,7 @@ pub fn player_input(
     // Handle menu separately, as we only want to send it when `just_pressed`
     // to prevent flickering.
     if action_state.just_pressed(UserAction::Menu) {
-        actions |= Action::Menu;
+        actions |= Action::Pause;
     }
 
     let movement = action_state

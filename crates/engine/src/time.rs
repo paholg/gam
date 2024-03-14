@@ -1,4 +1,5 @@
 use std::{
+    cmp::Ordering,
     ops::{Div, Sub},
     time::Instant,
 };
@@ -26,7 +27,7 @@ impl Frame {
 }
 
 /// Represents a duration in ticks rather than time.
-#[derive(Default, Debug, Copy, Clone, Reflect, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, Reflect, PartialEq, PartialOrd)]
 pub struct Dur(f32);
 
 impl Dur {
@@ -46,6 +47,21 @@ impl Dur {
     pub fn tick(&mut self, time_dilation: &TimeDilation) -> bool {
         self.0 = (self.0 - time_dilation.factor()).max(0.0);
         self.is_done(time_dilation)
+    }
+
+    pub fn max(self, rhs: Dur) -> Dur {
+        match self.partial_cmp(&rhs) {
+            Some(Ordering::Greater) => self,
+            Some(Ordering::Equal | Ordering::Less) => rhs,
+            None => {
+                debug_assert!(false, "Dur has invalid float value");
+                if rhs.0.is_finite() {
+                    rhs
+                } else {
+                    self
+                }
+            }
+        }
     }
 }
 

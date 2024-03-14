@@ -1,19 +1,15 @@
 use bevy_ecs::{
-    entity::Entity,
     schedule::{NextState, State},
     system::{Commands, Query, Res, ResMut},
 };
-use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
-use bevy_utils::HashSet;
 
 use crate::{
-    ability::{properties::AbilityProps, Abilities},
     face,
     movement::DesiredMove,
     multiplayer::{Action, PlayerInputs},
-    status_effect::TimeDilation,
-    AbilityOffset, AppState, Cooldowns, Energy, FootOffset, Player, Target,
+    player::Abilities,
+    AppState, Player, Target,
 };
 
 pub fn check_resume(
@@ -28,7 +24,7 @@ pub fn check_resume(
         };
         let buttons = input.buttons();
 
-        if buttons.contains(Action::Menu) {
+        if buttons.contains(Action::Pause) {
             pause_resume(&state, &mut next_state);
         }
     }
@@ -37,39 +33,17 @@ pub fn check_resume(
 pub fn apply_inputs(
     inputs: Res<PlayerInputs>,
     mut commands: Commands,
-    props: Res<AbilityProps>,
     state: Res<State<AppState>>,
     mut next_state: ResMut<NextState<AppState>>,
     mut query: Query<(
-        Entity,
-        &mut Energy,
-        &mut Cooldowns,
-        &Velocity,
-        &mut Transform,
-        &Player,
-        &mut Target,
         &Abilities,
+        &Player,
+        &mut Transform,
+        &mut Target,
         &mut DesiredMove,
-        &AbilityOffset,
-        &FootOffset,
-        &mut TimeDilation,
     )>,
 ) {
-    for (
-        entity,
-        mut energy,
-        mut cooldowns,
-        velocity,
-        mut transform,
-        player,
-        mut target,
-        abilities,
-        mut desired_move,
-        ability_offset,
-        foot_offset,
-        mut time_dilation,
-    ) in query.iter_mut()
-    {
+    for (abilities, player, mut transform, mut target, mut desired_move) in query.iter_mut() {
         let Some(input) = inputs.get(player) else {
             continue;
         };
@@ -82,31 +56,15 @@ pub fn apply_inputs(
 
         // Abilities
         let buttons = input.buttons();
-        let mut abilities_not_fired = abilities.iter().collect::<HashSet<_>>();
         for ability in buttons.abilities_fired(abilities) {
-            let fired = ability.fire(
-                &mut commands,
-                &props,
-                entity,
-                &mut energy,
-                &mut cooldowns,
-                &transform,
-                velocity,
-                &target,
-                ability_offset,
-                foot_offset,
-                &mut time_dilation,
-            );
-            if fired {
-                abilities_not_fired.remove(&ability);
-            }
+            commands.add(ability);
         }
 
         // Movement
         desired_move.dir = input.movement().clamp_length_max(1.0);
 
         // Menu
-        if buttons.contains(Action::Menu) {
+        if buttons.contains(Action::Pause) {
             pause_resume(&state, &mut next_state);
         }
     }

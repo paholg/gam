@@ -8,12 +8,10 @@ use bevy_utils::HashMap;
 use bitmask_enum::bitmask;
 use bytemuck::{Pod, Zeroable};
 use serde::{Deserialize, Serialize};
+use smallvec::SmallVec;
 use strum::EnumIter;
 
-use crate::{
-    ability::{Abilities, Ability},
-    Player,
-};
+use crate::{ability::AbilityCommand, player::Abilities, Player};
 
 /// The inputs of all players
 #[derive(Resource, Default, Debug)]
@@ -34,31 +32,48 @@ impl PlayerInputs {
 #[derive(EnumIter, TypePath, Deserialize)]
 #[bitmask(u16)]
 pub enum Action {
-    Ability0,
-    Ability1,
-    Ability2,
-    Ability3,
-    Ability4,
-    Menu,
+    // Abilities
+    LeftArm,
+    LeftArmSecondary,
+    RightArm,
+    RightArmSecondary,
+    LeftShoulder,
+    RightShoulder,
+    Legs,
+    Head,
+    // Non-ability actions
+    Pause,
 }
 
 impl Action {
-    pub fn abilities_fired(&self, abilities: &Abilities) -> impl Iterator<Item = Ability> {
-        let mut fired = Vec::new();
-        if self.contains(Action::Ability0) {
-            fired.push(abilities[0]);
+    pub fn abilities_fired<'a>(
+        &self,
+        abilities: &'a Abilities,
+    ) -> impl Iterator<Item = AbilityCommand> {
+        let mut fired = SmallVec::<AbilityCommand, 8>::new();
+        if self.contains(Action::LeftArm) {
+            fired.push(abilities.left_arm.clone());
         }
-        if self.contains(Action::Ability1) {
-            fired.push(abilities[1]);
+        if self.contains(Action::LeftArmSecondary) {
+            fired.push(abilities.left_arm_secondary.clone());
         }
-        if self.contains(Action::Ability2) {
-            fired.push(abilities[2]);
+        if self.contains(Action::RightArm) {
+            fired.push(abilities.right_arm.clone());
         }
-        if self.contains(Action::Ability3) {
-            fired.push(abilities[3]);
+        if self.contains(Action::RightArmSecondary) {
+            fired.push(abilities.right_arm_secondary.clone());
         }
-        if self.contains(Action::Ability4) {
-            fired.push(abilities[4]);
+        if self.contains(Action::LeftShoulder) {
+            fired.push(abilities.left_shoulder.clone());
+        }
+        if self.contains(Action::RightShoulder) {
+            fired.push(abilities.right_shoulder.clone());
+        }
+        if self.contains(Action::Legs) {
+            fired.push(abilities.legs.clone());
+        }
+        if self.contains(Action::Head) {
+            fired.push(abilities.head.clone());
         }
 
         fired.into_iter()

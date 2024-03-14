@@ -3,6 +3,7 @@ use bevy_ecs::{
     entity::Entity,
     query::{Added, With, Without},
     system::{Commands, Query},
+    world::World,
 };
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{

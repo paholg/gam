@@ -12,11 +12,11 @@ use bevy_transform::components::Transform;
 use rand::{thread_rng, Rng};
 
 use crate::{
-    ability::{properties::AbilityProps, Ability},
+    ability::{cooldown::Cooldown, properties::AbilityProps},
     level::Floor,
     movement::DesiredMove,
     status_effect::TimeDilation,
-    AbilityOffset, Ally, Cooldowns, Enemy, Energy, Faction, FootOffset, Target, To2d, To3d,
+    AbilityOffset, Ally, Enemy, Energy, Faction, FootOffset, To2d, To3d,
 };
 
 use super::{
@@ -108,7 +108,7 @@ fn gun_system(
     mut commands: Commands,
     mut ai_q: Query<(
         Entity,
-        &mut Cooldowns,
+        &mut Cooldown,
         &mut Energy,
         &Velocity,
         &Transform,
@@ -131,21 +131,21 @@ fn gun_system(
         mut time_dilation,
     ) in ai_q.iter_mut()
     {
-        if !ai.gun_obstruction {
-            Ability::Gun.fire(
-                &mut commands,
-                &props,
-                entity,
-                &mut energy,
-                &mut cooldowns,
-                transform,
-                velocity,
-                &Target::default(),
-                ability_offset,
-                foot_offset,
-                &mut time_dilation,
-            );
-        }
+        // if !ai.gun_obstruction {
+        //     Ability::Gun.fire(
+        //         &mut commands,
+        //         &props,
+        //         entity,
+        //         &mut energy,
+        //         &mut cooldowns,
+        //         transform,
+        //         velocity,
+        //         &Target::default(),
+        //         ability_offset,
+        //         foot_offset,
+        //         &mut time_dilation,
+        //     );
+        // }
     }
 }
 

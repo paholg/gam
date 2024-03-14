@@ -4,7 +4,7 @@ use bevy_ecs::system::Resource;
 
 use crate::{death_callback::ExplosionKind, movement::MaxSpeed, time::Dur};
 
-use super::{grenade::GrenadeKind, Ability};
+use super::grenade::GrenadeKind;
 
 #[derive(Debug, Resource)]
 pub struct AbilityProps {
@@ -65,39 +65,9 @@ impl Default for AbilityProps {
     }
 }
 
-impl AbilityProps {
-    pub fn cooldown(&self, ability: &Ability) -> Dur {
-        match ability {
-            Ability::None => Dur::default(),
-            Ability::Gun => self.gun.cooldown,
-            Ability::Shotgun => self.shotgun.cooldown,
-            Ability::FragGrenade => self.frag_grenade.cooldown,
-            Ability::HealGrenade => self.heal_grenade.cooldown,
-            Ability::SeekerRocket => self.seeker_rocket.cooldown,
-            Ability::NeutrinoBall => self.neutrino_ball.cooldown,
-            Ability::Transport => self.transport.cooldown,
-            Ability::SpeedUp => self.speed_up.cooldown,
-        }
-    }
-
-    pub fn cost(&self, ability: &Ability) -> f32 {
-        match ability {
-            Ability::None => 0.0,
-            Ability::Gun => self.gun.cost,
-            Ability::Shotgun => self.shotgun.cost,
-            Ability::FragGrenade => self.frag_grenade.cost,
-            Ability::HealGrenade => self.heal_grenade.cost,
-            Ability::SeekerRocket => self.seeker_rocket.cost,
-            Ability::NeutrinoBall => self.neutrino_ball.cost,
-            Ability::Transport => self.transport.cost,
-            Ability::SpeedUp => self.speed_up.cost,
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct GunProps {
-    pub cost: f32,
+    pub ammo: u32,
     pub cooldown: Dur,
     pub duration: Dur,
     pub speed: f32,
@@ -105,12 +75,14 @@ pub struct GunProps {
     pub damage: f32,
     pub mass: f32,
     pub bullet_health: f32,
+    pub reload_cost: f32,
+    pub reload_gcd: Dur,
 }
 
 impl Default for GunProps {
     fn default() -> Self {
         Self {
-            cost: 5.0,
+            ammo: 10,
             cooldown: Dur::new(5),
             duration: Dur::new(600),
             speed: 12.0,
@@ -118,6 +90,8 @@ impl Default for GunProps {
             damage: 2.0,
             bullet_health: 1.0,
             mass: 0.25,
+            reload_cost: 50.0,
+            reload_gcd: Dur::new(30),
         }
     }
 }
