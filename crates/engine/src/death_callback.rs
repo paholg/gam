@@ -98,7 +98,10 @@ impl ExplosionCallback {
 
 pub fn explosion_grow_system(mut explosion_q: Query<(&Explosion, &mut Collider, &TimeDilation)>) {
     for (explosion, mut collider, time_dilation) in &mut explosion_q {
-        let mut ball = collider.as_ball_mut().unwrap();
+        let Some(mut ball) = collider.as_ball_mut() else {
+            tracing::warn!(?collider, "Explosion collider not a ball");
+            return;
+        };
         let new_radius = ball.radius() + explosion.growth_rate * time_dilation.factor();
         ball.set_radius(new_radius);
     }
