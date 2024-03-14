@@ -29,14 +29,9 @@ impl CharacterAssets {
 
         const OUTLINE_ALPHA: f32 = 0.5;
         let material = builder.materials.add(StandardMaterial {
-            // FIXME: broken on windows with these settings
-            // depth_bias: OUTLINE_DEPTH_BIAS,
-            // perceptual_roughness: 1.0,
-            // metallic: 1.0,
-            // fog_enabled: false,
-            // alpha_mode: AlphaMode::Blend,
             unlit: true,
             base_color: color.with_a(OUTLINE_ALPHA),
+            // TODO: Make actually emissive???
             emissive: color.with_a(OUTLINE_ALPHA),
             ..Default::default()
         });

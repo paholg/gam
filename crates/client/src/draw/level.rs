@@ -1,7 +1,10 @@
-use bevy::prelude::{
-    Added, BuildChildren, Commands, Component, Entity, GlobalTransform, Handle,
-    InheritedVisibility, PbrBundle, Query, Res, SpotLight, SpotLightBundle, StandardMaterial,
-    Transform, Vec2, Vec3, With,
+use bevy::{
+    prelude::{
+        Added, BuildChildren, Commands, Component, Entity, GlobalTransform, Handle,
+        InheritedVisibility, PbrBundle, Query, Res, SpotLight, SpotLightBundle, StandardMaterial,
+        Transform, Vec2, Vec3, With,
+    },
+    render::view::RenderLayers,
 };
 use bevy_mod_raycast::prelude::RaycastMesh;
 use engine::{
@@ -224,7 +227,7 @@ pub fn draw_lights_system(
                     spot_light: SpotLight {
                         shadows_enabled: true,
                         range: 30.0,
-                        intensity: 4000.0,
+                        intensity: 4_000_000.0,
                         outer_angle: std::f32::consts::FRAC_PI_3,
                         inner_angle: 0.0,
                         ..Default::default()
@@ -232,6 +235,7 @@ pub fn draw_lights_system(
                     transform: t,
                     ..Default::default()
                 },
+                RenderLayers::all(),
                 InLevel,
             ));
         }

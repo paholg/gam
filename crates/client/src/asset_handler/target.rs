@@ -16,12 +16,12 @@ pub struct TargetAssets {
 impl TargetAssets {
     pub fn new(builder: &mut Builder) -> Self {
         let target_material = StandardMaterial {
-            emissive: Color::rgb_linear(10.0, 0.0, 0.1),
+            emissive: Color::rgb_linear(10_000.0, 0.0, 0.1),
             ..Default::default()
         };
 
         let target_laser_material = StandardMaterial {
-            emissive: Color::rgb_linear(10.0, 0.0, 0.1),
+            emissive: Color::rgb_linear(10_000.0, 0.0, 0.1),
             ..Default::default()
         };
         let laser_length = 100.0;

@@ -28,7 +28,7 @@ impl BulletAssets {
         let effect_pool = ParticleEffectBundle::new(effect).into();
 
         let shot_material = StandardMaterial {
-            emissive: Color::rgb_linear(0.0, 20.0, 20.0),
+            emissive: Color::rgb_linear(0.0, 20_000.0, 20_000.0),
             ..Default::default()
         };
 

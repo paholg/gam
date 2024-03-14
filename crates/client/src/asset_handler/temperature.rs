@@ -16,9 +16,9 @@ pub struct TemperatureAssets {
 impl TemperatureAssets {
     pub fn new(builder: &mut Builder) -> Self {
         let gradient = ColorGradient::new([
-            (0.0, Color::rgba(0.0, 2.0, 5.0, 0.3)),
+            (0.0, Color::rgba(0.0, 20.0, 50.0, 0.3)),
             (0.5, Color::rgba(0.0, 0.0, 0.0, 0.0)),
-            (1.0, Color::rgba(5.0, 2.0, 0.0, 0.3)),
+            (1.0, Color::rgba(50.0, 20.0, 0.0, 0.3)),
         ]);
         let mesh = builder.meshes.add(Sphere::new(1.0));
         let material = builder.materials.add(StandardMaterial {
