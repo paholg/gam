@@ -2,7 +2,7 @@ use bevy_ecs::{
     component::Component,
     entity::Entity,
     event::EventWriter,
-    query::{With, Without, WorldQuery},
+    query::{QueryData, With, Without},
     schedule::{IntoSystemConfigs, SystemConfigs},
     system::{Commands, Query, Res},
 };
@@ -149,8 +149,8 @@ fn gun_system(
     }
 }
 
-#[derive(WorldQuery)]
-#[world_query(mutable)]
+#[derive(QueryData)]
+#[query_data(mutable)]
 struct MoveQuery {
     entity: Entity,
     target: &'static mut AiTarget,

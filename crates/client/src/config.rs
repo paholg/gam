@@ -8,7 +8,7 @@ use bevy::{
     },
     reflect::Reflect,
 };
-use bevy_ui_navigation::{events::ScopeDirection, prelude::NavRequest};
+// use bevy_ui_navigation::{events::ScopeDirection, prelude::NavRequest};
 use directories::ProjectDirs;
 use engine::{
     ability::{Abilities, Ability},
@@ -88,52 +88,52 @@ impl Default for Config {
 
 fn default_controls() -> InputMap<UserAction> {
     let mut map = InputMap::default();
-    map.insert(KeyCode::Escape, UserAction::Menu)
-        .insert(GamepadButtonType::Start, UserAction::Menu)
-        .insert(DualAxis::left_stick(), UserAction::Move)
+    map.insert(UserAction::Menu, KeyCode::Escape)
+        .insert(UserAction::Menu, GamepadButtonType::Start)
+        .insert(UserAction::Move, DualAxis::left_stick())
         .insert(
+            UserAction::Move,
             VirtualDPad {
                 up: GamepadButtonType::DPadUp.into(),
                 down: GamepadButtonType::DPadUp.into(),
                 left: GamepadButtonType::DPadLeft.into(),
                 right: GamepadButtonType::DPadRight.into(),
             },
-            UserAction::Move,
         )
         .insert(
-            VirtualDPad {
-                up: KeyCode::E.into(),
-                down: KeyCode::D.into(),
-                left: KeyCode::S.into(),
-                right: KeyCode::F.into(),
-            },
             UserAction::Move,
+            VirtualDPad {
+                up: KeyCode::KeyE.into(),
+                down: KeyCode::KeyD.into(),
+                left: KeyCode::KeyS.into(),
+                right: KeyCode::KeyF.into(),
+            },
         )
-        .insert(DualAxis::right_stick(), UserAction::Aim)
-        .insert(MouseButton::Left, UserAction::Ability0)
-        .insert(GamepadButtonType::RightTrigger2, UserAction::Ability0)
-        .insert(MouseButton::Right, UserAction::Ability1)
-        .insert(GamepadButtonType::LeftTrigger2, UserAction::Ability1)
-        .insert(KeyCode::Space, UserAction::Ability2)
-        .insert(GamepadButtonType::South, UserAction::Ability2)
-        .insert(KeyCode::W, UserAction::Ability3)
-        .insert(MouseButton::Other(8), UserAction::Ability3)
-        .insert(GamepadButtonType::LeftTrigger, UserAction::Ability3)
-        .insert(KeyCode::R, UserAction::Ability4)
-        .insert(MouseButton::Other(9), UserAction::Ability4)
-        .insert(GamepadButtonType::RightTrigger, UserAction::Ability4)
+        .insert(UserAction::Aim, DualAxis::right_stick())
+        .insert(UserAction::Ability0, MouseButton::Left)
+        .insert(UserAction::Ability0, GamepadButtonType::RightTrigger2)
+        .insert(UserAction::Ability1, MouseButton::Right)
+        .insert(UserAction::Ability1, GamepadButtonType::LeftTrigger2)
+        .insert(UserAction::Ability2, KeyCode::Space)
+        .insert(UserAction::Ability2, GamepadButtonType::South)
+        .insert(UserAction::Ability3, KeyCode::KeyW)
+        .insert(UserAction::Ability3, MouseButton::Other(8))
+        .insert(UserAction::Ability3, GamepadButtonType::LeftTrigger)
+        .insert(UserAction::Ability4, KeyCode::KeyR)
+        .insert(UserAction::Ability4, MouseButton::Other(9))
+        .insert(UserAction::Ability4, GamepadButtonType::RightTrigger)
         // Menu controls
-        .insert(GamepadButtonType::LeftTrigger, UserAction::TabLeft)
-        .insert(GamepadButtonType::RightTrigger, UserAction::TabRight)
-        .insert(GamepadButtonType::LeftTrigger2, UserAction::TabLeft)
-        .insert(GamepadButtonType::RightTrigger2, UserAction::TabRight)
-        .insert(GamepadButtonType::South, UserAction::Select)
-        .insert(GamepadButtonType::East, UserAction::Cancel)
-        .insert(KeyCode::W, UserAction::TabLeft)
-        .insert(KeyCode::R, UserAction::TabRight)
-        .insert(KeyCode::Return, UserAction::Select)
-        .insert(MouseButton::Left, UserAction::Select)
-        .insert(MouseButton::Right, UserAction::Cancel);
+        .insert(UserAction::TabLeft, GamepadButtonType::LeftTrigger)
+        .insert(UserAction::TabRight, GamepadButtonType::RightTrigger)
+        .insert(UserAction::TabLeft, GamepadButtonType::LeftTrigger2)
+        .insert(UserAction::TabRight, GamepadButtonType::RightTrigger2)
+        .insert(UserAction::Select, GamepadButtonType::South)
+        .insert(UserAction::Cancel, GamepadButtonType::East)
+        .insert(UserAction::TabLeft, KeyCode::KeyW)
+        .insert(UserAction::TabRight, KeyCode::KeyR)
+        .insert(UserAction::Select, KeyCode::Enter)
+        .insert(UserAction::Select, MouseButton::Left)
+        .insert(UserAction::Cancel, MouseButton::Right);
     map
 }
 
@@ -148,6 +148,7 @@ impl Config {
         Ok(config)
     }
 
+    #[allow(unused)]
     fn save(&self) -> Result<(), Error> {
         let config = serde_json::to_string_pretty(self)?;
         let path = config_file()?;
@@ -318,16 +319,17 @@ impl From<GameAction> for Action {
     }
 }
 
-impl From<MenuAction> for NavRequest {
-    fn from(value: MenuAction) -> Self {
-        match value {
-            MenuAction::Select => NavRequest::Action,
-            MenuAction::Cancel => NavRequest::Cancel,
-            MenuAction::TabLeft => NavRequest::ScopeMove(ScopeDirection::Previous),
-            MenuAction::TabRight => NavRequest::ScopeMove(ScopeDirection::Next),
-        }
-    }
-}
+// TODO: bevy-ui-navigation
+// impl From<MenuAction> for NavRequest {
+//     fn from(value: MenuAction) -> Self {
+//         match value {
+//             MenuAction::Select => NavRequest::Action,
+//             MenuAction::Cancel => NavRequest::Cancel,
+//             MenuAction::TabLeft => NavRequest::ScopeMove(ScopeDirection::Previous),
+//             MenuAction::TabRight => NavRequest::ScopeMove(ScopeDirection::Next),
+//         }
+//     }
+// }
 
 fn spawn_input_manager(
     mut commands: Commands,

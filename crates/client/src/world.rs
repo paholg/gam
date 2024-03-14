@@ -2,9 +2,10 @@ use std::f32::consts::PI;
 
 use bevy::{
     core_pipeline::bloom::BloomSettings,
+    math::primitives::Rectangle,
     prelude::{
-        shape, Assets, Camera, Camera3dBundle, Color, Commands, Mesh, PbrBundle,
-        PerspectiveProjection, ResMut, StandardMaterial, Transform, Vec2, Vec3,
+        Assets, Camera, Camera3dBundle, Color, Commands, Mesh, PbrBundle,
+        PerspectiveProjection, ResMut, StandardMaterial, Transform, Vec3,
     },
 };
 use engine::{lifecycle::DEATH_Y, UP};
@@ -18,13 +19,7 @@ pub fn setup(
 ) {
     // Death floor
     commands.spawn(PbrBundle {
-        mesh: meshes.add(
-            shape::Quad {
-                size: Vec2::new(10_000.0, 10_000.0),
-                ..Default::default()
-            }
-            .into(),
-        ),
+        mesh: meshes.add(Rectangle::new(10_000.0, 10_000.0)),
         material: materials.add(StandardMaterial {
             base_color: Color::BLACK,
             unlit: true,

@@ -5,7 +5,7 @@ use bevy_ecs::{
     component::Component,
     entity::Entity,
     event::{Event, EventReader},
-    query::{Without, WorldQuery},
+    query::{QueryData, Without},
     system::{Commands, Query, Res, ResMut, Resource},
     world::Mut,
 };
@@ -89,7 +89,7 @@ pub struct PathfindingTasks {
     pub tasks: Vec<Task<FoundPath>>,
 }
 
-#[derive(WorldQuery)]
+#[derive(QueryData)]
 pub struct PathfindingQuery {
     transform: &'static Transform,
     foot_offset: &'static FootOffset,

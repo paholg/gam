@@ -1,6 +1,9 @@
 use std::f32::consts::PI;
 
-use bevy::{prelude::Mesh, render::render_resource::PrimitiveTopology};
+use bevy::{
+    prelude::Mesh,
+    render::{render_asset::RenderAssetUsages, render_resource::PrimitiveTopology},
+};
 
 /// A hollow polygon. Can also act as a hollow circle when vertices is large.
 pub struct HollowPolygon {
@@ -81,11 +84,14 @@ impl Chunk {
 
 impl From<Chunk> for Mesh {
     fn from(value: Chunk) -> Self {
-        let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+        let mut mesh = Mesh::new(
+            PrimitiveTopology::TriangleList,
+            RenderAssetUsages::RENDER_WORLD,
+        );
         let (positions, indices) = value.into_positions_and_indices();
 
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
-        mesh.set_indices(Some(bevy::render::mesh::Indices::U32(indices)));
+        mesh.insert_indices(bevy::render::mesh::Indices::U32(indices));
 
         mesh
     }
@@ -133,9 +139,12 @@ impl From<HollowChunk> for Mesh {
         // Now we need two final vertices to complete our sides.
         // FIXME: Do this.
 
-        let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+        let mut mesh = Mesh::new(
+            PrimitiveTopology::TriangleList,
+            RenderAssetUsages::RENDER_WORLD,
+        );
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
-        mesh.set_indices(Some(bevy::render::mesh::Indices::U32(indices)));
+        mesh.insert_indices(bevy::render::mesh::Indices::U32(indices));
 
         mesh
     }

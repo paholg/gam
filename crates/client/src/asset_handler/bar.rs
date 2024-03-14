@@ -1,4 +1,7 @@
-use bevy::prelude::{shape, Color, Handle, Mesh, StandardMaterial, Vec2};
+use bevy::{
+    math::primitives::Rectangle,
+    prelude::{Color, Handle, Mesh, StandardMaterial},
+};
 
 use super::Builder;
 
@@ -21,13 +24,7 @@ impl BarAssets {
             ..Default::default()
         };
         BarAssets {
-            mesh: builder.meshes.add(
-                shape::Quad {
-                    size: Vec2::new(1.0, 1.0),
-                    ..Default::default()
-                }
-                .into(),
-            ),
+            mesh: builder.meshes.add(Rectangle::new(1.0, 1.0)),
             fg_material: builder.materials.add(fg),
             bg_material: builder.materials.add(bg.clone()),
         }
@@ -50,13 +47,7 @@ impl BarAssets {
             ..Default::default()
         };
         BarAssets {
-            mesh: builder.meshes.add(
-                shape::Quad {
-                    size: Vec2::new(1.0, 1.0),
-                    ..Default::default()
-                }
-                .into(),
-            ),
+            mesh: builder.meshes.add(Rectangle::new(1.0, 1.0)),
             fg_material: builder.materials.add(fg),
             bg_material: builder.materials.add(bg.clone()),
         }

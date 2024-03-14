@@ -21,14 +21,11 @@ pub struct CharacterAssets {
 
 impl CharacterAssets {
     fn outline(builder: &mut Builder, color: Color) -> (Handle<Mesh>, Handle<StandardMaterial>) {
-        let mesh = builder.meshes.add(
-            HollowPolygon {
-                radius: PLAYER_R,
-                thickness: 0.04,
-                vertices: 30,
-            }
-            .into(),
-        );
+        let mesh = builder.meshes.add(HollowPolygon {
+            radius: PLAYER_R,
+            thickness: 0.04,
+            vertices: 30,
+        });
 
         const OUTLINE_ALPHA: f32 = 0.5;
         let material = builder.materials.add(StandardMaterial {
