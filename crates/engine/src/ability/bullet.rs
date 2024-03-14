@@ -77,6 +77,12 @@ pub fn kickback_system(
             continue;
         };
         shooter_v.linvel -= v.linvel * m.mass / shooter_m.mass;
+        debug_assert!(m.mass > 0.0, "bullet spawned with 0 mass");
+        debug_assert!(shooter_m.mass > 0.0, "bullet shooter has 0 mass");
+        debug_assert!(
+            !shooter_v.linvel.is_nan(),
+            "NaN velocity after kickback. Bullet: v: {v:?}, m: {m:?}, shooter_m: {shooter_m:?}",
+        );
     }
 }
 
@@ -117,6 +123,10 @@ pub fn collision_system(
                 // TODO: Add angvel maybe?
                 velocity.linvel =
                     bullet_mass.mass * bullet_velocity.linvel / mass.mass + velocity.linvel;
+                debug_assert!(
+                    !velocity.linvel.is_nan(),
+                    "NaN velocity after bullet collision. Bullet: {bullet_velocity:?}, mass: {mass:?}",
+                );
             }
         }
 

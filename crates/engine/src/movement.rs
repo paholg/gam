@@ -15,7 +15,7 @@ use crate::{
 ///
 /// The magnitude of this vector represents the fraction of `MaxSpeed` that the
 /// entity would like to move at. It is up to the setter to ensure it is always <= 1.0
-#[derive(Component, Default)]
+#[derive(Component, Default, Debug)]
 pub struct DesiredMove {
     pub dir: Vec2,
     pub can_fly: bool,
