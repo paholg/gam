@@ -1,4 +1,7 @@
-use bevy::prelude::{shape::Icosphere, AlphaMode, Color, Handle, Mesh, StandardMaterial};
+use bevy::{
+    math::primitives::Sphere,
+    prelude::{AlphaMode, Color, Handle, Mesh, StandardMaterial},
+};
 
 use crate::shapes::HollowPolygon;
 
@@ -21,22 +24,15 @@ impl NeutrinoBallAssets {
         };
 
         NeutrinoBallAssets {
-            mesh: builder.meshes.add(
-                Mesh::try_from(Icosphere {
-                    radius: builder.props.neutrino_ball.radius,
-                    ..Default::default()
-                })
-                .unwrap(),
-            ),
+            mesh: builder
+                .meshes
+                .add(Sphere::new(builder.props.neutrino_ball.radius)),
             material: builder.materials.add(neutrino_ball_material.clone()),
-            outline_mesh: builder.meshes.add(
-                HollowPolygon {
-                    radius: builder.props.neutrino_ball.effect_radius,
-                    thickness: 0.06,
-                    vertices: 60,
-                }
-                .into(),
-            ),
+            outline_mesh: builder.meshes.add(HollowPolygon {
+                radius: builder.props.neutrino_ball.effect_radius,
+                thickness: 0.06,
+                vertices: 60,
+            }),
             outline_material: builder.materials.add(neutrino_ball_material),
         }
     }

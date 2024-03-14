@@ -1,4 +1,7 @@
-use bevy::prelude::{shape::Icosphere, AlphaMode, Color, Handle, Mesh, StandardMaterial};
+use bevy::{
+    math::primitives::Sphere,
+    prelude::{AlphaMode, Color, Handle, Mesh, StandardMaterial},
+};
 
 use crate::color_gradient::ColorGradient;
 
@@ -16,13 +19,7 @@ impl ExplosionAssets {
         let initial_color = colors.get(0.0);
         ExplosionAssets {
             gradient: colors,
-            mesh: builder.meshes.add(
-                Mesh::try_from(Icosphere {
-                    radius: 1.0,
-                    subdivisions: 5,
-                })
-                .unwrap(),
-            ),
+            mesh: builder.meshes.add(Sphere::new(1.0)),
             material: builder.materials.add(StandardMaterial {
                 base_color: Color::rgba(0.0, 0.0, 0.0, 0.5),
                 emissive: initial_color,

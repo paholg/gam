@@ -1,4 +1,7 @@
-use bevy::prelude::{shape::Icosphere, Color, Handle, Mesh, StandardMaterial};
+use bevy::{
+    math::primitives::Sphere,
+    prelude::{Color, Handle, Mesh, StandardMaterial},
+};
 
 use crate::{color_gradient::ColorGradient, shapes::HollowPolygon};
 
@@ -20,22 +23,15 @@ impl GrenadeAssets {
         };
 
         GrenadeAssets {
-            mesh: builder.meshes.add(
-                Mesh::try_from(Icosphere {
-                    radius: builder.props.frag_grenade.radius,
-                    subdivisions: 5,
-                })
-                .unwrap(),
-            ),
+            mesh: builder
+                .meshes
+                .add(Sphere::new(builder.props.frag_grenade.radius)),
             material: builder.materials.add(frag_grenade_material.clone()),
-            outline_mesh: builder.meshes.add(
-                HollowPolygon {
-                    radius: builder.props.frag_grenade.explosion.max_radius,
-                    thickness: 0.06,
-                    vertices: 60,
-                }
-                .into(),
-            ),
+            outline_mesh: builder.meshes.add(HollowPolygon {
+                radius: builder.props.frag_grenade.explosion.max_radius,
+                thickness: 0.06,
+                vertices: 60,
+            }),
             outline_material: builder.materials.add(frag_grenade_material),
             explosion: ExplosionAssets::new(
                 builder,
@@ -56,21 +52,14 @@ impl GrenadeAssets {
         };
 
         GrenadeAssets {
-            mesh: builder.meshes.add(
-                Mesh::try_from(Icosphere {
-                    radius: builder.props.heal_grenade.radius,
-                    subdivisions: 5,
-                })
-                .unwrap(),
-            ),
-            outline_mesh: builder.meshes.add(
-                HollowPolygon {
-                    radius: builder.props.heal_grenade.explosion.max_radius,
-                    thickness: 0.06,
-                    vertices: 60,
-                }
-                .into(),
-            ),
+            mesh: builder
+                .meshes
+                .add(Sphere::new(builder.props.heal_grenade.radius)),
+            outline_mesh: builder.meshes.add(HollowPolygon {
+                radius: builder.props.heal_grenade.explosion.max_radius,
+                thickness: 0.06,
+                vertices: 60,
+            }),
             material: builder.materials.add(heal_grenade_material.clone()),
             outline_material: builder.materials.add(heal_grenade_material),
             explosion: ExplosionAssets::new(

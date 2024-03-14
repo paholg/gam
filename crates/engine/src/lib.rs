@@ -9,7 +9,10 @@ use bevy_ecs::{
     schedule::{IntoSystemConfigs, IntoSystemSetConfigs, State, States, SystemSet},
     system::{Query, Res, Resource},
 };
-use bevy_math::{Quat, Vec2, Vec3};
+use bevy_math::{
+    primitives::{Direction3d, Plane3d},
+    Quat, Vec2, Vec3,
+};
 use bevy_rapier3d::prelude::{
     Collider, ColliderMassProperties, ExternalForce, Friction, LockedAxes, ReadMassProperties,
     RigidBody, Velocity,
@@ -61,6 +64,9 @@ pub enum AppState {
 
 pub const FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
 pub const UP: Vec3 = Vec3::Y;
+pub const UP_PLANE: Plane3d = Plane3d {
+    normal: Direction3d::Y,
+};
 
 pub const PLAYER_R: f32 = 0.25;
 pub const PLAYER_HEIGHT: f32 = 0.75;
@@ -340,7 +346,7 @@ pub enum GameSet {
 impl Plugin for GamPlugin {
     fn build(&self, app: &mut App) {
         // State
-        app.add_state::<AppState>();
+        app.init_state::<AppState>();
 
         // Resources
         app.insert_resource(Time::<Fixed>::from_hz(FREQUENCY as f64))

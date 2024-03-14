@@ -1,5 +1,4 @@
-#![allow(unused)] // FIXME
-use bevy_ecs::{component::Component, query::WorldQuery, system::Query};
+use bevy_ecs::{component::Component, query::QueryData, system::Query};
 
 use crate::{time::TIMESTEP, Health};
 
@@ -7,8 +6,9 @@ use super::TimeDilation;
 
 const CHARGE_LOSS_FACTOR: f32 = 0.1 * TIMESTEP;
 const DISCHARGE_DAMAGE_FACTOR: f32 = 1.0;
-const DISCHARGE_THRESHOLD: f32 = 0.5;
-const CHARGE_FORCE_FACTOR: f32 = 1.0;
+const DISCHARGE_THRESHOLD: f32 = 0.1;
+// TODO: Use or delete
+// const CHARGE_FORCE_FACTOR: f32 = 1.0;
 
 /// Charge represents electrostatic buildup, in electric potential. "Charge" is
 /// perhaps a bad name.
@@ -56,8 +56,9 @@ pub fn charge_tick(mut query: Query<(&mut Charge, &TimeDilation)>) {
     }
 }
 
-#[derive(WorldQuery)]
-#[world_query(mutable)]
+// TODO: Do something with this.
+#[derive(QueryData)]
+#[query_data(mutable)]
 struct CollisionQuery {
     charge: &'static mut Charge,
     health: Option<&'static mut Health>,
@@ -65,12 +66,14 @@ struct CollisionQuery {
 }
 
 impl<'a> CollisionQueryItem<'a> {
+    #[allow(unused)]
     fn discharge(&mut self, other: &mut CollisionQueryItem<'_>) {
         let damage = self.charge.discharge(&mut other.charge);
         self.take(damage);
         other.take(damage);
     }
 
+    #[allow(unused)]
     fn take(&mut self, damage: f32) {
         if let (Some(h), Some(td)) = (self.health.as_mut(), self.time_dilation) {
             h.take(damage, td);

@@ -11,7 +11,7 @@ use leafwing_input_manager::prelude::ActionState;
 
 use engine::{
     multiplayer::{Action, Input, PlayerInputs},
-    Player, To2d, To3d, ABILITY_Y, UP,
+    Player, To2d, To3d, ABILITY_Y, UP, UP_PLANE,
 };
 
 use crate::{
@@ -68,19 +68,19 @@ pub fn player_input(
 
     // Handle menu separately, as we only want to send it when `just_pressed`
     // to prevent flickering.
-    if action_state.just_pressed(UserAction::Menu) {
+    if action_state.just_pressed(&UserAction::Menu) {
         actions |= Action::Menu;
     }
 
     let movement = action_state
-        .clamped_axis_pair(UserAction::Move)
+        .clamped_axis_pair(&UserAction::Move)
         .map(|pair| pair.xy())
         .unwrap_or_default();
     let (camera, camera_global_transform, mut camera_transform) = camera_query.single_mut();
 
     // Try to determine if the player wants to use mouse or controller to aim.
     let controller_aim = action_state
-        .clamped_axis_pair(UserAction::Aim)
+        .clamped_axis_pair(&UserAction::Aim)
         .unwrap_or_default();
     if !cursor_events.is_empty() {
         *camera_mode = CameraFollowMode::Mouse;
@@ -128,7 +128,7 @@ fn cursor_from_mouse(
     let cursor_window = primary_window.cursor_position()?;
 
     let ray = camera.viewport_to_world(camera_gt, cursor_window)?;
-    let distance = ray.intersect_plane(ABILITY_Y, UP)?;
+    let distance = ray.intersect_plane(ABILITY_Y, UP_PLANE)?;
     let cursor = ray.get_point(distance);
     Some(cursor.to_2d())
 }

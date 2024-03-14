@@ -1,4 +1,7 @@
-use bevy::prelude::{shape::Icosphere, Color, Handle, Mesh, StandardMaterial, Vec2, Vec3, Vec4};
+use bevy::{
+    math::primitives::Sphere,
+    prelude::{Color, Handle, Mesh, StandardMaterial, Vec2, Vec3, Vec4},
+};
 use bevy_hanabi::{
     Attribute, ColorOverLifetimeModifier, EffectAsset, ExprWriter, Gradient, LinearDragModifier,
     ParticleEffectBundle, SetAttributeModifier, SetPositionSphereModifier,
@@ -30,13 +33,7 @@ impl BulletAssets {
         };
 
         let bullet = BulletAssets {
-            mesh: builder.meshes.add(
-                Mesh::try_from(Icosphere {
-                    radius: 1.0,
-                    subdivisions: 5,
-                })
-                .unwrap(),
-            ),
+            mesh: builder.meshes.add(Sphere::new(1.0)),
             material: builder.materials.add(shot_material),
             collision_effect: effect_pool,
             spawn_sound: builder

@@ -1,4 +1,7 @@
-use bevy::prelude::{shape, AlphaMode, Color, Handle, Mesh, StandardMaterial};
+use bevy::{
+    math::primitives::Cuboid,
+    prelude::{AlphaMode, Color, Handle, Mesh, StandardMaterial},
+};
 
 use super::Builder;
 
@@ -26,15 +29,15 @@ impl WallAssets {
         };
 
         WallAssets {
-            shape: builder.meshes.add(shape::Box::new(1.0, 1.0, 1.0).into()),
+            shape: builder.meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
             floor: builder.materials.add(StandardMaterial {
                 base_color: Color::rgb(0.0, 0.6, 0.1),
                 perceptual_roughness: 0.8,
                 ..Default::default()
             }),
-            short_wall: builder.materials.add(short_wall_color.into()),
-            wall: builder.materials.add(wall_color.into()),
-            tall_wall: builder.materials.add(tall_wall_color.into()),
+            short_wall: builder.materials.add(short_wall_color),
+            wall: builder.materials.add(wall_color),
+            tall_wall: builder.materials.add(tall_wall_color),
             short_wall_trans: builder.materials.add(trans(short_wall_color)),
             wall_trans: builder.materials.add(trans(wall_color)),
             tall_wall_trans: builder.materials.add(trans(tall_wall_color)),

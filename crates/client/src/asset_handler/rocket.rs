@@ -1,4 +1,7 @@
-use bevy::prelude::{shape::Capsule, Color, Handle, Mesh, StandardMaterial};
+use bevy::{
+    math::primitives::Capsule3d,
+    prelude::{Color, Handle, Mesh, StandardMaterial},
+};
 
 use crate::color_gradient::ColorGradient;
 
@@ -18,14 +21,10 @@ impl SeekerRocketAssets {
         };
 
         SeekerRocketAssets {
-            mesh: builder.meshes.add(
-                Mesh::try_from(Capsule {
-                    radius: builder.props.seeker_rocket.capsule_radius,
-                    depth: builder.props.seeker_rocket.capsule_length,
-                    ..Default::default()
-                })
-                .unwrap(),
-            ),
+            mesh: builder.meshes.add(Capsule3d::new(
+                builder.props.seeker_rocket.capsule_radius,
+                builder.props.seeker_rocket.capsule_length,
+            )),
             material: builder.materials.add(seeker_rocket_material.clone()),
             explosion: ExplosionAssets::new(
                 builder,

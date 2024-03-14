@@ -92,7 +92,7 @@ fn score_update(num_ai: Res<NumAi>, mut query: Query<&mut Text, With<Score>>) {
 }
 
 fn render_score(score: usize) -> String {
-    t!("menu.score", score = score)
+    t!("menu.score", score = score).into_owned()
 }
 
 #[derive(Component)]
@@ -108,7 +108,7 @@ fn frame_time_update(
 
 fn render_frame_time(time: Duration) -> String {
     let dur = format!("{time:?}");
-    t!("menu.frame_time", time = dur)
+    t!("menu.frame_time", time = dur).into_owned()
 }
 
 #[derive(Resource)]
@@ -149,5 +149,5 @@ fn fps_update(fps: Res<FpsTracker>, mut query: Query<&mut Text, With<FpsText>>) 
 
 fn render_fps(fps: f32) -> String {
     let fps = format!("{fps:0.1}");
-    t!("menu.fps", fps = fps)
+    t!("menu.fps", fps = fps).into_owned()
 }

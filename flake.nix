@@ -21,8 +21,8 @@
 
       # rust_toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
 
-      runtimeInputs = with pkgs; [vulkan-loader udev alsa-lib];
       x11Inputs = with pkgs; [
+        xorg.libX11
         xorg.libXcursor
         xorg.libXi
         xorg.libXrandr
@@ -34,36 +34,21 @@
       buildInputs = with pkgs; [
         udev
         alsa-lib
+        vulkan-loader
       ];
-      nativeBuildInputs = with pkgs; [pkg-config rust-analyzer just];
-      # rustPkgs = pkgs.rustBuilder.makePackageSet {
-      #   packageFun = import ./Cargo.nix;
-      #   rustToolchain = rust_toolchain;
-      #   packageOverrides = pkgs:
-      #     pkgs.rustBuilder.overrides.all
-      #     ++ [
-      #       (pkgs.rustBuilder.rustLib.makeOverride {
-      #         name = "alsa-sys";
-      #         overrideAttrs = drv: {
-      #           propagatedBuildInputs = drv.propagatedBuildInputs or [] ++ [pkgs.alsa-lib];
-      #         };
-      #       })
-      #     ];
-      # };
+      nativeBuildInputs = with pkgs; [pkg-config];
     in {
       packages.${system} = {
         # default = (rustPkgs.workspace.gam {}).bin;
       };
 
       devShell.${system} = pkgs.mkShell {
-        packages = [];
-        buildInputs = buildInputs ++ runtimeInputs ++ x11Inputs ++ waylandInputs;
+        packages = with pkgs; [rust-analyzer just];
+        buildInputs = buildInputs ++ x11Inputs ++ waylandInputs;
         nativeBuildInputs = nativeBuildInputs;
 
-        shellHook = ''
-          export LD_LIBRARY_PATH="${nixpkgs.lib.makeLibraryPath runtimeInputs}"
-          export BEVY_ASSET_ROOT="./"
-        '';
+        LD_LIBRARY_PATH = nixpkgs.lib.makeLibraryPath (buildInputs ++ waylandInputs);
+        BEVY_ASSET_ROOT = "./";
       };
     };
 }

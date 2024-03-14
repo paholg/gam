@@ -1,4 +1,7 @@
-use bevy::prelude::{shape::Icosphere, AlphaMode, Color, Handle, Mesh, StandardMaterial};
+use bevy::{
+    math::primitives::Sphere,
+    prelude::{AlphaMode, Color, Handle, Mesh, StandardMaterial},
+};
 
 use crate::color_gradient::ColorGradient;
 
@@ -17,13 +20,7 @@ impl TemperatureAssets {
             (0.5, Color::rgba(0.0, 0.0, 0.0, 0.0)),
             (1.0, Color::rgba(5.0, 2.0, 0.0, 0.3)),
         ]);
-        let mesh = builder.meshes.add(
-            Mesh::try_from(Icosphere {
-                radius: 1.0,
-                subdivisions: 6,
-            })
-            .unwrap(),
-        );
+        let mesh = builder.meshes.add(Sphere::new(1.0));
         let material = builder.materials.add(StandardMaterial {
             base_color: Color::NONE,
             emissive: Color::NONE,

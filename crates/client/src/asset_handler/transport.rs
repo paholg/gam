@@ -1,4 +1,7 @@
-use bevy::prelude::{shape::Cylinder, AlphaMode, Color, Handle, Mesh, StandardMaterial};
+use bevy::{
+    math::primitives::Cylinder,
+    prelude::{AlphaMode, Color, Handle, Mesh, StandardMaterial},
+};
 
 use crate::color_gradient::ColorGradient;
 
@@ -21,14 +24,7 @@ impl TransportAssets {
         let base_color = gradient.get(0.0);
         Self {
             gradient,
-            mesh: builder.meshes.add(
-                Mesh::try_from(Cylinder {
-                    radius: 1.0,
-                    height: 1.0,
-                    ..Default::default()
-                })
-                .unwrap(),
-            ),
+            mesh: builder.meshes.add(Cylinder::new(1.0, 1.0)),
             material: builder.materials.add(StandardMaterial {
                 base_color,
                 alpha_mode: AlphaMode::Blend,

@@ -1,6 +1,6 @@
-use bevy::prelude::{
-    shape::{Circle, Cylinder},
-    Color, Handle, Mesh, StandardMaterial,
+use bevy::{
+    math::primitives::{Circle, Cylinder},
+    prelude::{Color, Handle, Mesh, StandardMaterial},
 };
 
 use super::Builder;
@@ -26,17 +26,9 @@ impl TargetAssets {
         };
         let laser_length = 100.0;
         TargetAssets {
-            cursor_mesh: builder.meshes.add(Circle::new(0.06).into()),
+            cursor_mesh: builder.meshes.add(Circle::new(0.06)),
             cursor_material: builder.materials.add(target_material),
-            laser_mesh: builder.meshes.add(
-                Cylinder {
-                    radius: 0.01,
-                    height: 1.0,
-                    resolution: 3,
-                    segments: 1,
-                }
-                .into(),
-            ),
+            laser_mesh: builder.meshes.add(Cylinder::new(0.01, 1.0)),
             laser_material: builder.materials.add(target_laser_material),
             laser_length,
         }
