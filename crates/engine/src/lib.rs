@@ -390,9 +390,11 @@ impl Plugin for GamPlugin {
             schedule.clone(),
             (
                 time::frame_counter.in_set(GameSet::Timer),
-                physics.set1().in_set(GameSet::Physics1),
-                physics.set2().in_set(GameSet::Physics2),
-                physics.set3().in_set(GameSet::Physics3),
+                (
+                    physics.set1().in_set(GameSet::Physics1),
+                    physics.set2().in_set(GameSet::Physics2),
+                    physics.set3().in_set(GameSet::Physics3),
+                ),
                 (
                     // Note: Most things should go here.
                     (
@@ -404,25 +406,35 @@ impl Plugin for GamPlugin {
                         clear_forces,
                         energy_regen,
                         cooldown_system,
-                        lifecycle::reset,
-                    ),
+                    )
+                        .chain(),
+                    (
+                        // Entities spawn with 0 mass, so we need to place this
+                        // after we run physics, after firing the bullet.
+                        // https://github.com/dimforge/bevy_rapier/issues/484
+                        ability::bullet::kickback_system,
+                    )
+                        .chain(),
                     (
                         // Inputs
                         input::apply_inputs,
                         ai::pathfind::poll_pathfinding_system,
                         ai::charge::system_set(),
-                    ),
-                    // Misc; categorize futher?
-                    movement::apply_movement,
-                    ability::bullet::kickback_system,
-                    seeker_rocket::tracking_system,
-                    ability::grenade::explode_system,
-                    death_callback::explosion_grow_system,
-                    ability::neutrino_ball::activation_system,
-                    ability::transport::move_system,
-                    ability::transport::activation_system,
-                    lifecycle::fall,
-                    ai::pathfind::pathfinding_system,
+                    )
+                        .chain(),
+                    (
+                        // Misc; categorize futher?
+                        movement::apply_movement,
+                        seeker_rocket::tracking_system,
+                        ability::grenade::explode_system,
+                        death_callback::explosion_grow_system,
+                        ability::neutrino_ball::activation_system,
+                        ability::transport::move_system,
+                        ability::transport::activation_system,
+                        lifecycle::fall,
+                        ai::pathfind::pathfinding_system,
+                    )
+                        .chain(),
                     (
                         // Collisions
                         collision::collision_system,
@@ -431,7 +443,8 @@ impl Plugin for GamPlugin {
                         ability::neutrino_ball::collision_system,
                         ability::transport::collision_system,
                         death_callback::explosion_collision_system,
-                    ),
+                    )
+                        .chain(),
                 )
                     .chain()
                     .in_set(GameSet::Stuff),
@@ -439,6 +452,7 @@ impl Plugin for GamPlugin {
                     // Put systems that despawn things at the end.
                     ability::bullet::despawn_system,
                     lifecycle::die,
+                    lifecycle::reset,
                     time::debug_frame_system,
                 )
                     .chain()
@@ -561,6 +575,10 @@ impl PrettyPrint for GlobalTransform {
 pub fn face(transform: &mut Transform, target: Vec2) {
     let y = transform.translation.y;
     transform.look_at(target.to_3d(y), UP);
+    debug_assert!(
+        transform.is_finite(),
+        "transform '{transform:?}' NaN while trying to face '{target:?}'"
+    );
 }
 
 /// Sometimes we want to work in a 2d plane, so functions like `Vec3::truncate`
