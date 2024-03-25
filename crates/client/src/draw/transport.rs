@@ -8,9 +8,8 @@ use bevy::{
 };
 use engine::{ability::transport::TransportBeam, To3d};
 
-use crate::asset_handler::AssetHandler;
-
 use super::ObjectGraphics;
+use crate::asset_handler::AssetHandler;
 
 #[derive(Component)]
 pub struct TransportSenderGraphics {

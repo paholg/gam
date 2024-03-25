@@ -2,21 +2,21 @@
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-    };
+    # rust-overlay = {
+    #   url = "github:oxalica/rust-overlay";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    #   inputs.flake-utils.follows = "flake-utils";
+    # };
   };
 
   outputs = inputs:
     with inputs; let
       system = "x86_64-linux";
-      overlays = [
-        rust-overlay.overlays.default
-      ];
+      # overlays = [
+      #   rust-overlay.overlays.default
+      # ];
       pkgs = import nixpkgs {
-        inherit system overlays;
+        inherit system;
       };
 
       # rust_toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
@@ -43,7 +43,7 @@
       };
 
       devShell.${system} = pkgs.mkShell {
-        packages = with pkgs; [rust-analyzer just];
+        packages = with pkgs; [just];
         buildInputs = buildInputs ++ x11Inputs ++ waylandInputs;
         nativeBuildInputs = nativeBuildInputs;
 

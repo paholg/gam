@@ -3,15 +3,12 @@ use bevy::prelude::{
     Visibility,
 };
 
-mod bullet;
 mod character;
 mod death;
 mod explosion;
-mod grenade;
 mod level;
-mod neutrino_ball;
 mod raycast_scene;
-mod rocket;
+// mod rocket;
 mod temperature;
 mod time_dilation;
 mod transport;
@@ -31,12 +28,7 @@ impl Plugin for DrawPlugin {
                     character::draw_ally_system,
                 ),
                 (
-                    bullet::draw_bullet_system,
-                    grenade::draw_grenade_system,
-                    grenade::draw_grenade_outline_system,
-                    rocket::draw_seeker_rocket_system,
-                    neutrino_ball::draw_neutrino_ball_system,
-                    neutrino_ball::draw_neutrino_ball_outline_system,
+                    // rocket::draw_seeker_rocket_system,
                     transport::draw_transport_system,
                     transport::update_transport_system,
                 ),
@@ -61,10 +53,10 @@ impl Plugin for DrawPlugin {
 }
 
 #[derive(Bundle, Default)]
-struct ObjectGraphics {
-    material: Handle<StandardMaterial>,
-    mesh: Handle<Mesh>,
-    visibility: Visibility,
-    inherited_visibility: InheritedVisibility,
-    view_visibility: ViewVisibility,
+pub struct ObjectGraphics {
+    pub material: Handle<StandardMaterial>,
+    pub mesh: Handle<Mesh>,
+    pub visibility: Visibility,
+    pub inherited_visibility: InheritedVisibility,
+    pub view_visibility: ViewVisibility,
 }

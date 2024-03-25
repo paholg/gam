@@ -69,6 +69,7 @@ impl LevelProps {
     }
 }
 
+#[derive(Debug)]
 struct FloorSpawner {
     dim: Vec3,
     loc: Vec3,

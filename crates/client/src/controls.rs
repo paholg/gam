@@ -6,13 +6,11 @@ use bevy::{
     time::Time,
     window::{CursorMoved, PrimaryWindow, Window},
 };
-
-use leafwing_input_manager::prelude::ActionState;
-
 use engine::{
     multiplayer::{Action, Input, PlayerInputs},
     Player, To2d, To3d, ABILITY_Y, UP, UP_PLANE,
 };
+use leafwing_input_manager::prelude::ActionState;
 
 use crate::{
     config::{GameAction, UserAction},
@@ -69,7 +67,7 @@ pub fn player_input(
     // Handle menu separately, as we only want to send it when `just_pressed`
     // to prevent flickering.
     if action_state.just_pressed(&UserAction::Menu) {
-        actions |= Action::Menu;
+        actions |= Action::Pause;
     }
 
     let movement = action_state

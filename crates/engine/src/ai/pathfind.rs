@@ -18,11 +18,10 @@ use oxidized_navigation::{
     query::find_path, tiles::NavMeshTiles, NavMesh, NavMeshSettings, OxidizedNavigationPlugin,
 };
 
+use super::AiTarget;
 use crate::{
     level::LevelProps, lifecycle::DEATH_Y, movement::DesiredMove, FootOffset, To2d, To3d, PLAYER_R,
 };
-
-use super::AiTarget;
 
 pub struct PathfindPlugin;
 

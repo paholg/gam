@@ -5,17 +5,26 @@ use bevy_ecs::{
     component::Component,
     entity::Entity,
     query::{With, Without},
+    schedule::{IntoSystemConfigs, SystemConfigs},
     system::{Query, Res},
 };
 use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 
-use crate::{ability::properties::AbilityProps, face, Faction, Target, To2d};
-
 use self::pathfind::HasPath;
+use crate::{ability::gun::GunProps, face, Faction, Target, To2d};
 
 pub mod charge;
 pub mod pathfind;
+
+pub fn systems() -> SystemConfigs {
+    (
+        pathfind::poll_pathfinding_system,
+        charge::system_set(),
+        pathfind::pathfinding_system,
+    )
+        .chain()
+}
 
 pub trait Ai: Component {
     /// A measure of how "smart" this ai is, from 0.0 to 1.0.
@@ -61,9 +70,9 @@ fn target_closest_system<T: Faction, A: Ai>(
 fn update_target_system<T: Faction, A: Ai>(
     mut ai_q: Query<(&mut Transform, &Velocity, &mut AiTarget, &A), (With<T>, Without<T::Foe>)>,
     target_q: Query<(&Transform, &Velocity), (With<T::Foe>, Without<T>)>,
-    props: Res<AbilityProps>,
+    props: Res<GunProps>,
 ) {
-    let shot_speed = props.gun.speed;
+    let shot_speed = props.speed;
 
     for (mut transform, velocity, mut target, ai) in ai_q.iter_mut() {
         let Some((target_transform, target_velocity)) =

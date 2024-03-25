@@ -2,7 +2,6 @@ use bevy_ecs::{
     component::Component,
     system::{Commands, Query, Res},
 };
-
 use bevy_rapier3d::prelude::{
     Collider, ExternalForce, LockedAxes, QueryFilter, QueryFilterFlags, RapierContext, Sensor,
     Velocity,
@@ -118,7 +117,7 @@ pub fn explosion_collision_system(
     };
     for (explosion, transform, colliding, dilation) in &explosion_q {
         // Dilated explosions have their lifetimes and grow rates affected, so
-        // their damage should be to. This way, a full explosion always does a
+        // their damage should be to. This way, a full explosion always does
         // constant damage.
         let explosion_damage = explosion.damage * dilation.factor();
         let explosion_force = explosion.force * dilation.factor();

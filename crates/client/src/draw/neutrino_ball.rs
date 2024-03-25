@@ -6,7 +6,7 @@ use bevy::{
     },
 };
 use engine::{
-    ability::neutrino_ball::{NeutrinoBall, NeutrinoBallActivated},
+    ability::gravity_ball::{GravityBall, GravityBallActivated},
     FootOffset,
 };
 
@@ -17,7 +17,7 @@ use super::ObjectGraphics;
 pub fn draw_neutrino_ball_system(
     mut commands: Commands,
     assets: Res<AssetHandler>,
-    query: Query<Entity, Added<NeutrinoBall>>,
+    query: Query<Entity, Added<GravityBall>>,
 ) {
     for entity in query.iter() {
         let Some(mut ecmds) = commands.get_entity(entity) else {
@@ -42,7 +42,7 @@ pub fn draw_neutrino_ball_system(
 pub fn draw_neutrino_ball_outline_system(
     mut commands: Commands,
     assets: Res<AssetHandler>,
-    query: Query<(Entity, &FootOffset), Added<NeutrinoBallActivated>>,
+    query: Query<(Entity, &FootOffset), Added<GravityBallActivated>>,
 ) {
     for (entity, foot_offset) in &query {
         commands.entity(entity).with_children(|builder| {

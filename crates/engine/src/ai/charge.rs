@@ -11,17 +11,16 @@ use bevy_rapier3d::prelude::{QueryFilter, RapierContext, Velocity};
 use bevy_transform::components::Transform;
 use rand::{thread_rng, Rng};
 
-use crate::{
-    ability::{properties::AbilityProps, Ability},
-    level::Floor,
-    movement::DesiredMove,
-    status_effect::TimeDilation,
-    AbilityOffset, Ally, Cooldowns, Enemy, Energy, Faction, FootOffset, Target, To2d, To3d,
-};
-
 use super::{
     pathfind::{set_move, HasPath, PathfindEvent},
     target_closest_system, update_target_system, Ai, AiTarget,
+};
+use crate::{
+    ability::{cooldown::Cooldown, gun::GunProps},
+    level::Floor,
+    movement::DesiredMove,
+    status_effect::TimeDilation,
+    AbilityOffset, Ally, Enemy, Energy, Faction, FootOffset, To2d, To3d,
 };
 
 #[derive(Component)]
@@ -105,10 +104,10 @@ fn check_obstructions<T: Faction>(
 }
 
 fn gun_system(
-    mut commands: Commands,
+    _commands: Commands,
     mut ai_q: Query<(
         Entity,
-        &mut Cooldowns,
+        &mut Cooldown,
         &mut Energy,
         &Velocity,
         &Transform,
@@ -117,35 +116,35 @@ fn gun_system(
         &ChargeAi,
         &mut TimeDilation,
     )>,
-    props: Res<AbilityProps>,
+    _props: Res<GunProps>,
 ) {
     for (
-        entity,
-        mut cooldowns,
-        mut energy,
-        velocity,
-        transform,
-        ability_offset,
-        foot_offset,
-        ai,
-        mut time_dilation,
+        _entity,
+        _cooldowns,
+        _energy,
+        _velocity,
+        _transform,
+        _ability_offset,
+        _foot_offset,
+        _ai,
+        _time_dilation,
     ) in ai_q.iter_mut()
     {
-        if !ai.gun_obstruction {
-            Ability::Gun.fire(
-                &mut commands,
-                &props,
-                entity,
-                &mut energy,
-                &mut cooldowns,
-                transform,
-                velocity,
-                &Target::default(),
-                ability_offset,
-                foot_offset,
-                &mut time_dilation,
-            );
-        }
+        // if !ai.gun_obstruction {
+        //     Ability::Gun.fire(
+        //         &mut commands,
+        //         &props,
+        //         entity,
+        //         &mut energy,
+        //         &mut cooldowns,
+        //         transform,
+        //         velocity,
+        //         &Target::default(),
+        //         ability_offset,
+        //         foot_offset,
+        //         &mut time_dilation,
+        //     );
+        // }
     }
 }
 

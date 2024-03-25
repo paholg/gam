@@ -1,5 +1,4 @@
 use bevy_app::{App, Plugin};
-
 use bevy_ecs::schedule::SystemConfigs;
 use bevy_rapier3d::prelude::{
     NoUserData, PhysicsSet, RapierConfiguration, RapierPhysicsPlugin, TimestepMode,

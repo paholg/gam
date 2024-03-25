@@ -1669,6 +1669,7 @@ dependencies = [
  "subenum",
  "thiserror",
  "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -2137,6 +2138,7 @@ dependencies = [
  "serde",
  "smallvec 2.0.0-alpha.4",
  "strum",
+ "subenum",
  "tracing",
 ]
 

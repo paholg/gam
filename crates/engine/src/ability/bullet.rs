@@ -130,7 +130,8 @@ pub fn collision_system(
                     bullet_mass.mass * bullet_velocity.linvel / mass.mass + velocity.linvel;
                 debug_assert!(
                     !velocity.linvel.is_nan(),
-                    "NaN velocity after bullet collision. Mass: {mass:?}, Bullet: {bullet_velocity:?}, bullet_mass: {bullet_mass:?}",
+                    "NaN velocity after bullet collision. Mass: {mass:?}, Bullet: \
+                     {bullet_velocity:?}, bullet_mass: {bullet_mass:?}",
                 );
             }
         }

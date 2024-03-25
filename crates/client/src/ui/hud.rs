@@ -8,7 +8,6 @@ use bevy::{
     text::{Text, TextStyle},
     ui::{AlignItems, FlexDirection, JustifyContent, Style, Val},
 };
-
 use engine::{time::FrameCounter, NumAi};
 use rust_i18n::t;
 

@@ -1,5 +1,12 @@
 use bevy::{
-    ecs::system::Resource,
+    app::{Plugin, Startup, Update},
+    asset::{AssetServer, Assets},
+    ecs::{
+        entity::Entity,
+        query::Added,
+        system::{Commands, Query, Res, ResMut, Resource},
+        world::World,
+    },
     math::primitives::Sphere,
     prelude::{Color, Handle, Mesh, StandardMaterial, Vec2, Vec3, Vec4},
 };
@@ -9,46 +16,74 @@ use bevy_hanabi::{
     SetVelocitySphereModifier, ShapeDimension, SizeOverLifetimeModifier, Spawner,
 };
 use bevy_kira_audio::AudioSource;
-use engine::ability::gun::GunProps;
+use engine::ability::{bullet::Bullet, gun::GunProps};
+use iyes_progress::prelude::AssetsLoading;
 
-use crate::particles::ParticleEffectPool;
+use crate::{draw::ObjectGraphics, particles::ParticleEffectPool};
 
-use super::Builder;
+pub struct GunPlugin;
 
-#[derive(Resource)]
-pub struct BulletAssets {
-    pub mesh: Handle<Mesh>,
-    pub material: Handle<StandardMaterial>,
-    pub collision_effect: ParticleEffectPool,
-    pub spawn_sound: Handle<AudioSource>,
-    pub despawn_sound: Handle<AudioSource>,
+impl Plugin for GunPlugin {
+    fn build(&self, app: &mut bevy::prelude::App) {
+        app.add_systems(Startup, setup)
+            .add_systems(Update, draw_bullet_system);
+    }
 }
 
-impl BulletAssets {
-    pub fn new(builder: &mut Builder, props: &GunProps) -> Self {
-        let effect = builder.effects.add(bullet_effect(&props));
-        let effect_pool = ParticleEffectBundle::new(effect).into();
+fn setup(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut effects: ResMut<Assets<EffectAsset>>,
+    asset_server: ResMut<AssetServer>,
+    mut loading: ResMut<AssetsLoading>,
+    props: Res<GunProps>,
+) {
+    let effect = effects.add(bullet_effect(&props));
+    let effect_pool = ParticleEffectBundle::new(effect).into();
 
-        let shot_material = StandardMaterial {
-            emissive: Color::rgb_linear(0.0, 20_000.0, 20_000.0),
+    let shot_material = StandardMaterial {
+        emissive: Color::rgb_linear(0.0, 20_000.0, 20_000.0),
+        ..Default::default()
+    };
+
+    let bullet = BulletAssets {
+        mesh: meshes.add(Sphere::new(1.0)),
+        material: materials.add(shot_material),
+        collision_effect: effect_pool,
+        spawn_sound: asset_server.load("third-party/audio/other/laserSmall_000.ogg"),
+        despawn_sound: asset_server.load("third-party/audio/other/laserSmall_000.ogg"),
+    };
+    loading.add(&bullet.spawn_sound);
+    loading.add(&bullet.despawn_sound);
+
+    commands.add(|world: &mut World| world.insert_resource(bullet));
+}
+
+fn draw_bullet_system(
+    mut commands: Commands,
+    assets: Res<BulletAssets>,
+    query: Query<Entity, Added<Bullet>>,
+) {
+    for entity in query.iter() {
+        let Some(mut ecmds) = commands.get_entity(entity) else {
+            continue;
+        };
+        ecmds.insert(ObjectGraphics {
+            material: assets.material.clone(),
+            mesh: assets.mesh.clone(),
             ..Default::default()
-        };
-
-        let bullet = BulletAssets {
-            mesh: builder.meshes.add(Sphere::new(1.0)),
-            material: builder.materials.add(shot_material),
-            collision_effect: effect_pool,
-            spawn_sound: builder
-                .asset_server
-                .load("third-party/audio/other/laserSmall_000.ogg"),
-            despawn_sound: builder
-                .asset_server
-                .load("third-party/audio/other/laserSmall_000.ogg"),
-        };
-        builder.loading.add(&bullet.spawn_sound);
-        builder.loading.add(&bullet.despawn_sound);
-        bullet
+        });
     }
+}
+
+#[derive(Resource)]
+struct BulletAssets {
+    mesh: Handle<Mesh>,
+    material: Handle<StandardMaterial>,
+    collision_effect: ParticleEffectPool,
+    spawn_sound: Handle<AudioSource>,
+    despawn_sound: Handle<AudioSource>,
 }
 
 fn bullet_effect(props: &GunProps) -> EffectAsset {

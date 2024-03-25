@@ -12,7 +12,7 @@ use bevy_rapier3d::prelude::{
 use bevy_transform::components::Transform;
 
 use crate::{
-    ability::{Abilities, Ability},
+    ability::AbilityMap,
     ai::{charge::ChargeAi, AiBundle},
     collision::TrackCollisionBundle,
     death_callback::DeathCallback,
@@ -20,7 +20,7 @@ use crate::{
     player::{character_collider, PlayerInfo},
     status_effect::{StatusProps, TimeDilation},
     time::FrameCounter,
-    Ally, Character, CharacterMarker, Cooldowns, Enemy, Energy, FootOffset, Health, Kind,
+    Ally, Character, CharacterMarker, Cooldown, Enemy, Energy, FootOffset, Health, Kind,
     MassBundle, NumAi, Object, Player, Shootable, ABILITY_Y, PLAYER_HEIGHT, PLAYER_MASS, PLAYER_R,
 };
 
@@ -80,7 +80,6 @@ fn spawn_enemies(
 ) {
     for _ in 0..num {
         let loc = level.point_in_plane(rapier_context);
-        let abilities = Abilities::new(vec![Ability::Gun]);
 
         let id = commands
             .spawn((
@@ -116,15 +115,14 @@ fn spawn_enemies(
                         combine_rule: CoefficientCombineRule::Min,
                     },
                     shootable: Shootable,
-                    cooldowns: Cooldowns::new(),
-                    abilities,
+                    global_cooldown: Cooldown::new(),
                     desired_movement: Default::default(),
                     ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
                     marker: CharacterMarker,
                 },
             ))
             .id();
-        tracing::debug!(?id, "Spawning enemy");
+        tracing::info!(?id, "Spawning enemy");
     }
 }
 
@@ -136,7 +134,6 @@ fn spawn_allies(
 ) {
     for _ in 0..num {
         let loc = level.point_in_plane(rapier_context);
-        let abilities = Abilities::new(vec![Ability::Gun]);
         let id = commands
             .spawn((
                 Ally,
@@ -171,8 +168,7 @@ fn spawn_allies(
                         combine_rule: CoefficientCombineRule::Min,
                     },
                     shootable: Shootable,
-                    cooldowns: Cooldowns::new(),
-                    abilities,
+                    global_cooldown: Cooldown::new(),
                     desired_movement: Default::default(),
                     ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
                     marker: CharacterMarker,
@@ -188,27 +184,27 @@ pub fn reset(
     mut commands: Commands,
     enemy_query: Query<Entity, With<Enemy>>,
     ally_query: Query<Entity, With<Ally>>,
-    mut player_query: Query<(Entity, &mut Health, &mut Energy, &mut Cooldowns), With<Player>>,
+    mut player_query: Query<(Entity, &mut Health, &mut Energy), With<Player>>,
     player_info_query: Query<&PlayerInfo>,
     mut num_ai: ResMut<NumAi>,
     level: Res<LevelProps>,
+    ability_map: Res<AbilityMap>,
     rapier_context: Res<RapierContext>,
 ) {
     if enemy_query.iter().next().is_none() {
         num_ai.enemies += 1;
         spawn_enemies(&mut commands, num_ai.enemies, &level, &rapier_context);
 
-        for (_entity, mut health, mut energy, mut cooldowns) in &mut player_query {
+        for (_entity, mut health, mut energy) in &mut player_query {
             health.cur = health.max;
             energy.cur = energy.max;
-            cooldowns.reset();
         }
     }
 
     if player_query.iter().next().is_none() {
         num_ai.enemies = num_ai.enemies.saturating_sub(1);
         for info in player_info_query.iter() {
-            info.spawn_player(&mut commands);
+            info.spawn_player(&mut commands, &ability_map);
         }
     }
 

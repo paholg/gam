@@ -6,9 +6,8 @@ use bevy_hanabi::{
 };
 use engine::PLAYER_R;
 
-use crate::particles::ParticleEffectPool;
-
 use super::Builder;
+use crate::particles::ParticleEffectPool;
 
 pub struct TimeDilationAssets {
     pub fast_effect: ParticleEffectPool,

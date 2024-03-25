@@ -1,3 +1,4 @@
+use ability::{gravity_ball::GravityBallPlugin, grenade::GrenadePlugin, gun::GunPlugin};
 use aim::AimPlugin;
 use bevy::{
     asset::LoadedFolder,
@@ -7,15 +8,13 @@ use bevy::{
         Transform, Update, Vec3, World,
     },
 };
-
 use bevy_kira_audio::{
     prelude::Volume, Audio, AudioControl, AudioInstance, AudioPlugin, PlaybackState,
 };
 use draw::DrawPlugin;
+use engine::{AppState, UP};
 use iyes_progress::ProgressPlugin;
 use rand::Rng;
-
-use engine::{AppState, UP};
 
 use self::{
     asset_handler::{asset_handler_setup, AssetHandler},
@@ -24,6 +23,7 @@ use self::{
     splash::SplashPlugin,
 };
 
+mod ability;
 mod aim;
 mod asset_handler;
 mod bar;
@@ -65,6 +65,10 @@ impl Plugin for GamClientPlugin {
             ConfigPlugin,
             GraphicsPlugin,
             bevy_hanabi::HanabiPlugin,
+            // Abilities
+            GunPlugin,
+            GrenadePlugin,
+            GravityBallPlugin,
         ))
         .insert_resource(BackgroundMusic::default())
         .add_systems(Update, background_music_system)

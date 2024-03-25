@@ -1,4 +1,5 @@
 use std::{
+    cmp::Ordering,
     ops::{Div, Sub},
     time::Instant,
 };
@@ -26,7 +27,7 @@ impl Frame {
 }
 
 /// Represents a duration in ticks rather than time.
-#[derive(Default, Debug, Copy, Clone, Reflect, PartialEq)]
+#[derive(Default, Debug, Copy, Clone, Reflect, PartialEq, PartialOrd)]
 pub struct Dur(f32);
 
 impl Dur {
@@ -46,6 +47,21 @@ impl Dur {
     pub fn tick(&mut self, time_dilation: &TimeDilation) -> bool {
         self.0 = (self.0 - time_dilation.factor()).max(0.0);
         self.is_done(time_dilation)
+    }
+
+    pub fn max(self, rhs: Dur) -> Dur {
+        match self.partial_cmp(&rhs) {
+            Some(Ordering::Greater) => self,
+            Some(Ordering::Equal | Ordering::Less) => rhs,
+            None => {
+                debug_assert!(false, "Dur has invalid float value");
+                if rhs.0.is_finite() {
+                    rhs
+                } else {
+                    self
+                }
+            }
+        }
     }
 }
 
@@ -116,16 +132,16 @@ pub fn frame_counter(mut counter: ResMut<FrameCounter>) {
 }
 
 /// Note: This system should be run after all others.
-pub fn debug_frame_system(mut tick_counter: ResMut<FrameCounter>) {
-    let frame_duration = tick_counter.frame_begin.elapsed();
-    tick_counter.accumulated_time += frame_duration;
+pub fn debug_frame_system(mut counter: ResMut<FrameCounter>) {
+    let frame_duration = counter.frame_begin.elapsed();
+    counter.accumulated_time += frame_duration;
 
-    if tick_counter.diagnostic_iter() {
-        let tick = tick_counter.frame;
+    if counter.diagnostic_iter() {
+        let tick = counter.frame;
 
-        let avg_dur = tick_counter.accumulated_time / FrameCounter::DIAGNOSTIC_ITERS;
-        tick_counter.accumulated_time = Duration::ZERO;
-        tick_counter.average_engine_frame = avg_dur;
+        let avg_dur = counter.accumulated_time / FrameCounter::DIAGNOSTIC_ITERS;
+        counter.accumulated_time = Duration::ZERO;
+        counter.average_engine_frame = avg_dur;
 
         info!(tick = tick.0, ?avg_dur, "Tick");
     }

@@ -239,7 +239,8 @@ pub fn bar_update_system<T: Component + HasBar>(
         transform.rotation = rotation;
         transform.translation = rotation * bar.displacement;
 
-        // The foreground bar is the first child, so we don't need to iterate over all of them.
+        // The foreground bar is the first child, so we don't need to iterate over all
+        // of them.
         if let Some(&child) = children.iter().next() {
             if let Ok(mut bar_transform) = fgbar_q.get_mut(child) {
                 bar_transform.scale.x = percent * bar.size.x;

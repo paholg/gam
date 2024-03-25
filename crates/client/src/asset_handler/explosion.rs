@@ -1,11 +1,10 @@
 use bevy::{
+    asset::Assets,
     math::primitives::Sphere,
     prelude::{AlphaMode, Color, Handle, Mesh, StandardMaterial},
 };
 
 use crate::color_gradient::ColorGradient;
-
-use super::Builder;
 
 pub struct ExplosionAssets {
     pub gradient: ColorGradient,
@@ -15,12 +14,16 @@ pub struct ExplosionAssets {
 }
 
 impl ExplosionAssets {
-    pub fn new(builder: &mut Builder, colors: ColorGradient) -> Self {
+    pub fn new(
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
+        colors: ColorGradient,
+    ) -> Self {
         let initial_color = colors.get(0.0);
         ExplosionAssets {
             gradient: colors,
-            mesh: builder.meshes.add(Sphere::new(1.0)),
-            material: builder.materials.add(StandardMaterial {
+            mesh: meshes.add(Sphere::new(1.0)),
+            material: materials.add(StandardMaterial {
                 base_color: Color::rgba(0.0, 0.0, 0.0, 0.5),
                 emissive: initial_color,
                 alpha_mode: AlphaMode::Blend,

@@ -3,9 +3,8 @@ use bevy::{
     prelude::{AlphaMode, Color, Handle, Mesh, StandardMaterial},
 };
 
-use crate::color_gradient::ColorGradient;
-
 use super::Builder;
+use crate::color_gradient::ColorGradient;
 
 pub struct TransportAssets {
     pub gradient: ColorGradient,

@@ -7,9 +7,8 @@ use bevy_hanabi::{
 use bevy_kira_audio::AudioSource;
 use engine::PLAYER_R;
 
-use crate::{particles::ParticleEffectPool, shapes::HollowPolygon};
-
 use super::Builder;
+use crate::{particles::ParticleEffectPool, shapes::HollowPolygon};
 
 pub struct CharacterAssets {
     pub scene: Handle<Scene>,

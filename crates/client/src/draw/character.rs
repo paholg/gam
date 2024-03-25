@@ -8,9 +8,8 @@ use bevy::{
 };
 use engine::{Ally, Enemy, Energy, FootOffset, Health, Player};
 
-use crate::{asset_handler::AssetHandler, bar::Bar, in_plane};
-
 use super::raycast_scene::RaycastScene;
+use crate::{asset_handler::AssetHandler, bar::Bar, in_plane};
 
 #[derive(Bundle, Default)]
 pub struct CharacterGraphics {

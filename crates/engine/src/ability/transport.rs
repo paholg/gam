@@ -8,6 +8,7 @@ use bevy_math::Vec2;
 use bevy_rapier3d::prelude::{Collider, ExternalForce, LockedAxes, RigidBody, Sensor, Velocity};
 use bevy_transform::{components::Transform, TransformBundle};
 
+use super::properties::TransportProps;
 use crate::{
     collision::{TrackCollisionBundle, TrackCollisions},
     level::{Floor, InLevel},
@@ -16,8 +17,6 @@ use crate::{
     time::Dur,
     Health, Kind, MassBundle, Object, Target, To2d, To3d,
 };
-
-use super::properties::TransportProps;
 
 #[derive(Component)]
 pub struct TransportBeam {
@@ -119,7 +118,8 @@ pub fn collision_system(
             let Ok(mut target_transform) = target_q.get_mut(target) else {
                 continue;
             };
-            // TODO: We'll likely want to account for altitude difference, or just not allow targeting inside a wall.
+            // TODO: We'll likely want to account for altitude difference, or just not allow
+            // targeting inside a wall.
             target_transform.translation += delta.to_3d(0.0);
         }
     }

@@ -15,6 +15,7 @@ pub fn raycast_scene_system(
     // A `Scene` has meshes as its grandchildren, so we need a silly bit of
     // indirection to tell if we should add our `RaycastMesh`.
     for (entity, parent) in q_meshes.iter() {
+        // FIXME: These queries are the same?????????
         let Ok(parent) = q_children.get(parent.get()) else {
             continue;
         };
