@@ -36,7 +36,7 @@
         alsa-lib
         vulkan-loader
       ];
-      nativeBuildInputs = with pkgs; [pkg-config];
+      nativeBuildInputs = with pkgs; [pkg-config clang];
     in {
       packages.${system} = {
         # default = (rustPkgs.workspace.gam {}).bin;

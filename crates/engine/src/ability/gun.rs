@@ -77,7 +77,7 @@ pub struct GunProps {
 impl Default for GunProps {
     fn default() -> Self {
         Self {
-            ammo: 10,
+            ammo: 30,
             cooldown: Dur::new(5),
             duration: Dur::new(600),
             speed: 12.0,

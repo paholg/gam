@@ -21,8 +21,8 @@ bevy_utils.workspace = true
 bevy_rapier3d.workspace = true
 bitmask-enum = "2.2.3"
 bytemuck = { version = "1.15.0", features = ["derive"] }
-futures-lite = "2.2.0"
-image = "0.25.0"
+futures-lite = "2.3.0"
+image = "0.25.1"
 libm = "0.2.8"
 oxidized_navigation = { version = "0.10.0", features = ["rapier"] }
 rand = "0.8"

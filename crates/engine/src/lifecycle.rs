@@ -122,7 +122,7 @@ fn spawn_enemies(
                 },
             ))
             .id();
-        tracing::info!(?id, "Spawning enemy");
+        tracing::debug!(?id, "Spawning enemy");
     }
 }
 

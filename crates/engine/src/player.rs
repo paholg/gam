@@ -35,7 +35,7 @@ impl AbilityIds {
         let right_arm = map.get_arm(ArmAbilitySlot::RightArm, &self.right_arm);
         let left_shoulder = map.get(AbilitySlot::LeftShoulder, &self.left_shoulder);
         let right_shoulder = map.get(AbilitySlot::RightShoulder, &self.right_shoulder);
-        let legs = map.get(AbilitySlot::Head, &self.legs);
+        let legs = map.get(AbilitySlot::Legs, &self.legs);
         let head = map.get(AbilitySlot::Head, &self.head);
 
         commands.run_system_with_input(left_arm.setup, entity);
