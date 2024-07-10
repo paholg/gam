@@ -99,7 +99,7 @@ pub fn update_transport_system(
         let frac = 1.0 - beam.activates_in / beam.delay;
 
         let color = assets.transport.gradient.get(frac);
-        materials.get_mut(material).unwrap().base_color = color;
+        materials.get_mut(material).unwrap().base_color = color.into();
         transform.scale.y = frac * beam.height;
         transform.translation.y = beam.height - (frac * beam.height * 0.5);
 

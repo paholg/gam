@@ -12,6 +12,7 @@ bevy_ecs.workspace = true
 bevy_hierarchy.workspace = true
 bevy_math.workspace = true
 bevy_reflect.workspace = true
+bevy_state.workspace = true
 bevy_tasks.workspace = true
 bevy_time.workspace = true
 bevy_transform.workspace = true
@@ -19,16 +20,17 @@ bevy_utils.workspace = true
 
 # Other crates
 bevy_rapier3d.workspace = true
-bitmask-enum = "2.2.3"
-bytemuck = { version = "1.15.0", features = ["derive"] }
+bitmask-enum = "2.2.4"
+bytemuck = { version = "1.16.1", features = ["derive"] }
 futures-lite = "2.3.0"
 image = "0.25.1"
 libm = "0.2.8"
-oxidized_navigation = { version = "0.10.0", features = ["rapier"] }
+# TODO: Not on bevy 0.14 yet
+# oxidized_navigation = { version = "0.10.0", features = ["rapier"] }
 rand = "0.8"
 serde = "1"
 smallvec.workspace = true
-strum = { version = "0.26.2", features = ["derive"] }
+strum = { version = "0.26.3", features = ["derive"] }
 subenum.workspace = true
 tracing.workspace = true
 # Wire serialization, try:

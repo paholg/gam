@@ -1,4 +1,10 @@
-use bevy::prelude::{Color, Handle, Mesh, Scene, StandardMaterial, Vec2, Vec3, Vec4};
+use bevy::{
+    color::{
+        palettes::css::{GREEN, RED, TEAL},
+        Alpha, LinearRgba,
+    },
+    prelude::{Handle, Mesh, Scene, StandardMaterial, Vec2, Vec3, Vec4},
+};
 use bevy_hanabi::{
     Attribute, ColorOverLifetimeModifier, EffectAsset, ExprWriter, Gradient, LinearDragModifier,
     ParticleEffectBundle, SetAttributeModifier, SetPositionSphereModifier,
@@ -19,7 +25,10 @@ pub struct CharacterAssets {
 }
 
 impl CharacterAssets {
-    fn outline(builder: &mut Builder, color: Color) -> (Handle<Mesh>, Handle<StandardMaterial>) {
+    fn outline(
+        builder: &mut Builder,
+        color: LinearRgba,
+    ) -> (Handle<Mesh>, Handle<StandardMaterial>) {
         let mesh = builder.meshes.add(HollowPolygon {
             radius: PLAYER_R,
             thickness: 0.04,
@@ -29,16 +38,16 @@ impl CharacterAssets {
         const OUTLINE_ALPHA: f32 = 0.5;
         let material = builder.materials.add(StandardMaterial {
             unlit: true,
-            base_color: color.with_a(OUTLINE_ALPHA),
+            base_color: color.with_alpha(OUTLINE_ALPHA).into(),
             // TODO: Make actually emissive???
-            emissive: color.with_a(OUTLINE_ALPHA),
+            emissive: color.with_alpha(OUTLINE_ALPHA),
             ..Default::default()
         });
 
         (mesh, material)
     }
 
-    fn character(builder: &mut Builder, color: Color, model_path: &'static str) -> Self {
+    fn character(builder: &mut Builder, color: LinearRgba, model_path: &'static str) -> Self {
         // let model = builder.asset_server.load("models/temp/robot1.glb#Scene0");
         let model = builder.asset_server.load(model_path);
         builder.loading.add(&model);
@@ -60,15 +69,15 @@ impl CharacterAssets {
     }
 
     pub fn player(builder: &mut Builder) -> Self {
-        Self::character(builder, Color::GREEN, "models/temp/robot1.glb#Scene0")
+        Self::character(builder, GREEN.into(), "models/temp/robot1.glb#Scene0")
     }
 
     pub fn ally(builder: &mut Builder) -> Self {
-        Self::character(builder, Color::CYAN, "models/temp/robot1.glb#Scene0")
+        Self::character(builder, TEAL.into(), "models/temp/robot1.glb#Scene0")
     }
 
     pub fn enemy(builder: &mut Builder) -> Self {
-        Self::character(builder, Color::RED, "models/temp/snowman.glb#Scene0")
+        Self::character(builder, RED.into(), "models/temp/snowman.glb#Scene0")
     }
 }
 
@@ -112,7 +121,7 @@ fn death_effect() -> EffectAsset {
         drag: writer.lit(5.0).expr(),
     };
 
-    EffectAsset::new(32768, spawner, writer.finish())
+    EffectAsset::new(vec![32768], spawner, writer.finish())
         .with_name("death_effect")
         .init(pos)
         .init(vel)

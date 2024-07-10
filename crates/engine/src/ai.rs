@@ -11,17 +11,19 @@ use bevy_ecs::{
 use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 
-use self::pathfind::HasPath;
+// use self::pathfind::HasPath;
 use crate::{ability::gun::GunProps, face, Faction, Target, To2d};
 
 pub mod charge;
-pub mod pathfind;
+// TODO: pathfind
+// pub mod pathfind;
 
 pub fn systems() -> SystemConfigs {
     (
-        pathfind::poll_pathfinding_system,
+        // TODO: pathfind
+        // pathfind::poll_pathfinding_system,
         charge::system_set(),
-        pathfind::pathfinding_system,
+        // pathfind::pathfinding_system,
     )
         .chain()
 }
@@ -35,7 +37,8 @@ pub trait Ai: Component {
 pub struct AiBundle<A: Ai + Default> {
     ai: A,
     target: AiTarget,
-    path: HasPath,
+    // TODO: pathfind
+    // path: HasPath,
 }
 
 #[derive(Component, Default)]

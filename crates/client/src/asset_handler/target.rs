@@ -1,6 +1,7 @@
 use bevy::{
+    color::LinearRgba,
     math::primitives::{Circle, Cylinder},
-    prelude::{Color, Handle, Mesh, StandardMaterial},
+    prelude::{Handle, Mesh, StandardMaterial},
 };
 
 use super::Builder;
@@ -16,12 +17,12 @@ pub struct TargetAssets {
 impl TargetAssets {
     pub fn new(builder: &mut Builder) -> Self {
         let target_material = StandardMaterial {
-            emissive: Color::rgb_linear(10_000.0, 0.0, 0.1),
+            emissive: LinearRgba::rgb(10_000.0, 0.0, 0.1),
             ..Default::default()
         };
 
         let target_laser_material = StandardMaterial {
-            emissive: Color::rgb_linear(10_000.0, 0.0, 0.1),
+            emissive: LinearRgba::rgb(10_000.0, 0.0, 0.1),
             ..Default::default()
         };
         let laser_length = 100.0;

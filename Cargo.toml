@@ -8,24 +8,25 @@ resolver = "2"
 
 [workspace.dependencies]
 # Bevy crates
-bevy = { version = "0.13.0", default-features = false }
-bevy_app = "0.13.0"
-bevy_core = "0.13.0"
-bevy_diagnostic = "0.13.0"
-bevy_ecs = "0.13.0"
-bevy_hierarchy = "0.13.0"
-bevy_internal = "0.13.0"
-bevy_log = "0.13.0"
-bevy_math = "0.13.0"
-bevy_reflect = "0.13.0"
-bevy_tasks = "0.13.0"
-bevy_time = "0.13.0"
-bevy_transform = "0.13.0"
-bevy_utils = "0.13.0"
+bevy = { version = "0.14.0", default-features = false }
+bevy_app = "0.14.0"
+bevy_core = "0.14.0"
+bevy_diagnostic = "0.14.0"
+bevy_ecs = "0.14.0"
+bevy_hierarchy = "0.14.0"
+bevy_internal = "0.14.0"
+bevy_log = "0.14.0"
+bevy_math = "0.14.0"
+bevy_reflect = "0.14.0"
+bevy_state = "0.14.0"
+bevy_tasks = "0.14.0"
+bevy_time = "0.14.0"
+bevy_transform = "0.14.0"
+bevy_utils = "0.14.0"
 
 # Non-bevy crates
-bevy_rapier3d = { version = "0.25", features = ["enhanced-determinism"] }
-smallvec = "2.0.0-alpha.4"
+bevy_rapier3d = { version = "0.27", features = ["enhanced-determinism"] }
+smallvec = "2.0.0-alpha.6"
 subenum = "1.1.2"
 tracing = "0.1.40"
 

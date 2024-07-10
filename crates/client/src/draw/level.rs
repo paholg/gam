@@ -235,7 +235,7 @@ pub fn draw_lights_system(
                     transform: t,
                     ..Default::default()
                 },
-                RenderLayers::all(),
+                RenderLayers::default(),
                 InLevel,
             ));
         }

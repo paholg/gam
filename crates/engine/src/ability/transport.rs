@@ -6,7 +6,7 @@ use bevy_ecs::{
 };
 use bevy_math::Vec2;
 use bevy_rapier3d::prelude::{Collider, ExternalForce, LockedAxes, RigidBody, Sensor, Velocity};
-use bevy_transform::{components::Transform, TransformBundle};
+use bevy_transform::{bundles::TransformBundle, components::Transform};
 
 use super::properties::TransportProps;
 use crate::{

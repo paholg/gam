@@ -1,6 +1,7 @@
 use bevy::{
     app::{Plugin, Startup, Update},
     asset::{AssetServer, Assets},
+    color::LinearRgba,
     ecs::{
         entity::Entity,
         query::Added,
@@ -8,7 +9,7 @@ use bevy::{
         world::World,
     },
     math::primitives::Sphere,
-    prelude::{Color, Handle, Mesh, StandardMaterial, Vec2, Vec3, Vec4},
+    prelude::{Handle, Mesh, StandardMaterial, Vec2, Vec3, Vec4},
 };
 use bevy_hanabi::{
     Attribute, ColorOverLifetimeModifier, EffectAsset, ExprWriter, Gradient, LinearDragModifier,
@@ -43,7 +44,7 @@ fn setup(
     let effect_pool = ParticleEffectBundle::new(effect).into();
 
     let shot_material = StandardMaterial {
-        emissive: Color::rgb_linear(0.0, 20_000.0, 20_000.0),
+        emissive: LinearRgba::rgb(0.0, 20_000.0, 20_000.0),
         ..Default::default()
     };
 
@@ -126,7 +127,7 @@ fn bullet_effect(props: &GunProps) -> EffectAsset {
         drag: writer.lit(5.0).expr(),
     };
 
-    EffectAsset::new(32768, spawner, writer.finish())
+    EffectAsset::new(vec![32768], spawner, writer.finish())
         .with_name("shot_particle_effect")
         .init(pos)
         .init(vel)

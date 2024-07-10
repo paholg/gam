@@ -1,9 +1,9 @@
 use bevy_ecs::{
     entity::Entity,
     query::QueryData,
-    schedule::{NextState, State},
     system::{Commands, Query, Res, ResMut},
 };
+use bevy_state::state::{NextState, State};
 use bevy_transform::components::Transform;
 
 use crate::{

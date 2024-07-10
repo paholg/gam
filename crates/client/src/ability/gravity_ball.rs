@@ -45,7 +45,7 @@ fn setup(
     props: Res<GravityBallProps>,
 ) {
     let neutrino_ball_material = StandardMaterial {
-        base_color: Color::rgba(0.0, 0.0, 0.0, 0.5),
+        base_color: Color::srgba(0.0, 0.0, 0.0, 0.5),
         unlit: true,
         alpha_mode: AlphaMode::Blend,
         ..Default::default()

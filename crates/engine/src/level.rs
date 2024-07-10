@@ -8,7 +8,8 @@ use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::{Collider, Friction, QueryFilter, RapierContext, RigidBody};
 use bevy_transform::components::{GlobalTransform, Transform};
-use oxidized_navigation::NavMeshAffector;
+// TODO: pathfind
+// use oxidized_navigation::NavMeshAffector;
 use rand::Rng;
 
 use crate::{lifecycle::DEATH_Y, Shootable, PLAYER_R};
@@ -99,7 +100,8 @@ impl FloorSpawner {
                 dim: self.dim,
                 loc: self.loc,
             },
-            NavMeshAffector,
+            // TODO: pathfind
+            // NavMeshAffector,
         ));
     }
 }

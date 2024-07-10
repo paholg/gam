@@ -1,10 +1,7 @@
 use bevy::{
-    app::Update,
     log::LogPlugin,
     math::bool,
     prelude::{App, Commands, PluginGroup, Res, Startup},
-    reflect::Array,
-    time::{Fixed, Time},
     utils::HashMap,
 };
 use clap::Parser;
@@ -91,7 +88,8 @@ impl Args {
         app.add_plugins(bevy::diagnostic::LogDiagnosticsPlugin::default());
 
         if self.check(self.paths) {
-            app.add_systems(bevy::app::Update, client::debug::draw_pathfinding_system);
+            // TODO: pathfind
+            //     app.add_systems(bevy::app::Update, client::debug::draw_pathfinding_system);
         }
         if self.check(self.raycast_cursor) {
             app.insert_resource(

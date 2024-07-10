@@ -1,11 +1,15 @@
 use bevy::{
     prelude::{
-        Added, BuildChildren, Color, Commands, Component, Entity, Gizmos, Plugin, Query, Res,
-        TextBundle, Update, With,
+        Added, BuildChildren, Color, Commands, Component, Entity, Plugin, Query, Res, TextBundle,
+        Update, With,
     },
     text::{Text, TextStyle},
 };
-use engine::{ai::pathfind::HasPath, debug::DebugText};
+use engine::{
+    // TODO: pathfind
+    // ai::pathfind::HasPath,
+    debug::DebugText,
+};
 use rand::{thread_rng, Rng};
 
 use crate::ui::hud::{Hud, TEXT_COLOR};
@@ -15,7 +19,7 @@ fn rand_color() -> Color {
 
     let mut gen = || rng.gen_range(0.0..=1.0);
 
-    Color::rgb(gen(), gen(), gen())
+    Color::srgb(gen(), gen(), gen())
 }
 
 #[derive(Component)]
@@ -23,29 +27,30 @@ pub struct PathColor {
     color: Color,
 }
 
-pub fn draw_pathfinding_system(
-    mut commands: Commands,
-    query: Query<(Entity, &HasPath, Option<&PathColor>)>,
-    mut gizmos: Gizmos,
-) {
-    for (entity, path, color) in &query {
-        let color = match color {
-            Some(color) => color.color,
-            None => {
-                let color = rand_color();
-                commands.entity(entity).insert(PathColor { color });
-                color
-            }
-        };
+// TODO: pathfind
+// pub fn draw_pathfinding_system(
+//     mut commands: Commands,
+//     query: Query<(Entity, &HasPath, Option<&PathColor>)>,
+//     mut gizmos: Gizmos,
+// ) {
+//     for (entity, path, color) in &query {
+//         let color = match color {
+//             Some(color) => color.color,
+//             None => {
+//                 let color = rand_color();
+//                 commands.entity(entity).insert(PathColor { color });
+//                 color
+//             }
+//         };
 
-        let mut path = path.path.clone();
-        for v in &mut path {
-            v.y = 0.1;
-        }
+//         let mut path = path.path.clone();
+//         for v in &mut path {
+//             v.y = 0.1;
+//         }
 
-        gizmos.linestrip(path, color);
-    }
-}
+//         gizmos.linestrip(path, color);
+//     }
+// }
 
 pub struct DebugTextPlugin;
 

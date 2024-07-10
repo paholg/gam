@@ -1,8 +1,8 @@
 use bevy::{
     prelude::{
-        Color, Commands, Component, DespawnRecursiveExt, Entity, NodeBundle, OnEnter, OnExit,
-        Plugin, Query, With,
+        Color, Commands, Component, DespawnRecursiveExt, Entity, NodeBundle, Plugin, Query, With,
     },
+    state::state::{OnEnter, OnExit},
     ui::{BackgroundColor, Style, Val},
 };
 use engine::AppState;

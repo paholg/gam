@@ -29,7 +29,7 @@ impl PhysicsPlugin {
                 dt: TIMESTEP,
                 substeps: 1,
             },
-            ..Default::default()
+            ..RapierConfiguration::new(1.0)
         };
         let rapier = RapierPlugin::default().with_default_system_setup(false);
 

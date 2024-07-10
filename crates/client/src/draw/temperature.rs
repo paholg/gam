@@ -64,6 +64,6 @@ pub fn update_temperature_system(
 
         let mat = materials.get_mut(material).unwrap();
         mat.emissive = color;
-        mat.base_color = color;
+        mat.base_color = color.into();
     }
 }

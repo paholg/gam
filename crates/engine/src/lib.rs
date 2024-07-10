@@ -9,27 +9,29 @@ use ability::{
     speed_up::SpeedUpPlugin,
     AbilityMap,
 };
-use ai::pathfind::PathfindPlugin;
+// TODO: pathfind
+// use ai::pathfind::PathfindPlugin;
 use bevy_app::{App, FixedUpdate, Plugin, PostUpdate, Startup};
 use bevy_ecs::{
     bundle::Bundle,
     component::Component,
-    schedule::{IntoSystemConfigs, IntoSystemSetConfigs, State, States, SystemSet},
+    schedule::{IntoSystemConfigs, IntoSystemSetConfigs, SystemSet},
     system::{Query, Res, Resource},
 };
-use bevy_math::{
-    primitives::{Direction3d, Plane3d},
-    Quat, Vec2, Vec3,
-};
+use bevy_math::{primitives::InfinitePlane3d, Dir3, Quat, Vec2, Vec3};
 use bevy_rapier3d::prelude::{
     Collider, ColliderMassProperties, ExternalForce, Friction, LockedAxes, ReadMassProperties,
     RigidBody, Velocity,
 };
 use bevy_reflect::Reflect;
+use bevy_state::{
+    app::AppExtStates,
+    state::{State, States},
+};
 use bevy_time::{Fixed, Time};
 use bevy_transform::{
+    bundles::TransformBundle,
     components::{GlobalTransform, Transform},
-    TransformBundle,
 };
 use collision::TrackCollisionBundle;
 use input::check_resume;
@@ -71,9 +73,7 @@ pub enum AppState {
 
 pub const FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
 pub const UP: Vec3 = Vec3::Y;
-pub const UP_PLANE: Plane3d = Plane3d {
-    normal: Direction3d::Y,
-};
+pub const UP_PLANE: InfinitePlane3d = InfinitePlane3d { normal: Dir3::Y };
 
 pub const PLAYER_R: f32 = 0.25;
 pub const PLAYER_HEIGHT: f32 = 0.75;
@@ -435,9 +435,11 @@ impl Plugin for GamPlugin {
         // Plugins
         // Note: None of these plugins should include systems; any systems
         // should be included manually to ensure determinism.
+        app.add_plugins(physics);
         // TODO: The `ChargeAiPlugin` does include systems, that run on `Update`. We'll
         // need to patch oxidized_navigation or use something else.`
-        app.add_plugins(physics).add_plugins(PathfindPlugin);
+        // TODO: pathfind
+        // app.add_plugins(PathfindPlugin);
     }
 }
 

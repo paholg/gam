@@ -1,4 +1,8 @@
 use bevy::{
+    color::{
+        palettes::css::{ALICE_BLUE, AQUAMARINE, RED},
+        Alpha,
+    },
     math::primitives::Cuboid,
     prelude::{AlphaMode, Color, Handle, Mesh, StandardMaterial},
 };
@@ -18,12 +22,12 @@ pub struct WallAssets {
 
 impl WallAssets {
     pub fn new(builder: &mut Builder) -> Self {
-        let short_wall_color = Color::ALICE_BLUE;
-        let wall_color = Color::AQUAMARINE;
-        let tall_wall_color = Color::RED;
+        let short_wall_color = ALICE_BLUE.into();
+        let wall_color = AQUAMARINE.into();
+        let tall_wall_color = RED.into();
 
         let trans = |color: Color| StandardMaterial {
-            base_color: color.with_a(0.5),
+            base_color: color.with_alpha(0.5),
             alpha_mode: AlphaMode::Blend,
             ..Default::default()
         };
@@ -31,7 +35,7 @@ impl WallAssets {
         WallAssets {
             shape: builder.meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
             floor: builder.materials.add(StandardMaterial {
-                base_color: Color::rgb(0.0, 0.6, 0.1),
+                base_color: Color::srgb(0.0, 0.6, 0.1),
                 perceptual_roughness: 0.8,
                 ..Default::default()
             }),
