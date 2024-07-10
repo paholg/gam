@@ -2,24 +2,6 @@ use std::f32::consts::PI;
 
 use crate::{death_callback::ExplosionKind, time::Dur};
 
-// #[derive(Debug, Resource)]
-// pub struct AbilityProps {
-//     pub gun: GunProps,
-//     pub shotgun: ShotgunProps,
-//     pub frag_grenade: GrenadeProps,
-//     pub heal_grenade: GrenadeProps,
-//     pub seeker_rocket: SeekerRocketProps,
-//     pub neutrino_ball: NeutrinoBallProps,
-//     pub transport: TransportProps,
-//     pub speed_up: SpeedUpProps,
-// }
-
-// impl Default for AbilityProps {
-//     fn default() -> Self {
-//         Self {
-//     }
-// }
-
 #[derive(Debug)]
 pub struct ShotgunProps {
     pub cost: f32,
@@ -83,25 +65,6 @@ impl Default for TransportProps {
             accel: 100.0,
             speed: 3.0,
             delay: Dur::new(90),
-        }
-    }
-}
-
-#[derive(Debug, Copy, Clone)]
-pub struct SpeedUpProps {
-    pub cost: f32,
-    pub cooldown: Dur,
-    pub duration: Dur,
-    pub amount: f32,
-}
-
-impl Default for SpeedUpProps {
-    fn default() -> Self {
-        Self {
-            cost: 2.0,
-            cooldown: Dur::new(1),
-            duration: Dur::new(1),
-            amount: 1.0,
         }
     }
 }

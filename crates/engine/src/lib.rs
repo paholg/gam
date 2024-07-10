@@ -5,7 +5,9 @@ use ability::{
     gravity_ball::GravityBallPlugin,
     grenade::GrenadePlugin,
     gun::GunPlugin,
-    seeker_rocket, AbilityMap,
+    seeker_rocket::SeekerRocketPlugin,
+    speed_up::SpeedUpPlugin,
+    AbilityMap,
 };
 use ai::pathfind::PathfindPlugin;
 use bevy_app::{App, FixedUpdate, Plugin, PostUpdate, Startup};
@@ -378,7 +380,6 @@ impl Plugin for GamPlugin {
                 ai::systems().in_set(GameSet::Ai),
                 (
                     ability::bullet::collision_system,
-                    ability::seeker_rocket::collision_system,
                     ability::transport::collision_system,
                     death_callback::explosion_collision_system,
                 )
@@ -387,7 +388,6 @@ impl Plugin for GamPlugin {
                 (
                     // Misc; categorize futher?
                     movement::apply_movement,
-                    seeker_rocket::tracking_system,
                     death_callback::explosion_grow_system,
                     ability::transport::move_system,
                     ability::transport::activation_system,
@@ -420,7 +420,13 @@ impl Plugin for GamPlugin {
         app.add_systems(SCHEDULE, (check_resume).run_if(game_paused));
 
         // Abilities as plugins
-        app.add_plugins((GunPlugin, GrenadePlugin, GravityBallPlugin));
+        app.add_plugins((
+            GunPlugin,
+            GrenadePlugin,
+            GravityBallPlugin,
+            SeekerRocketPlugin,
+            SpeedUpPlugin,
+        ));
 
         // TODO: This seems to currently be required so rapier does not miss
         // events, but it is likely a source of non-determinism.

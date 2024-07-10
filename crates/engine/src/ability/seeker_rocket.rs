@@ -1,30 +1,79 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, marker::PhantomData};
 
+use bevy_app::{Plugin, Startup};
 use bevy_ecs::{
     component::Component,
     entity::Entity,
-    query::With,
-    system::{Commands, Query},
+    query::{QueryData, With},
+    schedule::IntoSystemConfigs,
+    system::{Commands, In, Query, Res, Resource},
+    world::World,
 };
 use bevy_rapier3d::prelude::{Collider, ExternalForce, LockedAxes, Sensor, Velocity};
 use bevy_transform::components::Transform;
 
-use super::properties::ExplosionProps;
+use super::{
+    cooldown::Cooldown, properties::ExplosionProps, Ability, AbilityId, AbilityMap, Left, Right,
+    Side,
+};
 use crate::{
     collision::{TrackCollisionBundle, TrackCollisions},
     death_callback::{DeathCallback, ExplosionCallback, ExplosionKind},
     level::InLevel,
     movement::{DesiredMove, MaxSpeed},
-    status_effect::StatusProps,
+    status_effect::{StatusProps, TimeDilation},
     time::{Dur, TIMESTEP},
-    AbilityOffset, Energy, Health, Kind, MassBundle, Object, Shootable, Target, To2d, FORWARD,
-    PLAYER_R,
+    AbilityOffset, Energy, GameSet, Health, Kind, MassBundle, Object, Shootable, Target, To2d,
+    FORWARD, PLAYER_R, SCHEDULE,
 };
 
-#[derive(Debug)]
+pub struct SeekerRocketPlugin;
+
+impl Plugin for SeekerRocketPlugin {
+    fn build(&self, app: &mut bevy_app::App) {
+        app.insert_resource(SeekerRocketProps::default())
+            .add_systems(Startup, register)
+            .add_systems(
+                SCHEDULE,
+                (
+                    collision_system.in_set(GameSet::Collision),
+                    tracking_system.in_set(GameSet::Stuff),
+                    cooldown_system::<Left>,
+                    cooldown_system::<Right>,
+                ),
+            );
+    }
+}
+
+fn register(world: &mut World) {
+    let id = AbilityId::from("seeker_rocket");
+
+    let left = Ability::new(world, fire::<Left>, setup::<Left>);
+    let right = Ability::new(world, fire::<Right>, setup::<Right>);
+
+    let mut ability_map = world.get_resource_mut::<AbilityMap>().unwrap();
+
+    ability_map.register(super::AbilitySlot::LeftShoulder, id.clone(), left);
+    ability_map.register(super::AbilitySlot::RightShoulder, id, right);
+}
+
+fn cooldown_system<S: Side>(mut query: Query<(&mut Resources<S>, &TimeDilation)>) {
+    for (mut resources, time_dilation) in &mut query {
+        resources.cooldown.tick(time_dilation);
+    }
+}
+
+fn setup<S: Side>(entity: In<Entity>, mut commands: Commands) {
+    commands
+        .entity(*entity)
+        .try_insert(Resources::<S>::default());
+}
+
+#[derive(Debug, Resource)]
 pub struct SeekerRocketProps {
     pub cost: f32,
     pub cooldown: Dur,
+    gcd: Dur,
     /// Max turn per tick, in radians.
     pub turning_radius: f32,
     pub capsule_radius: f32,
@@ -44,6 +93,7 @@ impl Default for SeekerRocketProps {
         Self {
             cost: 30.0,
             cooldown: Dur::new(30),
+            gcd: Dur::new(30),
             turning_radius: PI * 0.03,
             capsule_radius: 0.05,
             capsule_length: 0.14,
@@ -67,29 +117,60 @@ impl Default for SeekerRocketProps {
     }
 }
 
-#[derive(Component)]
-pub struct SeekerRocket {
-    pub shooter: Entity,
-    pub radius: f32,
-    pub turning_radius: f32,
-    pub energy_cost: f32,
+#[derive(Component, Default)]
+struct Resources<S: Side> {
+    cooldown: Cooldown,
+    _marker: PhantomData<S>,
 }
 
-pub fn seeker_rocket(
-    commands: &mut Commands,
-    props: &SeekerRocketProps,
-    transform: &Transform,
-    velocity: &Velocity,
+#[derive(Component)]
+struct SeekerRocket {
     shooter: Entity,
-    ability_offset: &AbilityOffset,
+    radius: f32,
+    turning_radius: f32,
+    energy_cost: f32,
+}
+
+#[derive(QueryData)]
+#[query_data(mutable)]
+struct User<S: Side> {
+    gcd: &'static mut Cooldown,
+    transform: &'static Transform,
+    velocity: &'static Velocity,
+    ability_offset: &'static AbilityOffset,
+    resources: &'static mut Resources<S>,
+    energy: &'static mut Energy,
+    time_dilation: &'static TimeDilation,
+}
+
+fn fire<S: Side>(
+    entity: In<Entity>,
+    mut commands: Commands,
+    mut user_q: Query<User<S>>,
+    props: Res<SeekerRocketProps>,
 ) {
-    let mut rocket_transform = *transform;
-    let dir = transform.rotation * FORWARD;
+    let Ok(mut user) = user_q.get_mut(*entity) else {
+        return;
+    };
+    if !user.gcd.is_available(user.time_dilation) {
+        return;
+    }
+    if !user.resources.cooldown.is_available(user.time_dilation) {
+        return;
+    }
+    if !user.energy.try_use(props.cost) {
+        return;
+    }
+    user.gcd.set(props.gcd);
+    user.resources.cooldown.set(props.cooldown);
+
+    let mut rocket_transform = *user.transform;
+    let dir = rocket_transform.rotation * FORWARD;
     // TODO: If the rocket spawns inside a wall, no one will be hurt by its
     // explosion.
-    rocket_transform.translation = transform.translation
+    rocket_transform.translation = user.transform.translation
         + dir * (PLAYER_R + props.capsule_length * 2.0)
-        + ability_offset.to_vec();
+        + user.ability_offset.to_vec();
 
     commands.spawn((
         Object {
@@ -99,7 +180,7 @@ pub fn seeker_rocket(
             mass: MassBundle::new(props.mass),
             body: bevy_rapier3d::prelude::RigidBody::Dynamic,
             force: ExternalForce::default(),
-            velocity: *velocity,
+            velocity: *user.velocity,
             locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Y,
             kind: Kind::SeekerRocket,
             in_level: InLevel,
@@ -113,7 +194,7 @@ pub fn seeker_rocket(
         Health::new(props.health),
         Energy::new(props.energy, 0.0),
         SeekerRocket {
-            shooter,
+            shooter: *entity,
             radius: props.capsule_radius,
             turning_radius: props.turning_radius,
             energy_cost: props.energy_cost,
@@ -131,58 +212,68 @@ pub fn seeker_rocket(
     ));
 }
 
-pub fn tracking_system(
-    mut query: Query<(
-        &SeekerRocket,
-        &mut Transform,
-        &mut DesiredMove,
-        &mut Energy,
-        &mut LockedAxes,
-    )>,
-    target_query: Query<&Target>,
-) {
-    for (rocket, mut transform, mut desired_move, mut energy, mut locked_axes) in query.iter_mut() {
-        if energy.try_use(rocket.energy_cost) {
-            let Ok(target) = target_query.get(rocket.shooter) else {
+#[derive(QueryData)]
+#[query_data(mutable)]
+struct TrackingQuery {
+    rocket: &'static SeekerRocket,
+    transform: &'static mut Transform,
+    desired_move: &'static mut DesiredMove,
+    energy: &'static mut Energy,
+    locked_axes: &'static mut LockedAxes,
+}
+
+fn tracking_system(mut query: Query<TrackingQuery>, target_query: Query<&Target>) {
+    for mut rocket in query.iter_mut() {
+        if rocket.energy.try_use(rocket.rocket.energy_cost) {
+            let Ok(target) = target_query.get(rocket.rocket.shooter) else {
                 continue;
             };
             let target = target.0;
 
-            let facing = transform.forward().to_2d();
+            let facing = rocket.transform.forward().to_2d();
 
-            let desired_rotation = facing.angle_between(target - transform.translation.to_2d());
-            let rotation = desired_rotation.clamp(-rocket.turning_radius, rocket.turning_radius);
+            let desired_rotation =
+                facing.angle_between(target - rocket.transform.translation.to_2d());
+            let rotation =
+                desired_rotation.clamp(-rocket.rocket.turning_radius, rocket.rocket.turning_radius);
 
-            transform.rotate_y(rotation);
+            rocket.transform.rotate_y(rotation);
 
             // Rockets always go forward.
-            desired_move.dir = (transform.rotation * FORWARD).to_2d();
+            rocket.desired_move.dir = (rocket.transform.rotation * FORWARD).to_2d();
         } else {
             // Unlock y translation, so it can fall.
-            *locked_axes = LockedAxes::ROTATION_LOCKED;
+            *rocket.locked_axes = LockedAxes::ROTATION_LOCKED;
         }
     }
 }
 
-pub fn collision_system(
-    mut rocket_q: Query<
-        (&mut Health, &TrackCollisions, &Velocity, &mut Transform),
-        With<SeekerRocket>,
-    >,
+#[derive(QueryData)]
+#[query_data(mutable)]
+struct CollisionQuery {
+    health: &'static mut Health,
+    colliding: &'static TrackCollisions,
+    transform: &'static mut Transform,
+    velocity: &'static Velocity,
+}
+
+fn collision_system(
+    mut query: Query<CollisionQuery, With<SeekerRocket>>,
     shootable_q: Query<(), With<Shootable>>,
 ) {
-    for (mut health, colliding, velocity, mut transform) in &mut rocket_q {
-        let should_live = colliding.targets.is_empty()
-            || colliding
+    for mut rocket in &mut query {
+        let should_live = rocket.colliding.targets.is_empty()
+            || rocket
+                .colliding
                 .targets
                 .iter()
                 .all(|&t| shootable_q.get(t).is_err());
 
         if !should_live {
-            health.die();
+            rocket.health.die();
             // If a rocket hits a wall, it will be inside it when it explodes,
             // damaging no one. So, we just move back a frame.
-            transform.translation -= velocity.linvel * TIMESTEP;
+            rocket.transform.translation -= rocket.velocity.linvel * TIMESTEP;
         }
     }
 }

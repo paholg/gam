@@ -157,7 +157,7 @@ fn fire<S: Side>(
     }
     user.gcd.set(props.gcd);
     user.resources.cooldown.set(props.cooldown);
-    // if !user.resources.try_use(user
+
     let mut ball_transform = *user.transform;
     let dir = user.transform.rotation * FORWARD;
 
