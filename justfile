@@ -26,4 +26,5 @@ fmt:
 
 [private]
 cargo cmd *args:
-	cargo --color always {{cmd}} --features bevy/dynamic_linking {{args}}
+	# cargo --color always {{cmd}} --features bevy/dynamic_linking {{args}}
+	cargo --color always {{cmd}} {{args}}
