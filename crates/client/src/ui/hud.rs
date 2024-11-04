@@ -11,7 +11,7 @@ use bevy::{
 use engine::{time::FrameCounter, NumAi};
 use rust_i18n::t;
 
-pub const TEXT_COLOR: Color = Color::rgb(0.8, 0.8, 0.8);
+pub const TEXT_COLOR: Color = Color::srgb(0.8, 0.8, 0.8);
 
 pub struct HudPlugin;
 

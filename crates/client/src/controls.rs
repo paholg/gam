@@ -70,16 +70,11 @@ pub fn player_input(
         actions |= Action::Pause;
     }
 
-    let movement = action_state
-        .clamped_axis_pair(&UserAction::Move)
-        .map(|pair| pair.xy())
-        .unwrap_or_default();
+    let movement = action_state.clamped_axis_pair(&UserAction::Move);
     let (camera, camera_global_transform, mut camera_transform) = camera_query.single_mut();
 
     // Try to determine if the player wants to use mouse or controller to aim.
-    let controller_aim = action_state
-        .clamped_axis_pair(&UserAction::Aim)
-        .unwrap_or_default();
+    let controller_aim = action_state.clamped_axis_pair(&UserAction::Aim);
     if !cursor_events.is_empty() {
         *camera_mode = CameraFollowMode::Mouse;
     } else if controller_aim.length_squared() > 0.5 * 0.5 {
@@ -92,7 +87,7 @@ pub fn player_input(
                 .unwrap_or(player_transform.translation.to_2d())
         }
         CameraFollowMode::Controller => {
-            player_transform.translation.to_2d() + controller_aim.xy() * MAX_RANGE
+            player_transform.translation.to_2d() + controller_aim * MAX_RANGE
         }
     };
 

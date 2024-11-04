@@ -115,7 +115,7 @@ pub fn test_level(mut commands: Commands, mut props: ResMut<LevelProps>) {
     // TODO: This is currently a bit larger than PLAYER_R to give the ai some
     // extra pathfinding room. But we should pathfind better instead.
     let pixel = 0.30;
-    let image = image::io::Reader::open("assets/levels/test2.png")
+    let image = image::ImageReader::open("assets/levels/test2.png")
         .unwrap()
         .decode()
         .unwrap()

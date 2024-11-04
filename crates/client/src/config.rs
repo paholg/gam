@@ -12,7 +12,9 @@ use bevy::{
 use directories::ProjectDirs;
 use engine::{multiplayer::Action, player::AbilityIds, Player};
 use leafwing_input_manager::{
-    prelude::{DualAxis, InputManagerPlugin, InputMap, VirtualDPad},
+    prelude::{
+        GamepadStick, GamepadVirtualDPad, InputManagerPlugin, InputMap, KeyboardVirtualDPad,
+    },
     Actionlike, InputManagerBundle,
 };
 use serde::{Deserialize, Serialize};
@@ -86,26 +88,18 @@ fn default_controls() -> InputMap<UserAction> {
     let mut map = InputMap::default();
     map.insert(UserAction::Menu, KeyCode::Escape)
         .insert(UserAction::Menu, GamepadButtonType::Start)
-        .insert(UserAction::Move, DualAxis::left_stick())
-        .insert(
+        .insert_dual_axis(UserAction::Move, GamepadStick::LEFT)
+        .insert_dual_axis(UserAction::Move, GamepadVirtualDPad::DPAD)
+        .insert_dual_axis(
             UserAction::Move,
-            VirtualDPad {
-                up: GamepadButtonType::DPadUp.into(),
-                down: GamepadButtonType::DPadUp.into(),
-                left: GamepadButtonType::DPadLeft.into(),
-                right: GamepadButtonType::DPadRight.into(),
-            },
+            KeyboardVirtualDPad::new(
+                KeyCode::KeyE.into(),
+                KeyCode::KeyD.into(),
+                KeyCode::KeyS.into(),
+                KeyCode::KeyF.into(),
+            ),
         )
-        .insert(
-            UserAction::Move,
-            VirtualDPad {
-                up: KeyCode::KeyE.into(),
-                down: KeyCode::KeyD.into(),
-                left: KeyCode::KeyS.into(),
-                right: KeyCode::KeyF.into(),
-            },
-        )
-        .insert(UserAction::Aim, DualAxis::right_stick())
+        .insert_dual_axis(UserAction::Aim, GamepadStick::RIGHT)
         // Left arm
         .insert(UserAction::LeftArm, MouseButton::Left)
         .insert(UserAction::LeftArm, GamepadButtonType::LeftTrigger2)
@@ -306,7 +300,9 @@ pub enum UserAction {
     Head,
 
     // Not real actions; just indicate that an AxisPair was used.
+    #[actionlike(DualAxis)]
     Move,
+    #[actionlike(DualAxis)]
     Aim,
 
     // This one's weird, as it is a game action, we just handle it specially.

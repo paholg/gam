@@ -20,11 +20,11 @@ bevy_utils.workspace = true
 
 # Other crates
 bevy_rapier3d.workspace = true
-bitmask-enum = "2.2.4"
-bytemuck = { version = "1.16.1", features = ["derive"] }
-futures-lite = "2.3.0"
-image = "0.25.1"
-libm = "0.2.8"
+bitmask-enum = "2.2.5"
+bytemuck = { version = "1.19.0", features = ["derive"] }
+futures-lite = "2.4.0"
+image = "0.25.4"
+libm = "0.2.11"
 # TODO: Not on bevy 0.14 yet
 # oxidized_navigation = { version = "0.10.0", features = ["rapier"] }
 rand = "0.8"

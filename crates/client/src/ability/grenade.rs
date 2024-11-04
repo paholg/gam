@@ -45,7 +45,7 @@ fn setup(
 ) {
     // Frag grenade
     let frag_grenade_material = StandardMaterial {
-        emissive: LinearRgba::rgb(10_000.0, 0.0, 100.0),
+        emissive: LinearRgba::rgb(50.0, 0.0, 5.0),
         ..Default::default()
     };
 
@@ -73,7 +73,7 @@ fn setup(
 
     // Heal grenade
     let heal_grenade_material = StandardMaterial {
-        emissive: LinearRgba::rgb(0.0, 10_000.0, 100.0),
+        emissive: LinearRgba::rgb(0.0, 50.0, 5.0),
         ..Default::default()
     };
 

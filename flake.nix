@@ -54,7 +54,7 @@
         devShells.default = pkgs.mkShell {
           packages = [
             pkgs.just
-            rust
+            # rust
           ];
           buildInputs = buildInputs ++ x11Inputs ++ waylandInputs;
           nativeBuildInputs = nativeBuildInputs;
