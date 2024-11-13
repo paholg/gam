@@ -3,10 +3,6 @@ edition = "2021"
 name = "client"
 version = "0.1.0"
 
-[build-dependencies]
-i18n-build = { version = "0.10.0", features = ["i18n-embed", "localize"] }
-i18n-config = "0.4.7"
-
 [dependencies]
 engine.path = "../engine"
 
