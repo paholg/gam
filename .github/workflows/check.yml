@@ -31,6 +31,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: rustfmt
       - run: cargo +nightly fmt --all -- --check
     
   test:
