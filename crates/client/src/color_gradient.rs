@@ -1,15 +1,15 @@
-use bevy::prelude::Color;
+use bevy::color::LinearRgba;
 use itertools::Itertools;
 use smallvec::SmallVec;
 
 pub struct ColorGradient {
-    pub colors: SmallVec<(f32, Color), 4>,
+    pub colors: SmallVec<(f32, LinearRgba), 4>,
 }
 
 impl ColorGradient {
     /// Construct a new color gradient
 
-    pub fn new(colors: impl IntoIterator<Item = (f32, Color)>) -> Self {
+    pub fn new(colors: impl IntoIterator<Item = (f32, LinearRgba)>) -> Self {
         let colors = colors.into_iter().collect();
         let this = Self { colors };
 
@@ -27,7 +27,7 @@ impl ColorGradient {
         this
     }
 
-    pub fn get(&self, val: f32) -> Color {
+    pub fn get(&self, val: f32) -> LinearRgba {
         for (&(low, color_low), &(high, color_high)) in self.colors.iter().tuple_windows() {
             if val >= low && val <= high {
                 let low_frac = (high - val) / (high - low);

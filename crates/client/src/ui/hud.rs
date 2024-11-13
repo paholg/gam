@@ -27,7 +27,7 @@ use engine::NumAi;
 
 use crate::t;
 
-pub const TEXT_COLOR: Color = Color::rgb(0.8, 0.8, 0.8);
+pub const TEXT_COLOR: Color = Color::srgb(0.8, 0.8, 0.8);
 
 pub struct HudPlugin;
 

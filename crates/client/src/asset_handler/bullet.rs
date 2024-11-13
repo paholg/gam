@@ -1,5 +1,5 @@
+use bevy::color::LinearRgba;
 use bevy::math::primitives::Sphere;
-use bevy::prelude::Color;
 use bevy::prelude::Handle;
 use bevy::prelude::Mesh;
 use bevy::prelude::StandardMaterial;
@@ -39,7 +39,7 @@ impl BulletAssets {
         let effect_pool = ParticleEffectBundle::new(effect).into();
 
         let shot_material = StandardMaterial {
-            emissive: Color::rgb_linear(0.0, 20_000.0, 20_000.0),
+            emissive: LinearRgba::rgb(0.0, 20_000.0, 20_000.0),
             ..Default::default()
         };
 
@@ -100,7 +100,7 @@ fn bullet_effect(props: &GunProps) -> EffectAsset {
         drag: writer.lit(5.0).expr(),
     };
 
-    EffectAsset::new(32768, spawner, writer.finish())
+    EffectAsset::new(vec![32768], spawner, writer.finish())
         .with_name("shot_particle_effect")
         .init(pos)
         .init(vel)

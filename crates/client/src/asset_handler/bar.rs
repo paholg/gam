@@ -1,3 +1,6 @@
+use bevy::color::palettes::css::BLACK;
+use bevy::color::palettes::css::GREEN;
+use bevy::color::LinearRgba;
 use bevy::math::primitives::Rectangle;
 use bevy::prelude::Color;
 use bevy::prelude::Handle;
@@ -15,12 +18,12 @@ pub struct BarAssets {
 impl BarAssets {
     pub fn healthbar(builder: &mut Builder) -> Self {
         let fg = StandardMaterial {
-            base_color: Color::GREEN,
+            base_color: GREEN.into(),
             unlit: true,
             ..Default::default()
         };
         let bg = StandardMaterial {
-            base_color: Color::BLACK,
+            base_color: BLACK.into(),
             unlit: true,
             ..Default::default()
         };
@@ -33,12 +36,12 @@ impl BarAssets {
 
     pub fn energybar(builder: &mut Builder) -> Self {
         let fg = StandardMaterial {
-            base_color: Color::RgbaLinear {
+            base_color: Color::LinearRgba(LinearRgba {
                 red: 0.0,
                 green: 0.2,
                 blue: 0.8,
                 alpha: 1.0,
-            },
+            }),
             unlit: true,
             ..Default::default()
         };

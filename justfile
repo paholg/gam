@@ -15,8 +15,7 @@ fix:
 	@just cargo clippy --fix --allow-staged
 
 cargo cmd *args:
-	cargo --color always {{cmd}} --features bevy/dynamic_linking {{args}}
-	# cargo --color always {{cmd}} {{args}}
+	cargo --color always {{cmd}} {{args}}
 
 package_client target:
 	#!/usr/bin/env bash

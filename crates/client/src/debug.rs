@@ -26,7 +26,7 @@ fn rand_color() -> Color {
 
     let mut gen = || rng.gen_range(0.0..=1.0);
 
-    Color::rgb(gen(), gen(), gen())
+    Color::srgb(gen(), gen(), gen())
 }
 
 #[derive(Component)]

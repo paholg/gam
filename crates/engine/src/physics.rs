@@ -33,7 +33,10 @@ impl PhysicsPlugin {
                 dt: TIMESTEP,
                 substeps: 1,
             },
-            ..Default::default()
+            physics_pipeline_active: true,
+            query_pipeline_active: true,
+            scaled_shape_subdivision: 10,
+            force_update_from_transform_changes: false,
         };
         let rapier = RapierPlugin::default().with_default_system_setup(false);
 
