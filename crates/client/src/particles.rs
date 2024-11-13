@@ -1,8 +1,10 @@
-use bevy::{
-    core::FrameCount,
-    prelude::{Commands, Entity, Query, Transform},
-};
-use bevy_hanabi::{EffectSpawner, ParticleEffectBundle};
+use bevy::core::FrameCount;
+use bevy::prelude::Commands;
+use bevy::prelude::Entity;
+use bevy::prelude::Query;
+use bevy::prelude::Transform;
+use bevy_hanabi::EffectSpawner;
+use bevy_hanabi::ParticleEffectBundle;
 
 /// A wrapper around `ParticleEffectBundle` that allows spawning multiple copies
 /// of the same effect in the same frame.

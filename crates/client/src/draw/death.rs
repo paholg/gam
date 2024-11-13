@@ -1,12 +1,19 @@
-use bevy::{
-    core::FrameCount,
-    prelude::{Commands, EventReader, Query, Res, ResMut, Transform},
-};
+use bevy::core::FrameCount;
+use bevy::prelude::Commands;
+use bevy::prelude::EventReader;
+use bevy::prelude::Query;
+use bevy::prelude::Res;
+use bevy::prelude::ResMut;
+use bevy::prelude::Transform;
 use bevy_hanabi::EffectSpawner;
-use bevy_kira_audio::{prelude::Volume, Audio, AudioControl};
-use engine::{lifecycle::DeathEvent, Kind};
+use bevy_kira_audio::prelude::Volume;
+use bevy_kira_audio::Audio;
+use bevy_kira_audio::AudioControl;
+use engine::lifecycle::DeathEvent;
+use engine::Kind;
 
-use crate::{asset_handler::AssetHandler, Config};
+use crate::asset_handler::AssetHandler;
+use crate::Config;
 
 pub fn draw_death_system(
     mut commands: Commands,

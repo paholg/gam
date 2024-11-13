@@ -1,18 +1,29 @@
-use bevy::{
-    math::primitives::Sphere,
-    prelude::{Color, Handle, Mesh, StandardMaterial, Vec2, Vec3, Vec4},
-};
-use bevy_hanabi::{
-    Attribute, ColorOverLifetimeModifier, EffectAsset, ExprWriter, Gradient, LinearDragModifier,
-    ParticleEffectBundle, SetAttributeModifier, SetPositionSphereModifier,
-    SetVelocitySphereModifier, ShapeDimension, SizeOverLifetimeModifier, Spawner,
-};
+use bevy::math::primitives::Sphere;
+use bevy::prelude::Color;
+use bevy::prelude::Handle;
+use bevy::prelude::Mesh;
+use bevy::prelude::StandardMaterial;
+use bevy::prelude::Vec2;
+use bevy::prelude::Vec3;
+use bevy::prelude::Vec4;
+use bevy_hanabi::Attribute;
+use bevy_hanabi::ColorOverLifetimeModifier;
+use bevy_hanabi::EffectAsset;
+use bevy_hanabi::ExprWriter;
+use bevy_hanabi::Gradient;
+use bevy_hanabi::LinearDragModifier;
+use bevy_hanabi::ParticleEffectBundle;
+use bevy_hanabi::SetAttributeModifier;
+use bevy_hanabi::SetPositionSphereModifier;
+use bevy_hanabi::SetVelocitySphereModifier;
+use bevy_hanabi::ShapeDimension;
+use bevy_hanabi::SizeOverLifetimeModifier;
+use bevy_hanabi::Spawner;
 use bevy_kira_audio::AudioSource;
 use engine::ability::properties::GunProps;
 
-use crate::particles::ParticleEffectPool;
-
 use super::Builder;
+use crate::particles::ParticleEffectPool;
 
 pub struct BulletAssets {
     pub mesh: Handle<Mesh>,

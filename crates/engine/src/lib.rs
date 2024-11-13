@@ -1,41 +1,63 @@
 use std::fmt;
 
-use ability::{properties::AbilityProps, seeker_rocket, Abilities, Ability};
+use ability::properties::AbilityProps;
+use ability::seeker_rocket;
+use ability::Abilities;
+use ability::Ability;
 use ai::pathfind::PathfindPlugin;
-use bevy_app::{App, FixedUpdate, Plugin, PostUpdate, Startup};
-use bevy_ecs::{
-    bundle::Bundle,
-    component::Component,
-    schedule::{IntoSystemConfigs, IntoSystemSetConfigs, State, States, SystemSet},
-    system::{Query, Res, Resource},
-};
-use bevy_math::{
-    primitives::{Direction3d, Plane3d},
-    Quat, Vec2, Vec3,
-};
-use bevy_rapier3d::prelude::{
-    Collider, ColliderMassProperties, ExternalForce, Friction, LockedAxes, ReadMassProperties,
-    RigidBody, Velocity,
-};
+use bevy_app::App;
+use bevy_app::FixedUpdate;
+use bevy_app::Plugin;
+use bevy_app::PostUpdate;
+use bevy_app::Startup;
+use bevy_ecs::bundle::Bundle;
+use bevy_ecs::component::Component;
+use bevy_ecs::schedule::IntoSystemConfigs;
+use bevy_ecs::schedule::IntoSystemSetConfigs;
+use bevy_ecs::schedule::State;
+use bevy_ecs::schedule::States;
+use bevy_ecs::schedule::SystemSet;
+use bevy_ecs::system::Query;
+use bevy_ecs::system::Res;
+use bevy_ecs::system::Resource;
+use bevy_math::primitives::Direction3d;
+use bevy_math::primitives::Plane3d;
+use bevy_math::Quat;
+use bevy_math::Vec2;
+use bevy_math::Vec3;
+use bevy_rapier3d::prelude::Collider;
+use bevy_rapier3d::prelude::ColliderMassProperties;
+use bevy_rapier3d::prelude::ExternalForce;
+use bevy_rapier3d::prelude::Friction;
+use bevy_rapier3d::prelude::LockedAxes;
+use bevy_rapier3d::prelude::ReadMassProperties;
+use bevy_rapier3d::prelude::RigidBody;
+use bevy_rapier3d::prelude::Velocity;
 use bevy_reflect::Reflect;
-use bevy_time::{Fixed, Time};
-use bevy_transform::{
-    components::{GlobalTransform, Transform},
-    TransformBundle,
-};
+use bevy_time::Fixed;
+use bevy_time::Time;
+use bevy_transform::components::GlobalTransform;
+use bevy_transform::components::Transform;
+use bevy_transform::TransformBundle;
 use bevy_utils::HashMap;
 use collision::TrackCollisionBundle;
 use input::check_resume;
-use level::{InLevel, LevelProps};
+use level::InLevel;
+use level::LevelProps;
 use lifecycle::DeathEvent;
-use movement::{DesiredMove, MaxSpeed};
+use movement::DesiredMove;
+use movement::MaxSpeed;
 use multiplayer::PlayerInputs;
 use physics::PhysicsPlugin;
-use status_effect::{
-    charge::charge_tick, phased::phased_tick, temperature::temperature_tick,
-    time_dilation::time_dilation_tick, StatusBundle, TimeDilation,
-};
-use time::{Dur, FrameCounter, FREQUENCY};
+use status_effect::charge::charge_tick;
+use status_effect::phased::phased_tick;
+use status_effect::temperature::temperature_tick;
+use status_effect::time_dilation::time_dilation_tick;
+use status_effect::StatusBundle;
+use status_effect::TimeDilation;
+use time::Dur;
+use time::FrameCounter;
+use time::FREQUENCY;
 
 pub mod ability;
 pub mod ai;
@@ -471,7 +493,8 @@ impl Plugin for GamPlugin {
         // Plugins
         // Note: None of these plugins should include systems; any systems
         // should be included manually to ensure determinism.
-        // TODO: The `ChargeAiPlugin` does include systems, that run on `Update`. We'll need to patch oxidized_navigation or use something else.`
+        // TODO: The `ChargeAiPlugin` does include systems, that run on `Update`. We'll
+        // need to patch oxidized_navigation or use something else.`
         app.add_plugins(physics).add_plugins(PathfindPlugin);
     }
 }

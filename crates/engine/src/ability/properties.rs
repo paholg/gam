@@ -2,9 +2,11 @@ use std::f32::consts::PI;
 
 use bevy_ecs::system::Resource;
 
-use crate::{death_callback::ExplosionKind, movement::MaxSpeed, time::Dur};
-
-use super::{grenade::GrenadeKind, Ability};
+use super::grenade::GrenadeKind;
+use super::Ability;
+use crate::death_callback::ExplosionKind;
+use crate::movement::MaxSpeed;
+use crate::time::Dur;
 
 #[derive(Debug, Resource)]
 pub struct AbilityProps {

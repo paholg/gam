@@ -1,7 +1,12 @@
-use bevy::prelude::{
-    Bundle, Handle, InheritedVisibility, Mesh, Plugin, StandardMaterial, Update, ViewVisibility,
-    Visibility,
-};
+use bevy::prelude::Bundle;
+use bevy::prelude::Handle;
+use bevy::prelude::InheritedVisibility;
+use bevy::prelude::Mesh;
+use bevy::prelude::Plugin;
+use bevy::prelude::StandardMaterial;
+use bevy::prelude::Update;
+use bevy::prelude::ViewVisibility;
+use bevy::prelude::Visibility;
 
 mod bullet;
 mod character;

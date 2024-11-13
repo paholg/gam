@@ -1,8 +1,8 @@
-use bevy_ecs::{component::Component, system::Query};
-
-use crate::time::Dur;
+use bevy_ecs::component::Component;
+use bevy_ecs::system::Query;
 
 use super::TimeDilation;
+use crate::time::Dur;
 
 /// Phased is a boolean condition.
 ///

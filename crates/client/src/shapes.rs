@@ -1,9 +1,8 @@
 use std::f32::consts::PI;
 
-use bevy::{
-    prelude::Mesh,
-    render::{render_asset::RenderAssetUsages, render_resource::PrimitiveTopology},
-};
+use bevy::prelude::Mesh;
+use bevy::render::render_asset::RenderAssetUsages;
+use bevy::render::render_resource::PrimitiveTopology;
 
 /// A hollow polygon. Can also act as a hollow circle when vertices is large.
 pub struct HollowPolygon {

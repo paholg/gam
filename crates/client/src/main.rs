@@ -1,10 +1,14 @@
-use bevy::{
-    math::bool,
-    prelude::{App, Commands, PluginGroup, Res, Startup},
-};
+use bevy::math::bool;
+use bevy::prelude::App;
+use bevy::prelude::Commands;
+use bevy::prelude::PluginGroup;
+use bevy::prelude::Res;
+use bevy::prelude::Startup;
 use clap::Parser;
-use client::{debug::DebugTextPlugin, Config};
-use engine::{player::PlayerInfo, Player};
+use client::debug::DebugTextPlugin;
+use client::Config;
+use engine::player::PlayerInfo;
+use engine::Player;
 
 #[derive(Parser)]
 struct Args {

@@ -1,10 +1,17 @@
-use bevy::{
-    prelude::{
-        Color, Commands, Component, DespawnRecursiveExt, Entity, NodeBundle, OnEnter, OnExit,
-        Plugin, Query, With,
-    },
-    ui::{BackgroundColor, Style, Val},
-};
+use bevy::prelude::Color;
+use bevy::prelude::Commands;
+use bevy::prelude::Component;
+use bevy::prelude::DespawnRecursiveExt;
+use bevy::prelude::Entity;
+use bevy::prelude::NodeBundle;
+use bevy::prelude::OnEnter;
+use bevy::prelude::OnExit;
+use bevy::prelude::Plugin;
+use bevy::prelude::Query;
+use bevy::prelude::With;
+use bevy::ui::BackgroundColor;
+use bevy::ui::Style;
+use bevy::ui::Val;
 use engine::AppState;
 
 pub struct SplashPlugin;

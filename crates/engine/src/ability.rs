@@ -1,27 +1,36 @@
 use std::ops::Index;
 
-use bevy_ecs::{component::Component, entity::Entity, system::Commands};
+use bevy_ecs::component::Component;
+use bevy_ecs::entity::Entity;
+use bevy_ecs::system::Commands;
 use bevy_math::Quat;
 use bevy_rapier3d::prelude::Velocity;
 use bevy_reflect::Reflect;
 use bevy_transform::components::Transform;
-use serde::{Deserialize, Serialize};
-use strum::{Display, EnumIter};
+use serde::Deserialize;
+use serde::Serialize;
+use strum::Display;
+use strum::EnumIter;
 
-use crate::{
-    status_effect::TimeDilation, AbilityOffset, Cooldowns, Energy, FootOffset, Health, Target,
-    FORWARD, PLAYER_R,
-};
-
-use self::{
-    bullet::{Bullet, BulletSpawner},
-    grenade::grenade,
-    neutrino_ball::neutrino_ball,
-    properties::{AbilityProps, GunProps, ShotgunProps},
-    seeker_rocket::seeker_rocket,
-    speed_up::speed_up,
-    transport::transport,
-};
+use self::bullet::Bullet;
+use self::bullet::BulletSpawner;
+use self::grenade::grenade;
+use self::neutrino_ball::neutrino_ball;
+use self::properties::AbilityProps;
+use self::properties::GunProps;
+use self::properties::ShotgunProps;
+use self::seeker_rocket::seeker_rocket;
+use self::speed_up::speed_up;
+use self::transport::transport;
+use crate::status_effect::TimeDilation;
+use crate::AbilityOffset;
+use crate::Cooldowns;
+use crate::Energy;
+use crate::FootOffset;
+use crate::Health;
+use crate::Target;
+use crate::FORWARD;
+use crate::PLAYER_R;
 
 pub mod bullet;
 pub mod grenade;

@@ -1,11 +1,12 @@
-use bevy::{
-    math::primitives::Cylinder,
-    prelude::{AlphaMode, Color, Handle, Mesh, StandardMaterial},
-};
-
-use crate::color_gradient::ColorGradient;
+use bevy::math::primitives::Cylinder;
+use bevy::prelude::AlphaMode;
+use bevy::prelude::Color;
+use bevy::prelude::Handle;
+use bevy::prelude::Mesh;
+use bevy::prelude::StandardMaterial;
 
 use super::Builder;
+use crate::color_gradient::ColorGradient;
 
 pub struct TransportAssets {
     pub gradient: ColorGradient,

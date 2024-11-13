@@ -1,24 +1,35 @@
-use bevy_ecs::{
-    component::Component,
-    entity::Entity,
-    query::With,
-    system::{Commands, Query},
-};
-use bevy_rapier3d::prelude::{Collider, ExternalForce, LockedAxes, Sensor, Velocity};
+use bevy_ecs::component::Component;
+use bevy_ecs::entity::Entity;
+use bevy_ecs::query::With;
+use bevy_ecs::system::Commands;
+use bevy_ecs::system::Query;
+use bevy_rapier3d::prelude::Collider;
+use bevy_rapier3d::prelude::ExternalForce;
+use bevy_rapier3d::prelude::LockedAxes;
+use bevy_rapier3d::prelude::Sensor;
+use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 
-use crate::{
-    collision::{TrackCollisionBundle, TrackCollisions},
-    death_callback::{DeathCallback, ExplosionCallback},
-    level::InLevel,
-    movement::DesiredMove,
-    status_effect::StatusProps,
-    time::TIMESTEP,
-    AbilityOffset, Energy, Health, Kind, MassBundle, Object, Shootable, Target, To2d, FORWARD,
-    PLAYER_R,
-};
-
 use super::properties::SeekerRocketProps;
+use crate::collision::TrackCollisionBundle;
+use crate::collision::TrackCollisions;
+use crate::death_callback::DeathCallback;
+use crate::death_callback::ExplosionCallback;
+use crate::level::InLevel;
+use crate::movement::DesiredMove;
+use crate::status_effect::StatusProps;
+use crate::time::TIMESTEP;
+use crate::AbilityOffset;
+use crate::Energy;
+use crate::Health;
+use crate::Kind;
+use crate::MassBundle;
+use crate::Object;
+use crate::Shootable;
+use crate::Target;
+use crate::To2d;
+use crate::FORWARD;
+use crate::PLAYER_R;
 
 #[derive(Component)]
 pub struct SeekerRocket {

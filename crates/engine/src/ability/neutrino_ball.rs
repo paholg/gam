@@ -1,23 +1,32 @@
-use bevy_ecs::{
-    component::Component,
-    entity::Entity,
-    query::{With, Without},
-    system::{Commands, Query},
-};
-use bevy_rapier3d::prelude::{
-    Collider, ExternalForce, LockedAxes, ReadMassProperties, Sensor, Velocity,
-};
+use bevy_ecs::component::Component;
+use bevy_ecs::entity::Entity;
+use bevy_ecs::query::With;
+use bevy_ecs::query::Without;
+use bevy_ecs::system::Commands;
+use bevy_ecs::system::Query;
+use bevy_rapier3d::prelude::Collider;
+use bevy_rapier3d::prelude::ExternalForce;
+use bevy_rapier3d::prelude::LockedAxes;
+use bevy_rapier3d::prelude::ReadMassProperties;
+use bevy_rapier3d::prelude::Sensor;
+use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 
-use crate::{
-    collision::{TrackCollisionBundle, TrackCollisions},
-    level::InLevel,
-    status_effect::{StatusProps, TimeDilation},
-    time::Dur,
-    FootOffset, Health, Kind, Libm, MassBundle, Object, FORWARD, PLAYER_R,
-};
-
 use super::properties::NeutrinoBallProps;
+use crate::collision::TrackCollisionBundle;
+use crate::collision::TrackCollisions;
+use crate::level::InLevel;
+use crate::status_effect::StatusProps;
+use crate::status_effect::TimeDilation;
+use crate::time::Dur;
+use crate::FootOffset;
+use crate::Health;
+use crate::Kind;
+use crate::Libm;
+use crate::MassBundle;
+use crate::Object;
+use crate::FORWARD;
+use crate::PLAYER_R;
 
 #[derive(Component)]
 pub struct NeutrinoBall {

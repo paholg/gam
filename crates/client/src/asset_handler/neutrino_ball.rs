@@ -1,11 +1,12 @@
-use bevy::{
-    math::primitives::Sphere,
-    prelude::{AlphaMode, Color, Handle, Mesh, StandardMaterial},
-};
-
-use crate::shapes::HollowPolygon;
+use bevy::math::primitives::Sphere;
+use bevy::prelude::AlphaMode;
+use bevy::prelude::Color;
+use bevy::prelude::Handle;
+use bevy::prelude::Mesh;
+use bevy::prelude::StandardMaterial;
 
 use super::Builder;
+use crate::shapes::HollowPolygon;
 
 pub struct NeutrinoBallAssets {
     pub mesh: Handle<Mesh>,

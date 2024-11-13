@@ -1,20 +1,28 @@
-use bevy_ecs::{
-    entity::Entity,
-    schedule::{NextState, State},
-    system::{Commands, Query, Res, ResMut},
-};
+use bevy_ecs::entity::Entity;
+use bevy_ecs::schedule::NextState;
+use bevy_ecs::schedule::State;
+use bevy_ecs::system::Commands;
+use bevy_ecs::system::Query;
+use bevy_ecs::system::Res;
+use bevy_ecs::system::ResMut;
 use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 use bevy_utils::HashSet;
 
-use crate::{
-    ability::{properties::AbilityProps, Abilities},
-    face,
-    movement::DesiredMove,
-    multiplayer::{Action, PlayerInputs},
-    status_effect::TimeDilation,
-    AbilityOffset, AppState, Cooldowns, Energy, FootOffset, Player, Target,
-};
+use crate::ability::properties::AbilityProps;
+use crate::ability::Abilities;
+use crate::face;
+use crate::movement::DesiredMove;
+use crate::multiplayer::Action;
+use crate::multiplayer::PlayerInputs;
+use crate::status_effect::TimeDilation;
+use crate::AbilityOffset;
+use crate::AppState;
+use crate::Cooldowns;
+use crate::Energy;
+use crate::FootOffset;
+use crate::Player;
+use crate::Target;
 
 pub fn check_resume(
     inputs: Res<PlayerInputs>,

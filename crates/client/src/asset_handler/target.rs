@@ -1,7 +1,9 @@
-use bevy::{
-    math::primitives::{Circle, Cylinder},
-    prelude::{Color, Handle, Mesh, StandardMaterial},
-};
+use bevy::math::primitives::Circle;
+use bevy::math::primitives::Cylinder;
+use bevy::prelude::Color;
+use bevy::prelude::Handle;
+use bevy::prelude::Mesh;
+use bevy::prelude::StandardMaterial;
 
 use super::Builder;
 

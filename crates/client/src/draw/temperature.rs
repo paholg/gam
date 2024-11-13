@@ -1,11 +1,26 @@
-use bevy::{
-    pbr::{NotShadowCaster, NotShadowReceiver},
-    prelude::{
-        Added, Assets, BuildChildren, Commands, Component, Entity, Handle, Parent, PbrBundle,
-        Query, Res, ResMut, StandardMaterial, Transform, Vec3, With,
-    },
-};
-use engine::{status_effect::Temperature, CharacterMarker, FootOffset, PLAYER_HEIGHT, PLAYER_R};
+use bevy::pbr::NotShadowCaster;
+use bevy::pbr::NotShadowReceiver;
+use bevy::prelude::Added;
+use bevy::prelude::Assets;
+use bevy::prelude::BuildChildren;
+use bevy::prelude::Commands;
+use bevy::prelude::Component;
+use bevy::prelude::Entity;
+use bevy::prelude::Handle;
+use bevy::prelude::Parent;
+use bevy::prelude::PbrBundle;
+use bevy::prelude::Query;
+use bevy::prelude::Res;
+use bevy::prelude::ResMut;
+use bevy::prelude::StandardMaterial;
+use bevy::prelude::Transform;
+use bevy::prelude::Vec3;
+use bevy::prelude::With;
+use engine::status_effect::Temperature;
+use engine::CharacterMarker;
+use engine::FootOffset;
+use engine::PLAYER_HEIGHT;
+use engine::PLAYER_R;
 
 use crate::asset_handler::AssetHandler;
 

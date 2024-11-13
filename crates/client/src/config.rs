@@ -1,27 +1,37 @@
-use std::{fs, io, path::PathBuf};
+use std::fs;
+use std::io;
+use std::path::PathBuf;
 
-use bevy::{
-    core_pipeline::fxaa,
-    prelude::{
-        Added, Commands, Entity, GamepadButtonType, KeyCode, MouseButton, Plugin, Query, Res,
-        Resource, Update,
-    },
-    reflect::Reflect,
-};
+use bevy::core_pipeline::fxaa;
+use bevy::prelude::Added;
+use bevy::prelude::Commands;
+use bevy::prelude::Entity;
+use bevy::prelude::GamepadButtonType;
+use bevy::prelude::KeyCode;
+use bevy::prelude::MouseButton;
+use bevy::prelude::Plugin;
+use bevy::prelude::Query;
+use bevy::prelude::Res;
+use bevy::prelude::Resource;
+use bevy::prelude::Update;
+use bevy::reflect::Reflect;
 // use bevy_ui_navigation::{events::ScopeDirection, prelude::NavRequest};
 use directories::ProjectDirs;
-use engine::{
-    ability::{Abilities, Ability},
-    multiplayer::Action,
-    Player,
-};
-use leafwing_input_manager::{
-    prelude::{DualAxis, InputManagerPlugin, InputMap, VirtualDPad},
-    Actionlike, InputManagerBundle,
-};
-use serde::{Deserialize, Serialize};
+use engine::ability::Abilities;
+use engine::ability::Ability;
+use engine::multiplayer::Action;
+use engine::Player;
+use leafwing_input_manager::prelude::DualAxis;
+use leafwing_input_manager::prelude::InputManagerPlugin;
+use leafwing_input_manager::prelude::InputMap;
+use leafwing_input_manager::prelude::VirtualDPad;
+use leafwing_input_manager::Actionlike;
+use leafwing_input_manager::InputManagerBundle;
+use serde::Deserialize;
+use serde::Serialize;
 use subenum::subenum;
-use tracing::{error, info};
+use tracing::error;
+use tracing::info;
 
 // TODO: NAME THESE THINGS
 const ORG: &str = "Paho Corp";
@@ -325,8 +335,9 @@ impl From<GameAction> for Action {
 //         match value {
 //             MenuAction::Select => NavRequest::Action,
 //             MenuAction::Cancel => NavRequest::Cancel,
-//             MenuAction::TabLeft => NavRequest::ScopeMove(ScopeDirection::Previous),
-//             MenuAction::TabRight => NavRequest::ScopeMove(ScopeDirection::Next),
+//             MenuAction::TabLeft =>
+// NavRequest::ScopeMove(ScopeDirection::Previous),
+// MenuAction::TabRight => NavRequest::ScopeMove(ScopeDirection::Next),
 //         }
 //     }
 // }

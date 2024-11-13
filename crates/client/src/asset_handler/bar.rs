@@ -1,7 +1,8 @@
-use bevy::{
-    math::primitives::Rectangle,
-    prelude::{Color, Handle, Mesh, StandardMaterial},
-};
+use bevy::math::primitives::Rectangle;
+use bevy::prelude::Color;
+use bevy::prelude::Handle;
+use bevy::prelude::Mesh;
+use bevy::prelude::StandardMaterial;
 
 use super::Builder;
 

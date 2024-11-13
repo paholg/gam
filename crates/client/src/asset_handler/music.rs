@@ -1,4 +1,5 @@
-use bevy::{asset::LoadedFolder, prelude::Handle};
+use bevy::asset::LoadedFolder;
+use bevy::prelude::Handle;
 
 use super::Builder;
 

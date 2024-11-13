@@ -1,15 +1,30 @@
-use bevy::prelude::{Color, Handle, Mesh, Scene, StandardMaterial, Vec2, Vec3, Vec4};
-use bevy_hanabi::{
-    Attribute, ColorOverLifetimeModifier, EffectAsset, ExprWriter, Gradient, LinearDragModifier,
-    ParticleEffectBundle, SetAttributeModifier, SetPositionSphereModifier,
-    SetVelocitySphereModifier, ShapeDimension, SizeOverLifetimeModifier, Spawner,
-};
+use bevy::prelude::Color;
+use bevy::prelude::Handle;
+use bevy::prelude::Mesh;
+use bevy::prelude::Scene;
+use bevy::prelude::StandardMaterial;
+use bevy::prelude::Vec2;
+use bevy::prelude::Vec3;
+use bevy::prelude::Vec4;
+use bevy_hanabi::Attribute;
+use bevy_hanabi::ColorOverLifetimeModifier;
+use bevy_hanabi::EffectAsset;
+use bevy_hanabi::ExprWriter;
+use bevy_hanabi::Gradient;
+use bevy_hanabi::LinearDragModifier;
+use bevy_hanabi::ParticleEffectBundle;
+use bevy_hanabi::SetAttributeModifier;
+use bevy_hanabi::SetPositionSphereModifier;
+use bevy_hanabi::SetVelocitySphereModifier;
+use bevy_hanabi::ShapeDimension;
+use bevy_hanabi::SizeOverLifetimeModifier;
+use bevy_hanabi::Spawner;
 use bevy_kira_audio::AudioSource;
 use engine::PLAYER_R;
 
-use crate::{particles::ParticleEffectPool, shapes::HollowPolygon};
-
 use super::Builder;
+use crate::particles::ParticleEffectPool;
+use crate::shapes::HollowPolygon;
 
 pub struct CharacterAssets {
     pub scene: Handle<Scene>,

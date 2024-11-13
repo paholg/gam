@@ -1,16 +1,24 @@
 use std::f32::consts::PI;
 
-use bevy::{
-    core_pipeline::bloom::BloomSettings,
-    math::primitives::Rectangle,
-    prelude::{
-        Assets, Camera, Camera3dBundle, Color, Commands, Mesh, PbrBundle, PerspectiveProjection,
-        ResMut, StandardMaterial, Transform, Vec3,
-    },
-};
-use engine::{lifecycle::DEATH_Y, UP};
+use bevy::core_pipeline::bloom::BloomSettings;
+use bevy::math::primitives::Rectangle;
+use bevy::prelude::Assets;
+use bevy::prelude::Camera;
+use bevy::prelude::Camera3dBundle;
+use bevy::prelude::Color;
+use bevy::prelude::Commands;
+use bevy::prelude::Mesh;
+use bevy::prelude::PbrBundle;
+use bevy::prelude::PerspectiveProjection;
+use bevy::prelude::ResMut;
+use bevy::prelude::StandardMaterial;
+use bevy::prelude::Transform;
+use bevy::prelude::Vec3;
+use engine::lifecycle::DEATH_Y;
+use engine::UP;
 
-use crate::{in_plane, CAMERA_OFFSET};
+use crate::in_plane;
+use crate::CAMERA_OFFSET;
 
 pub fn setup(
     mut commands: Commands,

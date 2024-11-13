@@ -1,28 +1,38 @@
 use aim::AimPlugin;
-use bevy::{
-    asset::LoadedFolder,
-    ecs::component::ComponentInfo,
-    prelude::{
-        Assets, Children, Entity, Handle, Parent, Plugin, Query, Res, ResMut, Resource, Startup,
-        Transform, Update, Vec3, World,
-    },
-};
-
-use bevy_kira_audio::{
-    prelude::Volume, Audio, AudioControl, AudioInstance, AudioPlugin, PlaybackState,
-};
+use bevy::asset::LoadedFolder;
+use bevy::ecs::component::ComponentInfo;
+use bevy::prelude::Assets;
+use bevy::prelude::Children;
+use bevy::prelude::Entity;
+use bevy::prelude::Handle;
+use bevy::prelude::Parent;
+use bevy::prelude::Plugin;
+use bevy::prelude::Query;
+use bevy::prelude::Res;
+use bevy::prelude::ResMut;
+use bevy::prelude::Resource;
+use bevy::prelude::Startup;
+use bevy::prelude::Transform;
+use bevy::prelude::Update;
+use bevy::prelude::Vec3;
+use bevy::prelude::World;
+use bevy_kira_audio::prelude::Volume;
+use bevy_kira_audio::Audio;
+use bevy_kira_audio::AudioControl;
+use bevy_kira_audio::AudioInstance;
+use bevy_kira_audio::AudioPlugin;
+use bevy_kira_audio::PlaybackState;
 use draw::DrawPlugin;
+use engine::AppState;
+use engine::UP;
 use iyes_progress::ProgressPlugin;
 use rand::Rng;
 
-use engine::{AppState, UP};
-
-use self::{
-    asset_handler::{asset_handler_setup, AssetHandler},
-    bar::BarPlugin,
-    config::ConfigPlugin,
-    splash::SplashPlugin,
-};
+use self::asset_handler::asset_handler_setup;
+use self::asset_handler::AssetHandler;
+use self::bar::BarPlugin;
+use self::config::ConfigPlugin;
+use self::splash::SplashPlugin;
 
 mod aim;
 mod asset_handler;

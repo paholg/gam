@@ -1,4 +1,13 @@
-use bevy::prelude::{Added, Commands, Component, Entity, Handle, Mesh, Parent, Query, Scene, With};
+use bevy::prelude::Added;
+use bevy::prelude::Commands;
+use bevy::prelude::Component;
+use bevy::prelude::Entity;
+use bevy::prelude::Handle;
+use bevy::prelude::Mesh;
+use bevy::prelude::Parent;
+use bevy::prelude::Query;
+use bevy::prelude::Scene;
+use bevy::prelude::With;
 use bevy_mod_raycast::prelude::RaycastMesh;
 
 /// A Component to be added to entities with `Scene`s, that we want to act as

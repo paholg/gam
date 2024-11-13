@@ -1,29 +1,39 @@
 use std::f32::consts::PI;
 
-use bevy_ecs::{
-    component::Component,
-    entity::Entity,
-    system::{Commands, Query},
-};
-
+use bevy_ecs::component::Component;
+use bevy_ecs::entity::Entity;
+use bevy_ecs::system::Commands;
+use bevy_ecs::system::Query;
 use bevy_math::Vec3;
-use bevy_rapier3d::prelude::{
-    Collider, ExternalForce, Friction, LockedAxes, Restitution, Velocity,
-};
+use bevy_rapier3d::prelude::Collider;
+use bevy_rapier3d::prelude::ExternalForce;
+use bevy_rapier3d::prelude::Friction;
+use bevy_rapier3d::prelude::LockedAxes;
+use bevy_rapier3d::prelude::Restitution;
+use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 
-use crate::{
-    collision::TrackCollisionBundle,
-    death_callback::{DeathCallback, ExplosionCallback},
-    level::InLevel,
-    physics::G,
-    status_effect::{StatusProps, TimeDilation},
-    time::Dur,
-    AbilityOffset, Health, Kind, Libm, MassBundle, Object, Shootable, Target, To2d, To3d, FORWARD,
-    PLAYER_R,
-};
-
 use super::properties::GrenadeProps;
+use crate::collision::TrackCollisionBundle;
+use crate::death_callback::DeathCallback;
+use crate::death_callback::ExplosionCallback;
+use crate::level::InLevel;
+use crate::physics::G;
+use crate::status_effect::StatusProps;
+use crate::status_effect::TimeDilation;
+use crate::time::Dur;
+use crate::AbilityOffset;
+use crate::Health;
+use crate::Kind;
+use crate::Libm;
+use crate::MassBundle;
+use crate::Object;
+use crate::Shootable;
+use crate::Target;
+use crate::To2d;
+use crate::To3d;
+use crate::FORWARD;
+use crate::PLAYER_R;
 
 /// Calculate the initial velocity of a projectile thrown at 45 degrees up, so
 /// that it will land at target.

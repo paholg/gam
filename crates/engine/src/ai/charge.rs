@@ -1,28 +1,44 @@
-use bevy_ecs::{
-    component::Component,
-    entity::Entity,
-    event::EventWriter,
-    query::{QueryData, With, Without},
-    schedule::{IntoSystemConfigs, SystemConfigs},
-    system::{Commands, Query, Res},
-};
+use bevy_ecs::component::Component;
+use bevy_ecs::entity::Entity;
+use bevy_ecs::event::EventWriter;
+use bevy_ecs::query::QueryData;
+use bevy_ecs::query::With;
+use bevy_ecs::query::Without;
+use bevy_ecs::schedule::IntoSystemConfigs;
+use bevy_ecs::schedule::SystemConfigs;
+use bevy_ecs::system::Commands;
+use bevy_ecs::system::Query;
+use bevy_ecs::system::Res;
 use bevy_math::Vec2;
-use bevy_rapier3d::prelude::{QueryFilter, RapierContext, Velocity};
+use bevy_rapier3d::prelude::QueryFilter;
+use bevy_rapier3d::prelude::RapierContext;
+use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
-use rand::{thread_rng, Rng};
+use rand::thread_rng;
+use rand::Rng;
 
-use crate::{
-    ability::{properties::AbilityProps, Ability},
-    level::Floor,
-    movement::DesiredMove,
-    status_effect::TimeDilation,
-    AbilityOffset, Ally, Cooldowns, Enemy, Energy, Faction, FootOffset, Target, To2d, To3d,
-};
-
-use super::{
-    pathfind::{set_move, HasPath, PathfindEvent},
-    target_closest_system, update_target_system, Ai, AiTarget,
-};
+use super::pathfind::set_move;
+use super::pathfind::HasPath;
+use super::pathfind::PathfindEvent;
+use super::target_closest_system;
+use super::update_target_system;
+use super::Ai;
+use super::AiTarget;
+use crate::ability::properties::AbilityProps;
+use crate::ability::Ability;
+use crate::level::Floor;
+use crate::movement::DesiredMove;
+use crate::status_effect::TimeDilation;
+use crate::AbilityOffset;
+use crate::Ally;
+use crate::Cooldowns;
+use crate::Enemy;
+use crate::Energy;
+use crate::Faction;
+use crate::FootOffset;
+use crate::Target;
+use crate::To2d;
+use crate::To3d;
 
 #[derive(Component)]
 pub struct ChargeAi {

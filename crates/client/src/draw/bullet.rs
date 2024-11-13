@@ -1,9 +1,12 @@
-use bevy::prelude::{Added, Commands, Entity, Query, Res};
+use bevy::prelude::Added;
+use bevy::prelude::Commands;
+use bevy::prelude::Entity;
+use bevy::prelude::Query;
+use bevy::prelude::Res;
 use engine::ability::bullet::Bullet;
 
-use crate::asset_handler::AssetHandler;
-
 use super::ObjectGraphics;
+use crate::asset_handler::AssetHandler;
 
 pub fn draw_bullet_system(
     mut commands: Commands,

@@ -1,9 +1,13 @@
-use bevy::{
-    core::FrameCount,
-    prelude::{Commands, Query, Res, ResMut, Transform, Without},
-};
+use bevy::core::FrameCount;
+use bevy::prelude::Commands;
+use bevy::prelude::Query;
+use bevy::prelude::Res;
+use bevy::prelude::ResMut;
+use bevy::prelude::Transform;
+use bevy::prelude::Without;
 use bevy_hanabi::EffectSpawner;
-use engine::{status_effect::TimeDilation, FootOffset};
+use engine::status_effect::TimeDilation;
+use engine::FootOffset;
 
 use crate::asset_handler::AssetHandler;
 

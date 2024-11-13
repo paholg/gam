@@ -1,22 +1,32 @@
-use bevy_ecs::{
-    component::Component,
-    entity::Entity,
-    query::{Added, With, Without},
-    system::{Commands, Query},
-};
+use bevy_ecs::component::Component;
+use bevy_ecs::entity::Entity;
+use bevy_ecs::query::Added;
+use bevy_ecs::query::With;
+use bevy_ecs::query::Without;
+use bevy_ecs::system::Commands;
+use bevy_ecs::system::Query;
 use bevy_math::Vec3;
-use bevy_rapier3d::prelude::{
-    Ccd, Collider, ExternalForce, LockedAxes, ReadMassProperties, RigidBody, Sensor, Velocity,
-};
+use bevy_rapier3d::prelude::Ccd;
+use bevy_rapier3d::prelude::Collider;
+use bevy_rapier3d::prelude::ExternalForce;
+use bevy_rapier3d::prelude::LockedAxes;
+use bevy_rapier3d::prelude::ReadMassProperties;
+use bevy_rapier3d::prelude::RigidBody;
+use bevy_rapier3d::prelude::Sensor;
+use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 
-use crate::{
-    collision::{TrackCollisionBundle, TrackCollisions},
-    level::InLevel,
-    status_effect::{StatusProps, TimeDilation},
-    time::Dur,
-    Health, Kind, MassBundle, Object, Shootable,
-};
+use crate::collision::TrackCollisionBundle;
+use crate::collision::TrackCollisions;
+use crate::level::InLevel;
+use crate::status_effect::StatusProps;
+use crate::status_effect::TimeDilation;
+use crate::time::Dur;
+use crate::Health;
+use crate::Kind;
+use crate::MassBundle;
+use crate::Object;
+use crate::Shootable;
 
 pub struct BulletSpawner {
     pub velocity: Vec3,
@@ -130,7 +140,8 @@ pub fn collision_system(
                     bullet_mass.mass * bullet_velocity.linvel / mass.mass + velocity.linvel;
                 debug_assert!(
                     !velocity.linvel.is_nan(),
-                    "NaN velocity after bullet collision. Mass: {mass:?}, Bullet: {bullet_velocity:?}, bullet_mass: {bullet_mass:?}",
+                    "NaN velocity after bullet collision. Mass: {mass:?}, Bullet: \
+                     {bullet_velocity:?}, bullet_mass: {bullet_mass:?}",
                 );
             }
         }

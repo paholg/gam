@@ -1,20 +1,29 @@
-use bevy::{
-    asset::LoadedFolder,
-    prelude::{
-        AssetServer, Assets, Commands, Handle, Mesh, Res, ResMut, Resource, StandardMaterial,
-    },
-};
+use bevy::asset::LoadedFolder;
+use bevy::prelude::AssetServer;
+use bevy::prelude::Assets;
+use bevy::prelude::Commands;
+use bevy::prelude::Handle;
+use bevy::prelude::Mesh;
+use bevy::prelude::Res;
+use bevy::prelude::ResMut;
+use bevy::prelude::Resource;
+use bevy::prelude::StandardMaterial;
 use bevy_hanabi::EffectAsset;
+use engine::ability::properties::AbilityProps;
 use iyes_progress::prelude::AssetsLoading;
 
-use engine::ability::properties::AbilityProps;
-
-use self::{
-    bar::BarAssets, bullet::BulletAssets, character::CharacterAssets, grenade::GrenadeAssets,
-    music::load_music, neutrino_ball::NeutrinoBallAssets, rocket::SeekerRocketAssets,
-    target::TargetAssets, temperature::TemperatureAssets, time_dilation::TimeDilationAssets,
-    transport::TransportAssets, wall::WallAssets,
-};
+use self::bar::BarAssets;
+use self::bullet::BulletAssets;
+use self::character::CharacterAssets;
+use self::grenade::GrenadeAssets;
+use self::music::load_music;
+use self::neutrino_ball::NeutrinoBallAssets;
+use self::rocket::SeekerRocketAssets;
+use self::target::TargetAssets;
+use self::temperature::TemperatureAssets;
+use self::time_dilation::TimeDilationAssets;
+use self::transport::TransportAssets;
+use self::wall::WallAssets;
 
 pub mod bar;
 pub mod bullet;

@@ -1,9 +1,9 @@
-use std::{
-    ops::{Div, Sub},
-    time::Instant,
-};
+use std::ops::Div;
+use std::ops::Sub;
+use std::time::Instant;
 
-use bevy_ecs::system::{ResMut, Resource};
+use bevy_ecs::system::ResMut;
+use bevy_ecs::system::Resource;
 use bevy_reflect::Reflect;
 use bevy_utils::Duration;
 use tracing::info;

@@ -1,11 +1,12 @@
-use bevy::{
-    math::primitives::Capsule3d,
-    prelude::{Color, Handle, Mesh, StandardMaterial},
-};
+use bevy::math::primitives::Capsule3d;
+use bevy::prelude::Color;
+use bevy::prelude::Handle;
+use bevy::prelude::Mesh;
+use bevy::prelude::StandardMaterial;
 
+use super::explosion::ExplosionAssets;
+use super::Builder;
 use crate::color_gradient::ColorGradient;
-
-use super::{explosion::ExplosionAssets, Builder};
 
 pub struct SeekerRocketAssets {
     pub mesh: Handle<Mesh>,

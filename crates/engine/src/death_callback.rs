@@ -1,21 +1,29 @@
-use bevy_ecs::{
-    component::Component,
-    system::{Commands, Query, Res},
-};
-
-use bevy_rapier3d::prelude::{
-    Collider, ExternalForce, LockedAxes, QueryFilter, QueryFilterFlags, RapierContext, Sensor,
-    Velocity,
-};
+use bevy_ecs::component::Component;
+use bevy_ecs::system::Commands;
+use bevy_ecs::system::Query;
+use bevy_ecs::system::Res;
+use bevy_rapier3d::prelude::Collider;
+use bevy_rapier3d::prelude::ExternalForce;
+use bevy_rapier3d::prelude::LockedAxes;
+use bevy_rapier3d::prelude::QueryFilter;
+use bevy_rapier3d::prelude::QueryFilterFlags;
+use bevy_rapier3d::prelude::RapierContext;
+use bevy_rapier3d::prelude::Sensor;
+use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 
-use crate::{
-    ability::properties::ExplosionProps,
-    collision::{TrackCollisionBundle, TrackCollisions},
-    level::InLevel,
-    status_effect::{StatusProps, TimeDilation},
-    Health, Kind, MassBundle, Object, To2d, To3d,
-};
+use crate::ability::properties::ExplosionProps;
+use crate::collision::TrackCollisionBundle;
+use crate::collision::TrackCollisions;
+use crate::level::InLevel;
+use crate::status_effect::StatusProps;
+use crate::status_effect::TimeDilation;
+use crate::Health;
+use crate::Kind;
+use crate::MassBundle;
+use crate::Object;
+use crate::To2d;
+use crate::To3d;
 
 #[derive(Debug, Component)]
 pub enum DeathCallback {

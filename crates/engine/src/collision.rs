@@ -1,7 +1,10 @@
-use bevy_ecs::{
-    bundle::Bundle, component::Component, entity::Entity, event::EventReader, system::Query,
-};
-use bevy_rapier3d::prelude::{ActiveEvents, CollisionEvent};
+use bevy_ecs::bundle::Bundle;
+use bevy_ecs::component::Component;
+use bevy_ecs::entity::Entity;
+use bevy_ecs::event::EventReader;
+use bevy_ecs::system::Query;
+use bevy_rapier3d::prelude::ActiveEvents;
+use bevy_rapier3d::prelude::CollisionEvent;
 use smallvec::SmallVec;
 
 #[derive(Bundle)]

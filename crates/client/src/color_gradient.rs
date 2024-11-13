@@ -8,7 +8,6 @@ pub struct ColorGradient {
 
 impl ColorGradient {
     /// Construct a new color gradient
-    ///
 
     pub fn new(colors: impl IntoIterator<Item = (f32, Color)>) -> Self {
         let colors = colors.into_iter().collect();

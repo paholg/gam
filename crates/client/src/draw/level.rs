@@ -1,19 +1,35 @@
-use bevy::{
-    prelude::{
-        Added, BuildChildren, Commands, Component, Entity, GlobalTransform, Handle,
-        InheritedVisibility, PbrBundle, Query, Res, SpotLight, SpotLightBundle, StandardMaterial,
-        Transform, Vec2, Vec3, With,
-    },
-    render::view::RenderLayers,
-};
+use bevy::prelude::Added;
+use bevy::prelude::BuildChildren;
+use bevy::prelude::Commands;
+use bevy::prelude::Component;
+use bevy::prelude::Entity;
+use bevy::prelude::GlobalTransform;
+use bevy::prelude::Handle;
+use bevy::prelude::InheritedVisibility;
+use bevy::prelude::PbrBundle;
+use bevy::prelude::Query;
+use bevy::prelude::Res;
+use bevy::prelude::SpotLight;
+use bevy::prelude::SpotLightBundle;
+use bevy::prelude::StandardMaterial;
+use bevy::prelude::Transform;
+use bevy::prelude::Vec2;
+use bevy::prelude::Vec3;
+use bevy::prelude::With;
+use bevy::render::view::RenderLayers;
 use bevy_mod_raycast::prelude::RaycastMesh;
-use engine::{
-    level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
-    lifecycle::DEATH_Y,
-    Health, To2d, UP,
-};
+use engine::level::Floor;
+use engine::level::InLevel;
+use engine::level::LevelProps;
+use engine::level::SHORT_WALL;
+use engine::level::WALL_HEIGHT;
+use engine::lifecycle::DEATH_Y;
+use engine::Health;
+use engine::To2d;
+use engine::UP;
 
-use crate::{asset_handler::AssetHandler, bar::Bar};
+use crate::asset_handler::AssetHandler;
+use crate::bar::Bar;
 
 #[derive(Component, Copy, Clone)]
 pub enum WallKind {

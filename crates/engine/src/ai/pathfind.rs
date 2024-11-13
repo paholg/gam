@@ -1,28 +1,40 @@
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+use std::sync::RwLock;
 
 use bevy_app::Plugin;
-use bevy_ecs::{
-    component::Component,
-    entity::Entity,
-    event::{Event, EventReader},
-    query::{QueryData, Without},
-    system::{Commands, Query, Res, ResMut, Resource},
-    world::Mut,
-};
-use bevy_math::{Vec2, Vec3};
+use bevy_ecs::component::Component;
+use bevy_ecs::entity::Entity;
+use bevy_ecs::event::Event;
+use bevy_ecs::event::EventReader;
+use bevy_ecs::query::QueryData;
+use bevy_ecs::query::Without;
+use bevy_ecs::system::Commands;
+use bevy_ecs::system::Query;
+use bevy_ecs::system::Res;
+use bevy_ecs::system::ResMut;
+use bevy_ecs::system::Resource;
+use bevy_ecs::world::Mut;
+use bevy_math::Vec2;
+use bevy_math::Vec3;
 use bevy_rapier3d::prelude::Collider;
-use bevy_tasks::{AsyncComputeTaskPool, Task};
+use bevy_tasks::AsyncComputeTaskPool;
+use bevy_tasks::Task;
 use bevy_transform::components::Transform;
 use futures_lite::future;
-use oxidized_navigation::{
-    query::find_path, tiles::NavMeshTiles, NavMesh, NavMeshSettings, OxidizedNavigationPlugin,
-};
-
-use crate::{
-    level::LevelProps, lifecycle::DEATH_Y, movement::DesiredMove, FootOffset, To2d, To3d, PLAYER_R,
-};
+use oxidized_navigation::query::find_path;
+use oxidized_navigation::tiles::NavMeshTiles;
+use oxidized_navigation::NavMesh;
+use oxidized_navigation::NavMeshSettings;
+use oxidized_navigation::OxidizedNavigationPlugin;
 
 use super::AiTarget;
+use crate::level::LevelProps;
+use crate::lifecycle::DEATH_Y;
+use crate::movement::DesiredMove;
+use crate::FootOffset;
+use crate::To2d;
+use crate::To3d;
+use crate::PLAYER_R;
 
 pub struct PathfindPlugin;
 

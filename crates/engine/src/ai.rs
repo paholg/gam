@@ -1,18 +1,21 @@
 use std::cmp::Ordering;
 
-use bevy_ecs::{
-    bundle::Bundle,
-    component::Component,
-    entity::Entity,
-    query::{With, Without},
-    system::{Query, Res},
-};
+use bevy_ecs::bundle::Bundle;
+use bevy_ecs::component::Component;
+use bevy_ecs::entity::Entity;
+use bevy_ecs::query::With;
+use bevy_ecs::query::Without;
+use bevy_ecs::system::Query;
+use bevy_ecs::system::Res;
 use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 
-use crate::{ability::properties::AbilityProps, face, Faction, Target, To2d};
-
 use self::pathfind::HasPath;
+use crate::ability::properties::AbilityProps;
+use crate::face;
+use crate::Faction;
+use crate::Target;
+use crate::To2d;
 
 pub mod charge;
 pub mod pathfind;

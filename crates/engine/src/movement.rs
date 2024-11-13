@@ -1,20 +1,22 @@
 use std::ops::MulAssign;
 
-use bevy_ecs::{component::Component, system::Query};
+use bevy_ecs::component::Component;
+use bevy_ecs::system::Query;
 use bevy_math::Vec2;
 use bevy_rapier3d::prelude::Velocity;
 use bevy_reflect::Reflect;
 
-use crate::{
-    status_effect::TimeDilation,
-    time::{FREQUENCY, TIMESTEP},
-    To2d, To3d,
-};
+use crate::status_effect::TimeDilation;
+use crate::time::FREQUENCY;
+use crate::time::TIMESTEP;
+use crate::To2d;
+use crate::To3d;
 
 /// The desired movement of an entity.
 ///
 /// The magnitude of this vector represents the fraction of `MaxSpeed` that the
-/// entity would like to move at. It is up to the setter to ensure it is always <= 1.0
+/// entity would like to move at. It is up to the setter to ensure it is always
+/// <= 1.0
 #[derive(Component, Default, Debug)]
 pub struct DesiredMove {
     pub dir: Vec2,

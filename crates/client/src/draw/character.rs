@@ -1,16 +1,33 @@
-use bevy::{
-    pbr::{NotShadowCaster, NotShadowReceiver},
-    prelude::{
-        Added, BuildChildren, Bundle, Commands, Entity, GlobalTransform, Handle,
-        InheritedVisibility, PbrBundle, Query, Res, Scene, Transform, Vec3, ViewVisibility,
-        Visibility, Without,
-    },
-};
-use engine::{Ally, Enemy, Energy, FootOffset, Health, Player};
-
-use crate::{asset_handler::AssetHandler, bar::Bar, in_plane};
+use bevy::pbr::NotShadowCaster;
+use bevy::pbr::NotShadowReceiver;
+use bevy::prelude::Added;
+use bevy::prelude::BuildChildren;
+use bevy::prelude::Bundle;
+use bevy::prelude::Commands;
+use bevy::prelude::Entity;
+use bevy::prelude::GlobalTransform;
+use bevy::prelude::Handle;
+use bevy::prelude::InheritedVisibility;
+use bevy::prelude::PbrBundle;
+use bevy::prelude::Query;
+use bevy::prelude::Res;
+use bevy::prelude::Scene;
+use bevy::prelude::Transform;
+use bevy::prelude::Vec3;
+use bevy::prelude::ViewVisibility;
+use bevy::prelude::Visibility;
+use bevy::prelude::Without;
+use engine::Ally;
+use engine::Enemy;
+use engine::Energy;
+use engine::FootOffset;
+use engine::Health;
+use engine::Player;
 
 use super::raycast_scene::RaycastScene;
+use crate::asset_handler::AssetHandler;
+use crate::bar::Bar;
+use crate::in_plane;
 
 #[derive(Bundle, Default)]
 pub struct CharacterGraphics {

@@ -1,7 +1,9 @@
-use bevy::{
-    math::primitives::Cuboid,
-    prelude::{AlphaMode, Color, Handle, Mesh, StandardMaterial},
-};
+use bevy::math::primitives::Cuboid;
+use bevy::prelude::AlphaMode;
+use bevy::prelude::Color;
+use bevy::prelude::Handle;
+use bevy::prelude::Mesh;
+use bevy::prelude::StandardMaterial;
 
 use super::Builder;
 

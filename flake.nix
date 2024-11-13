@@ -54,6 +54,7 @@
         devShells.default = pkgs.mkShell {
           packages = [
             pkgs.just
+            pkgs.rust-bin.nightly.latest.rustfmt
             rust
           ];
           buildInputs = buildInputs ++ x11Inputs ++ waylandInputs;

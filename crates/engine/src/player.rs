@@ -1,14 +1,35 @@
-use bevy_ecs::{component::Component, system::Commands};
-use bevy_rapier3d::prelude::{
-    CoefficientCombineRule, Collider, ExternalForce, Friction, LockedAxes, RigidBody, Velocity,
-};
+use bevy_ecs::component::Component;
+use bevy_ecs::system::Commands;
+use bevy_rapier3d::prelude::CoefficientCombineRule;
+use bevy_rapier3d::prelude::Collider;
+use bevy_rapier3d::prelude::ExternalForce;
+use bevy_rapier3d::prelude::Friction;
+use bevy_rapier3d::prelude::LockedAxes;
+use bevy_rapier3d::prelude::RigidBody;
+use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 
-use crate::{
-    ability::Abilities, collision::TrackCollisionBundle, level::InLevel, lifecycle::ENERGY_REGEN,
-    status_effect::StatusProps, Ally, Character, CharacterMarker, Cooldowns, Energy, Health, Kind,
-    MassBundle, Object, Player, Shootable, Target, ABILITY_Y, PLAYER_HEIGHT, PLAYER_MASS, PLAYER_R,
-};
+use crate::ability::Abilities;
+use crate::collision::TrackCollisionBundle;
+use crate::level::InLevel;
+use crate::lifecycle::ENERGY_REGEN;
+use crate::status_effect::StatusProps;
+use crate::Ally;
+use crate::Character;
+use crate::CharacterMarker;
+use crate::Cooldowns;
+use crate::Energy;
+use crate::Health;
+use crate::Kind;
+use crate::MassBundle;
+use crate::Object;
+use crate::Player;
+use crate::Shootable;
+use crate::Target;
+use crate::ABILITY_Y;
+use crate::PLAYER_HEIGHT;
+use crate::PLAYER_MASS;
+use crate::PLAYER_R;
 
 #[derive(Debug, Component)]
 pub struct PlayerInfo {

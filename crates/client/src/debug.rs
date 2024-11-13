@@ -1,14 +1,25 @@
-use bevy::{
-    prelude::{
-        Added, BuildChildren, Color, Commands, Component, Entity, Gizmos, Plugin, Query, Res,
-        TextBundle, Update, With,
-    },
-    text::{Text, TextStyle},
-};
-use engine::{ai::pathfind::HasPath, debug::DebugText};
-use rand::{thread_rng, Rng};
+use bevy::prelude::Added;
+use bevy::prelude::BuildChildren;
+use bevy::prelude::Color;
+use bevy::prelude::Commands;
+use bevy::prelude::Component;
+use bevy::prelude::Entity;
+use bevy::prelude::Gizmos;
+use bevy::prelude::Plugin;
+use bevy::prelude::Query;
+use bevy::prelude::Res;
+use bevy::prelude::TextBundle;
+use bevy::prelude::Update;
+use bevy::prelude::With;
+use bevy::text::Text;
+use bevy::text::TextStyle;
+use engine::ai::pathfind::HasPath;
+use engine::debug::DebugText;
+use rand::thread_rng;
+use rand::Rng;
 
-use crate::ui::hud::{Hud, TEXT_COLOR};
+use crate::ui::hud::Hud;
+use crate::ui::hud::TEXT_COLOR;
 
 fn rand_color() -> Color {
     let mut rng = thread_rng();

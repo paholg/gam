@@ -1,11 +1,13 @@
-use bevy::{
-    math::primitives::Sphere,
-    prelude::{Color, Handle, Mesh, StandardMaterial},
-};
+use bevy::math::primitives::Sphere;
+use bevy::prelude::Color;
+use bevy::prelude::Handle;
+use bevy::prelude::Mesh;
+use bevy::prelude::StandardMaterial;
 
-use crate::{color_gradient::ColorGradient, shapes::HollowPolygon};
-
-use super::{explosion::ExplosionAssets, Builder};
+use super::explosion::ExplosionAssets;
+use super::Builder;
+use crate::color_gradient::ColorGradient;
+use crate::shapes::HollowPolygon;
 
 pub struct GrenadeAssets {
     pub mesh: Handle<Mesh>,

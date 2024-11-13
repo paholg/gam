@@ -1,23 +1,34 @@
-use bevy::{
-    prelude::{
-        Camera, EventReader, GlobalTransform, Plugin, Query, Res, ResMut, Resource, Transform,
-        Update, Vec2, With, Without,
-    },
-    time::Time,
-    window::{CursorMoved, PrimaryWindow, Window},
-};
-
+use bevy::prelude::Camera;
+use bevy::prelude::EventReader;
+use bevy::prelude::GlobalTransform;
+use bevy::prelude::Plugin;
+use bevy::prelude::Query;
+use bevy::prelude::Res;
+use bevy::prelude::ResMut;
+use bevy::prelude::Resource;
+use bevy::prelude::Transform;
+use bevy::prelude::Update;
+use bevy::prelude::Vec2;
+use bevy::prelude::With;
+use bevy::prelude::Without;
+use bevy::time::Time;
+use bevy::window::CursorMoved;
+use bevy::window::PrimaryWindow;
+use bevy::window::Window;
+use engine::multiplayer::Action;
+use engine::multiplayer::Input;
+use engine::multiplayer::PlayerInputs;
+use engine::Player;
+use engine::To2d;
+use engine::To3d;
+use engine::ABILITY_Y;
+use engine::UP;
+use engine::UP_PLANE;
 use leafwing_input_manager::prelude::ActionState;
 
-use engine::{
-    multiplayer::{Action, Input, PlayerInputs},
-    Player, To2d, To3d, ABILITY_Y, UP, UP_PLANE,
-};
-
-use crate::{
-    config::{GameAction, UserAction},
-    CAMERA_OFFSET,
-};
+use crate::config::GameAction;
+use crate::config::UserAction;
+use crate::CAMERA_OFFSET;
 
 pub struct ControlPlugin {
     pub player: Player,

@@ -1,18 +1,39 @@
 use std::marker::PhantomData;
 
-use bevy::{
-    pbr::{NotShadowCaster, NotShadowReceiver},
-    prelude::{
-        Added, BuildChildren, Bundle, Children, Commands, Component, Entity, GlobalTransform,
-        Handle, InheritedVisibility, IntoSystemConfigs, Mesh, Parent, PbrBundle, Plugin, Query,
-        Res, StandardMaterial, Transform, Update, Vec2, Vec3, ViewVisibility, Visibility, With,
-        Without,
-    },
-};
-use engine::{Energy, Health};
+use bevy::pbr::NotShadowCaster;
+use bevy::pbr::NotShadowReceiver;
+use bevy::prelude::Added;
+use bevy::prelude::BuildChildren;
+use bevy::prelude::Bundle;
+use bevy::prelude::Children;
+use bevy::prelude::Commands;
+use bevy::prelude::Component;
+use bevy::prelude::Entity;
+use bevy::prelude::GlobalTransform;
+use bevy::prelude::Handle;
+use bevy::prelude::InheritedVisibility;
+use bevy::prelude::IntoSystemConfigs;
+use bevy::prelude::Mesh;
+use bevy::prelude::Parent;
+use bevy::prelude::PbrBundle;
+use bevy::prelude::Plugin;
+use bevy::prelude::Query;
+use bevy::prelude::Res;
+use bevy::prelude::StandardMaterial;
+use bevy::prelude::Transform;
+use bevy::prelude::Update;
+use bevy::prelude::Vec2;
+use bevy::prelude::Vec3;
+use bevy::prelude::ViewVisibility;
+use bevy::prelude::Visibility;
+use bevy::prelude::With;
+use bevy::prelude::Without;
+use engine::Energy;
+use engine::Health;
 use tracing::warn;
 
-use crate::{asset_handler::AssetHandler, in_plane};
+use crate::asset_handler::AssetHandler;
+use crate::in_plane;
 
 pub const BAR_OFFSET_Y: f32 = 0.01;
 
@@ -239,7 +260,8 @@ pub fn bar_update_system<T: Component + HasBar>(
         transform.rotation = rotation;
         transform.translation = rotation * bar.displacement;
 
-        // The foreground bar is the first child, so we don't need to iterate over all of them.
+        // The foreground bar is the first child, so we don't need to iterate over all
+        // of them.
         if let Some(&child) = children.iter().next() {
             if let Ok(mut bar_transform) = fgbar_q.get_mut(child) {
                 bar_transform.scale.x = percent * bar.size.x;

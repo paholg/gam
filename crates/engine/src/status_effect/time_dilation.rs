@@ -1,9 +1,10 @@
-use bevy_ecs::{component::Component, system::Query};
+use bevy_ecs::component::Component;
+use bevy_ecs::system::Query;
 use smallvec::SmallVec;
 
-use crate::{time::Dur, Libm};
-
 use super::Effect;
+use crate::time::Dur;
+use crate::Libm;
 
 /// TimeDilation represents a factor that we multiply "time" values by, such as
 /// speed, energy regen, and duration. It is also a factor in how much damage

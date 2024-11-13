@@ -1,8 +1,10 @@
-use bevy_ecs::{component::Component, system::Query, world::Mut};
-
-use crate::{time::TIMESTEP, Health};
+use bevy_ecs::component::Component;
+use bevy_ecs::system::Query;
+use bevy_ecs::world::Mut;
 
 use super::TimeDilation;
+use crate::time::TIMESTEP;
+use crate::Health;
 
 const TEMP_LOSS_FACTOR: f32 = 1.0 * TIMESTEP;
 

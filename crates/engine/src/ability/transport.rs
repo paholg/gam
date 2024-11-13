@@ -1,23 +1,36 @@
-use bevy_ecs::{
-    component::Component,
-    entity::Entity,
-    query::{With, Without},
-    system::{Commands, Query},
-};
+use bevy_ecs::component::Component;
+use bevy_ecs::entity::Entity;
+use bevy_ecs::query::With;
+use bevy_ecs::query::Without;
+use bevy_ecs::system::Commands;
+use bevy_ecs::system::Query;
 use bevy_math::Vec2;
-use bevy_rapier3d::prelude::{Collider, ExternalForce, LockedAxes, RigidBody, Sensor, Velocity};
-use bevy_transform::{components::Transform, TransformBundle};
-
-use crate::{
-    collision::{TrackCollisionBundle, TrackCollisions},
-    level::{Floor, InLevel},
-    movement::{DesiredMove, MaxSpeed},
-    status_effect::{StatusProps, TimeDilation},
-    time::Dur,
-    Health, Kind, MassBundle, Object, Target, To2d, To3d,
-};
+use bevy_rapier3d::prelude::Collider;
+use bevy_rapier3d::prelude::ExternalForce;
+use bevy_rapier3d::prelude::LockedAxes;
+use bevy_rapier3d::prelude::RigidBody;
+use bevy_rapier3d::prelude::Sensor;
+use bevy_rapier3d::prelude::Velocity;
+use bevy_transform::components::Transform;
+use bevy_transform::TransformBundle;
 
 use super::properties::TransportProps;
+use crate::collision::TrackCollisionBundle;
+use crate::collision::TrackCollisions;
+use crate::level::Floor;
+use crate::level::InLevel;
+use crate::movement::DesiredMove;
+use crate::movement::MaxSpeed;
+use crate::status_effect::StatusProps;
+use crate::status_effect::TimeDilation;
+use crate::time::Dur;
+use crate::Health;
+use crate::Kind;
+use crate::MassBundle;
+use crate::Object;
+use crate::Target;
+use crate::To2d;
+use crate::To3d;
 
 #[derive(Component)]
 pub struct TransportBeam {
@@ -119,7 +132,8 @@ pub fn collision_system(
             let Ok(mut target_transform) = target_q.get_mut(target) else {
                 continue;
             };
-            // TODO: We'll likely want to account for altitude difference, or just not allow targeting inside a wall.
+            // TODO: We'll likely want to account for altitude difference, or just not allow
+            // targeting inside a wall.
             target_transform.translation += delta.to_3d(0.0);
         }
     }

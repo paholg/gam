@@ -1,28 +1,53 @@
-use bevy_ecs::{
-    entity::Entity,
-    event::{Event, EventWriter},
-    query::With,
-    system::{Commands, Query, Res, ResMut},
-};
+use bevy_ecs::entity::Entity;
+use bevy_ecs::event::Event;
+use bevy_ecs::event::EventWriter;
+use bevy_ecs::query::With;
+use bevy_ecs::system::Commands;
+use bevy_ecs::system::Query;
+use bevy_ecs::system::Res;
+use bevy_ecs::system::ResMut;
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
-use bevy_rapier3d::prelude::{
-    CoefficientCombineRule, ExternalForce, Friction, LockedAxes, RapierContext, RigidBody, Velocity,
-};
+use bevy_rapier3d::prelude::CoefficientCombineRule;
+use bevy_rapier3d::prelude::ExternalForce;
+use bevy_rapier3d::prelude::Friction;
+use bevy_rapier3d::prelude::LockedAxes;
+use bevy_rapier3d::prelude::RapierContext;
+use bevy_rapier3d::prelude::RigidBody;
+use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 
-use crate::{
-    ability::{Abilities, Ability},
-    ai::{charge::ChargeAi, AiBundle},
-    collision::TrackCollisionBundle,
-    death_callback::DeathCallback,
-    level::{InLevel, LevelProps},
-    player::{character_collider, PlayerInfo},
-    status_effect::{StatusProps, TimeDilation},
-    time::FrameCounter,
-    Ally, Character, CharacterMarker, Cooldowns, Enemy, Energy, FootOffset, Health, Kind,
-    MassBundle, NumAi, Object, Player, Shootable, ABILITY_Y, PLAYER_HEIGHT, PLAYER_MASS, PLAYER_R,
-};
+use crate::ability::Abilities;
+use crate::ability::Ability;
+use crate::ai::charge::ChargeAi;
+use crate::ai::AiBundle;
+use crate::collision::TrackCollisionBundle;
+use crate::death_callback::DeathCallback;
+use crate::level::InLevel;
+use crate::level::LevelProps;
+use crate::player::character_collider;
+use crate::player::PlayerInfo;
+use crate::status_effect::StatusProps;
+use crate::status_effect::TimeDilation;
+use crate::time::FrameCounter;
+use crate::Ally;
+use crate::Character;
+use crate::CharacterMarker;
+use crate::Cooldowns;
+use crate::Enemy;
+use crate::Energy;
+use crate::FootOffset;
+use crate::Health;
+use crate::Kind;
+use crate::MassBundle;
+use crate::NumAi;
+use crate::Object;
+use crate::Player;
+use crate::Shootable;
+use crate::ABILITY_Y;
+use crate::PLAYER_HEIGHT;
+use crate::PLAYER_MASS;
+use crate::PLAYER_R;
 
 pub const DEATH_Y: f32 = -2.0;
 

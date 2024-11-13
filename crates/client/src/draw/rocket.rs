@@ -1,11 +1,19 @@
-use bevy::prelude::{
-    Added, BuildChildren, Commands, Entity, GlobalTransform, InheritedVisibility, Query, Res, Vec2,
-};
-use engine::{ability::seeker_rocket::SeekerRocket, Energy};
-
-use crate::{asset_handler::AssetHandler, bar::Bar, in_plane};
+use bevy::prelude::Added;
+use bevy::prelude::BuildChildren;
+use bevy::prelude::Commands;
+use bevy::prelude::Entity;
+use bevy::prelude::GlobalTransform;
+use bevy::prelude::InheritedVisibility;
+use bevy::prelude::Query;
+use bevy::prelude::Res;
+use bevy::prelude::Vec2;
+use engine::ability::seeker_rocket::SeekerRocket;
+use engine::Energy;
 
 use super::ObjectGraphics;
+use crate::asset_handler::AssetHandler;
+use crate::bar::Bar;
+use crate::in_plane;
 
 pub fn draw_seeker_rocket_system(
     mut commands: Commands,
