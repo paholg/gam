@@ -1,18 +1,18 @@
 client *args:
-	cargo run --bin client --features bevy/dynamic_linking -- {{args}}
+	@just cargo run --bin client -- {{args}}
 
-check:
-	nix flake check
+check *args:
+	@just cargo check {{args}}
 
 profile:
-	CARGO_PROFILE_RELEASE_DEBUG=true cargo flamegraph --bin client
+	CARGO_PROFILE_RELEASE_DEBUG=true just cargo flamegraph --bin client
 
 update:
 	nix flake update
 	cargo update
 
 fix:
-	cargo clippy --fix --allow-staged
+	@just cargo clippy --fix --allow-staged
 
 rustfmt_config := replace("""
 	imports_granularity=Crate,
@@ -22,4 +22,9 @@ rustfmt_config := replace("""
 	format_strings=true
 """, "\n", "")
 fmt:
-	cargo fmt -- --config {{rustfmt_config}}
+	@just cargo fmt -- --config {{rustfmt_config}}
+
+[private]
+cargo cmd *args:
+	cargo --color always {{cmd}} --features bevy/dynamic_linking {{args}}
+	# cargo --color always {{cmd}} {{args}}
