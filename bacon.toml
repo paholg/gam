@@ -16,6 +16,6 @@ watch = ["tests", "benches", "examples"]
 
 [jobs.run]
 allow_warnings = true
-command = ["just", "cargo", "client"]
+command = ["just", "client"]
 need_stdout = true
 watch = ["examples"]

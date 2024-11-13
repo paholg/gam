@@ -10,7 +10,8 @@ use bevy::{
 };
 
 use engine::{time::FrameCounter, NumAi};
-use rust_i18n::t;
+
+use crate::t;
 
 pub const TEXT_COLOR: Color = Color::rgb(0.8, 0.8, 0.8);
 
@@ -30,6 +31,8 @@ impl Plugin for HudPlugin {
 #[derive(Component)]
 pub struct Hud;
 
+// NOTE: We end up with directional isolate invisible characters in our strings
+// from fluent. These are incorrectly rendered by TextBundle.
 fn persistent_ui_setup(mut commands: Commands) {
     commands
         .spawn((
@@ -92,7 +95,7 @@ fn score_update(num_ai: Res<NumAi>, mut query: Query<&mut Text, With<Score>>) {
 }
 
 fn render_score(score: usize) -> String {
-    t!("menu.score", score = score).into_owned()
+    t!("score", score = score)
 }
 
 #[derive(Component)]
@@ -107,8 +110,9 @@ fn frame_time_update(
 }
 
 fn render_frame_time(time: Duration) -> String {
+    // TODO: The units should be localized too.
     let dur = format!("{time:?}");
-    t!("menu.frame_time", time = dur).into_owned()
+    t!("frame_time", time = dur)
 }
 
 #[derive(Resource)]
@@ -149,5 +153,5 @@ fn fps_update(fps: Res<FpsTracker>, mut query: Query<&mut Text, With<FpsText>>) 
 
 fn render_fps(fps: f32) -> String {
     let fps = format!("{fps:0.1}");
-    t!("menu.fps", fps = fps).into_owned()
+    t!("fps", fps = fps)
 }

@@ -32,6 +32,7 @@ mod config;
 mod controls;
 pub mod debug;
 mod draw;
+mod i18n;
 mod particles;
 mod shapes;
 mod splash;
@@ -40,8 +41,6 @@ mod world;
 
 pub use config::Config;
 pub use controls::ControlPlugin;
-
-rust_i18n::i18n!("../../locales");
 
 const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, 12.0, 12.0);
 

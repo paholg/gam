@@ -32,8 +32,6 @@ struct Args {
 }
 
 fn main() {
-    rust_i18n::set_locale("en");
-
     let args = Args::parse();
 
     let mut app = App::new();
