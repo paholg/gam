@@ -14,14 +14,12 @@ use bevy_ecs::bundle::Bundle;
 use bevy_ecs::component::Component;
 use bevy_ecs::schedule::IntoSystemConfigs;
 use bevy_ecs::schedule::IntoSystemSetConfigs;
-use bevy_ecs::schedule::State;
-use bevy_ecs::schedule::States;
 use bevy_ecs::schedule::SystemSet;
 use bevy_ecs::system::Query;
 use bevy_ecs::system::Res;
 use bevy_ecs::system::Resource;
-use bevy_math::primitives::Direction3d;
-use bevy_math::primitives::Plane3d;
+use bevy_math::prelude::InfinitePlane3d;
+use bevy_math::Dir3;
 use bevy_math::Quat;
 use bevy_math::Vec2;
 use bevy_math::Vec3;
@@ -34,11 +32,14 @@ use bevy_rapier3d::prelude::ReadMassProperties;
 use bevy_rapier3d::prelude::RigidBody;
 use bevy_rapier3d::prelude::Velocity;
 use bevy_reflect::Reflect;
+use bevy_state::app::AppExtStates;
+use bevy_state::state::State;
+use bevy_state::state::States;
 use bevy_time::Fixed;
 use bevy_time::Time;
+use bevy_transform::bundles::TransformBundle;
 use bevy_transform::components::GlobalTransform;
 use bevy_transform::components::Transform;
-use bevy_transform::TransformBundle;
 use bevy_utils::HashMap;
 use collision::TrackCollisionBundle;
 use input::check_resume;
@@ -86,9 +87,7 @@ pub enum AppState {
 
 pub const FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
 pub const UP: Vec3 = Vec3::Y;
-pub const UP_PLANE: Plane3d = Plane3d {
-    normal: Direction3d::Y,
-};
+pub const UP_PLANE: InfinitePlane3d = InfinitePlane3d { normal: Dir3::Y };
 
 pub const PLAYER_R: f32 = 0.25;
 pub const PLAYER_HEIGHT: f32 = 0.75;

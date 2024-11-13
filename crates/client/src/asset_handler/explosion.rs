@@ -22,7 +22,7 @@ impl ExplosionAssets {
             gradient: colors,
             mesh: builder.meshes.add(Sphere::new(1.0)),
             material: builder.materials.add(StandardMaterial {
-                base_color: Color::rgba(0.0, 0.0, 0.0, 0.5),
+                base_color: Color::srgba(0.0, 0.0, 0.0, 0.5),
                 emissive: initial_color,
                 alpha_mode: AlphaMode::Blend,
                 ..Default::default()

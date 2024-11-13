@@ -11,8 +11,8 @@ use bevy_rapier3d::prelude::LockedAxes;
 use bevy_rapier3d::prelude::RigidBody;
 use bevy_rapier3d::prelude::Sensor;
 use bevy_rapier3d::prelude::Velocity;
+use bevy_transform::bundles::TransformBundle;
 use bevy_transform::components::Transform;
-use bevy_transform::TransformBundle;
 
 use super::properties::TransportProps;
 use crate::collision::TrackCollisionBundle;

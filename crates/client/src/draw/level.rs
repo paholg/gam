@@ -16,7 +16,6 @@ use bevy::prelude::Transform;
 use bevy::prelude::Vec2;
 use bevy::prelude::Vec3;
 use bevy::prelude::With;
-use bevy::render::view::RenderLayers;
 use bevy_mod_raycast::prelude::RaycastMesh;
 use engine::level::Floor;
 use engine::level::InLevel;
@@ -251,7 +250,8 @@ pub fn draw_lights_system(
                     transform: t,
                     ..Default::default()
                 },
-                RenderLayers::all(),
+                // TODO: Is this needed?
+                // RenderLayers::all(),
                 InLevel,
             ));
         }

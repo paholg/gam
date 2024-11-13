@@ -1,3 +1,4 @@
+use std::num::NonZeroU16;
 use std::sync::Arc;
 use std::sync::RwLock;
 
@@ -40,7 +41,7 @@ pub struct PathfindPlugin;
 
 impl Plugin for PathfindPlugin {
     fn build(&self, app: &mut bevy_app::App) {
-        let level_props: &LevelProps = app.world.get_resource().unwrap();
+        let level_props: &LevelProps = app.world().get_resource().unwrap();
         let extents = level_props.x.max(level_props.z);
 
         app.add_plugins(OxidizedNavigationPlugin::<Collider>::new(NavMeshSettings {
@@ -54,10 +55,10 @@ impl Plugin for PathfindPlugin {
             walkable_radius: 2,
             step_height: 1,
             min_region_area: 100,
-            merge_region_area: 500,
             max_edge_length: 80,
             max_contour_simplification_error: 1.1,
-            max_tile_generation_tasks: Some(1),
+            max_tile_generation_tasks: NonZeroU16::new(1),
+            max_region_area_to_merge_into: 500,
         }))
         .insert_resource(PathfindingTasks::default())
         .add_event::<PathfindEvent>();

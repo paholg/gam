@@ -1,11 +1,11 @@
 use bevy_ecs::entity::Entity;
-use bevy_ecs::schedule::NextState;
-use bevy_ecs::schedule::State;
 use bevy_ecs::system::Commands;
 use bevy_ecs::system::Query;
 use bevy_ecs::system::Res;
 use bevy_ecs::system::ResMut;
 use bevy_rapier3d::prelude::Velocity;
+use bevy_state::state::NextState;
+use bevy_state::state::State;
 use bevy_transform::components::Transform;
 use bevy_utils::HashSet;
 
