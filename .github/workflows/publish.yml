@@ -19,7 +19,7 @@ jobs:
           - { os: windows-latest, target: "x86_64-pc-windows-msvc" }
           - { os: ubuntu-latest, target: "x86_64-unknown-linux-gnu" }
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       # Ugh, Github does not allow jobs of different tags to share a cache, even
       # though they're on the same freaking branch. I am very annoyed.
@@ -27,13 +27,13 @@ jobs:
       # think tagged jobs could use that cache. So stupid.
       # Long-term, I think we just build in nix and use cachix or something.
       # See: https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#restrictions-for-accessing-a-cache
-      # - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2
       - name: Install Bevy Deps
         run: sudo apt-get update && sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
         if: runner.os == 'linux'
       - name: Build
         run: ./github_build.sh ${{ matrix.config.target }}
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: packages
           path: gam-*.zip
@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: prepare_release
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: packages
       - name: Publish
