@@ -20,9 +20,6 @@ jobs:
           - { os: ubuntu-latest, target: "x86_64-unknown-linux-gnu" }
     steps:
       - uses: actions/checkout@v3
-        with:
-          lfs: true
-      - run: git lfs pull
       - uses: dtolnay/rust-toolchain@stable
       # Ugh, Github does not allow jobs of different tags to share a cache, even
       # though they're on the same freaking branch. I am very annoyed.
