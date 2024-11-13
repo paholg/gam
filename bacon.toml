@@ -6,16 +6,16 @@
 default_job = "check"
 
 [jobs.check]
-command = ["cargo", "check", "--features", "bevy/dynamic_linking", "--color", "always"]
+command = ["just", "cargo", "check"]
 need_stdout = false
 
 [jobs.clippy]
-command = ["cargo", "clippy", "--features", "bevy/dynamic_linking", "--all-targets", "--color", "always"]
+command = ["just", "cargo", "clippy"]
 need_stdout = false
 watch = ["tests", "benches", "examples"]
 
 [jobs.run]
 allow_warnings = true
-command = ["cargo", "run", "--features", "bevy/dynamic_linking", "--color", "always", "--bin", "client"]
+command = ["just", "cargo", "client"]
 need_stdout = true
 watch = ["examples"]

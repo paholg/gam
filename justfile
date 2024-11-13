@@ -24,7 +24,6 @@ rustfmt_config := replace("""
 fmt:
 	@just cargo fmt -- --config {{rustfmt_config}}
 
-[private]
 cargo cmd *args:
 	cargo --color always {{cmd}} --features bevy/dynamic_linking {{args}}
 	# cargo --color always {{cmd}} {{args}}
