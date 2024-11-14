@@ -36,7 +36,7 @@ jobs:
         run: just package_client ${{ matrix.config.target }}
       - uses: actions/upload-artifact@v4
         with:
-          name: packages
+          name: package-${{ matrix.config.target }}
           path: gam-${{ matrix.config.target }}.zip
           compression-level: 0 # already compressed
   release:
@@ -46,7 +46,9 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: packages
+          name: package
+          pattern: package-*
+          merge-multiple: true
       - name: Publish
         uses: softprops/action-gh-release@v2
         with:
