@@ -3,7 +3,7 @@ on:
     tags:
       - 'v*'
 
-name: Publish new version
+name: Publish
 
 defaults:
   run:
@@ -31,12 +31,14 @@ jobs:
       - name: Install Bevy Deps
         run: sudo apt-get update && sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
         if: runner.os == 'linux'
-      - name: Build
-        run: ./github_build.sh ${{ matrix.config.target }}
+      - uses: extractions/setup-just@v2
+      - name: Build & Package
+        run: just package_client ${{ matrix.config.target }}
       - uses: actions/upload-artifact@v4
         with:
           name: packages
-          path: gam-*.zip
+          path: gam-${{ matrix.config.target }}.zip
+          compression-level: 0 # already compressed
   release:
     name: Issue release
     runs-on: ubuntu-latest
