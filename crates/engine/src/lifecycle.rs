@@ -45,6 +45,7 @@ use crate::Object;
 use crate::Player;
 use crate::Shootable;
 use crate::ABILITY_Y;
+use crate::CONTACT_SKIN;
 use crate::PLAYER_HEIGHT;
 use crate::PLAYER_MASS;
 use crate::PLAYER_R;
@@ -146,6 +147,7 @@ fn spawn_enemies(
                     desired_movement: Default::default(),
                     ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
                     marker: CharacterMarker,
+                    contact_skin: CONTACT_SKIN,
                 },
             ))
             .id();
@@ -167,8 +169,6 @@ fn spawn_allies(
                 Ally,
                 AiBundle::<ChargeAi>::default(),
                 Character {
-                    health: Health::new(100.0),
-                    energy: Energy::new(100.0, ENERGY_REGEN),
                     object: Object {
                         transform: Transform::from_translation(
                             loc + Vec3::new(0.0, 0.5 * PLAYER_HEIGHT, 0.0),
@@ -190,6 +190,9 @@ fn spawn_allies(
                         .into(),
                         collisions: TrackCollisionBundle::off(),
                     },
+                    contact_skin: CONTACT_SKIN,
+                    health: Health::new(100.0),
+                    energy: Energy::new(100.0, ENERGY_REGEN),
                     max_speed: Default::default(),
                     friction: Friction {
                         coefficient: 0.0,
