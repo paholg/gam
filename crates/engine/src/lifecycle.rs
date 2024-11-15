@@ -1,6 +1,7 @@
 use bevy_ecs::entity::Entity;
 use bevy_ecs::event::Event;
 use bevy_ecs::event::EventWriter;
+use bevy_ecs::query::QueryData;
 use bevy_ecs::query::With;
 use bevy_ecs::system::Commands;
 use bevy_ecs::system::Query;
@@ -17,12 +18,11 @@ use bevy_rapier3d::prelude::RigidBody;
 use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 
-use crate::ability::Abilities;
-use crate::ability::Ability;
+use crate::ability::cooldown::Cooldown;
+use crate::ability::AbilityMap;
 use crate::ai::charge::ChargeAi;
 use crate::ai::AiBundle;
 use crate::collision::TrackCollisionBundle;
-use crate::death_callback::DeathCallback;
 use crate::level::InLevel;
 use crate::level::LevelProps;
 use crate::player::character_collider;
@@ -33,7 +33,6 @@ use crate::time::FrameCounter;
 use crate::Ally;
 use crate::Character;
 use crate::CharacterMarker;
-use crate::Cooldowns;
 use crate::Enemy;
 use crate::Energy;
 use crate::FootOffset;
@@ -66,33 +65,35 @@ pub fn fall(mut query: Query<(&mut Health, &Transform, &FootOffset)>) {
     }
 }
 
+#[derive(QueryData)]
+#[query_data(mutable)]
+pub struct DieQuery {
+    entity: Entity,
+    health: &'static mut Health,
+    transform: &'static Transform,
+    kind: &'static Kind,
+    // death_callback: Option<&'static DeathCallback>,
+    dilation: &'static TimeDilation,
+}
 pub fn die(
     mut commands: Commands,
-    mut query: Query<(
-        Entity,
-        &mut Health,
-        &Transform,
-        &Kind,
-        Option<&DeathCallback>,
-        &TimeDilation,
-    )>,
+    mut query: Query<DieQuery>,
     mut event_writer: EventWriter<DeathEvent>,
     tick_counter: Res<FrameCounter>,
 ) {
-    let events = query.iter_mut().filter_map(
-        |(entity, mut health, &transform, &kind, callback, time_dilation)| {
-            if health.cur <= 0.0 && health.death_delay.tick(time_dilation) {
-                tracing::debug!(tick = ?tick_counter.frame, ?entity, ?health, ?transform, "DEATH");
-                if let Some(callback) = callback {
-                    callback.call(&mut commands, &transform);
-                }
-                commands.entity(entity).despawn_recursive();
-                Some(DeathEvent { transform, kind })
-            } else {
-                None
-            }
-        },
-    );
+    let events = query.iter_mut().filter_map(|mut q| {
+        if q.health.cur <= 0.0 && q.health.death_delay.tick(q.dilation) {
+            tracing::debug!(tick = ?tick_counter.frame, ?q.entity, ?q.health, ?q.transform, "DEATH");
+            // FIXME
+            // if let Some(callback) = q.callback {
+            //     callback.call(&mut commands, &q.transform);
+            // }
+            commands.entity(q.entity).despawn_recursive();
+            Some(DeathEvent { transform: *q.transform, kind: *q.kind })
+        } else {
+            None
+        }
+    });
     event_writer.send_batch(events);
 }
 
@@ -103,18 +104,20 @@ fn spawn_enemies(
     num: usize,
     level: &LevelProps,
     rapier_context: &RapierContext,
+    ability_map: &AbilityMap,
 ) {
     for _ in 0..num {
         let loc = level.point_in_plane(rapier_context);
-        let abilities = Abilities::new(vec![Ability::Gun]);
+        let ai_bundle = AiBundle::<ChargeAi>::default();
+        let ability_ids = ai_bundle.ai.ability_ids.clone();
 
         let id = commands
             .spawn((
                 Enemy,
-                AiBundle::<ChargeAi>::default(),
+                ai_bundle,
                 Character {
                     health: Health::new(10.0),
-                    energy: Energy::new(20.0, 0.2),
+                    energy: Energy::new(50.0, 0.2),
                     object: Object {
                         transform: Transform::from_translation(
                             loc + Vec3::new(0.0, 0.5 * PLAYER_HEIGHT, 0.0),
@@ -142,8 +145,7 @@ fn spawn_enemies(
                         combine_rule: CoefficientCombineRule::Min,
                     },
                     shootable: Shootable,
-                    cooldowns: Cooldowns::new(),
-                    abilities,
+                    global_cooldown: Cooldown::new(),
                     desired_movement: Default::default(),
                     ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
                     marker: CharacterMarker,
@@ -151,6 +153,8 @@ fn spawn_enemies(
                 },
             ))
             .id();
+        let abilities = ability_ids.build(ability_map, commands, id);
+        commands.entity(id).insert(abilities);
         tracing::debug!(?id, "Spawning enemy");
     }
 }
@@ -160,14 +164,16 @@ fn spawn_allies(
     num: usize,
     level: &LevelProps,
     rapier_context: &RapierContext,
+    ability_map: &AbilityMap,
 ) {
     for _ in 0..num {
         let loc = level.point_in_plane(rapier_context);
-        let abilities = Abilities::new(vec![Ability::Gun]);
+        let ai_bundle = AiBundle::<ChargeAi>::default();
+        let ability_ids = ai_bundle.ai.ability_ids.clone();
         let id = commands
             .spawn((
                 Ally,
-                AiBundle::<ChargeAi>::default(),
+                ai_bundle,
                 Character {
                     object: Object {
                         transform: Transform::from_translation(
@@ -199,14 +205,15 @@ fn spawn_allies(
                         combine_rule: CoefficientCombineRule::Min,
                     },
                     shootable: Shootable,
-                    cooldowns: Cooldowns::new(),
-                    abilities,
+                    global_cooldown: Cooldown::new(),
                     desired_movement: Default::default(),
                     ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
                     marker: CharacterMarker,
                 },
             ))
             .id();
+        let abilities = ability_ids.build(ability_map, commands, id);
+        commands.entity(id).insert(abilities);
         tracing::debug!(?id, "Spawning ally");
     }
 }
@@ -216,31 +223,43 @@ pub fn reset(
     mut commands: Commands,
     enemy_query: Query<Entity, With<Enemy>>,
     ally_query: Query<Entity, With<Ally>>,
-    mut player_query: Query<(Entity, &mut Health, &mut Energy, &mut Cooldowns), With<Player>>,
+    mut player_query: Query<(Entity, &mut Health, &mut Energy), With<Player>>,
     player_info_query: Query<&PlayerInfo>,
     mut num_ai: ResMut<NumAi>,
     level: Res<LevelProps>,
     rapier_context: Res<RapierContext>,
+    ability_map: Res<AbilityMap>,
 ) {
     if enemy_query.iter().next().is_none() {
         num_ai.enemies += 1;
-        spawn_enemies(&mut commands, num_ai.enemies, &level, &rapier_context);
+        spawn_enemies(
+            &mut commands,
+            num_ai.enemies,
+            &level,
+            &rapier_context,
+            &ability_map,
+        );
 
-        for (_entity, mut health, mut energy, mut cooldowns) in &mut player_query {
+        for (_entity, mut health, mut energy) in &mut player_query {
             health.cur = health.max;
             energy.cur = energy.max;
-            cooldowns.reset();
         }
     }
 
     if player_query.iter().next().is_none() {
         num_ai.enemies = num_ai.enemies.saturating_sub(1);
         for info in player_info_query.iter() {
-            info.spawn_player(&mut commands);
+            info.spawn_player(&mut commands, &ability_map);
         }
     }
 
     if ally_query.iter().next().is_none() {
-        spawn_allies(&mut commands, num_ai.allies, &level, &rapier_context);
+        spawn_allies(
+            &mut commands,
+            num_ai.allies,
+            &level,
+            &rapier_context,
+            &ability_map,
+        );
     }
 }

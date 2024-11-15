@@ -88,7 +88,7 @@ fn debug_stuff(app: &mut App, args: &Args) {
 
 fn player_spawner(mut commands: Commands, config: Res<Config>) {
     commands.spawn(PlayerInfo {
-        abilities: config.player.abilities.clone(),
+        ability_ids: config.player.ability_ids.clone(),
         // TODO: Set by server/engine for multiplayer
         handle: Player::new(0),
     });

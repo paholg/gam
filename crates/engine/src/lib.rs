@@ -1,9 +1,11 @@
 use std::fmt;
 
-use ability::properties::AbilityProps;
-use ability::seeker_rocket;
-use ability::Abilities;
+use ability::bullet::collision_system;
+use ability::cooldown::global_cooldown_tick_system;
+use ability::cooldown::Cooldown;
+use ability::gun::GunPlugin;
 use ability::Ability;
+use ability::AbilityMap;
 use ai::pathfind::PathfindPlugin;
 use bevy_app::App;
 use bevy_app::FixedUpdate;
@@ -64,7 +66,7 @@ use time::FREQUENCY;
 pub mod ability;
 pub mod ai;
 pub mod collision;
-pub mod death_callback;
+// pub mod death_callback;
 pub mod debug;
 pub mod input;
 pub mod level;
@@ -85,6 +87,7 @@ pub enum AppState {
     Running,
     Paused,
 }
+pub const SCHEDULE: FixedUpdate = FixedUpdate;
 
 pub const FORWARD: Vec3 = Vec3::new(0.0, 0.0, -1.0);
 pub const UP: Vec3 = Vec3::Y;
@@ -223,43 +226,6 @@ impl Faction for Ally {
 #[derive(Component, Default)]
 pub struct Shootable;
 
-#[derive(Component, Reflect, Default)]
-pub struct Cooldowns {
-    map: HashMap<Ability, Dur>,
-}
-
-impl Cooldowns {
-    pub fn new() -> Self {
-        Self {
-            map: HashMap::default(),
-        }
-    }
-
-    pub fn is_available(&self, ability: &Ability, time_dilation: &TimeDilation) -> bool {
-        match self.map.get(ability) {
-            Some(dur) => dur.is_done(time_dilation),
-            None => true,
-        }
-    }
-
-    pub fn set(&mut self, ability: Ability, cooldown: Dur) {
-        self.map.insert(ability, cooldown);
-    }
-
-    pub fn reset(&mut self) {
-        self.map.clear();
-    }
-}
-
-pub fn cooldown_system(mut query: Query<(&mut Cooldowns, &TimeDilation)>) {
-    for (mut cd, time_dilation) in &mut query {
-        for (_ability, dur) in cd.map.iter_mut() {
-            dur.tick(time_dilation);
-        }
-        cd.map.retain(|_ability, dur| !dur.is_done(time_dilation));
-    }
-}
-
 /// The offset from an object's transform, to its bottom.
 #[derive(Component, Default, Clone, Copy)]
 pub struct FootOffset {
@@ -339,8 +305,7 @@ struct Character {
     max_speed: MaxSpeed,
     friction: Friction,
     shootable: Shootable,
-    cooldowns: Cooldowns,
-    abilities: Abilities,
+    global_cooldown: Cooldown,
     desired_movement: DesiredMove,
     ability_offset: AbilityOffset,
     marker: CharacterMarker,
@@ -358,12 +323,14 @@ pub struct GamPlugin;
 #[derive(SystemSet, Debug, Hash, PartialEq, Eq, Clone)]
 pub enum GameSet {
     Timer,
+    Reset,
     Input,
     Ai,
+    Collision,
+    Stuff,
     Physics1,
     Physics2,
     Physics3,
-    Stuff,
     Despawn,
 }
 
@@ -375,13 +342,13 @@ impl Plugin for GamPlugin {
         // Resources
         app.insert_resource(Time::<Fixed>::from_hz(FREQUENCY as f64))
             .insert_resource(FrameCounter::new())
-            .insert_resource(AbilityProps::default())
             .insert_resource(NumAi {
                 enemies: 0,
                 allies: 0,
             })
             .insert_resource(PlayerInputs::default())
-            .insert_resource(LevelProps::default());
+            .insert_resource(LevelProps::default())
+            .init_resource::<AbilityMap>();
 
         // Events
         // TODO: Currently, these events are only used for engine -> client
@@ -393,17 +360,19 @@ impl Plugin for GamPlugin {
 
         let physics = PhysicsPlugin::new();
 
-        let schedule = FixedUpdate;
-
         // Sytem sets
         app.configure_sets(
-            schedule.clone(),
+            SCHEDULE,
             (
                 GameSet::Timer,
+                GameSet::Reset,
+                GameSet::Input,
+                GameSet::Ai,
+                GameSet::Collision,
+                GameSet::Stuff,
                 GameSet::Physics1,
                 GameSet::Physics2,
                 GameSet::Physics3,
-                GameSet::Stuff,
                 GameSet::Despawn,
             )
                 .chain(),
@@ -411,73 +380,46 @@ impl Plugin for GamPlugin {
 
         // Systems in order
         app.add_systems(Startup, level::test_level).add_systems(
-            schedule.clone(),
+            SCHEDULE,
             (
                 time::frame_counter.in_set(GameSet::Timer),
+                (
+                    temperature_tick,
+                    charge_tick,
+                    time_dilation_tick,
+                    phased_tick,
+                    clear_forces,
+                    energy_regen,
+                    global_cooldown_tick_system,
+                    collision::collision_system,
+                )
+                    .in_set(GameSet::Reset),
+                input::apply_inputs.in_set(GameSet::Input),
+                ai::systems().in_set(GameSet::Ai),
+                (ability::bullet::collision_system,)
+                    .chain()
+                    .in_set(GameSet::Collision),
+                (
+                    // Misc; categorize futher?
+                    movement::apply_movement,
+                    // death_callback::explosion_grow_system,
+                    lifecycle::fall,
+                )
+                    .in_set(GameSet::Stuff),
                 (
                     physics.set1().in_set(GameSet::Physics1),
                     physics.set2().in_set(GameSet::Physics2),
                     physics.set3().in_set(GameSet::Physics3),
                 ),
                 (
-                    // Note: Most things should go here.
-                    (
-                        // Initial frame resets.
-                        temperature_tick,
-                        charge_tick,
-                        time_dilation_tick,
-                        phased_tick,
-                        clear_forces,
-                        energy_regen,
-                        cooldown_system,
-                    )
-                        .chain(),
-                    (
-                        // Entities spawn with 0 mass, so we need to place this
-                        // after we run physics, after firing the bullet.
-                        // https://github.com/dimforge/bevy_rapier/issues/484
-                        ability::bullet::kickback_system,
-                    )
-                        .chain(),
-                    (
-                        // Inputs
-                        input::apply_inputs,
-                        ai::pathfind::poll_pathfinding_system,
-                        ai::charge::system_set(),
-                    )
-                        .chain(),
-                    (
-                        // Misc; categorize futher?
-                        movement::apply_movement,
-                        seeker_rocket::tracking_system,
-                        ability::grenade::explode_system,
-                        death_callback::explosion_grow_system,
-                        ability::neutrino_ball::activation_system,
-                        ability::transport::move_system,
-                        ability::transport::activation_system,
-                        lifecycle::fall,
-                        ai::pathfind::pathfinding_system,
-                    )
-                        .chain(),
-                    (
-                        // Collisions
-                        collision::collision_system,
-                        ability::bullet::collision_system,
-                        ability::seeker_rocket::collision_system,
-                        ability::neutrino_ball::collision_system,
-                        ability::transport::collision_system,
-                        death_callback::explosion_collision_system,
-                    )
-                        .chain(),
-                )
-                    .chain()
-                    .in_set(GameSet::Stuff),
-                (
-                    // Put systems that despawn things at the end.
                     ability::bullet::despawn_system,
                     lifecycle::die,
                     lifecycle::reset,
                     time::debug_frame_system,
+                    // Entities spawn with 0 mass, so we need to place this
+                    // after we run physics, after firing the bullet.
+                    // https://github.com/dimforge/bevy_rapier/issues/484
+                    ability::bullet::kickback_system,
                 )
                     .chain()
                     .in_set(GameSet::Despawn),
@@ -486,7 +428,10 @@ impl Plugin for GamPlugin {
         );
 
         // Special pause systems
-        app.add_systems(schedule, (check_resume).run_if(game_paused));
+        app.add_systems(SCHEDULE, (check_resume).run_if(game_paused));
+
+        // Ability Plugins
+        app.add_plugins((GunPlugin,));
 
         // TODO: This seems to currently be required so rapier does not miss
         // events, but it is likely a source of non-determinism.

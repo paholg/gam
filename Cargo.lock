@@ -2311,6 +2311,7 @@ dependencies = [
  "serde",
  "smallvec 2.0.0-alpha.7",
  "strum",
+ "subenum",
  "tracing",
 ]
 

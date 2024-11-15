@@ -30,6 +30,7 @@ rand = "0.8"
 serde = "1"
 smallvec.workspace = true
 strum = { version = "0.26.3", features = ["derive"] }
+subenum.workspace = true
 tracing.workspace = true
 # typed-builder = "0.11"
 image = "0.25.5"

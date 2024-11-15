@@ -1,5 +1,7 @@
 use core::fmt;
 
+use bevy_ecs::entity::Entity;
+use bevy_ecs::system::Commands;
 use bevy_ecs::system::Resource;
 use bevy_math::Vec2;
 use bevy_reflect::TypePath;
@@ -11,8 +13,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use strum::EnumIter;
 
-use crate::ability::Abilities;
-use crate::ability::Ability;
+use crate::player::Abilities;
 use crate::Player;
 
 /// The inputs of all players
@@ -34,34 +35,45 @@ impl PlayerInputs {
 #[derive(EnumIter, TypePath, Deserialize)]
 #[bitmask(u16)]
 pub enum Action {
-    Ability0,
-    Ability1,
-    Ability2,
-    Ability3,
-    Ability4,
-    Menu,
+    // Abilities
+    LeftArm,
+    LeftArmSecondary,
+    RightArm,
+    RightArmSecondary,
+    LeftShoulder,
+    RightShoulder,
+    Legs,
+    Head,
+    // Non-ability actions
+    Pause,
 }
 
 impl Action {
-    pub fn abilities_fired(&self, abilities: &Abilities) -> impl Iterator<Item = Ability> {
-        let mut fired = Vec::new();
-        if self.contains(Action::Ability0) {
-            fired.push(abilities[0]);
+    pub fn fire_abilities(&self, commands: &mut Commands, user: Entity, abilities: &Abilities) {
+        if self.contains(Action::LeftArm) {
+            commands.run_system_with_input(abilities.left_arm, user);
         }
-        if self.contains(Action::Ability1) {
-            fired.push(abilities[1]);
+        if self.contains(Action::LeftArmSecondary) {
+            commands.run_system_with_input(abilities.left_arm_secondary, user);
         }
-        if self.contains(Action::Ability2) {
-            fired.push(abilities[2]);
+        if self.contains(Action::RightArm) {
+            commands.run_system_with_input(abilities.right_arm, user);
         }
-        if self.contains(Action::Ability3) {
-            fired.push(abilities[3]);
+        if self.contains(Action::RightArmSecondary) {
+            commands.run_system_with_input(abilities.right_arm_secondary, user);
         }
-        if self.contains(Action::Ability4) {
-            fired.push(abilities[4]);
+        if self.contains(Action::LeftShoulder) {
+            commands.run_system_with_input(abilities.left_shoulder, user);
         }
-
-        fired.into_iter()
+        if self.contains(Action::RightShoulder) {
+            commands.run_system_with_input(abilities.right_shoulder, user);
+        }
+        if self.contains(Action::Legs) {
+            commands.run_system_with_input(abilities.legs, user);
+        }
+        if self.contains(Action::Head) {
+            commands.run_system_with_input(abilities.head, user);
+        }
     }
 }
 

@@ -12,7 +12,6 @@ use bevy_ecs::system::Res;
 use bevy_math::Vec2;
 use bevy_rapier3d::prelude::QueryFilter;
 use bevy_rapier3d::prelude::RapierContext;
-use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 use rand::thread_rng;
 use rand::Rng;
@@ -24,19 +23,16 @@ use super::target_closest_system;
 use super::update_target_system;
 use super::Ai;
 use super::AiTarget;
-use crate::ability::properties::AbilityProps;
-use crate::ability::Ability;
+use crate::ability::AbilityId;
 use crate::level::Floor;
 use crate::movement::DesiredMove;
-use crate::status_effect::TimeDilation;
+use crate::multiplayer::Action;
+use crate::player::Abilities;
+use crate::player::AbilityIds;
 use crate::AbilityOffset;
 use crate::Ally;
-use crate::Cooldowns;
 use crate::Enemy;
-use crate::Energy;
 use crate::Faction;
-use crate::FootOffset;
-use crate::Target;
 use crate::To2d;
 use crate::To3d;
 
@@ -51,6 +47,7 @@ pub struct ChargeAi {
     /// to shoot.
     pub gun_obstruction: bool,
     // pub move_loc: Option<Vec2>,
+    pub ability_ids: AbilityIds,
 }
 
 impl Ai for ChargeAi {
@@ -68,6 +65,10 @@ impl Default for ChargeAi {
             target_dist_squared: 3.0 * 3.0,
             intelligence: 1.0,
             gun_obstruction: true,
+            ability_ids: AbilityIds {
+                left_arm: AbilityId::from("gun"),
+                ..Default::default()
+            },
         }
     }
 }
@@ -120,47 +121,14 @@ fn check_obstructions<T: Faction>(
     }
 }
 
-fn gun_system(
-    mut commands: Commands,
-    mut ai_q: Query<(
-        Entity,
-        &mut Cooldowns,
-        &mut Energy,
-        &Velocity,
-        &Transform,
-        &AbilityOffset,
-        &FootOffset,
-        &ChargeAi,
-        &mut TimeDilation,
-    )>,
-    props: Res<AbilityProps>,
-) {
-    for (
-        entity,
-        mut cooldowns,
-        mut energy,
-        velocity,
-        transform,
-        ability_offset,
-        foot_offset,
-        ai,
-        mut time_dilation,
-    ) in ai_q.iter_mut()
-    {
+fn gun_system(mut commands: Commands, mut ai_q: Query<(Entity, &ChargeAi, &Abilities)>) {
+    for (entity, ai, abilities) in ai_q.iter_mut() {
         if !ai.gun_obstruction {
-            Ability::Gun.fire(
-                &mut commands,
-                &props,
-                entity,
-                &mut energy,
-                &mut cooldowns,
-                transform,
-                velocity,
-                &Target::default(),
-                ability_offset,
-                foot_offset,
-                &mut time_dilation,
-            );
+            // We'll just try to fire all abilities here, as dumb as that is.
+            // Because shooting is first, and cooldowns exist, we'll shoot until
+            // out of ammo, then reload, then repeat, so it's not tooo bad in
+            // practice.
+            Action::all_flags().fire_abilities(&mut commands, entity, abilities);
         }
     }
 }

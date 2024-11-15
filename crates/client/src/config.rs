@@ -16,9 +16,9 @@ use bevy::prelude::Resource;
 use bevy::prelude::Update;
 use bevy::reflect::Reflect;
 use directories::ProjectDirs;
-use engine::ability::Abilities;
 use engine::ability::Ability;
 use engine::multiplayer::Action;
+use engine::player::AbilityIds;
 use engine::Player;
 use leafwing_input_manager::prelude::GamepadStick;
 use leafwing_input_manager::prelude::GamepadVirtualDPad;
@@ -107,29 +107,41 @@ fn default_controls() -> InputMap<UserAction> {
             KeyboardVirtualDPad::new(KeyCode::KeyE, KeyCode::KeyD, KeyCode::KeyS, KeyCode::KeyF),
         )
         .insert_dual_axis(UserAction::Aim, GamepadStick::RIGHT)
-        .insert(UserAction::Ability0, MouseButton::Left)
-        .insert(UserAction::Ability0, GamepadButtonType::RightTrigger2)
-        .insert(UserAction::Ability1, MouseButton::Right)
-        .insert(UserAction::Ability1, GamepadButtonType::LeftTrigger2)
-        .insert(UserAction::Ability2, KeyCode::Space)
-        .insert(UserAction::Ability2, GamepadButtonType::South)
-        .insert(UserAction::Ability3, KeyCode::KeyW)
-        .insert(UserAction::Ability3, MouseButton::Back)
-        .insert(UserAction::Ability3, GamepadButtonType::LeftTrigger)
-        .insert(UserAction::Ability4, KeyCode::KeyR)
-        .insert(UserAction::Ability4, MouseButton::Forward)
-        .insert(UserAction::Ability4, GamepadButtonType::RightTrigger)
+        // Left Arm
+        .insert(UserAction::LeftArm, MouseButton::Left)
+        .insert(UserAction::LeftArm, GamepadButtonType::LeftTrigger2)
+        .insert(UserAction::LeftArmSecondary, KeyCode::KeyW)
+        .insert(UserAction::LeftArmSecondary, GamepadButtonType::West)
+        // Right Arm
+        .insert(UserAction::RightArm, MouseButton::Right)
+        .insert(UserAction::RightArm, GamepadButtonType::RightTrigger2)
+        .insert(UserAction::RightArmSecondary, KeyCode::KeyE)
+        .insert(UserAction::RightArmSecondary, GamepadButtonType::East)
+        // Left Shoulder
+        .insert(UserAction::LeftShoulder, MouseButton::Back)
+        .insert(UserAction::LeftShoulder, GamepadButtonType::LeftTrigger)
+        // Right Shoulder
+        .insert(UserAction::RightShoulder, MouseButton::Forward)
+        .insert(UserAction::RightShoulder, GamepadButtonType::RightTrigger)
+        // Legs
+        .insert(UserAction::Legs, KeyCode::Space)
+        .insert(UserAction::Legs, GamepadButtonType::South)
+        // Head
+        .insert(UserAction::Head, KeyCode::KeyG)
+        .insert(UserAction::Head, GamepadButtonType::North)
         // Menu controls
         .insert(UserAction::TabLeft, GamepadButtonType::LeftTrigger)
-        .insert(UserAction::TabRight, GamepadButtonType::RightTrigger)
         .insert(UserAction::TabLeft, GamepadButtonType::LeftTrigger2)
-        .insert(UserAction::TabRight, GamepadButtonType::RightTrigger2)
-        .insert(UserAction::Select, GamepadButtonType::South)
-        .insert(UserAction::Cancel, GamepadButtonType::East)
         .insert(UserAction::TabLeft, KeyCode::KeyW)
+        .insert(UserAction::TabRight, GamepadButtonType::RightTrigger)
+        .insert(UserAction::TabRight, GamepadButtonType::RightTrigger2)
         .insert(UserAction::TabRight, KeyCode::KeyR)
+        .insert(UserAction::Select, GamepadButtonType::South)
         .insert(UserAction::Select, KeyCode::Enter)
+        .insert(UserAction::Select, KeyCode::Space)
         .insert(UserAction::Select, MouseButton::Left)
+        .insert(UserAction::Cancel, GamepadButtonType::East)
+        .insert(UserAction::Cancel, KeyCode::Escape)
         .insert(UserAction::Cancel, MouseButton::Right);
     map
 }
@@ -242,19 +254,21 @@ impl Default for Sound {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PlayerConfig {
-    pub abilities: Abilities,
+    pub ability_ids: AbilityIds,
 }
 
 impl Default for PlayerConfig {
     fn default() -> Self {
-        let abilities = Abilities::new(vec![
-            Ability::Gun,
-            Ability::SeekerRocket,
-            Ability::Transport,
-            Ability::NeutrinoBall,
-            Ability::FragGrenade,
-        ]);
-        Self { abilities }
+        Self {
+            ability_ids: AbilityIds {
+                left_arm: "gun".into(),
+                right_arm: "noop".into(),
+                left_shoulder: "noop".into(),
+                right_shoulder: "noop".into(),
+                legs: "noop".into(),
+                head: "noop".into(),
+            },
+        }
     }
 }
 
@@ -276,15 +290,21 @@ impl Default for PlayerConfig {
 pub enum UserAction {
     // Game actions
     #[subenum(GameAction)]
-    Ability0,
+    LeftArm,
     #[subenum(GameAction)]
-    Ability1,
+    LeftArmSecondary,
     #[subenum(GameAction)]
-    Ability2,
+    RightArm,
     #[subenum(GameAction)]
-    Ability3,
+    RightArmSecondary,
     #[subenum(GameAction)]
-    Ability4,
+    LeftShoulder,
+    #[subenum(GameAction)]
+    RightShoulder,
+    #[subenum(GameAction)]
+    Legs,
+    #[subenum(GameAction)]
+    Head,
 
     // Not real actions; just indicate that an AxisPair was used.
     #[actionlike(DualAxis)]
@@ -309,11 +329,14 @@ pub enum UserAction {
 impl From<GameAction> for Action {
     fn from(value: GameAction) -> Self {
         match value {
-            GameAction::Ability0 => Action::Ability0,
-            GameAction::Ability1 => Action::Ability1,
-            GameAction::Ability2 => Action::Ability2,
-            GameAction::Ability3 => Action::Ability3,
-            GameAction::Ability4 => Action::Ability4,
+            GameAction::LeftArm => Action::LeftArm,
+            GameAction::LeftArmSecondary => Action::LeftArmSecondary,
+            GameAction::RightArm => Action::RightArm,
+            GameAction::RightArmSecondary => Action::RightArmSecondary,
+            GameAction::LeftShoulder => Action::LeftShoulder,
+            GameAction::RightShoulder => Action::RightShoulder,
+            GameAction::Legs => Action::Legs,
+            GameAction::Head => Action::Head,
         }
     }
 }

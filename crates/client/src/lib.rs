@@ -1,3 +1,4 @@
+use ability::gun::GunPlugin;
 use aim::AimPlugin;
 use bevy::asset::LoadedFolder;
 use bevy::ecs::component::ComponentInfo;
@@ -34,6 +35,7 @@ use self::bar::BarPlugin;
 use self::config::ConfigPlugin;
 use self::splash::SplashPlugin;
 
+pub mod ability;
 mod aim;
 mod asset_handler;
 mod bar;
@@ -75,6 +77,8 @@ impl Plugin for GamClientPlugin {
             GraphicsPlugin,
             bevy_hanabi::HanabiPlugin,
         ))
+        // Abilities
+        .add_plugins((GunPlugin,))
         .insert_resource(BackgroundMusic::default())
         .add_systems(Update, background_music_system)
         .add_systems(Startup, world::setup);

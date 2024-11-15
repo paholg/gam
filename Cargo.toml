@@ -27,6 +27,7 @@ bevy_utils = "0.14.2"
 # Non-bevy crates
 bevy_rapier3d = { version = "0.27", features = ["enhanced-determinism"] }
 smallvec = "2.0.0-alpha.7"
+subenum = "1.1.2"
 tracing = "0.1.40"
 
 # Enable a small amount of optimization in debug mode
