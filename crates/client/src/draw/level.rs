@@ -209,8 +209,8 @@ pub fn draw_lights_system(
     if query.iter().next().is_some() {
         return;
     }
-    let altitude = 10.0;
-    let spacing = 15.0;
+    let altitude = 2.0;
+    let spacing = 3.0;
 
     let nx = (level.x / spacing).ceil().max(1.0) as usize;
     let nz = (level.z / spacing).ceil().max(1.0) as usize;
@@ -242,7 +242,7 @@ pub fn draw_lights_system(
                     spot_light: SpotLight {
                         shadows_enabled: true,
                         range: 30.0,
-                        intensity: 4_000_000.0,
+                        intensity: 40_000.0,
                         outer_angle: std::f32::consts::FRAC_PI_3,
                         inner_angle: 0.0,
                         ..Default::default()
