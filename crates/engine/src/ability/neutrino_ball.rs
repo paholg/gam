@@ -1,15 +1,19 @@
 use bevy_ecs::component::Component;
 use bevy_ecs::entity::Entity;
-use bevy_ecs::query::With;
+use bevy_ecs::query::QueryData;
 use bevy_ecs::query::Without;
 use bevy_ecs::system::Commands;
 use bevy_ecs::system::Query;
+use bevy_hierarchy::BuildChildren;
+use bevy_rapier3d::prelude::ActiveEvents;
 use bevy_rapier3d::prelude::Collider;
 use bevy_rapier3d::prelude::ExternalForce;
 use bevy_rapier3d::prelude::LockedAxes;
 use bevy_rapier3d::prelude::ReadMassProperties;
 use bevy_rapier3d::prelude::Sensor;
 use bevy_rapier3d::prelude::Velocity;
+use bevy_transform::bundles::TransformBundle;
+use bevy_transform::components::GlobalTransform;
 use bevy_transform::components::Transform;
 
 use super::properties::NeutrinoBallProps;
@@ -19,12 +23,13 @@ use crate::level::InLevel;
 use crate::status_effect::StatusProps;
 use crate::status_effect::TimeDilation;
 use crate::time::Dur;
+use crate::AbilityOffset;
 use crate::FootOffset;
 use crate::Health;
 use crate::Kind;
-use crate::Libm;
 use crate::MassBundle;
 use crate::Object;
+use crate::Shootable;
 use crate::FORWARD;
 use crate::PLAYER_R;
 
@@ -42,22 +47,22 @@ pub fn neutrino_ball(
     props: &NeutrinoBallProps,
     transform: &Transform,
     velocity: &Velocity,
-    foot_offset: &FootOffset,
+    ability_offset: &AbilityOffset,
 ) {
     let mut ball_transform = *transform;
     let dir = transform.rotation * FORWARD;
 
     // Let's spawn this one at the caster's feet.
     ball_transform.translation =
-        transform.translation + dir * (PLAYER_R + props.radius) + foot_offset.to_vec();
+        transform.translation + dir * (PLAYER_R + props.radius * 2.0) + ability_offset.to_vec();
 
     let ball_velocity = velocity.linvel + dir * props.speed;
 
     commands.spawn((
         Object {
             transform: ball_transform.into(),
-            collider: Collider::ball(props.effect_radius),
-            foot_offset: (0.0).into(),
+            collider: Collider::ball(props.radius),
+            foot_offset: (-props.radius).into(),
             mass: MassBundle::new(props.mass()),
             body: bevy_rapier3d::prelude::RigidBody::Dynamic,
             force: ExternalForce::default(),
@@ -70,7 +75,7 @@ pub fn neutrino_ball(
                 capacitance: 1.0,
             }
             .into(),
-            collisions: TrackCollisionBundle::on(),
+            collisions: TrackCollisionBundle::off(),
         },
         NeutrinoBall {
             accel_numerator: props.accel_numerator(),
@@ -80,63 +85,90 @@ pub fn neutrino_ball(
             activates_in: props.activation_delay,
         },
         Health::new_with_delay(0.0, props.duration),
-        Sensor,
+        Shootable,
     ));
 }
 
 #[derive(Component)]
-pub struct NeutrinoBallActivated;
+pub struct NeutrinoBallGravityFieldSpawned;
+
+#[derive(Component)]
+pub struct NeutrinoBallGravityField {
+    accel_numerator: f32,
+}
+
+#[derive(QueryData)]
+#[query_data(mutable)]
+pub struct ActivationQuery {
+    entity: Entity,
+    neutrino_ball: &'static mut NeutrinoBall,
+    foot_offset: &'static FootOffset,
+    time_dilation: &'static TimeDilation,
+}
 
 pub fn activation_system(
     mut commands: Commands,
-    mut neutrino_q: Query<
-        (Entity, &mut NeutrinoBall, &TimeDilation),
-        Without<NeutrinoBallActivated>,
-    >,
+    mut neutrino_q: Query<ActivationQuery, Without<NeutrinoBallGravityFieldSpawned>>,
 ) {
-    for (entity, mut ball, time_dilation) in &mut neutrino_q {
-        if ball.activates_in.tick(time_dilation) {
-            commands.entity(entity).insert(NeutrinoBallActivated);
+    for mut q in &mut neutrino_q {
+        if q.neutrino_ball.activates_in.tick(q.time_dilation) {
+            commands
+                .entity(q.entity)
+                .insert(NeutrinoBallGravityFieldSpawned)
+                .with_children(|builder| {
+                    builder.spawn((
+                        NeutrinoBallGravityField {
+                            accel_numerator: q.neutrino_ball.accel_numerator,
+                        },
+                        *q.foot_offset,
+                        TransformBundle::default(),
+                        ActiveEvents::COLLISION_EVENTS,
+                        TrackCollisions::default(),
+                        Collider::ball(q.neutrino_ball.effect_radius),
+                        Sensor,
+                    ));
+                });
         }
     }
 }
 
-pub fn collision_system(
-    neutrino_q: Query<(&NeutrinoBall, &Transform, &TrackCollisions), With<NeutrinoBallActivated>>,
-    mut target_q: Query<(
-        &mut ExternalForce,
-        &Transform,
-        &ReadMassProperties,
-        &TimeDilation,
-    )>,
-) {
-    for (ball, transform, colliding) in &neutrino_q {
-        for &target in &colliding.targets {
-            let Ok((mut force, target_transform, mass, dilation)) = target_q.get_mut(target) else {
+#[derive(QueryData)]
+#[query_data(mutable)]
+pub struct CollisionQuery {
+    field: &'static NeutrinoBallGravityField,
+    global_transform: &'static GlobalTransform,
+    colliding: &'static TrackCollisions,
+}
+
+#[derive(QueryData)]
+#[query_data(mutable)]
+pub struct TargetQuery {
+    force: &'static mut ExternalForce,
+    transform: &'static Transform,
+    mass: &'static ReadMassProperties,
+    dilation: &'static TimeDilation,
+}
+
+pub fn collision_system(neutrino_q: Query<CollisionQuery>, mut target_q: Query<TargetQuery>) {
+    for q in &neutrino_q {
+        for &colliding_entity in &q.colliding.targets {
+            let Ok(mut target) = target_q.get_mut(colliding_entity) else {
                 // TODO: Exclude `Floor` before this. Or maybe it doesn't
                 // matter.
                 // tracing::warn!(?target, "Neutrino ball hit target, but not in query");
                 continue;
             };
-            let translation = transform.translation;
-            let d2 = translation.distance_squared(target_transform.translation);
+            let translation = q.global_transform.translation();
+            let d2 = translation.distance_squared(target.transform.translation);
 
-            let a = if d2 < ball.radius * ball.radius {
-                // Per Gauss' law, if inside the ball's radius, gravity linearly
-                // decreases as we approach the center.
-                let d = Libm::sqrt(d2);
-                let factor = d / ball.radius;
-                factor * ball.surface_a
-            } else {
-                ball.accel_numerator / d2
-            };
-            let f = mass.mass * a;
+            let a = q.field.accel_numerator / d2;
+            let f = target.mass.mass * a;
 
-            let mut dir = (translation - target_transform.translation).normalize();
+            let mut dir = (translation - target.transform.translation).normalize();
             // Let's keep it from letting you fly up, for now.
             dir.y = 0.0;
 
-            force.force += f * dilation.factor() * dir;
+            target.force.force += f * target.dilation.factor() * dir;
         }
     }
 }

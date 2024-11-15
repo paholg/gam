@@ -107,7 +107,7 @@ impl Ability {
         velocity: &Velocity,
         target: &Target,
         ability_offset: &AbilityOffset,
-        foot_offset: &FootOffset,
+        _foot_offset: &FootOffset,
         time_dilation: &mut TimeDilation,
     ) -> bool {
         if cooldowns.is_available(self, time_dilation) && energy.try_use(props.cost(self)) {
@@ -163,7 +163,7 @@ impl Ability {
                 &props.neutrino_ball,
                 transform,
                 velocity,
-                foot_offset,
+                ability_offset,
             ),
             Ability::Transport => transport(commands, entity, &props.transport, transform, target),
             Ability::SpeedUp => speed_up(&props.speed_up, time_dilation),

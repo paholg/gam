@@ -239,14 +239,14 @@ pub struct NeutrinoBallProps {
 impl Default for NeutrinoBallProps {
     fn default() -> Self {
         Self {
-            cost: 50.0,
+            cost: 0.0,
             cooldown: Dur::new(30),
-            radius: 1.0,
+            radius: 0.3,
             effect_radius: 3.0,
             duration: Dur::new(240),
             activation_delay: Dur::new(30),
             speed: 3.0,
-            surface_a: 35.0,
+            surface_a: 300.0,
         }
     }
 }

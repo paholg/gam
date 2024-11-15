@@ -1,6 +1,5 @@
+use bevy::color::palettes::css::BLACK;
 use bevy::math::primitives::Sphere;
-use bevy::prelude::AlphaMode;
-use bevy::prelude::Color;
 use bevy::prelude::Handle;
 use bevy::prelude::Mesh;
 use bevy::prelude::StandardMaterial;
@@ -18,9 +17,8 @@ pub struct NeutrinoBallAssets {
 impl NeutrinoBallAssets {
     pub fn new(builder: &mut Builder) -> Self {
         let neutrino_ball_material = StandardMaterial {
-            base_color: Color::srgba(0.0, 0.0, 0.0, 0.5),
+            base_color: BLACK.into(),
             unlit: true,
-            alpha_mode: AlphaMode::Blend,
             ..Default::default()
         };
 
