@@ -25,6 +25,7 @@ use bevy_math::Vec2;
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::Collider;
 use bevy_rapier3d::prelude::ColliderMassProperties;
+use bevy_rapier3d::prelude::ContactSkin;
 use bevy_rapier3d::prelude::ExternalForce;
 use bevy_rapier3d::prelude::Friction;
 use bevy_rapier3d::prelude::LockedAxes;
@@ -94,6 +95,7 @@ pub const PLAYER_HEIGHT: f32 = 0.75;
 pub const PLAYER_MASS: f32 = 15.0;
 pub const ABILITY_Y: Vec3 = Vec3::new(0.0, 0.4, 0.0);
 pub const PLAYER_ABILITY_COUNT: usize = 5;
+pub const CONTACT_SKIN: ContactSkin = ContactSkin(0.01);
 
 /// Represents the kind of entity this is; used, at least, for effects.
 ///
@@ -331,6 +333,7 @@ pub struct CharacterMarker;
 #[derive(Bundle)]
 struct Character {
     object: Object,
+    contact_skin: ContactSkin,
     health: Health,
     energy: Energy,
     max_speed: MaxSpeed,

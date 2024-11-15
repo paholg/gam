@@ -1,5 +1,6 @@
 use bevy_ecs::component::Component;
 use bevy_ecs::system::Commands;
+use bevy_math::Vec3;
 use bevy_rapier3d::prelude::CoefficientCombineRule;
 use bevy_rapier3d::prelude::Collider;
 use bevy_rapier3d::prelude::ExternalForce;
@@ -27,6 +28,7 @@ use crate::Player;
 use crate::Shootable;
 use crate::Target;
 use crate::ABILITY_Y;
+use crate::CONTACT_SKIN;
 use crate::PLAYER_HEIGHT;
 use crate::PLAYER_MASS;
 use crate::PLAYER_R;
@@ -45,8 +47,6 @@ impl PlayerInfo {
                 self.handle,
                 Ally,
                 Character {
-                    health: Health::new(100.0),
-                    energy: Energy::new(100.0, ENERGY_REGEN),
                     object: Object {
                         collider: character_collider(PLAYER_R, PLAYER_HEIGHT),
                         foot_offset: (-PLAYER_HEIGHT * 0.5).into(),
@@ -65,14 +65,17 @@ impl PlayerInfo {
                         .into(),
                         collisions: TrackCollisionBundle::off(),
                     },
+                    contact_skin: CONTACT_SKIN,
+                    health: Health::new(100.0),
+                    energy: Energy::new(100.0, ENERGY_REGEN),
                     max_speed: Default::default(),
                     friction: Friction {
                         coefficient: 0.0,
                         combine_rule: CoefficientCombineRule::Min,
                     },
                     shootable: Shootable,
-                    abilities: self.abilities.clone(),
                     cooldowns: Cooldowns::new(),
+                    abilities: self.abilities.clone(),
                     desired_movement: Default::default(),
                     ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
                     marker: CharacterMarker,
@@ -84,5 +87,7 @@ impl PlayerInfo {
 }
 
 pub fn character_collider(radius: f32, height: f32) -> Collider {
-    Collider::cylinder(height * 0.5, radius)
+    let half = (height * 0.5 - radius) * Vec3::Y;
+    debug_assert!(half.y > 0.0);
+    Collider::capsule(-half, half, radius)
 }

@@ -55,11 +55,7 @@ pub fn draw_player_system(
                     PbrBundle {
                         mesh: assets.player.outline_mesh.clone(),
                         material: assets.player.outline_material.clone(),
-                        transform: in_plane().with_translation(Vec3::new(
-                            0.0,
-                            foot_offset.y + 0.01,
-                            0.0,
-                        )),
+                        transform: in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
                         ..Default::default()
                     },
                     NotShadowCaster,
@@ -85,11 +81,7 @@ pub fn draw_enemy_system(
                 PbrBundle {
                     mesh: assets.enemy.outline_mesh.clone(),
                     material: assets.enemy.outline_material.clone(),
-                    transform: in_plane().with_translation(Vec3::new(
-                        0.0,
-                        foot_offset.y + 0.01,
-                        0.0,
-                    )),
+                    transform: in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
                     ..Default::default()
                 },
                 NotShadowCaster,
@@ -121,11 +113,7 @@ pub fn draw_ally_system(
                 PbrBundle {
                     mesh: assets.ally.outline_mesh.clone(),
                     material: assets.ally.outline_material.clone(),
-                    transform: in_plane().with_translation(Vec3::new(
-                        0.0,
-                        foot_offset.y + 0.01,
-                        0.0,
-                    )),
+                    transform: in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
                     ..Default::default()
                 },
                 NotShadowCaster,
