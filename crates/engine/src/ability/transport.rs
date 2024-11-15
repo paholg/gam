@@ -61,6 +61,7 @@ pub fn transport(
             velocity: Velocity::default(),
             in_level: InLevel,
             foot_offset: 0.0.into(),
+            // TODO: Why does this have mass?
             mass: MassBundle::new(10_000.0),
             force: ExternalForce::default(),
             statuses: StatusProps {

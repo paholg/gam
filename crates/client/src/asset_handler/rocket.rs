@@ -17,7 +17,7 @@ pub struct SeekerRocketAssets {
 impl SeekerRocketAssets {
     pub fn new(builder: &mut Builder) -> Self {
         let seeker_rocket_material = StandardMaterial {
-            emissive: LinearRgba::rgb(10_000.0, 100.0, 10_000.0),
+            emissive: LinearRgba::rgb(20.0, 1.0, 20.0),
             ..Default::default()
         };
 
