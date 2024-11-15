@@ -6,7 +6,7 @@ on:
     branches:
       - main
 
-name: CI
+name: Check
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -34,6 +34,19 @@ jobs:
         with:
           components: rustfmt
       - run: cargo +nightly fmt --all -- --check
+
+  clippy:
+    name: Clippy
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -D warnings
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install Bevy Deps
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
+      - run: cargo clippy -- -D warnings
     
   test:
     name: Test
@@ -53,5 +66,4 @@ jobs:
       - name: Install Bevy Deps
         run: sudo apt-get update && sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
         if: runner.os == 'linux'
-      - run: cargo clippy -- -D warnings
       - run: cargo test
