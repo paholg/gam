@@ -57,7 +57,7 @@ fn fast_effect() -> EffectAsset {
         value: writer.lit(0.5).expr(),
     };
 
-    EffectAsset::new(vec![32768], spawner, writer.finish())
+    EffectAsset::new(32768, spawner, writer.finish())
         .with_name("hyper_sprint_effect")
         .init(pos)
         .init(vel)
@@ -66,7 +66,7 @@ fn fast_effect() -> EffectAsset {
             gradient: color_gradient,
         })
         .render(SizeOverLifetimeModifier {
-            gradient: Gradient::constant([0.05; 2].into()),
+            gradient: Gradient::constant([0.05; 3].into()),
             screen_space_size: false,
         })
 }

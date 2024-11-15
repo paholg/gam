@@ -5,7 +5,7 @@ use bevy::prelude::Res;
 use bevy::prelude::ResMut;
 use bevy::prelude::Transform;
 use bevy::prelude::Without;
-use bevy_hanabi::EffectSpawner;
+use bevy_hanabi::EffectInitializers;
 use engine::status_effect::TimeDilation;
 use engine::FootOffset;
 
@@ -14,8 +14,8 @@ use crate::asset_handler::AssetHandler;
 pub fn draw_time_dilation_system(
     mut commands: Commands,
     mut assets: ResMut<AssetHandler>,
-    mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
-    query: Query<(&Transform, &FootOffset, &TimeDilation), Without<EffectSpawner>>,
+    mut effects: Query<(&mut Transform, &mut EffectInitializers)>,
+    query: Query<(&Transform, &FootOffset, &TimeDilation), Without<EffectInitializers>>,
     frame: Res<FrameCount>,
 ) {
     let effect = &mut assets.time_dilation.fast_effect;

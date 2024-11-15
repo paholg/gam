@@ -5,7 +5,7 @@ use bevy::prelude::Query;
 use bevy::prelude::Res;
 use bevy::prelude::ResMut;
 use bevy::prelude::Transform;
-use bevy_hanabi::EffectSpawner;
+use bevy_hanabi::EffectInitializers;
 use bevy_kira_audio::prelude::Volume;
 use bevy_kira_audio::Audio;
 use bevy_kira_audio::AudioControl;
@@ -20,7 +20,7 @@ pub fn draw_death_system(
     mut assets: ResMut<AssetHandler>,
     audio: Res<Audio>,
     config: Res<Config>,
-    mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
+    mut effects: Query<(&mut Transform, &mut EffectInitializers)>,
     mut event_reader: EventReader<DeathEvent>,
     frame: Res<FrameCount>,
 ) {

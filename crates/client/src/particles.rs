@@ -3,7 +3,7 @@ use bevy::prelude::Commands;
 use bevy::prelude::Entity;
 use bevy::prelude::Query;
 use bevy::prelude::Transform;
-use bevy_hanabi::EffectSpawner;
+use bevy_hanabi::EffectInitializers;
 use bevy_hanabi::ParticleEffectBundle;
 
 /// A wrapper around `ParticleEffectBundle` that allows spawning multiple copies
@@ -50,7 +50,7 @@ impl ParticleEffectPool {
         &mut self,
         commands: &mut Commands,
         transform: Transform,
-        effects: &mut Query<(&mut Transform, &mut EffectSpawner)>,
+        effects: &mut Query<(&mut Transform, &mut EffectInitializers)>,
         frame: &FrameCount,
     ) {
         if self.last_run != frame.0 {

@@ -3,7 +3,6 @@ use bevy::math::primitives::Sphere;
 use bevy::prelude::Handle;
 use bevy::prelude::Mesh;
 use bevy::prelude::StandardMaterial;
-use bevy::prelude::Vec2;
 use bevy::prelude::Vec3;
 use bevy::prelude::Vec4;
 use bevy_hanabi::Attribute;
@@ -68,9 +67,9 @@ fn bullet_effect(props: &GunProps) -> EffectAsset {
     color_gradient1.add_key(1.0, Vec4::new(4.0, 0.0, 4.0, 0.0));
 
     let mut size_gradient1 = Gradient::new();
-    size_gradient1.add_key(0.0, Vec2::splat(0.1));
-    size_gradient1.add_key(0.3, Vec2::splat(0.1));
-    size_gradient1.add_key(1.0, Vec2::splat(0.0));
+    size_gradient1.add_key(0.0, Vec3::splat(0.1));
+    size_gradient1.add_key(0.3, Vec3::splat(0.1));
+    size_gradient1.add_key(1.0, Vec3::splat(0.0));
 
     let spawner = Spawner::once(250.0.into(), true);
     let writer = ExprWriter::new();
@@ -100,7 +99,7 @@ fn bullet_effect(props: &GunProps) -> EffectAsset {
         drag: writer.lit(5.0).expr(),
     };
 
-    EffectAsset::new(vec![32768], spawner, writer.finish())
+    EffectAsset::new(32768, spawner, writer.finish())
         .with_name("shot_particle_effect")
         .init(pos)
         .init(vel)
