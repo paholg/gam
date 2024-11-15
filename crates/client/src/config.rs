@@ -104,12 +104,7 @@ fn default_controls() -> InputMap<UserAction> {
         .insert_dual_axis(UserAction::Move, GamepadVirtualDPad::DPAD)
         .insert_dual_axis(
             UserAction::Move,
-            KeyboardVirtualDPad::new(
-                KeyCode::KeyE.into(),
-                KeyCode::KeyD.into(),
-                KeyCode::KeyS.into(),
-                KeyCode::KeyF.into(),
-            ),
+            KeyboardVirtualDPad::new(KeyCode::KeyE, KeyCode::KeyD, KeyCode::KeyS, KeyCode::KeyF),
         )
         .insert_dual_axis(UserAction::Aim, GamepadStick::RIGHT)
         .insert(UserAction::Ability0, MouseButton::Left)
