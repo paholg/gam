@@ -52,11 +52,12 @@ fn persistent_ui_setup(mut commands: Commands) {
         .spawn((
             NodeBundle {
                 style: Style {
-                    width: Val::Px(600.0),
-                    height: Val::Px(20.0),
+                    position_type: bevy::ui::PositionType::Absolute,
                     align_items: AlignItems::Start,
-                    justify_content: JustifyContent::Start,
+                    justify_content: JustifyContent::End,
                     flex_direction: FlexDirection::Column,
+                    right: Val::Percent(0.0),
+                    top: Val::Percent(0.0),
                     ..Default::default()
                 },
                 ..Default::default()
