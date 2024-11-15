@@ -1,7 +1,7 @@
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 name: Publish
 
@@ -21,12 +21,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      # Ugh, Github does not allow jobs of different tags to share a cache, even
-      # though they're on the same freaking branch. I am very annoyed.
-      # We could probably set-up a job to build the same way on main, and then I
-      # think tagged jobs could use that cache. So stupid.
-      # Long-term, I think we just build in nix and use cachix or something.
-      # See: https://docs.github.com/en/actions/using-workflows/caching-dependencies-to-speed-up-workflows#restrictions-for-accessing-a-cache
       - uses: Swatinem/rust-cache@v2
       - name: Install Bevy Deps
         run: sudo apt-get update && sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
