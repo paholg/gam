@@ -20,7 +20,7 @@ pub struct GrenadeAssets {
 impl GrenadeAssets {
     pub fn frag(builder: &mut Builder) -> Self {
         let frag_grenade_material = StandardMaterial {
-            emissive: LinearRgba::rgb(10_000.0, 0.0, 100.0),
+            emissive: LinearRgba::rgb(10.0, 0.0, 1.0),
             ..Default::default()
         };
 
@@ -49,7 +49,7 @@ impl GrenadeAssets {
 
     pub fn heal(builder: &mut Builder) -> Self {
         let heal_grenade_material = StandardMaterial {
-            emissive: LinearRgba::rgb(0.0, 10_000.0, 100.0),
+            emissive: LinearRgba::rgb(0.0, 10.0, 1.0),
             ..Default::default()
         };
 

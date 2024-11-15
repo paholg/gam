@@ -17,10 +17,10 @@ pub struct TransportAssets {
 impl TransportAssets {
     pub fn new(builder: &mut Builder) -> Self {
         let gradient = ColorGradient::new([
-            (0.0, LinearRgba::new(0.0, 0.0, 100.0, 0.1)),
-            (0.5, LinearRgba::new(0.0, 50.0, 100.0, 0.4)),
-            (0.8, LinearRgba::new(0.0, 100.0, 100.0, 0.8)),
-            (1.0, LinearRgba::new(0.0, 1_000.0, 1_000.0, 0.8)),
+            (0.0, LinearRgba::new(0.0, 0.0, 2.0, 0.1)),
+            (0.5, LinearRgba::new(0.0, 1.0, 2.0, 0.4)),
+            (0.8, LinearRgba::new(0.0, 5.0, 5.0, 0.4)),
+            (1.0, LinearRgba::new(0.0, 100.0, 100.0, 0.6)),
         ]);
         let base_color = gradient.get(0.0);
         Self {
