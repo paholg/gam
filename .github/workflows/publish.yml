@@ -18,7 +18,7 @@ defaults:
 jobs:
   prepare_release:
     name: Prepare Release
-    if: ${{ github.event.workflow_run.conclusion == 'success' }
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ${{ matrix.config.os }}
     strategy:
       matrix:
