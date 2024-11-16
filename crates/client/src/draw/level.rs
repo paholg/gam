@@ -242,7 +242,7 @@ pub fn draw_lights_system(
                     spot_light: SpotLight {
                         shadows_enabled: true,
                         range: 30.0,
-                        intensity: 4000_000.0,
+                        intensity: 4_000_000.0,
                         outer_angle: std::f32::consts::FRAC_PI_3,
                         inner_angle: 0.0,
                         ..Default::default()
