@@ -53,6 +53,15 @@ use crate::Config;
 pub struct GunPlugin;
 
 #[derive(Resource)]
+struct BulletAssets {
+    mesh: Handle<Mesh>,
+    material: Handle<StandardMaterial>,
+    collision_effect: ParticleEffectPool,
+    spawn_sound: Handle<AudioSource>,
+    despawn_sound: Handle<AudioSource>,
+}
+
+#[derive(Resource)]
 struct GunDeathCallback {
     system: SystemId<Entity>,
 }
@@ -131,21 +140,12 @@ fn draw_bullet_system(
         ecmds.insert((
             ClientDeathCallback::new(death_callback.system),
             ObjectGraphics {
-                material: assets.material.clone(),
-                mesh: assets.mesh.clone(),
+                material: assets.material.clone_weak(),
+                mesh: assets.mesh.clone_weak(),
                 ..Default::default()
             },
         ));
     }
-}
-
-#[derive(Resource)]
-struct BulletAssets {
-    mesh: Handle<Mesh>,
-    material: Handle<StandardMaterial>,
-    collision_effect: ParticleEffectPool,
-    spawn_sound: Handle<AudioSource>,
-    despawn_sound: Handle<AudioSource>,
 }
 
 fn bullet_effect(props: &GunProps) -> EffectAsset {

@@ -1,3 +1,4 @@
+use ability::gravity_ball::GravityBallPlugin;
 use ability::gun::GunPlugin;
 use aim::AimPlugin;
 use bevy::asset::LoadedFolder;
@@ -78,7 +79,7 @@ impl Plugin for GamClientPlugin {
             bevy_hanabi::HanabiPlugin,
         ))
         // Abilities
-        .add_plugins((GunPlugin,))
+        .add_plugins((GunPlugin, GravityBallPlugin))
         .insert_resource(BackgroundMusic::default())
         .add_systems(Update, background_music_system)
         .add_systems(Startup, world::setup);

@@ -48,7 +48,7 @@ impl BulletSpawner {
         commands.spawn((
             Object {
                 transform: Transform::from_translation(self.position)
-                    .with_scale(Vec3::new(self.radius, self.radius, self.radius))
+                    .with_scale(Vec3::splat(self.radius))
                     .into(),
                 collider: Collider::ball(self.radius),
                 foot_offset: (-self.radius).into(),

@@ -13,6 +13,7 @@ use subenum::subenum;
 
 pub mod bullet;
 pub mod cooldown;
+pub mod gravity_ball;
 pub mod gun;
 
 pub trait Side: Default + Send + Sync + Clone + Copy + 'static {}

@@ -96,34 +96,6 @@ impl AbilityProps {
         }
     }
 }
-
-#[derive(Debug)]
-pub struct GunProps {
-    pub cost: f32,
-    pub cooldown: Dur,
-    pub duration: Dur,
-    pub speed: f32,
-    pub radius: f32,
-    pub damage: f32,
-    pub mass: f32,
-    pub bullet_health: f32,
-}
-
-impl Default for GunProps {
-    fn default() -> Self {
-        Self {
-            cost: 5.0,
-            cooldown: Dur::new(5),
-            duration: Dur::new(600),
-            speed: 12.0,
-            radius: 0.03,
-            damage: 2.0,
-            bullet_health: 1.0,
-            mass: 0.25,
-        }
-    }
-}
-
 #[derive(Debug)]
 pub struct ShotgunProps {
     pub cost: f32,
@@ -222,48 +194,6 @@ pub struct ExplosionProps {
     pub damage: f32,
     pub force: f32,
     pub kind: ExplosionKind,
-}
-
-#[derive(Debug, Copy, Clone)]
-pub struct NeutrinoBallProps {
-    pub cost: f32,
-    pub cooldown: Dur,
-    pub radius: f32,
-    pub effect_radius: f32,
-    pub duration: Dur,
-    pub activation_delay: Dur,
-    pub speed: f32,
-    pub surface_a: f32,
-}
-
-impl Default for NeutrinoBallProps {
-    fn default() -> Self {
-        Self {
-            cost: 50.0,
-            cooldown: Dur::new(30),
-            radius: 0.3,
-            effect_radius: 3.0,
-            duration: Dur::new(240),
-            activation_delay: Dur::new(30),
-            speed: 3.0,
-            surface_a: 300.0,
-        }
-    }
-}
-
-impl NeutrinoBallProps {
-    /// The acceleration due to this ball will be the result value, divided by
-    /// distance squared.
-    pub fn accel_numerator(&self) -> f32 {
-        self.surface_a * self.radius * self.radius
-    }
-
-    pub fn mass(&self) -> f32 {
-        const G: f32 = 6.674e-11;
-        // Rather than setting the mass, it's more convenient to set the surface
-        // gravity and compute the mass.
-        self.accel_numerator() / G
-    }
 }
 
 #[derive(Debug, Copy, Clone)]

@@ -143,7 +143,7 @@ struct FireQuery<S: Side> {
     transform: &'static Transform,
     velocity: &'static Velocity,
     ability_offset: &'static AbilityOffset,
-    gun_resources: &'static mut Resources<S>,
+    resources: &'static mut Resources<S>,
     time_dilation: &'static TimeDilation,
 }
 fn fire<S: Side>(
@@ -159,10 +159,7 @@ fn fire<S: Side>(
         return;
     }
 
-    if !user
-        .gun_resources
-        .try_use(user.time_dilation, props.cooldown)
-    {
+    if !user.resources.try_use(user.time_dilation, props.cooldown) {
         return;
     }
     user.gcd.set(props.cooldown);
@@ -191,7 +188,7 @@ fn fire<S: Side>(
 #[derive(QueryData)]
 #[query_data(mutable)]
 struct ReloadQuery<S: Side> {
-    gun_resources: &'static mut Resources<S>,
+    resources: &'static mut Resources<S>,
     energy: &'static mut Energy,
     gcd: &'static mut Cooldown,
     time_dilation: &'static TimeDilation,
@@ -205,11 +202,15 @@ fn reload<S: Side>(entity: In<Entity>, mut user_q: Query<ReloadQuery<S>>, props:
         return;
     }
 
+    if !user.resources.cooldown.is_available(user.time_dilation) {
+        return;
+    }
+
     if !user.energy.try_use(props.reload_cost) {
         return;
     };
 
     user.gcd.set(props.reload_gcd);
-    user.gun_resources.ammo = props.ammo;
-    user.gun_resources.cooldown.set(props.reload_cd);
+    user.resources.ammo = props.ammo;
+    user.resources.cooldown.set(props.reload_cd);
 }
