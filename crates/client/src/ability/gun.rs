@@ -4,6 +4,7 @@ use bevy::app::Update;
 use bevy::asset::AssetServer;
 use bevy::asset::Assets;
 use bevy::color::LinearRgba;
+use bevy::core::FrameCount;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::query::Added;
 use bevy::ecs::system::Commands;
@@ -11,16 +12,21 @@ use bevy::ecs::system::Query;
 use bevy::ecs::system::Res;
 use bevy::ecs::system::ResMut;
 use bevy::ecs::system::Resource;
+use bevy::ecs::system::SystemId;
 use bevy::ecs::world::World;
 use bevy::math::primitives::Sphere;
 use bevy::prelude::Handle;
+use bevy::prelude::In;
 use bevy::prelude::Mesh;
 use bevy::prelude::StandardMaterial;
+use bevy::prelude::Transform;
 use bevy::prelude::Vec3;
 use bevy::prelude::Vec4;
+use bevy::prelude::Without;
 use bevy_hanabi::Attribute;
 use bevy_hanabi::ColorOverLifetimeModifier;
 use bevy_hanabi::EffectAsset;
+use bevy_hanabi::EffectInitializers;
 use bevy_hanabi::ExprWriter;
 use bevy_hanabi::Gradient;
 use bevy_hanabi::LinearDragModifier;
@@ -31,19 +37,33 @@ use bevy_hanabi::SetVelocitySphereModifier;
 use bevy_hanabi::ShapeDimension;
 use bevy_hanabi::SizeOverLifetimeModifier;
 use bevy_hanabi::Spawner;
+use bevy_kira_audio::prelude::Volume;
+use bevy_kira_audio::Audio;
+use bevy_kira_audio::AudioControl;
 use bevy_kira_audio::AudioSource;
 use engine::ability::bullet::Bullet;
 use engine::ability::gun::GunProps;
+use engine::lifecycle::ClientDeathCallback;
 use iyes_progress::prelude::AssetsLoading;
 
 use crate::draw::ObjectGraphics;
 use crate::particles::ParticleEffectPool;
+use crate::Config;
 
 pub struct GunPlugin;
 
+#[derive(Resource)]
+struct GunDeathCallback {
+    system: SystemId<Entity>,
+}
+
 impl Plugin for GunPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_systems(Startup, setup)
+        let callback = GunDeathCallback {
+            system: app.register_system(bullet_death_system),
+        };
+        app.insert_resource(callback)
+            .add_systems(Startup, setup)
             .add_systems(Update, draw_bullet_system);
     }
 }
@@ -78,20 +98,44 @@ fn setup(
     commands.add(|world: &mut World| world.insert_resource(bullet));
 }
 
+fn bullet_death_system(
+    In(entity): In<Entity>,
+    query: Query<&Transform, Without<EffectInitializers>>,
+    mut commands: Commands,
+    mut assets: ResMut<BulletAssets>,
+    audio: Res<Audio>,
+    config: Res<Config>,
+    mut effects: Query<(&mut Transform, &mut EffectInitializers)>,
+    frame: Res<FrameCount>,
+) {
+    let effect = &mut assets.collision_effect;
+    let transform = *query.get(entity).unwrap();
+    effect.trigger(&mut commands, transform, &mut effects, &frame);
+
+    let sound = assets.despawn_sound.clone_weak();
+    audio
+        .play(sound)
+        .with_volume(Volume::Decibels(config.sound.effects_volume));
+}
+
 fn draw_bullet_system(
     mut commands: Commands,
     assets: Res<BulletAssets>,
+    death_callback: Res<GunDeathCallback>,
     query: Query<Entity, Added<Bullet>>,
 ) {
     for entity in query.iter() {
         let Some(mut ecmds) = commands.get_entity(entity) else {
             continue;
         };
-        ecmds.insert(ObjectGraphics {
-            material: assets.material.clone(),
-            mesh: assets.mesh.clone(),
-            ..Default::default()
-        });
+        ecmds.insert((
+            ClientDeathCallback::new(death_callback.system),
+            ObjectGraphics {
+                material: assets.material.clone(),
+                mesh: assets.mesh.clone(),
+                ..Default::default()
+            },
+        ));
     }
 }
 
