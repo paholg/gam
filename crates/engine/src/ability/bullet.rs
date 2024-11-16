@@ -23,7 +23,6 @@ use crate::status_effect::StatusProps;
 use crate::status_effect::TimeDilation;
 use crate::time::Dur;
 use crate::Health;
-use crate::Kind;
 use crate::MassBundle;
 use crate::Object;
 use crate::Shootable;
@@ -61,7 +60,6 @@ impl BulletSpawner {
                     angvel: Vec3::ZERO,
                 },
                 locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Y,
-                kind: Kind::Bullet,
                 in_level: InLevel,
                 statuses: StatusProps {
                     thermal_mass: 1.0,

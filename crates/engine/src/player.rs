@@ -28,7 +28,6 @@ use crate::Character;
 use crate::CharacterMarker;
 use crate::Energy;
 use crate::Health;
-use crate::Kind;
 use crate::MassBundle;
 use crate::Object;
 use crate::Player;
@@ -112,7 +111,6 @@ impl PlayerInfo {
                         foot_offset: (-PLAYER_HEIGHT * 0.5).into(),
                         body: RigidBody::Dynamic,
                         locked_axes: LockedAxes::ROTATION_LOCKED,
-                        kind: Kind::Player,
                         transform: Transform::from_xyz(0.0, PLAYER_HEIGHT * 0.5, 0.0).into(),
                         mass: MassBundle::new(PLAYER_MASS),
                         velocity: Velocity::zero(),

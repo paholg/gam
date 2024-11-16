@@ -16,7 +16,6 @@ use bevy::prelude::Resource;
 use bevy::prelude::Update;
 use bevy::reflect::Reflect;
 use directories::ProjectDirs;
-use engine::ability::Ability;
 use engine::multiplayer::Action;
 use engine::player::AbilityIds;
 use engine::Player;

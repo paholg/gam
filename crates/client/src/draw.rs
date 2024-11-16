@@ -7,6 +7,7 @@ use bevy::prelude::StandardMaterial;
 use bevy::prelude::Update;
 use bevy::prelude::ViewVisibility;
 use bevy::prelude::Visibility;
+use character::CharacterPlugin;
 
 mod character;
 mod death;
@@ -28,12 +29,6 @@ impl Plugin for DrawPlugin {
         app.add_systems(
             Update,
             (
-                (
-                    raycast_scene::raycast_scene_system,
-                    character::draw_player_system,
-                    character::draw_enemy_system,
-                    character::draw_ally_system,
-                ),
                 // (
                 //     bullet::draw_bullet_system,
                 //     grenade::draw_grenade_system,
@@ -45,6 +40,7 @@ impl Plugin for DrawPlugin {
                 //     transport::update_transport_system,
                 // ),
                 (
+                    raycast_scene::raycast_scene_system,
                     time_dilation::draw_time_dilation_system,
                     temperature::draw_temperature_system,
                     temperature::update_temperature_system,
@@ -54,13 +50,9 @@ impl Plugin for DrawPlugin {
                     level::update_wall_system,
                     level::draw_lights_system,
                 ),
-                (
-                    death::draw_death_system,
-                    // explosion::draw_explosion_system,
-                    // explosion::update_explosion_system,
-                ),
             ),
-        );
+        )
+        .add_plugins(CharacterPlugin);
     }
 }
 

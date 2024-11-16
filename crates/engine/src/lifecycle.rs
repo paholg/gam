@@ -1,12 +1,12 @@
+use bevy_ecs::component::Component;
 use bevy_ecs::entity::Entity;
-use bevy_ecs::event::Event;
-use bevy_ecs::event::EventWriter;
 use bevy_ecs::query::QueryData;
 use bevy_ecs::query::With;
 use bevy_ecs::system::Commands;
 use bevy_ecs::system::Query;
 use bevy_ecs::system::Res;
 use bevy_ecs::system::ResMut;
+use bevy_ecs::system::SystemId;
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::CoefficientCombineRule;
@@ -37,7 +37,6 @@ use crate::Enemy;
 use crate::Energy;
 use crate::FootOffset;
 use crate::Health;
-use crate::Kind;
 use crate::MassBundle;
 use crate::NumAi;
 use crate::Object;
@@ -51,10 +50,19 @@ use crate::PLAYER_R;
 
 pub const DEATH_Y: f32 = -2.0;
 
-#[derive(Debug, Event)]
-pub struct DeathEvent {
-    pub transform: Transform,
-    pub kind: Kind,
+/// A callback to run when something dies.
+///
+/// This is reserved for the client; if we need another callback for logic, we
+/// can add one, or make it an array or something.
+#[derive(Debug, Component)]
+pub struct ClientDeathCallback {
+    system: SystemId<Entity>,
+}
+
+impl ClientDeathCallback {
+    pub fn new(system: SystemId<Entity>) -> Self {
+        Self { system }
+    }
 }
 
 pub fn fall(mut query: Query<(&mut Health, &Transform, &FootOffset)>) {
@@ -71,30 +79,19 @@ pub struct DieQuery {
     entity: Entity,
     health: &'static mut Health,
     transform: &'static Transform,
-    kind: &'static Kind,
-    // death_callback: Option<&'static DeathCallback>,
+    death_callback: Option<&'static ClientDeathCallback>,
     dilation: &'static TimeDilation,
 }
-pub fn die(
-    mut commands: Commands,
-    mut query: Query<DieQuery>,
-    mut event_writer: EventWriter<DeathEvent>,
-    tick_counter: Res<FrameCounter>,
-) {
-    let events = query.iter_mut().filter_map(|mut q| {
+pub fn die(mut commands: Commands, mut query: Query<DieQuery>, tick_counter: Res<FrameCounter>) {
+    for mut q in query.iter_mut() {
         if q.health.cur <= 0.0 && q.health.death_delay.tick(q.dilation) {
             tracing::debug!(tick = ?tick_counter.frame, ?q.entity, ?q.health, ?q.transform, "DEATH");
-            // FIXME
-            // if let Some(callback) = q.callback {
-            //     callback.call(&mut commands, &q.transform);
-            // }
+            if let Some(callback) = q.death_callback {
+                commands.run_system_with_input(callback.system, q.entity);
+            }
             commands.entity(q.entity).despawn_recursive();
-            Some(DeathEvent { transform: *q.transform, kind: *q.kind })
-        } else {
-            None
         }
-    });
-    event_writer.send_batch(events);
+    }
 }
 
 pub const ENERGY_REGEN: f32 = 0.5;
@@ -127,7 +124,6 @@ fn spawn_enemies(
                         foot_offset: (-PLAYER_HEIGHT * 0.5).into(),
                         body: RigidBody::Dynamic,
                         locked_axes: LockedAxes::ROTATION_LOCKED,
-                        kind: Kind::Enemy,
                         mass: MassBundle::new(PLAYER_MASS),
                         velocity: Velocity::zero(),
                         force: ExternalForce::default(),
@@ -184,7 +180,6 @@ fn spawn_allies(
                         foot_offset: (-PLAYER_HEIGHT * 0.5).into(),
                         body: RigidBody::Dynamic,
                         locked_axes: LockedAxes::ROTATION_LOCKED,
-                        kind: Kind::Ally,
                         mass: MassBundle::new(PLAYER_MASS),
                         velocity: Velocity::zero(),
                         force: ExternalForce::default(),

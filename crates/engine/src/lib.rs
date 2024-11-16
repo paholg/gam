@@ -1,10 +1,8 @@
 use std::fmt;
 
-use ability::bullet::collision_system;
 use ability::cooldown::global_cooldown_tick_system;
 use ability::cooldown::Cooldown;
 use ability::gun::GunPlugin;
-use ability::Ability;
 use ability::AbilityMap;
 use ai::pathfind::PathfindPlugin;
 use bevy_app::App;
@@ -43,12 +41,10 @@ use bevy_time::Time;
 use bevy_transform::bundles::TransformBundle;
 use bevy_transform::components::GlobalTransform;
 use bevy_transform::components::Transform;
-use bevy_utils::HashMap;
 use collision::TrackCollisionBundle;
 use input::check_resume;
 use level::InLevel;
 use level::LevelProps;
-use lifecycle::DeathEvent;
 use movement::DesiredMove;
 use movement::MaxSpeed;
 use multiplayer::PlayerInputs;
@@ -66,7 +62,6 @@ use time::FREQUENCY;
 pub mod ability;
 pub mod ai;
 pub mod collision;
-// pub mod death_callback;
 pub mod debug;
 pub mod input;
 pub mod level;
@@ -100,28 +95,12 @@ pub const ABILITY_Y: Vec3 = Vec3::new(0.0, 0.4, 0.0);
 pub const PLAYER_ABILITY_COUNT: usize = 5;
 pub const CONTACT_SKIN: ContactSkin = ContactSkin(0.01);
 
-/// Represents the kind of entity this is; used, at least, for effects.
-///
-/// All in-game entities should probably have this component.
-#[derive(Component, Debug, Default, Copy, Clone)]
-pub enum Kind {
-    #[default]
-    Other,
-    Player,
-    Enemy,
-    Ally,
-    Bullet,
-    FragGrenade,
-    HealGrenade,
-    SeekerRocket,
-    NeutrinoBall,
-    TransportBeam,
-}
-
 #[derive(Component, Default, Reflect, Debug)]
 pub struct Health {
     pub cur: f32,
     pub max: f32,
+    // This prevents death, ticking every frame below 0 heath. It was added to
+    // have some abilities spawn things that can't die.
     pub death_delay: Dur,
 }
 
@@ -287,7 +266,6 @@ pub struct Object {
     velocity: Velocity,
     force: ExternalForce,
     locked_axes: LockedAxes,
-    kind: Kind,
     in_level: InLevel,
     statuses: StatusBundle,
     collisions: TrackCollisionBundle,
@@ -349,14 +327,6 @@ impl Plugin for GamPlugin {
             .insert_resource(PlayerInputs::default())
             .insert_resource(LevelProps::default())
             .init_resource::<AbilityMap>();
-
-        // Events
-        // TODO: Currently, these events are only used for engine -> client
-        // communication. We should probably come up with a method so that the
-        // server does not need to generate them.
-        // Note: If any events are needed by the server, don't use `add_event`. See
-        // https://bevy-cheatbook.github.io/patterns/manual-event-clear.html
-        app.add_event::<DeathEvent>();
 
         let physics = PhysicsPlugin::new();
 
