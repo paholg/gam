@@ -355,9 +355,9 @@ impl Plugin for GamPlugin {
             (
                 time::frame_counter.in_set(GameSet::Timer),
                 (
+                    time_dilation_tick,
                     temperature_tick,
                     charge_tick,
-                    time_dilation_tick,
                     phased_tick,
                     clear_forces,
                     energy_regen,
