@@ -1,3 +1,4 @@
+use bevy_app::Plugin;
 use bevy_ecs::entity::Entity;
 use bevy_ecs::system::In;
 use bevy_ecs::system::IntoSystem;
@@ -7,15 +8,25 @@ use bevy_ecs::world::FromWorld;
 use bevy_ecs::world::World;
 use bevy_reflect::TypePath;
 use bevy_utils::HashMap;
+use gravity_ball::GravityBallPlugin;
+use gun::GunPlugin;
 use serde::Deserialize;
 use serde::Serialize;
 use subenum::subenum;
+use transport::TransportBeamPlugin;
 
 pub mod bullet;
 pub mod cooldown;
 pub mod gravity_ball;
 pub mod gun;
 pub mod transport;
+
+pub struct AbilityPlugin;
+impl Plugin for AbilityPlugin {
+    fn build(&self, app: &mut bevy_app::App) {
+        app.add_plugins((GunPlugin, GravityBallPlugin, TransportBeamPlugin));
+    }
+}
 
 pub trait Side: Default + Send + Sync + Clone + Copy + 'static {}
 #[derive(Debug, Copy, Clone, Default, TypePath)]
