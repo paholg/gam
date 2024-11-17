@@ -197,31 +197,6 @@ pub struct ExplosionProps {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct TransportProps {
-    pub cost: f32,
-    pub cooldown: Dur,
-    pub radius: f32,
-    pub height: f32,
-    pub accel: f32,
-    pub speed: f32,
-    pub delay: Dur,
-}
-
-impl Default for TransportProps {
-    fn default() -> Self {
-        Self {
-            cost: 40.0,
-            cooldown: Dur::new(90),
-            radius: 0.5,
-            height: 2.0,
-            accel: 100.0,
-            speed: 3.0,
-            delay: Dur::new(90),
-        }
-    }
-}
-
-#[derive(Debug, Copy, Clone)]
 pub struct SpeedUpProps {
     pub cost: f32,
     pub cooldown: Dur,

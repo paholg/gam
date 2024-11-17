@@ -4,6 +4,7 @@ use ability::cooldown::global_cooldown_tick_system;
 use ability::cooldown::Cooldown;
 use ability::gravity_ball::GravityBallPlugin;
 use ability::gun::GunPlugin;
+use ability::transport::TransportBeamPlugin;
 use ability::AbilityMap;
 use ai::pathfind::PathfindPlugin;
 use bevy_app::App;
@@ -402,7 +403,7 @@ impl Plugin for GamPlugin {
         app.add_systems(SCHEDULE, (check_resume).run_if(game_paused));
 
         // Ability Plugins
-        app.add_plugins((GunPlugin, GravityBallPlugin));
+        app.add_plugins((GunPlugin, GravityBallPlugin, TransportBeamPlugin));
 
         // TODO: This seems to currently be required so rapier does not miss
         // events, but it is likely a source of non-determinism.

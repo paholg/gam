@@ -264,7 +264,7 @@ impl Default for PlayerConfig {
                 right_arm: "noop".into(),
                 left_shoulder: "gravity_ball".into(),
                 right_shoulder: "noop".into(),
-                legs: "noop".into(),
+                legs: "transport_beam".into(),
                 head: "noop".into(),
             },
         }

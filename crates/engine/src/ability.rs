@@ -15,6 +15,7 @@ pub mod bullet;
 pub mod cooldown;
 pub mod gravity_ball;
 pub mod gun;
+pub mod transport;
 
 pub trait Side: Default + Send + Sync + Clone + Copy + 'static {}
 #[derive(Debug, Copy, Clone, Default, TypePath)]
