@@ -177,9 +177,9 @@ fn fire<S: Side>(
         mass: props.mass,
         bullet: Bullet {
             shooter: entity,
-            expires_in: props.duration,
             damage: props.damage,
         },
+        lifetime: props.duration,
         health: Health::new(props.bullet_health),
     }
     .spawn(&mut commands);

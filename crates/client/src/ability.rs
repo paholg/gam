@@ -1,11 +1,13 @@
 use bevy::app::Plugin;
 use bevy::prelude::Component;
 use gravity_ball::GravityBallPlugin;
+use grenade::GrenadePlugin;
 use gun::GunPlugin;
 use rocket::RocketPlugin;
 use transport::TransportBeamPlugin;
 
 mod gravity_ball;
+pub mod grenade;
 mod gun;
 pub mod rocket;
 mod transport;
@@ -17,10 +19,11 @@ pub struct AbilityPlugin;
 impl Plugin for AbilityPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_plugins((
-            GunPlugin,
             GravityBallPlugin,
-            TransportBeamPlugin,
+            GrenadePlugin,
+            GunPlugin,
             RocketPlugin,
+            TransportBeamPlugin,
         ));
     }
 }

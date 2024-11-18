@@ -382,7 +382,7 @@ impl Plugin for GamPlugin {
                     physics.set3().in_set(GameSet::Physics3),
                 ),
                 (
-                    ability::bullet::despawn_system,
+                    lifecycle::lifetime_system,
                     lifecycle::die,
                     lifecycle::reset,
                     time::debug_frame_system,

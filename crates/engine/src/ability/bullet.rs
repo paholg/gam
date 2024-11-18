@@ -19,6 +19,7 @@ use bevy_transform::components::Transform;
 use crate::collision::TrackCollisionBundle;
 use crate::collision::TrackCollisions;
 use crate::level::InLevel;
+use crate::lifecycle::Lifetime;
 use crate::status_effect::StatusProps;
 use crate::status_effect::TimeDilation;
 use crate::time::Dur;
@@ -34,12 +35,12 @@ pub struct BulletSpawner {
     pub mass: f32,
     pub bullet: Bullet,
     pub health: Health,
+    pub lifetime: Dur,
 }
 
 #[derive(Component)]
 pub struct Bullet {
     pub shooter: Entity,
-    pub expires_in: Dur,
     pub damage: f32,
 }
 
@@ -68,6 +69,7 @@ impl BulletSpawner {
                 .into(),
                 collisions: TrackCollisionBundle::on(),
             },
+            Lifetime::new(self.lifetime),
             Sensor,
             Ccd::enabled(),
             self.health,
@@ -91,17 +93,6 @@ pub fn kickback_system(
             !shooter_v.linvel.is_nan(),
             "NaN velocity after kickback. Bullet: v: {v:?}, m: {m:?}, shooter_m: {shooter_m:?}",
         );
-    }
-}
-
-pub fn despawn_system(
-    mut commands: Commands,
-    mut query: Query<(Entity, &mut Bullet, &TimeDilation)>,
-) {
-    for (entity, mut shot, time_dilation) in query.iter_mut() {
-        if shot.expires_in.tick(time_dilation) {
-            commands.entity(entity).despawn();
-        }
     }
 }
 

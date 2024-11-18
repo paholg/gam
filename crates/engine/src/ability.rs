@@ -10,6 +10,7 @@ use bevy_reflect::TypePath;
 use bevy_utils::HashMap;
 use explosion::ExplosionPlugin;
 use gravity_ball::GravityBallPlugin;
+use grenade::GrenadePlugin;
 use gun::GunPlugin;
 use rocket::RocketPlugin;
 use serde::Deserialize;
@@ -21,6 +22,7 @@ pub mod bullet;
 pub mod cooldown;
 pub mod explosion;
 pub mod gravity_ball;
+pub mod grenade;
 pub mod gun;
 pub mod rocket;
 pub mod transport;
@@ -30,10 +32,11 @@ impl Plugin for AbilityPlugin {
     fn build(&self, app: &mut bevy_app::App) {
         app.add_plugins((
             ExplosionPlugin,
-            GunPlugin,
             GravityBallPlugin,
-            TransportBeamPlugin,
+            GrenadePlugin,
+            GunPlugin,
             RocketPlugin,
+            TransportBeamPlugin,
         ));
     }
 }

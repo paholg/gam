@@ -29,6 +29,7 @@ use crate::player::character_collider;
 use crate::player::PlayerInfo;
 use crate::status_effect::StatusProps;
 use crate::status_effect::TimeDilation;
+use crate::time::Dur;
 use crate::time::FrameCounter;
 use crate::Ally;
 use crate::Character;
@@ -271,5 +272,28 @@ pub fn reset(
             &rapier_context,
             &ability_map,
         );
+    }
+}
+
+/// When this component is attached to something, it will die at the end of the
+/// lifetime.
+///
+/// It must also have `Health` and `TimeDilation` for this to be useful.
+#[derive(Component)]
+pub struct Lifetime {
+    duration: Dur,
+}
+
+impl Lifetime {
+    pub fn new(duration: Dur) -> Self {
+        Self { duration }
+    }
+}
+
+pub fn lifetime_system(mut query: Query<(&mut Lifetime, &mut Health, &TimeDilation)>) {
+    for (mut lifetime, mut health, dilation) in &mut query {
+        if lifetime.duration.tick(dilation) {
+            health.die();
+        }
     }
 }

@@ -24,8 +24,11 @@ use bevy::prelude::With;
 use bevy_rapier3d::prelude::Collider;
 use engine::ability::explosion::Explosion;
 use engine::ability::explosion::ExplosionKind;
+use engine::ability::grenade::FragGrenade;
+use engine::ability::grenade::HealGrenade;
 
 use super::ObjectGraphics;
+use crate::ability::grenade::GrenadeAssets;
 use crate::ability::rocket::RocketAssets;
 use crate::color_gradient::ColorGradient;
 
@@ -72,11 +75,13 @@ fn draw_explosion(
     mut materials: ResMut<Assets<StandardMaterial>>,
     query: Query<(Entity, &Explosion, &Collider), Added<Explosion>>,
     rocket_assets: Res<RocketAssets>,
+    frag_grenade_assets: Res<GrenadeAssets<FragGrenade>>,
+    heal_grenade_assets: Res<GrenadeAssets<HealGrenade>>,
 ) {
     for (entity, explosion, collider) in &query {
         let explosion_assets = match explosion.kind {
-            ExplosionKind::FragGrenade => todo!(),
-            ExplosionKind::HealGrenade => todo!(),
+            ExplosionKind::FragGrenade => &frag_grenade_assets.explosion,
+            ExplosionKind::HealGrenade => &heal_grenade_assets.explosion,
             ExplosionKind::SeekerRocket => &rocket_assets.explosion,
         };
         let radius = collider.as_ball().unwrap().radius();
@@ -108,6 +113,8 @@ fn update_explosion(
     mut query: Query<(&Parent, &Handle<StandardMaterial>), With<ExplosionGraphics>>,
     parent_q: Query<(&Explosion, &Transform)>,
     rocket_assets: Res<RocketAssets>,
+    frag_grenade_assets: Res<GrenadeAssets<FragGrenade>>,
+    heal_grenade_assets: Res<GrenadeAssets<HealGrenade>>,
 ) {
     for (parent, material) in &mut query {
         let Ok((explosion, parent_transform)) = parent_q.get(parent.get()) else {
@@ -122,8 +129,8 @@ fn update_explosion(
 
         let frac = (radius - min_radius) / (max_radius - min_radius);
         let explosion_assets = match explosion.kind {
-            ExplosionKind::FragGrenade => todo!(),
-            ExplosionKind::HealGrenade => todo!(),
+            ExplosionKind::FragGrenade => &frag_grenade_assets.explosion,
+            ExplosionKind::HealGrenade => &heal_grenade_assets.explosion,
             ExplosionKind::SeekerRocket => &rocket_assets.explosion,
         };
 

@@ -262,8 +262,8 @@ impl Default for PlayerConfig {
             ability_ids: AbilityIds {
                 left_arm: "gun".into(),
                 right_arm: "rocket".into(),
-                left_shoulder: "gravity_ball".into(),
-                right_shoulder: "noop".into(),
+                left_shoulder: "frag_grenade".into(),
+                right_shoulder: "gravity_ball".into(),
                 legs: "transport_beam".into(),
                 head: "noop".into(),
             },
