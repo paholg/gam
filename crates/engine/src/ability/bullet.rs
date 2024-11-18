@@ -28,14 +28,21 @@ use crate::MassBundle;
 use crate::Object;
 use crate::Shootable;
 
-pub struct BulletSpawner {
-    pub velocity: Vec3,
-    pub position: Vec3,
+#[derive(Debug, Copy, Clone)]
+pub struct BulletProps {
     pub radius: f32,
     pub mass: f32,
-    pub bullet: Bullet,
-    pub health: Health,
+    pub health: f32,
     pub lifetime: Dur,
+    pub damage: f32,
+}
+
+pub struct BulletSpawner<G> {
+    pub shooter: Entity,
+    pub velocity: Vec3,
+    pub position: Vec3,
+    pub props: BulletProps,
+    pub gun_kind: G,
 }
 
 #[derive(Component)]
@@ -44,16 +51,16 @@ pub struct Bullet {
     pub damage: f32,
 }
 
-impl BulletSpawner {
+impl<G: Component> BulletSpawner<G> {
     pub fn spawn(self, commands: &mut Commands) {
         commands.spawn((
             Object {
                 transform: Transform::from_translation(self.position)
-                    .with_scale(Vec3::splat(self.radius))
+                    .with_scale(Vec3::splat(self.props.radius))
                     .into(),
-                collider: Collider::ball(self.radius),
-                foot_offset: (-self.radius).into(),
-                mass: MassBundle::new(self.mass),
+                collider: Collider::ball(1.0),
+                foot_offset: (-self.props.radius).into(),
+                mass: MassBundle::new(self.props.mass),
                 body: RigidBody::Dynamic,
                 force: ExternalForce::default(),
                 velocity: Velocity {
@@ -69,11 +76,14 @@ impl BulletSpawner {
                 .into(),
                 collisions: TrackCollisionBundle::on(),
             },
-            Lifetime::new(self.lifetime),
+            Lifetime::new(self.props.lifetime),
             Sensor,
             Ccd::enabled(),
-            self.health,
-            self.bullet,
+            Health::new(self.props.health),
+            Bullet {
+                shooter: self.shooter,
+                damage: self.props.damage,
+            },
         ));
     }
 }

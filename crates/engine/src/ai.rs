@@ -14,6 +14,7 @@ use bevy_transform::components::Transform;
 
 use self::pathfind::HasPath;
 use crate::ability::gun::GunProps;
+use crate::ability::gun::StandardGun;
 use crate::face;
 use crate::Faction;
 use crate::Target;
@@ -75,7 +76,7 @@ fn target_closest_system<T: Faction, A: Ai>(
 fn update_target_system<T: Faction, A: Ai>(
     mut ai_q: Query<(&mut Transform, &Velocity, &mut AiTarget, &A), (With<T>, Without<T::Foe>)>,
     target_q: Query<(&Transform, &Velocity), (With<T::Foe>, Without<T>)>,
-    props: Res<GunProps>,
+    props: Res<GunProps<StandardGun>>,
 ) {
     let shot_speed = props.speed;
 

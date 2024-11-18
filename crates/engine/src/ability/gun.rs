@@ -15,7 +15,7 @@ use bevy_ecs::world::World;
 use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
 
-use super::bullet::Bullet;
+use super::bullet::BulletProps;
 use super::bullet::BulletSpawner;
 use super::cooldown::Cooldown;
 use super::noop_ability;
@@ -31,7 +31,6 @@ use crate::time::Dur;
 use crate::AbilityOffset;
 use crate::Energy;
 use crate::GameSet;
-use crate::Health;
 use crate::FORWARD;
 use crate::PLAYER_R;
 use crate::SCHEDULE;
@@ -39,58 +38,80 @@ use crate::SCHEDULE;
 pub struct GunPlugin;
 impl Plugin for GunPlugin {
     fn build(&self, app: &mut bevy_app::App) {
-        app.insert_resource(GunProps::default())
-            .add_systems(Startup, register)
+        app.insert_resource(GunProps::<StandardGun>::default())
+            .add_systems(Startup, register::<StandardGun>)
             .add_systems(
                 SCHEDULE,
-                (cooldown_system::<Left>, cooldown_system::<Right>).in_set(GameSet::Reset),
+                (
+                    cooldown_system::<Left, StandardGun>,
+                    cooldown_system::<Right, StandardGun>,
+                )
+                    .in_set(GameSet::Reset),
             );
     }
 }
 
+pub trait GunKind: Send + Sync + Sized + 'static + Component {
+    fn id() -> AbilityId;
+    fn new() -> Self;
+}
+
+#[derive(Component, Default)]
+pub struct StandardGun;
+
+impl GunKind for StandardGun {
+    fn id() -> AbilityId {
+        AbilityId::from("gun")
+    }
+
+    fn new() -> Self {
+        Self
+    }
+}
+
 #[derive(Debug, Resource)]
-pub struct GunProps {
+pub struct GunProps<G: GunKind> {
     ammo: u32,
     cooldown: Dur,
-    duration: Dur,
     pub speed: f32,
-    pub radius: f32,
-    damage: f32,
-    mass: f32,
-    bullet_health: f32,
     reload_cost: f32,
     reload_gcd: Dur,
     reload_cd: Dur,
+    pub bullet: BulletProps,
+    _marker: PhantomData<G>,
 }
 
-impl Default for GunProps {
+impl<G: GunKind> Default for GunProps<G> {
     fn default() -> Self {
         Self {
             ammo: 30,
             cooldown: Dur::new(5),
-            duration: Dur::new(600),
             speed: 12.0,
-            radius: 0.03,
-            damage: 2.0,
-            bullet_health: 1.0,
-            mass: 0.25,
             reload_cost: 50.0,
             reload_gcd: Dur::new(30),
             reload_cd: Dur::new(120),
+            bullet: BulletProps {
+                radius: 0.03,
+                mass: 0.25,
+                health: 1.0,
+                lifetime: Dur::new(600),
+                damage: 2.0,
+            },
+            _marker: PhantomData,
         }
     }
 }
 
-fn register(world: &mut World) {
-    let id = AbilityId::from("gun");
+fn register<G: GunKind>(world: &mut World) {
+    let id = G::id();
 
     let left = (
-        Ability::new(world, fire::<Left>, setup::<Left>),
-        Ability::new(world, reload::<Left>, noop_ability),
+        Ability::new(world, fire::<Left, G>, setup::<Left, G>),
+        Ability::new(world, reload::<Left, G>, noop_ability),
     );
     let right = (
-        Ability::new(world, fire::<Right>, setup::<Right>),
-        Ability::new(world, reload::<Right>, noop_ability),
+        Ability::new(world, fire::<Right, G>, setup::<Right, G>),
+        Ability::new(world, reload::<Right, G>, noop_ability),
     );
 
     let mut ability_map = world.get_resource_mut::<AbilityMap>().unwrap();
@@ -99,26 +120,26 @@ fn register(world: &mut World) {
     ability_map.register_arm(SideEnum::Right, id, right.0, right.1);
 }
 
-fn cooldown_system<S: Side>(mut query: Query<(&mut Resources<S>, &TimeDilation)>) {
+fn cooldown_system<S: Side, G: GunKind>(mut query: Query<(&mut Resources<S, G>, &TimeDilation)>) {
     for (mut resources, time_dilation) in &mut query {
         resources.cooldown.tick(time_dilation);
     }
 }
 
-fn setup<S: Side>(entity: In<Entity>, mut commands: Commands, props: Res<GunProps>) {
+fn setup<S: Side, G: GunKind>(entity: In<Entity>, mut commands: Commands, props: Res<GunProps<G>>) {
     commands
         .entity(*entity)
-        .try_insert(Resources::<S>::new(&props));
+        .try_insert(Resources::<S, G>::new(&props));
 }
 
 #[derive(Component)]
-pub struct Resources<S: Side> {
+pub struct Resources<S: Side, G: GunKind> {
     cooldown: Cooldown,
     ammo: u32,
-    _marker: PhantomData<S>,
+    _marker: PhantomData<(S, G)>,
 }
-impl<S: Side> Resources<S> {
-    pub fn new(props: &GunProps) -> Self {
+impl<S: Side, G: GunKind> Resources<S, G> {
+    pub fn new(props: &GunProps<G>) -> Self {
         Self {
             cooldown: Cooldown::new(),
             ammo: props.ammo,
@@ -138,19 +159,19 @@ impl<S: Side> Resources<S> {
 }
 #[derive(QueryData)]
 #[query_data(mutable)]
-struct FireQuery<S: Side> {
+struct FireQuery<S: Side, G: GunKind> {
     gcd: &'static mut Cooldown,
     transform: &'static Transform,
     velocity: &'static Velocity,
     ability_offset: &'static AbilityOffset,
-    resources: &'static mut Resources<S>,
+    resources: &'static mut Resources<S, G>,
     time_dilation: &'static TimeDilation,
 }
-fn fire<S: Side>(
+fn fire<S: Side, G: GunKind>(
     In(entity): In<Entity>,
     mut commands: Commands,
-    mut user_q: Query<FireQuery<S>>,
-    props: Res<GunProps>,
+    mut user_q: Query<FireQuery<S, G>>,
+    props: Res<GunProps<G>>,
 ) {
     let Ok(mut user) = user_q.get_mut(entity) else {
         return;
@@ -166,34 +187,33 @@ fn fire<S: Side>(
 
     let dir = user.transform.rotation * FORWARD;
     let position = user.transform.translation
-        + dir * (PLAYER_R + props.radius * 2.0)
+        + dir * (PLAYER_R + props.bullet.radius * 2.0)
         + user.ability_offset.to_vec();
     let velocity = dir * props.speed + user.velocity.linvel;
 
     BulletSpawner {
+        shooter: entity,
         position,
         velocity,
-        radius: props.radius,
-        mass: props.mass,
-        bullet: Bullet {
-            shooter: entity,
-            damage: props.damage,
-        },
-        lifetime: props.duration,
-        health: Health::new(props.bullet_health),
+        props: props.bullet,
+        gun_kind: G::new(),
     }
     .spawn(&mut commands);
 }
 
 #[derive(QueryData)]
 #[query_data(mutable)]
-struct ReloadQuery<S: Side> {
-    resources: &'static mut Resources<S>,
+struct ReloadQuery<S: Side, G: GunKind> {
+    resources: &'static mut Resources<S, G>,
     energy: &'static mut Energy,
     gcd: &'static mut Cooldown,
     time_dilation: &'static TimeDilation,
 }
-fn reload<S: Side>(entity: In<Entity>, mut user_q: Query<ReloadQuery<S>>, props: Res<GunProps>) {
+fn reload<S: Side, G: GunKind>(
+    entity: In<Entity>,
+    mut user_q: Query<ReloadQuery<S, G>>,
+    props: Res<GunProps<G>>,
+) {
     let Ok(mut user) = user_q.get_mut(*entity) else {
         return;
     };

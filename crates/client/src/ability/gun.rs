@@ -42,7 +42,9 @@ use bevy_kira_audio::Audio;
 use bevy_kira_audio::AudioControl;
 use bevy_kira_audio::AudioSource;
 use engine::ability::bullet::Bullet;
+use engine::ability::gun::GunKind;
 use engine::ability::gun::GunProps;
+use engine::ability::gun::StandardGun;
 use engine::lifecycle::ClientDeathCallback;
 use iyes_progress::prelude::AssetsLoading;
 
@@ -72,19 +74,19 @@ impl Plugin for GunPlugin {
             system: app.register_system(bullet_death_system),
         };
         app.insert_resource(callback)
-            .add_systems(Startup, setup)
-            .add_systems(Update, draw_bullet_system);
+            .add_systems(Startup, setup::<StandardGun>)
+            .add_systems(Update, draw_bullet);
     }
 }
 
-fn setup(
+fn setup<G: GunKind>(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut effects: ResMut<Assets<EffectAsset>>,
     asset_server: ResMut<AssetServer>,
     mut loading: ResMut<AssetsLoading>,
-    props: Res<GunProps>,
+    props: Res<GunProps<G>>,
 ) {
     let effect = effects.add(bullet_effect(&props));
     let effect_pool = ParticleEffectBundle::new(effect).into();
@@ -127,7 +129,7 @@ fn bullet_death_system(
         .with_volume(Volume::Decibels(config.sound.effects_volume));
 }
 
-fn draw_bullet_system(
+fn draw_bullet(
     mut commands: Commands,
     assets: Res<BulletAssets>,
     death_callback: Res<GunDeathCallback>,
@@ -148,7 +150,7 @@ fn draw_bullet_system(
     }
 }
 
-fn bullet_effect(props: &GunProps) -> EffectAsset {
+fn bullet_effect<G: GunKind>(props: &GunProps<G>) -> EffectAsset {
     let mut color_gradient1 = Gradient::new();
     color_gradient1.add_key(0.0, Vec4::new(0.0, 4.0, 4.0, 1.0));
     color_gradient1.add_key(0.5, Vec4::new(2.0, 2.0, 4.0, 1.0));
@@ -165,7 +167,7 @@ fn bullet_effect(props: &GunProps) -> EffectAsset {
 
     let pos = SetPositionSphereModifier {
         center: writer.lit(Vec3::ZERO).expr(),
-        radius: writer.lit(props.radius).expr(),
+        radius: writer.lit(props.bullet.radius).expr(),
         dimension: ShapeDimension::Volume,
     };
 
