@@ -8,8 +8,10 @@ use bevy_ecs::world::FromWorld;
 use bevy_ecs::world::World;
 use bevy_reflect::TypePath;
 use bevy_utils::HashMap;
+use explosion::ExplosionPlugin;
 use gravity_ball::GravityBallPlugin;
 use gun::GunPlugin;
+use rocket::RocketPlugin;
 use serde::Deserialize;
 use serde::Serialize;
 use subenum::subenum;
@@ -17,14 +19,22 @@ use transport::TransportBeamPlugin;
 
 pub mod bullet;
 pub mod cooldown;
+pub mod explosion;
 pub mod gravity_ball;
 pub mod gun;
+pub mod rocket;
 pub mod transport;
 
 pub struct AbilityPlugin;
 impl Plugin for AbilityPlugin {
     fn build(&self, app: &mut bevy_app::App) {
-        app.add_plugins((GunPlugin, GravityBallPlugin, TransportBeamPlugin));
+        app.add_plugins((
+            ExplosionPlugin,
+            GunPlugin,
+            GravityBallPlugin,
+            TransportBeamPlugin,
+            RocketPlugin,
+        ));
     }
 }
 
@@ -141,9 +151,11 @@ impl AbilityMap {
         let primary = match self.map.get(&Slot::Arm(side)).and_then(|m| m.get(id)) {
             Some(ability) => ability,
             None => {
-                tracing::error!(
-                    "Missing primary ability for primary arm action {side:?}, id {id:?}"
-                );
+                if id.0 != "noop" {
+                    tracing::error!(
+                        "Missing primary ability for primary arm action {side:?}, id {id:?}"
+                    );
+                }
                 &self.noop
             }
         };
@@ -154,9 +166,11 @@ impl AbilityMap {
         {
             Some(ability) => ability,
             None => {
-                tracing::error!(
-                    "Missing primary ability for secondary arm action {side:?}, id {id:?}"
-                );
+                if id.0 != "noop" {
+                    tracing::error!(
+                        "Missing primary ability for secondary arm action {side:?}, id {id:?}"
+                    );
+                }
                 &self.noop
             }
         };
@@ -169,7 +183,9 @@ impl AbilityMap {
         match self.map.get(&slot).and_then(|m| m.get(id)) {
             Some(ability) => ability,
             None => {
-                tracing::error!("Missing ability for slot {slot:?}, id {id:?}");
+                if id.0 != "noop" {
+                    tracing::error!("Missing ability for slot {slot:?}, id {id:?}");
+                }
                 &self.noop
             }
         }

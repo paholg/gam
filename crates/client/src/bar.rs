@@ -1,5 +1,7 @@
+use std::fmt;
 use std::marker::PhantomData;
 
+use bevy::ecs::query::QueryData;
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::NotShadowReceiver;
 use bevy::prelude::Added;
@@ -63,7 +65,7 @@ impl<T> Default for BarChildMarker<T> {
     }
 }
 
-pub trait HasBar {
+pub trait HasBar: fmt::Debug {
     fn percent(&self) -> f32;
 }
 
@@ -98,13 +100,13 @@ impl<T> Bar<T> {
 
 impl Default for Bar<Health> {
     fn default() -> Self {
-        Self::new(0.18, Vec2::new(0.45, 0.08))
+        Self::new(0.36, Vec2::new(0.45, 0.16))
     }
 }
 
 impl Default for Bar<Energy> {
     fn default() -> Self {
-        Self::new(0.22, Vec2::new(0.45, 0.08))
+        Self::new(0.44, Vec2::new(0.45, 0.16))
     }
 }
 
@@ -174,55 +176,64 @@ impl BarAssets for Energy {
     }
 }
 
+#[derive(QueryData)]
+struct ParentQuery<T: Component> {
+    entity: Entity,
+    global_transform: &'static GlobalTransform,
+    bar: &'static Bar<T>,
+}
+
 fn bar_add_system<T: Component + BarAssets + Default>(
     mut commands: Commands,
     assets: Res<AssetHandler>,
-    parents: Query<(Entity, &Bar<T>), Added<Bar<T>>>,
+    parents: Query<ParentQuery<T>, Added<Bar<T>>>,
 ) {
-    for (parent, bar) in parents.iter() {
+    for parent in parents.iter() {
         let (fg, bg, mesh) = T::assets(&assets);
-        let foreground = commands
-            .spawn((
-                PbrBundle {
-                    material: fg,
-                    mesh: mesh.clone(),
+        let recip_scale = parent.global_transform.compute_transform().scale.recip();
+        let scale = recip_scale * parent.bar.size.extend(1.0);
+
+        commands.entity(parent.entity).with_children(|builder| {
+            builder
+                .spawn(BarBundle::<T> {
                     transform: in_plane()
-                        .with_translation(bar.displacement)
-                        .with_scale(bar.size.extend(1.0)),
+                        .with_translation(parent.bar.displacement * recip_scale)
+                        .with_scale(scale),
                     ..Default::default()
-                },
-                BarChildMarker::<T>::default(),
-                NotShadowCaster,
-                NotShadowReceiver,
-            ))
-            .id();
-        let background = commands
-            .spawn((
-                PbrBundle {
-                    material: bg,
-                    mesh,
-                    transform: in_plane()
-                        .with_translation(bar.displacement - Vec3::new(0.0, BAR_OFFSET_Y, 0.0))
-                        .with_scale(bar.size.extend(1.0)),
-                    ..Default::default()
-                },
-                NotShadowCaster,
-                NotShadowReceiver,
-            ))
-            .id();
-        let bundle = commands.spawn(BarBundle::<T>::default()).id();
-        commands
-            .entity(bundle)
-            .push_children(&[foreground, background]);
-        commands.entity(parent).push_children(&[bundle]);
+                })
+                .with_children(|builder| {
+                    // Foreground
+                    builder.spawn((
+                        PbrBundle {
+                            material: fg,
+                            mesh: mesh.clone(),
+                            ..Default::default()
+                        },
+                        BarChildMarker::<T>::default(),
+                        NotShadowCaster,
+                        NotShadowReceiver,
+                    ));
+                    // Background
+                    builder.spawn((
+                        PbrBundle {
+                            material: bg,
+                            mesh,
+                            ..Default::default()
+                        },
+                        NotShadowCaster,
+                        NotShadowReceiver,
+                    ));
+                });
+        });
     }
 }
 
 // We have a bit of a convoluted hierarchy here:
 // An entity has the quantity we care about, T; entity_q.
-// It has a child with graphics, including the Bar<T>; graphcs_q.
+// It has a child with graphics, including the Bar<T>; graphics_q.
 // That has a child, with our transform; bar_q.
-// Finally, that has children, one of which we need to modify; fgbar_q.
+// That has children; the first is the foreground bar, the second is the
+// background.
 pub fn bar_update_system<T: Component + HasBar>(
     entity_q: Query<(&Transform, &T), (Without<BarMarker<T>>, Without<BarChildMarker<T>>)>,
     graphics_q: Query<
@@ -257,21 +268,22 @@ pub fn bar_update_system<T: Component + HasBar>(
         };
         let percent = quantity.percent();
         let rotation = graphics_transform.rotation.inverse() * entity_transform.rotation.inverse();
+        let scale = (graphics_transform.scale * entity_transform.scale).recip();
         transform.rotation = rotation;
-        transform.translation = rotation * bar.displacement;
+        transform.translation = rotation * bar.displacement * scale;
 
-        // The foreground bar is the first child, so we don't need to iterate over all
-        // of them.
-        if let Some(&child) = children.iter().next() {
-            if let Ok(mut bar_transform) = fgbar_q.get_mut(child) {
-                bar_transform.scale.x = percent * bar.size.x;
-                let offset = bar.size.x * 0.5 * (1.0 - percent);
-                bar_transform.translation = bar.displacement - Vec3::new(offset, 0.0, 0.0);
-            } else {
-                warn!("BarMarker's first child is incorrect!");
-            }
-        } else {
+        // The foreground bar is the first child.
+        let Some(&child) = children.iter().next() else {
             warn!("BarMarker does not have a child");
-        }
+            return;
+        };
+        let Ok(mut bar_transform) = fgbar_q.get_mut(child) else {
+            warn!("BarMarker's first child is incorrect!");
+            return;
+        };
+
+        bar_transform.scale.x = percent;
+        let offset = 0.5 * (1.0 - percent);
+        bar_transform.translation.x = -offset;
     }
 }

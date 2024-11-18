@@ -140,52 +140,6 @@ pub struct GrenadeProps {
     pub mass: f32,
 }
 
-#[derive(Debug)]
-pub struct SeekerRocketProps {
-    pub cost: f32,
-    pub cooldown: Dur,
-    /// Max turn per tick, in radians.
-    pub turning_radius: f32,
-    pub capsule_radius: f32,
-    pub capsule_length: f32,
-    pub health: f32,
-    pub max_speed: MaxSpeed,
-    /// How much energy the rocket has.
-    pub energy: f32,
-    /// How much energy the rocket spends every frame to move.
-    pub energy_cost: f32,
-    pub explosion: ExplosionProps,
-    pub mass: f32,
-}
-
-impl Default for SeekerRocketProps {
-    fn default() -> Self {
-        Self {
-            cost: 30.0,
-            cooldown: Dur::new(30),
-            turning_radius: PI * 0.03,
-            capsule_radius: 0.05,
-            capsule_length: 0.14,
-            health: 3.0,
-            max_speed: MaxSpeed {
-                accel: 1800.0,
-                speed: 8.0,
-            },
-            energy: 10.0,
-            energy_cost: 0.2,
-            explosion: ExplosionProps {
-                min_radius: 0.2,
-                max_radius: 1.2,
-                duration: Dur::new(15),
-                damage: 0.6,
-                force: 300.0,
-                kind: ExplosionKind::SeekerRocket,
-            },
-            mass: 2.0,
-        }
-    }
-}
-
 #[derive(Debug, Copy, Clone)]
 pub struct ExplosionProps {
     pub min_radius: f32,

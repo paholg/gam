@@ -8,18 +8,15 @@ use bevy::prelude::Update;
 use bevy::prelude::ViewVisibility;
 use bevy::prelude::Visibility;
 use character::CharacterPlugin;
+use explosion::ExplosionPlugin;
 
 mod character;
 mod death;
-// mod explosion;
-// mod grenade;
+pub mod explosion;
 mod level;
-// mod neutrino_ball;
 mod raycast_scene;
-// mod rocket;
 mod temperature;
 mod time_dilation;
-// mod transport;
 
 /// A plugin for spawning graphics for newly-created entities.
 pub struct DrawPlugin;
@@ -52,10 +49,12 @@ impl Plugin for DrawPlugin {
                 ),
             ),
         )
-        .add_plugins(CharacterPlugin);
+        .add_plugins((CharacterPlugin, ExplosionPlugin));
     }
 }
 
+// TODO: Remove this. Since graphics are always children now, we should just use
+// PbrBundle.
 #[derive(Bundle, Default)]
 pub struct ObjectGraphics {
     pub material: Handle<StandardMaterial>,

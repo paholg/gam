@@ -129,7 +129,7 @@ impl Health {
     }
 }
 
-#[derive(Component, Default, Reflect)]
+#[derive(Component, Default, Debug, Reflect)]
 pub struct Energy {
     pub cur: f32,
     pub max: f32,

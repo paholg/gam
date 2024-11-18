@@ -51,9 +51,21 @@ use crate::PLAYER_R;
 pub const DEATH_Y: f32 = -2.0;
 
 /// A callback to run when something dies.
+#[derive(Debug, Component)]
+pub(crate) struct DeathCallback {
+    system: SystemId<Entity>,
+}
+
+impl DeathCallback {
+    pub fn new(system: SystemId<Entity>) -> Self {
+        Self { system }
+    }
+}
+
+/// A callback to run when something dies.
 ///
-/// This is reserved for the client; if we need another callback for logic, we
-/// can add one, or make it an array or something.
+/// This one is reserved for the client and should never be created in the
+/// engine.
 #[derive(Debug, Component)]
 pub struct ClientDeathCallback {
     system: SystemId<Entity>,
@@ -79,7 +91,8 @@ pub struct DieQuery {
     entity: Entity,
     health: &'static mut Health,
     transform: &'static Transform,
-    death_callback: Option<&'static ClientDeathCallback>,
+    death_callback: Option<&'static DeathCallback>,
+    client_death_callback: Option<&'static ClientDeathCallback>,
     dilation: &'static TimeDilation,
 }
 pub fn die(mut commands: Commands, mut query: Query<DieQuery>, tick_counter: Res<FrameCounter>) {
@@ -87,6 +100,9 @@ pub fn die(mut commands: Commands, mut query: Query<DieQuery>, tick_counter: Res
         if q.health.cur <= 0.0 && q.health.death_delay.tick(q.dilation) {
             tracing::debug!(tick = ?tick_counter.frame, ?q.entity, ?q.health, ?q.transform, "DEATH");
             if let Some(callback) = q.death_callback {
+                commands.run_system_with_input(callback.system, q.entity);
+            }
+            if let Some(callback) = q.client_death_callback {
                 commands.run_system_with_input(callback.system, q.entity);
             }
             commands.entity(q.entity).despawn_recursive();

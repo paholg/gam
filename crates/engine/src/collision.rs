@@ -38,7 +38,7 @@ pub struct TrackCollisions {
 }
 
 impl TrackCollisions {
-    pub fn remove(&mut self, target: Entity) {
+    fn remove(&mut self, target: Entity) {
         if let Some(idx) = self.targets.iter().position(|&entity| entity == target) {
             self.targets.swap_remove(idx);
         }

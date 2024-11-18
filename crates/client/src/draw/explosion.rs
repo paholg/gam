@@ -1,4 +1,8 @@
+use bevy::app::Plugin;
+use bevy::app::Update;
+use bevy::color::Color;
 use bevy::prelude::Added;
+use bevy::prelude::AlphaMode;
 use bevy::prelude::Assets;
 use bevy::prelude::BuildChildren;
 use bevy::prelude::Commands;
@@ -7,41 +11,74 @@ use bevy::prelude::Entity;
 use bevy::prelude::GlobalTransform;
 use bevy::prelude::Handle;
 use bevy::prelude::InheritedVisibility;
+use bevy::prelude::Mesh;
 use bevy::prelude::Parent;
 use bevy::prelude::Query;
 use bevy::prelude::Res;
 use bevy::prelude::ResMut;
+use bevy::prelude::Sphere;
 use bevy::prelude::StandardMaterial;
 use bevy::prelude::Transform;
 use bevy::prelude::Vec3;
 use bevy::prelude::With;
 use bevy_rapier3d::prelude::Collider;
-use engine::death_callback::Explosion;
-use engine::death_callback::ExplosionKind;
+use engine::ability::explosion::Explosion;
+use engine::ability::explosion::ExplosionKind;
 
 use super::ObjectGraphics;
-use crate::asset_handler::explosion::ExplosionAssets;
-use crate::asset_handler::AssetHandler;
+use crate::ability::rocket::RocketAssets;
+use crate::color_gradient::ColorGradient;
 
 #[derive(Component)]
-pub struct ExplosionGraphics;
+pub struct ExplosionAssets {
+    gradient: ColorGradient,
+    mesh: Handle<Mesh>,
+    material: Handle<StandardMaterial>,
+    // TODO: Add a sound.
+}
 
-fn explosion_assets(assets: &AssetHandler, kind: ExplosionKind) -> &ExplosionAssets {
-    match kind {
-        ExplosionKind::FragGrenade => &assets.frag_grenade.explosion,
-        ExplosionKind::HealGrenade => &assets.heal_grenade.explosion,
-        ExplosionKind::SeekerRocket => &assets.seeker_rocket.explosion,
+impl ExplosionAssets {
+    pub fn new(
+        colors: ColorGradient,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
+    ) -> Self {
+        let initial_color = colors.get(0.0);
+        ExplosionAssets {
+            gradient: colors,
+            mesh: meshes.add(Sphere::new(1.0)),
+            material: materials.add(StandardMaterial {
+                base_color: Color::srgba(0.0, 0.0, 0.0, 0.5),
+                emissive: initial_color,
+                alpha_mode: AlphaMode::Blend,
+                ..Default::default()
+            }),
+        }
     }
 }
 
-pub fn draw_explosion_system(
+pub struct ExplosionPlugin;
+impl Plugin for ExplosionPlugin {
+    fn build(&self, app: &mut bevy::prelude::App) {
+        app.add_systems(Update, (draw_explosion, update_explosion));
+    }
+}
+
+#[derive(Component)]
+struct ExplosionGraphics;
+
+fn draw_explosion(
     mut commands: Commands,
-    assets: Res<AssetHandler>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     query: Query<(Entity, &Explosion, &Collider), Added<Explosion>>,
+    rocket_assets: Res<RocketAssets>,
 ) {
     for (entity, explosion, collider) in &query {
-        let explosion_assets = explosion_assets(&assets, explosion.kind);
+        let explosion_assets = match explosion.kind {
+            ExplosionKind::FragGrenade => todo!(),
+            ExplosionKind::HealGrenade => todo!(),
+            ExplosionKind::SeekerRocket => &rocket_assets.explosion,
+        };
         let radius = collider.as_ball().unwrap().radius();
 
         // Clone the material because we're going to mutate it. Probably we
@@ -66,28 +103,31 @@ pub fn draw_explosion_system(
     }
 }
 
-pub fn update_explosion_system(
-    assets: Res<AssetHandler>,
+fn update_explosion(
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut query: Query<(&Parent, &mut Transform, &Handle<StandardMaterial>), With<ExplosionGraphics>>,
-    parent_q: Query<(&Explosion, &Collider)>,
+    mut query: Query<(&Parent, &Handle<StandardMaterial>), With<ExplosionGraphics>>,
+    parent_q: Query<(&Explosion, &Transform)>,
+    rocket_assets: Res<RocketAssets>,
 ) {
-    for (parent, mut transform, material) in &mut query {
-        let Ok((explosion, collider)) = parent_q.get(parent.get()) else {
+    for (parent, material) in &mut query {
+        let Ok((explosion, parent_transform)) = parent_q.get(parent.get()) else {
             tracing::warn!("ExplosionGraphics missing parent");
             continue;
         };
-        let radius = collider.as_ball().unwrap().radius();
+        // Assume scale is same in all dimensions.
+        let radius = parent_transform.scale.x;
 
         let min_radius = explosion.min_radius;
         let max_radius = explosion.max_radius;
 
         let frac = (radius - min_radius) / (max_radius - min_radius);
-        let explosion_assets = explosion_assets(&assets, explosion.kind);
+        let explosion_assets = match explosion.kind {
+            ExplosionKind::FragGrenade => todo!(),
+            ExplosionKind::HealGrenade => todo!(),
+            ExplosionKind::SeekerRocket => &rocket_assets.explosion,
+        };
 
         let color = explosion_assets.gradient.get(frac);
         materials.get_mut(material).unwrap().emissive = color;
-
-        transform.scale = Vec3::splat(radius);
     }
 }
