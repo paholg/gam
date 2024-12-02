@@ -21,6 +21,7 @@ use crate::collision::TrackCollisions;
 use crate::level::InLevel;
 use crate::lifecycle::Lifetime;
 use crate::status_effect::StatusProps;
+use crate::status_effect::Temperature;
 use crate::status_effect::TimeDilation;
 use crate::time::Dur;
 use crate::Health;
@@ -35,6 +36,7 @@ pub struct BulletProps {
     pub health: f32,
     pub lifetime: Dur,
     pub damage: f32,
+    pub heat: f32,
 }
 
 pub struct BulletSpawner<G> {
@@ -49,6 +51,7 @@ pub struct BulletSpawner<G> {
 pub struct Bullet {
     pub shooter: Entity,
     pub damage: f32,
+    pub heat: f32,
 }
 
 impl<G: Component> BulletSpawner<G> {
@@ -83,6 +86,7 @@ impl<G: Component> BulletSpawner<G> {
             Bullet {
                 shooter: self.shooter,
                 damage: self.props.damage,
+                heat: self.props.heat,
             },
         ));
     }
@@ -114,7 +118,7 @@ pub fn collision_system(
         &Velocity,
         &TrackCollisions,
     )>,
-    mut health_q: Query<(&mut Health, &TimeDilation), Without<Bullet>>,
+    mut health_q: Query<(&mut Health, &mut Temperature, &TimeDilation), Without<Bullet>>,
     mut momentum_q: Query<(&mut Velocity, &ReadMassProperties), Without<Bullet>>,
     shootable_q: Query<(), With<Shootable>>,
 ) {
@@ -124,8 +128,9 @@ pub fn collision_system(
             if shootable_q.get(target).is_ok() {
                 should_die = true;
             }
-            if let Ok((mut health, dilation)) = health_q.get_mut(target) {
+            if let Ok((mut health, mut temperature, dilation)) = health_q.get_mut(target) {
                 health.take(bullet.damage, dilation);
+                temperature.heat(bullet.heat);
             }
 
             if let Ok((mut velocity, mass)) = momentum_q.get_mut(target) {

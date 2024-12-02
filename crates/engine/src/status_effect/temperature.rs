@@ -6,9 +6,8 @@ use super::TimeDilation;
 use crate::time::TIMESTEP;
 use crate::Health;
 
-const TEMP_LOSS_FACTOR: f32 = 1.0 * TIMESTEP;
-
-const FIRE_DAMAGE_FACTOR: f32 = 1.0 * TIMESTEP;
+const TEMP_LOSS_FACTOR: f32 = 0.4 * TIMESTEP;
+const FIRE_DAMAGE_FACTOR: f32 = 0.7 * TIMESTEP;
 
 /// Temperature is measured as an abstract effect, rather than a number in
 /// degress or Kelvin.

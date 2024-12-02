@@ -39,12 +39,25 @@ pub struct GunPlugin;
 impl Plugin for GunPlugin {
     fn build(&self, app: &mut bevy_app::App) {
         app.insert_resource(GunProps::<StandardGun>::default())
-            .add_systems(Startup, register::<StandardGun>)
+            .insert_resource(GunProps::<FireGun>::default())
+            .insert_resource(GunProps::<ColdGun>::default())
+            .add_systems(
+                Startup,
+                (
+                    register::<StandardGun>,
+                    register::<FireGun>,
+                    register::<ColdGun>,
+                ),
+            )
             .add_systems(
                 SCHEDULE,
                 (
                     cooldown_system::<Left, StandardGun>,
                     cooldown_system::<Right, StandardGun>,
+                    cooldown_system::<Left, FireGun>,
+                    cooldown_system::<Right, FireGun>,
+                    cooldown_system::<Left, ColdGun>,
+                    cooldown_system::<Right, ColdGun>,
                 )
                     .in_set(GameSet::Reset),
             );
@@ -69,6 +82,32 @@ impl GunKind for StandardGun {
     }
 }
 
+#[derive(Component, Default)]
+pub struct FireGun;
+
+impl GunKind for FireGun {
+    fn id() -> AbilityId {
+        AbilityId::from("fire_gun")
+    }
+
+    fn new() -> Self {
+        Self
+    }
+}
+
+#[derive(Component, Default)]
+pub struct ColdGun;
+
+impl GunKind for ColdGun {
+    fn id() -> AbilityId {
+        AbilityId::from("cold_gun")
+    }
+
+    fn new() -> Self {
+        Self
+    }
+}
+
 #[derive(Debug, Resource)]
 pub struct GunProps<G: GunKind> {
     ammo: u32,
@@ -81,10 +120,54 @@ pub struct GunProps<G: GunKind> {
     _marker: PhantomData<G>,
 }
 
-impl<G: GunKind> Default for GunProps<G> {
+impl Default for GunProps<StandardGun> {
     fn default() -> Self {
         Self {
-            ammo: 30,
+            ammo: 100,
+            cooldown: Dur::new(5),
+            speed: 12.0,
+            reload_cost: 50.0,
+            reload_gcd: Dur::new(30),
+            reload_cd: Dur::new(120),
+            bullet: BulletProps {
+                radius: 0.03,
+                mass: 0.5,
+                health: 1.0,
+                lifetime: Dur::new(600),
+                damage: 2.0,
+                heat: 0.0,
+            },
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl Default for GunProps<FireGun> {
+    fn default() -> Self {
+        Self {
+            ammo: 100,
+            cooldown: Dur::new(5),
+            speed: 12.0,
+            reload_cost: 50.0,
+            reload_gcd: Dur::new(30),
+            reload_cd: Dur::new(120),
+            bullet: BulletProps {
+                radius: 0.05,
+                mass: 0.5,
+                health: 1.0,
+                lifetime: Dur::new(20),
+                damage: 0.0,
+                heat: 2.0,
+            },
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl Default for GunProps<ColdGun> {
+    fn default() -> Self {
+        Self {
+            ammo: 100,
             cooldown: Dur::new(5),
             speed: 12.0,
             reload_cost: 50.0,
@@ -95,7 +178,8 @@ impl<G: GunKind> Default for GunProps<G> {
                 mass: 0.25,
                 health: 1.0,
                 lifetime: Dur::new(600),
-                damage: 2.0,
+                damage: 0.0,
+                heat: -3.0,
             },
             _marker: PhantomData,
         }
@@ -183,7 +267,7 @@ fn fire<S: Side, G: GunKind>(
     if !user.resources.try_use(user.time_dilation, props.cooldown) {
         return;
     }
-    user.gcd.set(props.cooldown);
+    // user.gcd.set(props.cooldown);
 
     let dir = user.transform.rotation * FORWARD;
     let position = user.transform.translation
