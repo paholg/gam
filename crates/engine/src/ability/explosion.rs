@@ -5,11 +5,10 @@ use bevy_ecs::schedule::IntoSystemConfigs;
 use bevy_ecs::system::Commands;
 use bevy_ecs::system::In;
 use bevy_ecs::system::Query;
-use bevy_ecs::system::Res;
 use bevy_ecs::system::Resource;
 use bevy_ecs::system::SystemId;
 use bevy_math::Vec3;
-use bevy_rapier3d::plugin::RapierContext;
+use bevy_rapier3d::plugin::ReadDefaultRapierContext;
 use bevy_rapier3d::prelude::Collider;
 use bevy_rapier3d::prelude::ExternalForce;
 use bevy_rapier3d::prelude::LockedAxes;
@@ -49,7 +48,7 @@ impl Plugin for ExplosionPlugin {
 
 #[derive(Resource)]
 pub struct ExplosionCallback {
-    pub system: SystemId<Entity>,
+    pub system: SystemId<In<Entity>>,
 }
 
 #[derive(Debug, Copy, Clone, Component)]
@@ -80,7 +79,7 @@ pub struct Explosion {
     pub kind: ExplosionKind,
 }
 
-impl<'a> From<&'a ExplosionProps> for Explosion {
+impl From<&ExplosionProps> for Explosion {
     fn from(props: &ExplosionProps) -> Self {
         Self {
             damage: props.damage,
@@ -107,7 +106,7 @@ fn explosion_callback(
         // TODO: This should not be an Object, a lot of these things don't
         // make sense.
         Object {
-            transform: (transform).into(),
+            transform: (transform),
             collider: Collider::ball(1.0),
             // Foot offset doesn't really make sense for an explosion, I think.
             foot_offset: 0.0.into(),
@@ -140,7 +139,7 @@ fn explosion_grow_system(mut explosion_q: Query<(&Explosion, &mut Transform, &Ti
 }
 
 fn explosion_collision_system(
-    rapier_context: Res<RapierContext>,
+    rapier_context: ReadDefaultRapierContext,
     explosion_q: Query<(&Explosion, &Transform, &TrackCollisions, &TimeDilation)>,
     mut target_q: Query<(&Transform, &mut Health, &mut ExternalForce, &TimeDilation)>,
 ) {

@@ -1,5 +1,6 @@
 use bevy::prelude::Added;
 use bevy::prelude::BuildChildren;
+use bevy::prelude::ChildBuild;
 use bevy::prelude::Color;
 use bevy::prelude::Commands;
 use bevy::prelude::Component;
@@ -8,23 +9,22 @@ use bevy::prelude::Gizmos;
 use bevy::prelude::Plugin;
 use bevy::prelude::Query;
 use bevy::prelude::Res;
-use bevy::prelude::TextBundle;
+use bevy::prelude::Text;
 use bevy::prelude::Update;
 use bevy::prelude::With;
-use bevy::text::Text;
-use bevy::text::TextStyle;
+use bevy::text::TextColor;
+use bevy::text::TextFont;
 use engine::ai::pathfind::HasPath;
 use engine::debug::DebugText;
-use rand::thread_rng;
 use rand::Rng;
 
 use crate::ui::hud::Hud;
 use crate::ui::hud::TEXT_COLOR;
 
 fn rand_color() -> Color {
-    let mut rng = thread_rng();
+    let mut rng = rand::rng();
 
-    let mut gen = || rng.gen_range(0.0..=1.0);
+    let mut gen = || rng.random_range(0.0..=1.0);
 
     Color::srgb(gen(), gen(), gen())
 }
@@ -77,14 +77,9 @@ fn debug_text_setup(mut commands: Commands, hud: Query<Entity, Added<Hud>>) {
 
     commands.entity(hud_entity).with_children(|builder| {
         builder.spawn((
-            TextBundle::from_section(
-                "",
-                TextStyle {
-                    font_size: 40.0,
-                    color: TEXT_COLOR,
-                    ..Default::default()
-                },
-            ),
+            Text("".into()),
+            TextFont::from_font_size(40.0),
+            TextColor::from(TEXT_COLOR),
             DebugTextMarker,
         ));
     });
@@ -97,5 +92,5 @@ fn debug_text_update(
     let Ok(mut text) = query.get_single_mut() else {
         return;
     };
-    text.sections[0].value = debug_text.get();
+    text.0 = debug_text.get();
 }

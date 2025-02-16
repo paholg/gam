@@ -7,16 +7,18 @@ use bevy::asset::Assets;
 use bevy::asset::Handle;
 use bevy::color::LinearRgba;
 use bevy::math::Vec3;
+use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::NotShadowReceiver;
-use bevy::pbr::PbrBundle;
 use bevy::pbr::StandardMaterial;
 use bevy::prelude::Added;
 use bevy::prelude::BuildChildren;
+use bevy::prelude::ChildBuild;
 use bevy::prelude::Commands;
 use bevy::prelude::Entity;
 use bevy::prelude::InheritedVisibility;
 use bevy::prelude::Mesh;
+use bevy::prelude::Mesh3d;
 use bevy::prelude::Query;
 use bevy::prelude::Res;
 use bevy::prelude::ResMut;
@@ -122,7 +124,7 @@ fn setup(
         _marker: PhantomData,
     };
 
-    commands.add(|world: &mut World| {
+    commands.queue(|world: &mut World| {
         world.insert_resource(frag_assets);
         world.insert_resource(heal_assets);
     });
@@ -139,11 +141,10 @@ pub fn draw_grenade<G: Grenade>(
         };
         ecmds.insert(InheritedVisibility::default());
         ecmds.with_children(|builder| {
-            builder.spawn(PbrBundle {
-                material: assets.material.clone_weak(),
-                mesh: assets.mesh.clone_weak(),
-                ..Default::default()
-            });
+            builder.spawn((
+                MeshMaterial3d::from(assets.material.clone_weak()),
+                Mesh3d::from(assets.mesh.clone_weak()),
+            ));
         });
     }
 }
@@ -162,14 +163,11 @@ pub fn draw_grenade_outline<G: Grenade>(
                 .insert(HasOutline)
                 .with_children(|builder| {
                     builder.spawn((
-                        PbrBundle {
-                            mesh: assets.outline_mesh.clone_weak(),
-                            material: assets.outline_material.clone_weak(),
-                            transform: in_plane()
-                                .with_translation(Vec3::new(0.0, foot_offset.y + 0.01, 0.0))
-                                .with_scale(transform.scale.recip() * grenade.explosion_radius()),
-                            ..Default::default()
-                        },
+                        Mesh3d::from(assets.outline_mesh.clone_weak()),
+                        MeshMaterial3d::from(assets.outline_material.clone_weak()),
+                        in_plane()
+                            .with_translation(Vec3::new(0.0, foot_offset.y + 0.01, 0.0))
+                            .with_scale(transform.scale.recip() * grenade.explosion_radius()),
                         NotShadowCaster,
                         NotShadowReceiver,
                     ));

@@ -1,14 +1,15 @@
+use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::NotShadowReceiver;
 use bevy::prelude::Added;
 use bevy::prelude::Assets;
 use bevy::prelude::BuildChildren;
+use bevy::prelude::ChildBuild;
 use bevy::prelude::Commands;
 use bevy::prelude::Component;
 use bevy::prelude::Entity;
-use bevy::prelude::Handle;
+use bevy::prelude::Mesh3d;
 use bevy::prelude::Parent;
-use bevy::prelude::PbrBundle;
 use bevy::prelude::Query;
 use bevy::prelude::Res;
 use bevy::prelude::ResMut;
@@ -38,19 +39,16 @@ pub fn draw_temperature_system(
             // Clone material because we'll mutate it.
             let material = materials.get(&assets.temperature.material).unwrap().clone();
             builder.spawn((
-                PbrBundle {
-                    mesh: assets.temperature.mesh.clone(),
-                    material: materials.add(material),
-                    transform: Transform::from_translation(
-                        foot_offset.to_vec() + Vec3::new(0.0, PLAYER_HEIGHT * 0.5, 0.0),
-                    )
-                    .with_scale(Vec3::new(
-                        PLAYER_R * 1.4,
-                        PLAYER_HEIGHT * 0.7,
-                        PLAYER_R * 1.4,
-                    )),
-                    ..Default::default()
-                },
+                Mesh3d(assets.temperature.mesh.clone_weak()),
+                MeshMaterial3d(materials.add(material)),
+                Transform::from_translation(
+                    foot_offset.to_vec() + Vec3::new(0.0, PLAYER_HEIGHT * 0.5, 0.0),
+                )
+                .with_scale(Vec3::new(
+                    PLAYER_R * 1.4,
+                    PLAYER_HEIGHT * 0.7,
+                    PLAYER_R * 1.4,
+                )),
                 NotShadowCaster,
                 NotShadowReceiver,
                 TemperatureGlow,
@@ -62,7 +60,7 @@ pub fn draw_temperature_system(
 pub fn update_temperature_system(
     assets: Res<AssetHandler>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    query: Query<(&Parent, &Handle<StandardMaterial>), With<TemperatureGlow>>,
+    query: Query<(&Parent, &MeshMaterial3d<StandardMaterial>), With<TemperatureGlow>>,
     parent_q: Query<&Temperature>,
 ) {
     for (parent, material) in &query {

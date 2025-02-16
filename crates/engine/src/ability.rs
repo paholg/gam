@@ -74,16 +74,16 @@ pub enum Slot {
 #[derive(Copy, Clone)]
 pub struct Ability {
     /// System to run when this ability is added to an Entity.
-    pub setup: SystemId<Entity>,
+    pub setup: SystemId<In<Entity>>,
     /// Main system when this ability is used.
-    pub fire: SystemId<Entity>,
+    pub fire: SystemId<In<Entity>>,
 }
 
 impl Ability {
     pub fn new<Marker1, Marker2>(
         world: &mut World,
-        system: impl IntoSystem<Entity, (), Marker1> + 'static,
-        setup_system: impl IntoSystem<Entity, (), Marker2> + 'static,
+        system: impl IntoSystem<In<Entity>, (), Marker1> + 'static,
+        setup_system: impl IntoSystem<In<Entity>, (), Marker2> + 'static,
     ) -> Self {
         let system = world.register_system(system);
         let setup_system = world.register_system(setup_system);

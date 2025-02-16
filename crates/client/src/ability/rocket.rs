@@ -4,15 +4,17 @@ use bevy::app::Update;
 use bevy::asset::Assets;
 use bevy::asset::Handle;
 use bevy::color::LinearRgba;
+use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::StandardMaterial;
 use bevy::prelude::Added;
 use bevy::prelude::BuildChildren;
 use bevy::prelude::Capsule3d;
+use bevy::prelude::ChildBuild;
 use bevy::prelude::Commands;
 use bevy::prelude::Entity;
-use bevy::prelude::GlobalTransform;
 use bevy::prelude::InheritedVisibility;
 use bevy::prelude::Mesh;
+use bevy::prelude::Mesh3d;
 use bevy::prelude::Query;
 use bevy::prelude::Res;
 use bevy::prelude::ResMut;
@@ -25,7 +27,6 @@ use engine::Energy;
 use crate::bar::Bar;
 use crate::color_gradient::ColorGradient;
 use crate::draw::explosion::ExplosionAssets;
-use crate::draw::ObjectGraphics;
 use crate::in_plane;
 
 pub struct RocketPlugin;
@@ -68,7 +69,7 @@ fn setup(
             &mut materials,
         ),
     };
-    commands.add(|world: &mut World| world.insert_resource(assets));
+    commands.queue(|world: &mut World| world.insert_resource(assets));
 }
 
 pub fn draw_rocket_system(
@@ -84,14 +85,10 @@ pub fn draw_rocket_system(
 
         ecmds.with_children(|builder| {
             builder.spawn((
-                ObjectGraphics {
-                    material: assets.material.clone(),
-                    mesh: assets.mesh.clone(),
-                    ..Default::default()
-                },
+                MeshMaterial3d::from(assets.material.clone_weak()),
+                Mesh3d::from(assets.mesh.clone_weak()),
                 Bar::<Energy>::new(0.2, Vec2::new(0.15, 0.08)),
                 in_plane(),
-                GlobalTransform::default(),
             ));
         });
     }

@@ -5,10 +5,10 @@ use bevy::color::Alpha;
 use bevy::color::LinearRgba;
 use bevy::prelude::Handle;
 use bevy::prelude::Mesh;
-use bevy::prelude::Scene;
 use bevy::prelude::StandardMaterial;
 use bevy::prelude::Vec3;
 use bevy::prelude::Vec4;
+use bevy::scene::SceneRoot;
 use bevy_hanabi::Attribute;
 use bevy_hanabi::ColorOverLifetimeModifier;
 use bevy_hanabi::EffectAsset;
@@ -30,7 +30,7 @@ use crate::particles::ParticleEffectPool;
 use crate::shapes::HollowPolygon;
 
 pub struct CharacterAssets {
-    pub scene: Handle<Scene>,
+    pub scene: SceneRoot,
     pub outline_mesh: Handle<Mesh>,
     pub outline_material: Handle<StandardMaterial>,
     pub despawn_sound: Handle<AudioSource>,
@@ -63,17 +63,15 @@ impl CharacterAssets {
     fn character(builder: &mut Builder, color: LinearRgba, model_path: &'static str) -> Self {
         // let model = builder.asset_server.load("models/temp/robot1.glb#Scene0");
         let model = builder.asset_server.load(model_path);
-        builder.loading.add(&model);
         let despawn_sound = builder
             .asset_server
             .load("third-party/audio/other/explosionCrunch_000.ogg");
-        builder.loading.add(&despawn_sound);
 
         let despawn_effect = ParticleEffectBundle::new(builder.effects.add(death_effect())).into();
 
         let (outline_mesh, outline_material) = Self::outline(builder, color);
         CharacterAssets {
-            scene: model,
+            scene: SceneRoot(model),
             outline_mesh,
             outline_material,
             despawn_sound,

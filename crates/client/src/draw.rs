@@ -1,12 +1,5 @@
-use bevy::prelude::Bundle;
-use bevy::prelude::Handle;
-use bevy::prelude::InheritedVisibility;
-use bevy::prelude::Mesh;
 use bevy::prelude::Plugin;
-use bevy::prelude::StandardMaterial;
 use bevy::prelude::Update;
-use bevy::prelude::ViewVisibility;
-use bevy::prelude::Visibility;
 use character::CharacterPlugin;
 use explosion::ExplosionPlugin;
 
@@ -14,7 +7,6 @@ mod character;
 mod death;
 pub mod explosion;
 mod level;
-mod raycast_scene;
 mod temperature;
 mod time_dilation;
 
@@ -37,7 +29,6 @@ impl Plugin for DrawPlugin {
                 //     transport::update_transport_system,
                 // ),
                 (
-                    raycast_scene::raycast_scene_system,
                     time_dilation::draw_time_dilation_system,
                     temperature::draw_temperature_system,
                     temperature::update_temperature_system,
@@ -51,15 +42,4 @@ impl Plugin for DrawPlugin {
         )
         .add_plugins((CharacterPlugin, ExplosionPlugin));
     }
-}
-
-// TODO: Remove this. Since graphics are always children now, we should just use
-// PbrBundle.
-#[derive(Bundle, Default)]
-pub struct ObjectGraphics {
-    pub material: Handle<StandardMaterial>,
-    pub mesh: Handle<Mesh>,
-    pub visibility: Visibility,
-    pub inherited_visibility: InheritedVisibility,
-    pub view_visibility: ViewVisibility,
 }

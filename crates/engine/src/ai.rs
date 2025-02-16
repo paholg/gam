@@ -11,8 +11,8 @@ use bevy_ecs::system::Query;
 use bevy_ecs::system::Res;
 use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
+use pathfind::HasPath;
 
-use self::pathfind::HasPath;
 use crate::ability::gun::GunProps;
 use crate::ability::gun::StandardGun;
 use crate::face;

@@ -3,19 +3,17 @@ use bevy_app::Plugin;
 use bevy_ecs::schedule::SystemConfigs;
 use bevy_rapier3d::prelude::NoUserData;
 use bevy_rapier3d::prelude::PhysicsSet;
-use bevy_rapier3d::prelude::RapierConfiguration;
 use bevy_rapier3d::prelude::RapierPhysicsPlugin;
 use bevy_rapier3d::prelude::TimestepMode;
 
 use crate::time::TIMESTEP;
-use crate::UP;
 
 pub type RapierPlugin = RapierPhysicsPlugin<NoUserData>;
 
 pub const G: f32 = 9.81;
 
 pub struct PhysicsPlugin {
-    config: RapierConfiguration,
+    timestep: TimestepMode,
     rapier: RapierPlugin,
 }
 
@@ -27,20 +25,13 @@ impl Default for PhysicsPlugin {
 
 impl PhysicsPlugin {
     pub fn new() -> Self {
-        let config = RapierConfiguration {
-            gravity: UP * (-G),
-            timestep_mode: TimestepMode::Fixed {
-                dt: TIMESTEP,
-                substeps: 1,
-            },
-            physics_pipeline_active: true,
-            query_pipeline_active: true,
-            scaled_shape_subdivision: 10,
-            force_update_from_transform_changes: false,
+        let timestep = TimestepMode::Fixed {
+            dt: TIMESTEP,
+            substeps: 1,
         };
         let rapier = RapierPlugin::default().with_default_system_setup(false);
 
-        Self { config, rapier }
+        Self { rapier, timestep }
     }
 
     pub fn set1(&self) -> SystemConfigs {
@@ -58,7 +49,7 @@ impl PhysicsPlugin {
 
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(self.config);
+        app.insert_resource(self.timestep);
         self.rapier.build(app);
     }
 }

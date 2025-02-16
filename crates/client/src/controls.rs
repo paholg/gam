@@ -122,7 +122,7 @@ pub fn player_input(
     let max = delta.length();
 
     camera_transform.translation +=
-        (delta.normalize_or_zero() * CAMERA_SPEED * time.delta_seconds()).clamp_length_max(max);
+        (delta.normalize_or_zero() * CAMERA_SPEED * time.delta_secs()).clamp_length_max(max);
 }
 
 fn cursor_from_mouse(
@@ -132,7 +132,7 @@ fn cursor_from_mouse(
 ) -> Option<Vec2> {
     let cursor_window = primary_window.cursor_position()?;
 
-    let ray = camera.viewport_to_world(camera_gt, cursor_window)?;
+    let ray = camera.viewport_to_world(camera_gt, cursor_window).ok()?;
     let distance = ray.intersect_plane(ABILITY_Y, UP_PLANE)?;
     let cursor = ray.get_point(distance);
     Some(cursor.to_2d())

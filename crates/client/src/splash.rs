@@ -3,14 +3,13 @@ use bevy::prelude::Commands;
 use bevy::prelude::Component;
 use bevy::prelude::DespawnRecursiveExt;
 use bevy::prelude::Entity;
-use bevy::prelude::NodeBundle;
 use bevy::prelude::OnEnter;
 use bevy::prelude::OnExit;
 use bevy::prelude::Plugin;
 use bevy::prelude::Query;
 use bevy::prelude::With;
 use bevy::ui::BackgroundColor;
-use bevy::ui::Style;
+use bevy::ui::Node;
 use bevy::ui::Val;
 use engine::AppState;
 
@@ -28,17 +27,14 @@ struct SplashScreen;
 
 fn splash_setup(mut commands: Commands) {
     commands.spawn((
-        NodeBundle {
-            style: Style {
-                align_items: bevy::ui::AlignItems::Center,
-                justify_content: bevy::ui::JustifyContent::Center,
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                ..Default::default()
-            },
-            background_color: BackgroundColor(Color::BLACK),
+        Node {
+            align_items: bevy::ui::AlignItems::Center,
+            justify_content: bevy::ui::JustifyContent::Center,
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
             ..Default::default()
         },
+        BackgroundColor(Color::BLACK),
         SplashScreen,
     ));
 }

@@ -14,6 +14,7 @@ use bevy_ecs::system::Res;
 use bevy_ecs::system::Resource;
 use bevy_ecs::world::World;
 use bevy_hierarchy::BuildChildren;
+use bevy_hierarchy::ChildBuild;
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::ActiveEvents;
 use bevy_rapier3d::prelude::Collider;
@@ -22,7 +23,6 @@ use bevy_rapier3d::prelude::LockedAxes;
 use bevy_rapier3d::prelude::ReadMassProperties;
 use bevy_rapier3d::prelude::Sensor;
 use bevy_rapier3d::prelude::Velocity;
-use bevy_transform::bundles::TransformBundle;
 use bevy_transform::components::GlobalTransform;
 use bevy_transform::components::Transform;
 
@@ -188,8 +188,7 @@ fn fire<S: Side>(
     commands.spawn((
         Object {
             transform: Transform::from_translation(position)
-                .with_scale(Vec3::splat(props.radius))
-                .into(),
+                .with_scale(Vec3::splat(props.radius)),
             collider: Collider::ball(1.0),
             foot_offset: (-props.radius).into(),
             mass: MassBundle::new(props.mass()),
@@ -262,7 +261,7 @@ fn activation_system(
                             accel_numerator: q.gravity_ball.accel_numerator,
                         },
                         *q.foot_offset,
-                        TransformBundle::from_transform(Transform::from_scale(scale)),
+                        Transform::from_scale(scale),
                         ActiveEvents::COLLISION_EVENTS,
                         TrackCollisions::default(),
                         Collider::ball(1.0),

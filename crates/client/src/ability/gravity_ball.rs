@@ -13,14 +13,16 @@ use bevy::ecs::system::Resource;
 use bevy::ecs::world::World;
 use bevy::math::primitives::Sphere;
 use bevy::math::Vec3;
+use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::NotShadowReceiver;
-use bevy::pbr::PbrBundle;
 use bevy::prelude::BuildChildren;
+use bevy::prelude::ChildBuild;
 use bevy::prelude::GlobalTransform;
 use bevy::prelude::Handle;
 use bevy::prelude::InheritedVisibility;
 use bevy::prelude::Mesh;
+use bevy::prelude::Mesh3d;
 use bevy::prelude::StandardMaterial;
 use bevy::prelude::Transform;
 use bevy::prelude::Without;
@@ -30,7 +32,6 @@ use engine::collision::TrackCollisions;
 use engine::FootOffset;
 
 use super::HasOutline;
-use crate::draw::ObjectGraphics;
 use crate::in_plane;
 use crate::shapes::HollowPolygon;
 
@@ -74,7 +75,7 @@ fn setup(
         }),
         outline_material: materials.add(material),
     };
-    commands.add(|world: &mut World| world.insert_resource(assets));
+    commands.queue(|world: &mut World| world.insert_resource(assets));
 }
 
 fn draw_gravity_ball(
@@ -90,13 +91,9 @@ fn draw_gravity_ball(
 
         ecmds.with_children(|builder| {
             builder.spawn((
-                ObjectGraphics {
-                    material: assets.material.clone(),
-                    mesh: assets.mesh.clone(),
-                    ..Default::default()
-                },
+                MeshMaterial3d::from(assets.material.clone_weak()),
+                Mesh3d::from(assets.mesh.clone_weak()),
                 Transform::IDENTITY,
-                GlobalTransform::default(),
             ));
         });
     }
@@ -125,12 +122,9 @@ fn draw_gravity_ball_outline(
             .insert(HasOutline)
             .with_children(|builder| {
                 builder.spawn((
-                    PbrBundle {
-                        mesh: assets.outline_mesh.clone(),
-                        material: assets.outline_material.clone(),
-                        transform: in_plane().with_translation(offset),
-                        ..Default::default()
-                    },
+                    MeshMaterial3d::from(assets.outline_material.clone_weak()),
+                    Mesh3d::from(assets.outline_mesh.clone()),
+                    in_plane().with_translation(offset),
                     NotShadowCaster,
                     NotShadowReceiver,
                 ));

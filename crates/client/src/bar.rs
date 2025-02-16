@@ -2,22 +2,22 @@ use std::fmt;
 use std::marker::PhantomData;
 
 use bevy::ecs::query::QueryData;
+use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::NotShadowReceiver;
 use bevy::prelude::Added;
 use bevy::prelude::BuildChildren;
-use bevy::prelude::Bundle;
+use bevy::prelude::ChildBuild;
 use bevy::prelude::Children;
 use bevy::prelude::Commands;
 use bevy::prelude::Component;
 use bevy::prelude::Entity;
 use bevy::prelude::GlobalTransform;
 use bevy::prelude::Handle;
-use bevy::prelude::InheritedVisibility;
 use bevy::prelude::IntoSystemConfigs;
 use bevy::prelude::Mesh;
+use bevy::prelude::Mesh3d;
 use bevy::prelude::Parent;
-use bevy::prelude::PbrBundle;
 use bevy::prelude::Plugin;
 use bevy::prelude::Query;
 use bevy::prelude::Res;
@@ -26,7 +26,6 @@ use bevy::prelude::Transform;
 use bevy::prelude::Update;
 use bevy::prelude::Vec2;
 use bevy::prelude::Vec3;
-use bevy::prelude::ViewVisibility;
 use bevy::prelude::Visibility;
 use bevy::prelude::With;
 use bevy::prelude::Without;
@@ -40,6 +39,7 @@ use crate::in_plane;
 pub const BAR_OFFSET_Y: f32 = 0.01;
 
 #[derive(Component)]
+#[require(Transform, Visibility)]
 pub struct BarMarker<T> {
     _marker: PhantomData<T>,
 }
@@ -108,16 +108,6 @@ impl Default for Bar<Energy> {
     fn default() -> Self {
         Self::new(0.44, Vec2::new(0.45, 0.16))
     }
-}
-
-#[derive(Bundle, Default)]
-struct BarBundle<T: Component> {
-    transform: Transform,
-    global_transform: GlobalTransform,
-    visibility: Visibility,
-    inherited_visibility: InheritedVisibility,
-    view_visibility: ViewVisibility,
-    marker: BarMarker<T>,
 }
 
 pub struct BarPlugin;
@@ -195,31 +185,25 @@ fn bar_add_system<T: Component + BarAssets + Default>(
 
         commands.entity(parent.entity).with_children(|builder| {
             builder
-                .spawn(BarBundle::<T> {
-                    transform: in_plane()
+                .spawn((
+                    BarMarker::<T>::default(),
+                    in_plane()
                         .with_translation(parent.bar.displacement * recip_scale)
                         .with_scale(scale),
-                    ..Default::default()
-                })
+                ))
                 .with_children(|builder| {
                     // Foreground
                     builder.spawn((
-                        PbrBundle {
-                            material: fg,
-                            mesh: mesh.clone(),
-                            ..Default::default()
-                        },
+                        MeshMaterial3d::from(fg),
+                        Mesh3d::from(mesh.clone()),
                         BarChildMarker::<T>::default(),
                         NotShadowCaster,
                         NotShadowReceiver,
                     ));
                     // Background
                     builder.spawn((
-                        PbrBundle {
-                            material: bg,
-                            mesh,
-                            ..Default::default()
-                        },
+                        MeshMaterial3d::from(bg),
+                        Mesh3d::from(mesh),
                         NotShadowCaster,
                         NotShadowReceiver,
                     ));

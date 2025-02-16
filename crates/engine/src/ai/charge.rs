@@ -8,12 +8,10 @@ use bevy_ecs::schedule::IntoSystemConfigs;
 use bevy_ecs::schedule::SystemConfigs;
 use bevy_ecs::system::Commands;
 use bevy_ecs::system::Query;
-use bevy_ecs::system::Res;
 use bevy_math::Vec2;
+use bevy_rapier3d::plugin::ReadDefaultRapierContext;
 use bevy_rapier3d::prelude::QueryFilter;
-use bevy_rapier3d::prelude::RapierContext;
 use bevy_transform::components::Transform;
-use rand::thread_rng;
 use rand::Rng;
 
 use super::pathfind::set_move;
@@ -58,8 +56,8 @@ impl Ai for ChargeAi {
 
 impl Default for ChargeAi {
     fn default() -> Self {
-        let mut rng = thread_rng();
-        let desired_range = rng.gen_range(0.0..=4.0);
+        let mut rng = rand::rng();
+        let desired_range = rng.random_range(0.0..=4.0);
         Self {
             desired_range_squared: desired_range * desired_range,
             target_dist_squared: 3.0 * 3.0,
@@ -89,7 +87,7 @@ pub fn system_set() -> SystemConfigs {
 }
 
 fn check_obstructions<T: Faction>(
-    rapier_context: Res<RapierContext>,
+    rapier_context: ReadDefaultRapierContext,
     mut ai_q: Query<(Entity, &AiTarget, &Transform, &AbilityOffset, &mut ChargeAi), With<T>>,
     wall_q: Query<(), With<Floor>>,
     friend_q: Query<(), With<T>>,

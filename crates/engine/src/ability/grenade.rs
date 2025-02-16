@@ -284,8 +284,7 @@ fn fire<S: Side, G: Grenade>(
     commands.spawn((
         Object {
             transform: Transform::from_translation(position)
-                .with_scale(Vec3::splat(props.radius))
-                .into(),
+                .with_scale(Vec3::splat(props.radius)),
             collider: Collider::ball(1.0),
             foot_offset: (-props.radius).into(),
             mass: MassBundle::new(props.mass),

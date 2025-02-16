@@ -1,5 +1,7 @@
 use ability::AbilityPlugin;
-use aim::AimPlugin;
+use asset_handler::asset_handler_setup;
+use asset_handler::AssetHandler;
+use bar::BarPlugin;
 use bevy::asset::LoadedFolder;
 use bevy::ecs::component::ComponentInfo;
 use bevy::prelude::Assets;
@@ -23,20 +25,15 @@ use bevy_kira_audio::AudioControl;
 use bevy_kira_audio::AudioInstance;
 use bevy_kira_audio::AudioPlugin;
 use bevy_kira_audio::PlaybackState;
+use config::ConfigPlugin;
 use draw::DrawPlugin;
-use engine::AppState;
 use engine::UP;
-use iyes_progress::ProgressPlugin;
 use rand::Rng;
-
-use self::asset_handler::asset_handler_setup;
-use self::asset_handler::AssetHandler;
-use self::bar::BarPlugin;
-use self::config::ConfigPlugin;
-use self::splash::SplashPlugin;
+use splash::SplashPlugin;
 
 pub mod ability;
-mod aim;
+// TODO: Replace bevy_mod_raycast
+// mod aim;
 mod asset_handler;
 mod bar;
 pub mod color_gradient;
@@ -69,9 +66,6 @@ impl Plugin for GamClientPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_plugins((
             SplashPlugin,
-            ProgressPlugin::new(AppState::Loading)
-                .continue_to(AppState::Running)
-                .track_assets(),
             AudioPlugin,
             ConfigPlugin,
             GraphicsPlugin,
@@ -92,7 +86,8 @@ impl Plugin for GraphicsPlugin {
             BarPlugin,
             ui::UiPlugin,
             DrawPlugin,
-            AimPlugin,
+            // FIXME
+            // AimPlugin,
         ));
     }
 }
@@ -121,8 +116,8 @@ fn background_music_system(
 
     if should_play {
         if let Some(folder) = loaded_folders.get(&assets.music) {
-            let mut rng = rand::thread_rng();
-            let idx = rng.gen_range(0..folder.handles.len());
+            let mut rng = rand::rng();
+            let idx = rng.random_range(0..folder.handles.len());
             let track = folder.handles[idx].clone().typed();
             let name = track
                 .path()
@@ -177,7 +172,6 @@ pub fn print_hierarchy(
 fn print_hierarchy_inner(entity: Entity, world: &World, q_parents: &Query<&Children>) -> Hierarchy {
     let components = world
         .inspect_entity(entity)
-        .into_iter()
         .map(ComponentInfo::name)
         .map(ToOwned::to_owned)
         .collect();

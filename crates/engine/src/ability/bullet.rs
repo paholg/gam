@@ -59,8 +59,7 @@ impl<G: Component> BulletSpawner<G> {
         commands.spawn((
             Object {
                 transform: Transform::from_translation(self.position)
-                    .with_scale(Vec3::splat(self.props.radius))
-                    .into(),
+                    .with_scale(Vec3::splat(self.props.radius)),
                 collider: Collider::ball(1.0),
                 foot_offset: (-self.props.radius).into(),
                 mass: MassBundle::new(self.props.mass),

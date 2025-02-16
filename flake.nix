@@ -62,6 +62,7 @@
 
           LD_LIBRARY_PATH = nixpkgs.lib.makeLibraryPath (buildInputs ++ waylandInputs);
           BEVY_ASSET_ROOT = "./";
+          RUST_BACKTRACE = 1;
         };
 
       }

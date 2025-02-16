@@ -2,25 +2,25 @@ use std::time::Duration;
 use std::time::Instant;
 
 use bevy::prelude::BuildChildren;
+use bevy::prelude::ChildBuild;
 use bevy::prelude::Color;
 use bevy::prelude::Commands;
 use bevy::prelude::Component;
-use bevy::prelude::NodeBundle;
 use bevy::prelude::Plugin;
 use bevy::prelude::Query;
 use bevy::prelude::Res;
 use bevy::prelude::ResMut;
 use bevy::prelude::Resource;
 use bevy::prelude::Startup;
-use bevy::prelude::TextBundle;
+use bevy::prelude::Text;
 use bevy::prelude::Update;
 use bevy::prelude::With;
-use bevy::text::Text;
-use bevy::text::TextStyle;
+use bevy::text::TextColor;
+use bevy::text::TextFont;
 use bevy::ui::AlignItems;
 use bevy::ui::FlexDirection;
 use bevy::ui::JustifyContent;
-use bevy::ui::Style;
+use bevy::ui::Node;
 use bevy::ui::Val;
 use engine::time::FrameCounter;
 use engine::NumAi;
@@ -50,52 +50,34 @@ pub struct Hud;
 fn persistent_ui_setup(mut commands: Commands) {
     commands
         .spawn((
-            NodeBundle {
-                style: Style {
-                    position_type: bevy::ui::PositionType::Absolute,
-                    align_items: AlignItems::Start,
-                    justify_content: JustifyContent::End,
-                    flex_direction: FlexDirection::Column,
-                    right: Val::Percent(0.0),
-                    top: Val::Percent(0.0),
-                    ..Default::default()
-                },
+            Node {
+                position_type: bevy::ui::PositionType::Absolute,
+                align_items: AlignItems::Start,
+                justify_content: JustifyContent::End,
+                flex_direction: FlexDirection::Column,
+                right: Val::Percent(0.0),
+                top: Val::Percent(0.0),
                 ..Default::default()
             },
             Hud,
         ))
         .with_children(|parent| {
             parent.spawn((
-                TextBundle::from_section(
-                    render_score(0),
-                    TextStyle {
-                        font_size: 40.0,
-                        color: TEXT_COLOR,
-                        ..Default::default()
-                    },
-                ),
+                Text(render_score(0)),
+                TextFont::from_font_size(40.0),
+                TextColor::from(TEXT_COLOR),
                 Score,
             ));
             parent.spawn((
-                TextBundle::from_section(
-                    render_frame_time(Duration::ZERO),
-                    TextStyle {
-                        font_size: 40.0,
-                        color: TEXT_COLOR,
-                        ..Default::default()
-                    },
-                ),
+                Text(render_frame_time(Duration::ZERO)),
+                TextFont::from_font_size(40.0),
+                TextColor::from(TEXT_COLOR),
                 FrameTime,
             ));
             parent.spawn((
-                TextBundle::from_section(
-                    render_frame_time(Duration::ZERO),
-                    TextStyle {
-                        font_size: 40.0,
-                        color: TEXT_COLOR,
-                        ..Default::default()
-                    },
-                ),
+                Text(render_frame_time(Duration::ZERO)),
+                TextFont::from_font_size(40.0),
+                TextColor::from(TEXT_COLOR),
                 FpsText,
             ));
         });
@@ -106,7 +88,7 @@ struct Score;
 
 fn score_update(num_ai: Res<NumAi>, mut query: Query<&mut Text, With<Score>>) {
     let mut text = query.single_mut();
-    text.sections[0].value = render_score(num_ai.enemies);
+    text.0 = render_score(num_ai.enemies);
 }
 
 fn render_score(score: usize) -> String {
@@ -121,7 +103,7 @@ fn frame_time_update(
     mut query: Query<&mut Text, With<FrameTime>>,
 ) {
     let mut text = query.single_mut();
-    text.sections[0].value = render_frame_time(tick_counter.average_engine_frame);
+    text.0 = render_frame_time(tick_counter.average_engine_frame);
 }
 
 fn render_frame_time(time: Duration) -> String {
@@ -163,7 +145,7 @@ struct FpsText;
 
 fn fps_update(fps: Res<FpsTracker>, mut query: Query<&mut Text, With<FpsText>>) {
     let mut text = query.single_mut();
-    text.sections[0].value = render_fps(fps.fps);
+    text.0 = render_fps(fps.fps);
 }
 
 fn render_fps(fps: f32) -> String {

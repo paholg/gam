@@ -1,17 +1,19 @@
 use bevy::app::Plugin;
 use bevy::app::Update;
 use bevy::color::Color;
+use bevy::pbr::MeshMaterial3d;
 use bevy::prelude::Added;
 use bevy::prelude::AlphaMode;
 use bevy::prelude::Assets;
 use bevy::prelude::BuildChildren;
+use bevy::prelude::ChildBuild;
 use bevy::prelude::Commands;
 use bevy::prelude::Component;
 use bevy::prelude::Entity;
-use bevy::prelude::GlobalTransform;
 use bevy::prelude::Handle;
 use bevy::prelude::InheritedVisibility;
 use bevy::prelude::Mesh;
+use bevy::prelude::Mesh3d;
 use bevy::prelude::Parent;
 use bevy::prelude::Query;
 use bevy::prelude::Res;
@@ -27,7 +29,6 @@ use engine::ability::explosion::ExplosionKind;
 use engine::ability::grenade::FragGrenade;
 use engine::ability::grenade::HealGrenade;
 
-use super::ObjectGraphics;
 use crate::ability::grenade::GrenadeAssets;
 use crate::ability::rocket::RocketAssets;
 use crate::color_gradient::ColorGradient;
@@ -95,13 +96,9 @@ fn draw_explosion(
             .insert(InheritedVisibility::default());
         commands.entity(entity).with_children(|builder| {
             builder.spawn((
-                ObjectGraphics {
-                    material: materials.add(material),
-                    mesh: explosion_assets.mesh.clone(),
-                    ..Default::default()
-                },
+                MeshMaterial3d::from(materials.add(material)),
+                Mesh3d::from(explosion_assets.mesh.clone_weak()),
                 Transform::from_scale(Vec3::splat(radius)),
-                GlobalTransform::default(),
                 ExplosionGraphics,
             ));
         });
@@ -110,7 +107,7 @@ fn draw_explosion(
 
 fn update_explosion(
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut query: Query<(&Parent, &Handle<StandardMaterial>), With<ExplosionGraphics>>,
+    mut query: Query<(&Parent, &MeshMaterial3d<StandardMaterial>), With<ExplosionGraphics>>,
     parent_q: Query<(&Explosion, &Transform)>,
     rocket_assets: Res<RocketAssets>,
     frag_grenade_assets: Res<GrenadeAssets<FragGrenade>>,

@@ -2,27 +2,23 @@ use bevy::app::Plugin;
 use bevy::app::Update;
 use bevy::core::FrameCount;
 use bevy::ecs::system::SystemId;
+use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::NotShadowReceiver;
 use bevy::prelude::Added;
 use bevy::prelude::BuildChildren;
-use bevy::prelude::Bundle;
+use bevy::prelude::ChildBuild;
 use bevy::prelude::Commands;
 use bevy::prelude::Entity;
-use bevy::prelude::GlobalTransform;
-use bevy::prelude::Handle;
 use bevy::prelude::In;
 use bevy::prelude::InheritedVisibility;
-use bevy::prelude::PbrBundle;
+use bevy::prelude::Mesh3d;
 use bevy::prelude::Query;
 use bevy::prelude::Res;
 use bevy::prelude::ResMut;
 use bevy::prelude::Resource;
-use bevy::prelude::Scene;
 use bevy::prelude::Transform;
 use bevy::prelude::Vec3;
-use bevy::prelude::ViewVisibility;
-use bevy::prelude::Visibility;
 use bevy::prelude::Without;
 use bevy_hanabi::EffectInitializers;
 use bevy_kira_audio::prelude::Volume;
@@ -36,7 +32,6 @@ use engine::FootOffset;
 use engine::Health;
 use engine::Player;
 
-use super::raycast_scene::RaycastScene;
 use crate::asset_handler::AssetHandler;
 use crate::bar::Bar;
 use crate::in_plane;
@@ -46,9 +41,9 @@ pub struct CharacterPlugin;
 
 #[derive(Resource)]
 struct CharacterDeathCallbacks {
-    player: SystemId<Entity>,
-    enemy: SystemId<Entity>,
-    ally: SystemId<Entity>,
+    player: SystemId<In<Entity>>,
+    enemy: SystemId<In<Entity>>,
+    ally: SystemId<In<Entity>>,
 }
 
 impl Plugin for CharacterPlugin {
@@ -126,19 +121,6 @@ fn ally_death_system(
         .with_volume(Volume::Decibels(config.sound.effects_volume));
 }
 
-#[derive(Bundle, Default)]
-struct CharacterGraphics {
-    healthbar: Bar<Health>,
-    energybar: Bar<Energy>,
-    scene: Handle<Scene>,
-    visibility: Visibility,
-    inherited_visibility: InheritedVisibility,
-    view_visibility: ViewVisibility,
-    raycast: RaycastScene,
-    transform: Transform,
-    global_transform: GlobalTransform,
-}
-
 fn draw_player_system(
     mut commands: Commands,
     assets: Res<AssetHandler>,
@@ -154,20 +136,18 @@ fn draw_player_system(
             ))
             .with_children(|builder| {
                 builder.spawn((
-                    PbrBundle {
-                        mesh: assets.player.outline_mesh.clone(),
-                        material: assets.player.outline_material.clone(),
-                        transform: in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
-                        ..Default::default()
-                    },
+                    Mesh3d::from(assets.player.outline_mesh.clone()),
+                    MeshMaterial3d::from(assets.player.outline_material.clone()),
+                    in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
                     NotShadowCaster,
                     NotShadowReceiver,
                 ));
-                builder.spawn(CharacterGraphics {
-                    scene: assets.player.scene.clone(),
-                    transform: Transform::from_translation(foot_offset.to_vec()),
-                    ..Default::default()
-                });
+                builder.spawn((
+                    assets.player.scene.clone(),
+                    Transform::from_translation(foot_offset.to_vec()),
+                    Bar::<Health>::default(),
+                    Bar::<Energy>::default(),
+                ));
             });
     }
 }
@@ -187,20 +167,18 @@ fn draw_enemy_system(
             ))
             .with_children(|builder| {
                 builder.spawn((
-                    PbrBundle {
-                        mesh: assets.enemy.outline_mesh.clone(),
-                        material: assets.enemy.outline_material.clone(),
-                        transform: in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
-                        ..Default::default()
-                    },
+                    Mesh3d::from(assets.enemy.outline_mesh.clone()),
+                    MeshMaterial3d::from(assets.enemy.outline_material.clone()),
+                    in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
                     NotShadowCaster,
                     NotShadowReceiver,
                 ));
-                builder.spawn(CharacterGraphics {
-                    scene: assets.enemy.scene.clone(),
-                    transform: Transform::from_translation(foot_offset.to_vec()),
-                    ..Default::default()
-                });
+                builder.spawn((
+                    assets.enemy.scene.clone(),
+                    Transform::from_translation(foot_offset.to_vec()),
+                    Bar::<Health>::default(),
+                    Bar::<Energy>::default(),
+                ));
             });
     }
 }
@@ -220,20 +198,18 @@ fn draw_ally_system(
             ))
             .with_children(|builder| {
                 builder.spawn((
-                    PbrBundle {
-                        mesh: assets.ally.outline_mesh.clone(),
-                        material: assets.ally.outline_material.clone(),
-                        transform: in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
-                        ..Default::default()
-                    },
+                    Mesh3d::from(assets.ally.outline_mesh.clone()),
+                    MeshMaterial3d::from(assets.ally.outline_material.clone()),
+                    in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
                     NotShadowCaster,
                     NotShadowReceiver,
                 ));
-                builder.spawn(CharacterGraphics {
-                    scene: assets.ally.scene.clone(),
-                    transform: Transform::from_translation(foot_offset.to_vec()),
-                    ..Default::default()
-                });
+                builder.spawn((
+                    assets.ally.scene.clone(),
+                    Transform::from_translation(foot_offset.to_vec()),
+                    Bar::<Health>::default(),
+                    Bar::<Energy>::default(),
+                ));
             });
     }
 }

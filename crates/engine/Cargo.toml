@@ -21,15 +21,15 @@ bevy_utils.workspace = true
 # Other crates
 bevy_rapier3d.workspace = true
 bitmask-enum = "2.2.5"
-bytemuck = { version = "1.19.0", features = ["derive"] }
-oxidized_navigation = { version = "0.11.0", features = ["rapier"] }
+bytemuck = { version = "1.21.0", features = ["derive"] }
+oxidized_navigation = { version = "0.12.0", features = ["rapier"] }
 # bincode = { version = "2.0.0-rc.2", features = ["serde"] }
-futures-lite = "2.5.0"
+futures-lite = "2.6.0"
 libm = "0.2.11"
-rand = "0.8"
+rand = "0.9"
 serde = "1"
 smallvec.workspace = true
-strum = { version = "0.26.3", features = ["derive"] }
+strum = { version = "0.27.0", features = ["derive"] }
 subenum.workspace = true
 tracing.workspace = true
 # typed-builder = "0.11"

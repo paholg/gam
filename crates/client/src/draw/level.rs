@@ -1,3 +1,4 @@
+use bevy::pbr::MeshMaterial3d;
 use bevy::prelude::Added;
 use bevy::prelude::BuildChildren;
 use bevy::prelude::Commands;
@@ -6,17 +7,17 @@ use bevy::prelude::Entity;
 use bevy::prelude::GlobalTransform;
 use bevy::prelude::Handle;
 use bevy::prelude::InheritedVisibility;
-use bevy::prelude::PbrBundle;
+use bevy::prelude::Mesh3d;
 use bevy::prelude::Query;
 use bevy::prelude::Res;
 use bevy::prelude::SpotLight;
-use bevy::prelude::SpotLightBundle;
 use bevy::prelude::StandardMaterial;
 use bevy::prelude::Transform;
 use bevy::prelude::Vec2;
 use bevy::prelude::Vec3;
 use bevy::prelude::With;
-use bevy_mod_raycast::prelude::RaycastMesh;
+// FIXME
+// use bevy_mod_raycast::prelude::RaycastMesh;
 use engine::level::Floor;
 use engine::level::InLevel;
 use engine::level::LevelProps;
@@ -84,7 +85,7 @@ pub fn draw_wall_system(
             WallKind::Floor
         };
 
-        // First add InheritedVisibility to our entity to make bevy happy.
+        // Add InheritedVisibility to make bevy happy.
         commands
             .entity(entity)
             .insert(InheritedVisibility::default());
@@ -125,25 +126,23 @@ pub fn draw_wall_system(
             .map(|(transform, kind)| {
                 let wall = commands
                     .spawn((
-                        PbrBundle {
-                            mesh: assets.wall.shape.clone(),
-                            material: kind.opaque(&assets),
-                            transform,
-                            ..Default::default()
-                        },
+                        Mesh3d(assets.wall.shape.clone_weak()),
+                        MeshMaterial3d(kind.opaque(&assets)),
+                        transform,
                         kind,
                     ))
                     .id();
-                if kind.is_wall() {
-                    commands
-                        .entity(wall)
-                        .insert((Wall, RaycastMesh::<()>::default()));
-                }
+                // TODO: Raycast
+                // if kind.is_wall() {
+                //     commands
+                //         .entity(wall)
+                //         .insert((Wall, RaycastMesh::<()>::default()));
+                // }
                 wall
             })
             .collect::<Vec<_>>();
 
-        commands.entity(entity).push_children(&ids);
+        commands.entity(entity).add_children(&ids);
     }
 }
 
@@ -151,7 +150,7 @@ pub fn update_wall_system(
     assets: Res<AssetHandler>,
     mut query: Query<
         (
-            &mut Handle<StandardMaterial>,
+            &mut MeshMaterial3d<StandardMaterial>,
             &Transform,
             &GlobalTransform,
             &WallKind,
@@ -194,9 +193,9 @@ pub fn update_wall_system(
                 && hb_bottom > wall_top
                 && hb_bottom < wall_top + DELTA_Y
         }) {
-            *material = kind.trans(&assets);
+            *material = kind.trans(&assets).into();
         } else {
-            *material = kind.opaque(&assets);
+            *material = kind.opaque(&assets).into();
         }
     }
 }
@@ -234,24 +233,19 @@ pub fn draw_lights_system(
             let z = (z as f32) * spacing + zoffset;
 
             // Offset the light a bit, for more interesting shadows.
-            let t = Transform::from_xyz(x - spacing * 0.5, altitude, z - spacing)
+            let transform = Transform::from_xyz(x - spacing * 0.5, altitude, z - spacing)
                 .looking_at(Vec3::new(x, 0.0, z), UP);
 
             commands.spawn((
-                SpotLightBundle {
-                    spot_light: SpotLight {
-                        shadows_enabled: true,
-                        range: 30.0,
-                        intensity: 4_000_000.0,
-                        outer_angle: std::f32::consts::FRAC_PI_3,
-                        inner_angle: 0.0,
-                        ..Default::default()
-                    },
-                    transform: t,
+                SpotLight {
+                    shadows_enabled: true,
+                    range: 30.0,
+                    intensity: 4_000_000.0,
+                    outer_angle: std::f32::consts::FRAC_PI_3,
+                    inner_angle: 0.0,
                     ..Default::default()
                 },
-                // TODO: Is this needed?
-                // RenderLayers::all(),
+                transform,
                 InLevel,
             ));
         }

@@ -2,19 +2,21 @@ use bevy::app::Plugin;
 use bevy::app::Startup;
 use bevy::app::Update;
 use bevy::color::LinearRgba;
+use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::NotShadowReceiver;
 use bevy::prelude::Added;
 use bevy::prelude::AlphaMode;
 use bevy::prelude::Assets;
 use bevy::prelude::BuildChildren;
+use bevy::prelude::ChildBuild;
 use bevy::prelude::Commands;
 use bevy::prelude::Component;
 use bevy::prelude::Cylinder;
 use bevy::prelude::Entity;
-use bevy::prelude::GlobalTransform;
 use bevy::prelude::Handle;
 use bevy::prelude::InheritedVisibility;
 use bevy::prelude::Mesh;
+use bevy::prelude::Mesh3d;
 use bevy::prelude::Parent;
 use bevy::prelude::Query;
 use bevy::prelude::Res;
@@ -30,7 +32,6 @@ use engine::ability::transport::TransportBeam;
 use engine::To3d;
 
 use crate::color_gradient::ColorGradient;
-use crate::draw::ObjectGraphics;
 
 pub struct TransportBeamPlugin;
 impl Plugin for TransportBeamPlugin {
@@ -69,7 +70,7 @@ fn setup(
         }),
     };
 
-    commands.add(|world: &mut World| world.insert_resource(assets));
+    commands.queue(|world: &mut World| world.insert_resource(assets));
 }
 
 #[derive(Component)]
@@ -98,28 +99,20 @@ fn draw_transport_system(
         commands.entity(entity).with_children(|builder| {
             let receiver = builder
                 .spawn((
-                    ObjectGraphics {
-                        material: material.clone_weak(),
-                        mesh: assets.mesh.clone_weak(),
-                        ..Default::default()
-                    },
+                    MeshMaterial3d::from(material.clone_weak()),
+                    Mesh3d::from(assets.mesh.clone_weak()),
                     Transform::from_scale(Vec3::new(beam.radius, 0.0, beam.radius))
                         .with_translation(beam.destination.to_3d(0.0) - transform.translation),
-                    GlobalTransform::default(),
                     TransportReceiverGraphics,
                     NotShadowReceiver,
                 ))
                 .id();
 
             builder.spawn((
-                ObjectGraphics {
-                    material,
-                    mesh: assets.mesh.clone_weak(),
-                    ..Default::default()
-                },
+                MeshMaterial3d::from(material),
+                Mesh3d::from(assets.mesh.clone_weak()),
                 Transform::from_scale(Vec3::new(beam.radius, 0.0, beam.radius))
                     .with_translation(Vec3::new(0.0, beam.height, 0.0)),
-                GlobalTransform::default(),
                 TransportSenderGraphics { receiver },
                 NotShadowReceiver,
             ));
@@ -133,7 +126,7 @@ fn update_transport_system(
     mut sender_q: Query<(
         &Parent,
         &mut Transform,
-        &Handle<StandardMaterial>,
+        &MeshMaterial3d<StandardMaterial>,
         &TransportSenderGraphics,
     )>,
     mut receiver_q: Query<

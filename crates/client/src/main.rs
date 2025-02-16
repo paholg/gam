@@ -40,14 +40,21 @@ fn main() {
 
     let mut app = App::new();
 
+    let mut log_plugin = bevy::log::LogPlugin::default();
+    log_plugin
+        .filter
+        .push_str(",symphonia_format_ogg::demuxer=warn,symphonia_core::probe=warn");
+
     app.add_plugins((
-        bevy::DefaultPlugins.set(bevy::window::WindowPlugin {
-            primary_window: Some(bevy::window::Window {
-                present_mode: bevy::window::PresentMode::AutoNoVsync,
+        bevy::DefaultPlugins
+            .set(bevy::window::WindowPlugin {
+                primary_window: Some(bevy::window::Window {
+                    present_mode: bevy::window::PresentMode::AutoNoVsync,
+                    ..Default::default()
+                }),
                 ..Default::default()
-            }),
-            ..Default::default()
-        }),
+            })
+            .set(log_plugin),
         engine::GamPlugin,
         client::GamClientPlugin,
         client::ControlPlugin {
@@ -67,20 +74,20 @@ fn debug_stuff(app: &mut App, args: &Args) {
     if args.all || args.paths {
         app.add_systems(bevy::app::Update, client::debug::draw_pathfinding_system);
     }
-    if args.all || args.raycast_cursor {
-        app.insert_resource(
-            bevy_mod_raycast::prelude::RaycastPluginState::<()>::default().with_debug_cursor(),
-        );
-    }
+    // if args.all || args.raycast_cursor {
+    //     app.insert_resource(
+    //         bevy_mod_raycast::prelude::RaycastPluginState::<()>::default().
+    // with_debug_cursor(),     );
+    // }
     if args.all || args.inspector {
         app.add_plugins(bevy_inspector_egui::quick::WorldInspectorPlugin::new());
     }
     if args.all || args.rapier {
         app.add_plugins(bevy_rapier3d::render::RapierDebugRenderPlugin::default());
     }
-    if args.all || args.frame_time {
-        app.add_plugins(bevy::diagnostic::FrameTimeDiagnosticsPlugin);
-    }
+    // if args.all || args.frame_time {
+    //     app.add_plugins(bevy::diagnostic::FrameTimeDiagnosticsPlugin);
+    // }
     if args.all || args.debug_text {
         app.add_plugins(DebugTextPlugin);
     }

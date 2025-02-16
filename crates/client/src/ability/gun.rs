@@ -16,9 +16,11 @@ use bevy::ecs::system::Resource;
 use bevy::ecs::system::SystemId;
 use bevy::ecs::world::World;
 use bevy::math::primitives::Sphere;
+use bevy::pbr::MeshMaterial3d;
 use bevy::prelude::Handle;
 use bevy::prelude::In;
 use bevy::prelude::Mesh;
+use bevy::prelude::Mesh3d;
 use bevy::prelude::StandardMaterial;
 use bevy::prelude::Transform;
 use bevy::prelude::Vec3;
@@ -47,9 +49,7 @@ use engine::ability::gun::GunKind;
 use engine::ability::gun::GunProps;
 use engine::ability::gun::StandardGun;
 use engine::lifecycle::ClientDeathCallback;
-use iyes_progress::prelude::AssetsLoading;
 
-use crate::draw::ObjectGraphics;
 use crate::particles::ParticleEffectPool;
 use crate::Config;
 
@@ -68,7 +68,7 @@ struct BulletAssets {
 
 #[derive(Resource)]
 struct GunDeathCallback {
-    system: SystemId<Entity>,
+    system: SystemId<In<Entity>>,
 }
 
 impl Plugin for GunPlugin {
@@ -88,7 +88,6 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut effects: ResMut<Assets<EffectAsset>>,
     asset_server: ResMut<AssetServer>,
-    mut loading: ResMut<AssetsLoading>,
     standard_props: Res<GunProps<StandardGun>>,
     // fire_props: Res<GunProps<FireGun>>,
     // cold_props: Res<GunProps<ColdGun>>,
@@ -120,10 +119,8 @@ fn setup(
         spawn_sound: asset_server.load("third-party/audio/other/laserSmall_000.ogg"),
         despawn_sound: asset_server.load("third-party/audio/other/laserSmall_000.ogg"),
     };
-    loading.add(&bullet.spawn_sound);
-    loading.add(&bullet.despawn_sound);
 
-    commands.add(|world: &mut World| world.insert_resource(bullet));
+    commands.queue(|world: &mut World| world.insert_resource(bullet));
 }
 
 fn bullet_death_system(
@@ -165,11 +162,8 @@ fn draw_bullet(
         };
         ecmds.insert((
             ClientDeathCallback::new(death_callback.system),
-            ObjectGraphics {
-                material,
-                mesh: assets.mesh.clone_weak(),
-                ..Default::default()
-            },
+            MeshMaterial3d::from(material),
+            Mesh3d::from(assets.mesh.clone_weak()),
         ));
     }
 }

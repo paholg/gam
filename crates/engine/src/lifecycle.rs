@@ -3,12 +3,14 @@ use bevy_ecs::entity::Entity;
 use bevy_ecs::query::QueryData;
 use bevy_ecs::query::With;
 use bevy_ecs::system::Commands;
+use bevy_ecs::system::In;
 use bevy_ecs::system::Query;
 use bevy_ecs::system::Res;
 use bevy_ecs::system::ResMut;
 use bevy_ecs::system::SystemId;
 use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
+use bevy_rapier3d::plugin::ReadDefaultRapierContext;
 use bevy_rapier3d::prelude::CoefficientCombineRule;
 use bevy_rapier3d::prelude::ExternalForce;
 use bevy_rapier3d::prelude::Friction;
@@ -54,11 +56,11 @@ pub const DEATH_Y: f32 = -2.0;
 /// A callback to run when something dies.
 #[derive(Debug, Component)]
 pub(crate) struct DeathCallback {
-    system: SystemId<Entity>,
+    system: SystemId<In<Entity>>,
 }
 
 impl DeathCallback {
-    pub fn new(system: SystemId<Entity>) -> Self {
+    pub fn new(system: SystemId<In<Entity>>) -> Self {
         Self { system }
     }
 }
@@ -69,11 +71,11 @@ impl DeathCallback {
 /// engine.
 #[derive(Debug, Component)]
 pub struct ClientDeathCallback {
-    system: SystemId<Entity>,
+    system: SystemId<In<Entity>>,
 }
 
 impl ClientDeathCallback {
-    pub fn new(system: SystemId<Entity>) -> Self {
+    pub fn new(system: SystemId<In<Entity>>) -> Self {
         Self { system }
     }
 }
@@ -135,8 +137,7 @@ fn spawn_enemies(
                     object: Object {
                         transform: Transform::from_translation(
                             loc + Vec3::new(0.0, 0.5 * PLAYER_HEIGHT, 0.0),
-                        )
-                        .into(),
+                        ),
                         collider: character_collider(PLAYER_R, PLAYER_HEIGHT),
                         foot_offset: (-PLAYER_HEIGHT * 0.5).into(),
                         body: RigidBody::Dynamic,
@@ -191,8 +192,7 @@ fn spawn_allies(
                     object: Object {
                         transform: Transform::from_translation(
                             loc + Vec3::new(0.0, 0.5 * PLAYER_HEIGHT, 0.0),
-                        )
-                        .into(),
+                        ),
                         collider: character_collider(PLAYER_R, PLAYER_HEIGHT),
                         foot_offset: (-PLAYER_HEIGHT * 0.5).into(),
                         body: RigidBody::Dynamic,
@@ -238,7 +238,7 @@ pub fn reset(
     player_info_query: Query<&PlayerInfo>,
     mut num_ai: ResMut<NumAi>,
     level: Res<LevelProps>,
-    rapier_context: Res<RapierContext>,
+    rapier_context: ReadDefaultRapierContext,
     ability_map: Res<AbilityMap>,
 ) {
     if enemy_query.iter().next().is_none() {

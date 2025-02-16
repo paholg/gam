@@ -1,3 +1,4 @@
+use bar::BarAssets;
 use bevy::asset::LoadedFolder;
 use bevy::prelude::AssetServer;
 use bevy::prelude::Assets;
@@ -8,15 +9,12 @@ use bevy::prelude::ResMut;
 use bevy::prelude::Resource;
 use bevy::prelude::StandardMaterial;
 use bevy_hanabi::EffectAsset;
-use iyes_progress::prelude::AssetsLoading;
-
-use self::bar::BarAssets;
-use self::character::CharacterAssets;
-use self::music::load_music;
-use self::target::TargetAssets;
-use self::temperature::TemperatureAssets;
-use self::time_dilation::TimeDilationAssets;
-use self::wall::WallAssets;
+use character::CharacterAssets;
+use music::load_music;
+use target::TargetAssets;
+use temperature::TemperatureAssets;
+use time_dilation::TimeDilationAssets;
+use wall::WallAssets;
 
 pub mod bar;
 pub mod character;
@@ -31,7 +29,6 @@ pub struct Builder<'a> {
     materials: ResMut<'a, Assets<StandardMaterial>>,
     effects: ResMut<'a, Assets<EffectAsset>>,
     asset_server: ResMut<'a, AssetServer>,
-    loading: ResMut<'a, AssetsLoading>,
 }
 
 // A collection of HandleIds for assets for spawning.
@@ -49,7 +46,7 @@ pub struct AssetHandler {
     pub temperature: TemperatureAssets,
 }
 
-impl<'a> Builder<'a> {
+impl Builder<'_> {
     fn build(&mut self) -> AssetHandler {
         AssetHandler {
             music: load_music(self),
@@ -72,14 +69,12 @@ pub fn asset_handler_setup(
     materials: ResMut<Assets<StandardMaterial>>,
     effects: ResMut<Assets<EffectAsset>>,
     asset_server: ResMut<AssetServer>,
-    loading: ResMut<AssetsLoading>,
 ) {
     let asset_handler = Builder {
         meshes,
         materials,
         effects,
         asset_server,
-        loading,
     }
     .build();
 

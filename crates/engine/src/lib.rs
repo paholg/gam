@@ -38,7 +38,6 @@ use bevy_state::state::State;
 use bevy_state::state::States;
 use bevy_time::Fixed;
 use bevy_time::Time;
-use bevy_transform::bundles::TransformBundle;
 use bevy_transform::components::GlobalTransform;
 use bevy_transform::components::Transform;
 use collision::TrackCollisionBundle;
@@ -77,8 +76,9 @@ pub type Libm = libm::Libm<f32>;
 
 #[derive(States, PartialEq, Eq, Debug, Copy, Clone, Hash, Default)]
 pub enum AppState {
-    #[default]
+    // FIXME: make default again
     Loading,
+    #[default]
     Running,
     Paused,
 }
@@ -258,7 +258,7 @@ impl MassBundle {
 
 #[derive(Bundle)]
 pub struct Object {
-    transform: TransformBundle,
+    transform: Transform,
     collider: Collider,
     foot_offset: FootOffset,
     mass: MassBundle,

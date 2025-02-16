@@ -212,8 +212,7 @@ fn fire<S: Side>(
                     props.capsule_radius,
                     props.capsule_radius,
                     props.capsule_length * 0.5,
-                ))
-                .into(),
+                )),
             collider: Collider::capsule_z(1.0, 1.0),
             foot_offset: (-props.capsule_radius).into(),
             mass: MassBundle::new(props.mass),
@@ -276,7 +275,7 @@ fn tracking_system(
 
             let facing = transform.forward().to_2d();
 
-            let desired_rotation = facing.angle_between(target - transform.translation.to_2d());
+            let desired_rotation = facing.angle_to(target - transform.translation.to_2d());
             let rotation = desired_rotation.clamp(-rocket.turning_radius, rocket.turning_radius);
 
             transform.rotate_y(rotation);

@@ -1,9 +1,9 @@
 use bevy_ecs::bundle::Bundle;
+pub use charge::Charge;
+pub use phased::Phased;
+pub use temperature::Temperature;
+pub use time_dilation::TimeDilation;
 
-pub use self::charge::Charge;
-pub use self::phased::Phased;
-pub use self::temperature::Temperature;
-pub use self::time_dilation::TimeDilation;
 use crate::time::Dur;
 
 pub mod charge;

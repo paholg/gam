@@ -51,11 +51,11 @@ impl Default for LevelProps {
 
 impl LevelProps {
     pub fn point_in_plane(&self, rapier_context: &RapierContext) -> Vec3 {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let filter = QueryFilter::default();
         loop {
-            let x = rng.gen::<f32>() * (self.x - PLAYER_R) - (self.x - PLAYER_R) * 0.5;
-            let z = rng.gen::<f32>() * (self.z - PLAYER_R) - (self.z - PLAYER_R) * 0.5;
+            let x = rng.random::<f32>() * (self.x - PLAYER_R) - (self.x - PLAYER_R) * 0.5;
+            let z = rng.random::<f32>() * (self.z - PLAYER_R) - (self.z - PLAYER_R) * 0.5;
             let loc = Vec3::new(x, 0.0, z);
 
             let ray_loc = loc + Vec3::new(0.0, 0.1, 0.0);

@@ -6,7 +6,7 @@ use bevy::core_pipeline::fxaa;
 use bevy::prelude::Added;
 use bevy::prelude::Commands;
 use bevy::prelude::Entity;
-use bevy::prelude::GamepadButtonType;
+use bevy::prelude::GamepadButton;
 use bevy::prelude::KeyCode;
 use bevy::prelude::MouseButton;
 use bevy::prelude::Plugin;
@@ -20,10 +20,9 @@ use engine::multiplayer::Action;
 use engine::player::AbilityIds;
 use engine::Player;
 use leafwing_input_manager::prelude::GamepadStick;
-use leafwing_input_manager::prelude::GamepadVirtualDPad;
 use leafwing_input_manager::prelude::InputManagerPlugin;
 use leafwing_input_manager::prelude::InputMap;
-use leafwing_input_manager::prelude::KeyboardVirtualDPad;
+use leafwing_input_manager::prelude::VirtualDPad;
 use leafwing_input_manager::Actionlike;
 use leafwing_input_manager::InputManagerBundle;
 use serde::Deserialize;
@@ -98,48 +97,48 @@ impl Default for Config {
 fn default_controls() -> InputMap<UserAction> {
     let mut map = InputMap::default();
     map.insert(UserAction::Menu, KeyCode::Escape)
-        .insert(UserAction::Menu, GamepadButtonType::Start)
+        .insert(UserAction::Menu, GamepadButton::Start)
         .insert_dual_axis(UserAction::Move, GamepadStick::LEFT)
-        .insert_dual_axis(UserAction::Move, GamepadVirtualDPad::DPAD)
+        .insert_dual_axis(UserAction::Move, VirtualDPad::dpad())
         .insert_dual_axis(
             UserAction::Move,
-            KeyboardVirtualDPad::new(KeyCode::KeyE, KeyCode::KeyD, KeyCode::KeyS, KeyCode::KeyF),
+            VirtualDPad::new(KeyCode::KeyE, KeyCode::KeyD, KeyCode::KeyS, KeyCode::KeyF),
         )
         .insert_dual_axis(UserAction::Aim, GamepadStick::RIGHT)
         // Left Arm
         .insert(UserAction::LeftArm, MouseButton::Left)
-        .insert(UserAction::LeftArm, GamepadButtonType::LeftTrigger2)
+        .insert(UserAction::LeftArm, GamepadButton::LeftTrigger2)
         .insert(UserAction::LeftArmSecondary, KeyCode::KeyW)
-        .insert(UserAction::LeftArmSecondary, GamepadButtonType::West)
+        .insert(UserAction::LeftArmSecondary, GamepadButton::West)
         // Right Arm
         .insert(UserAction::RightArm, MouseButton::Right)
-        .insert(UserAction::RightArm, GamepadButtonType::RightTrigger2)
+        .insert(UserAction::RightArm, GamepadButton::RightTrigger2)
         .insert(UserAction::RightArmSecondary, KeyCode::KeyE)
-        .insert(UserAction::RightArmSecondary, GamepadButtonType::East)
+        .insert(UserAction::RightArmSecondary, GamepadButton::East)
         // Left Shoulder
         .insert(UserAction::LeftShoulder, MouseButton::Back)
-        .insert(UserAction::LeftShoulder, GamepadButtonType::LeftTrigger)
+        .insert(UserAction::LeftShoulder, GamepadButton::LeftTrigger)
         // Right Shoulder
         .insert(UserAction::RightShoulder, MouseButton::Forward)
-        .insert(UserAction::RightShoulder, GamepadButtonType::RightTrigger)
+        .insert(UserAction::RightShoulder, GamepadButton::RightTrigger)
         // Legs
         .insert(UserAction::Legs, KeyCode::Space)
-        .insert(UserAction::Legs, GamepadButtonType::South)
+        .insert(UserAction::Legs, GamepadButton::South)
         // Head
         .insert(UserAction::Head, KeyCode::KeyG)
-        .insert(UserAction::Head, GamepadButtonType::North)
+        .insert(UserAction::Head, GamepadButton::North)
         // Menu controls
-        .insert(UserAction::TabLeft, GamepadButtonType::LeftTrigger)
-        .insert(UserAction::TabLeft, GamepadButtonType::LeftTrigger2)
+        .insert(UserAction::TabLeft, GamepadButton::LeftTrigger)
+        .insert(UserAction::TabLeft, GamepadButton::LeftTrigger2)
         .insert(UserAction::TabLeft, KeyCode::KeyW)
-        .insert(UserAction::TabRight, GamepadButtonType::RightTrigger)
-        .insert(UserAction::TabRight, GamepadButtonType::RightTrigger2)
+        .insert(UserAction::TabRight, GamepadButton::RightTrigger)
+        .insert(UserAction::TabRight, GamepadButton::RightTrigger2)
         .insert(UserAction::TabRight, KeyCode::KeyR)
-        .insert(UserAction::Select, GamepadButtonType::South)
+        .insert(UserAction::Select, GamepadButton::South)
         .insert(UserAction::Select, KeyCode::Enter)
         .insert(UserAction::Select, KeyCode::Space)
         .insert(UserAction::Select, MouseButton::Left)
-        .insert(UserAction::Cancel, GamepadButtonType::East)
+        .insert(UserAction::Cancel, GamepadButton::East)
         .insert(UserAction::Cancel, KeyCode::Escape)
         .insert(UserAction::Cancel, MouseButton::Right);
     map

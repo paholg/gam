@@ -1,6 +1,7 @@
 use bevy_ecs::component::Component;
 use bevy_ecs::entity::Entity;
 use bevy_ecs::system::Commands;
+use bevy_ecs::system::In;
 use bevy_ecs::system::SystemId;
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::CoefficientCombineRule;
@@ -82,14 +83,14 @@ impl AbilityIds {
 
 #[derive(Component, Debug)]
 pub struct Abilities {
-    pub left_arm: SystemId<Entity, ()>,
-    pub left_arm_secondary: SystemId<Entity, ()>,
-    pub right_arm: SystemId<Entity, ()>,
-    pub right_arm_secondary: SystemId<Entity, ()>,
-    pub left_shoulder: SystemId<Entity, ()>,
-    pub right_shoulder: SystemId<Entity, ()>,
-    pub legs: SystemId<Entity, ()>,
-    pub head: SystemId<Entity, ()>,
+    pub left_arm: SystemId<In<Entity>, ()>,
+    pub left_arm_secondary: SystemId<In<Entity>, ()>,
+    pub right_arm: SystemId<In<Entity>, ()>,
+    pub right_arm_secondary: SystemId<In<Entity>, ()>,
+    pub left_shoulder: SystemId<In<Entity>, ()>,
+    pub right_shoulder: SystemId<In<Entity>, ()>,
+    pub legs: SystemId<In<Entity>, ()>,
+    pub head: SystemId<In<Entity>, ()>,
 }
 
 #[derive(Debug, Component)]
@@ -111,7 +112,7 @@ impl PlayerInfo {
                         foot_offset: (-PLAYER_HEIGHT * 0.5).into(),
                         body: RigidBody::Dynamic,
                         locked_axes: LockedAxes::ROTATION_LOCKED,
-                        transform: Transform::from_xyz(0.0, PLAYER_HEIGHT * 0.5, 0.0).into(),
+                        transform: Transform::from_xyz(0.0, PLAYER_HEIGHT * 0.5, 0.0),
                         mass: MassBundle::new(PLAYER_MASS),
                         velocity: Velocity::zero(),
                         force: ExternalForce::default(),
