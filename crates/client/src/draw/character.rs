@@ -32,6 +32,7 @@ use engine::FootOffset;
 use engine::Health;
 use engine::Player;
 
+use crate::aim::BlocksSight;
 use crate::asset_handler::AssetHandler;
 use crate::bar::Bar;
 use crate::in_plane;
@@ -75,7 +76,7 @@ fn player_death_system(
     let transform = *query.get(entity).unwrap();
     effect.trigger(&mut commands, transform, &mut effects, &frame);
 
-    let sound = assets.player.despawn_sound.clone();
+    let sound = assets.player.despawn_sound.clone_weak();
     audio
         .play(sound)
         .with_volume(Volume::Decibels(config.sound.effects_volume));
@@ -95,7 +96,7 @@ fn enemy_death_system(
     let transform = *query.get(entity).unwrap();
     effect.trigger(&mut commands, transform, &mut effects, &frame);
 
-    let sound = assets.enemy.despawn_sound.clone();
+    let sound = assets.enemy.despawn_sound.clone_weak();
     audio
         .play(sound)
         .with_volume(Volume::Decibels(config.sound.effects_volume));
@@ -115,7 +116,7 @@ fn ally_death_system(
     let transform = *query.get(entity).unwrap();
     effect.trigger(&mut commands, transform, &mut effects, &frame);
 
-    let sound = assets.ally.despawn_sound.clone();
+    let sound = assets.ally.despawn_sound.clone_weak();
     audio
         .play(sound)
         .with_volume(Volume::Decibels(config.sound.effects_volume));
@@ -136,8 +137,8 @@ fn draw_player_system(
             ))
             .with_children(|builder| {
                 builder.spawn((
-                    Mesh3d::from(assets.player.outline_mesh.clone()),
-                    MeshMaterial3d::from(assets.player.outline_material.clone()),
+                    Mesh3d::from(assets.player.outline_mesh.clone_weak()),
+                    MeshMaterial3d::from(assets.player.outline_material.clone_weak()),
                     in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
                     NotShadowCaster,
                     NotShadowReceiver,
@@ -145,6 +146,7 @@ fn draw_player_system(
                 builder.spawn((
                     assets.player.scene.clone(),
                     Transform::from_translation(foot_offset.to_vec()),
+                    BlocksSight,
                     Bar::<Health>::default(),
                     Bar::<Energy>::default(),
                 ));
@@ -167,8 +169,8 @@ fn draw_enemy_system(
             ))
             .with_children(|builder| {
                 builder.spawn((
-                    Mesh3d::from(assets.enemy.outline_mesh.clone()),
-                    MeshMaterial3d::from(assets.enemy.outline_material.clone()),
+                    Mesh3d::from(assets.enemy.outline_mesh.clone_weak()),
+                    MeshMaterial3d::from(assets.enemy.outline_material.clone_weak()),
                     in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
                     NotShadowCaster,
                     NotShadowReceiver,
@@ -176,6 +178,7 @@ fn draw_enemy_system(
                 builder.spawn((
                     assets.enemy.scene.clone(),
                     Transform::from_translation(foot_offset.to_vec()),
+                    BlocksSight,
                     Bar::<Health>::default(),
                     Bar::<Energy>::default(),
                 ));
@@ -198,8 +201,8 @@ fn draw_ally_system(
             ))
             .with_children(|builder| {
                 builder.spawn((
-                    Mesh3d::from(assets.ally.outline_mesh.clone()),
-                    MeshMaterial3d::from(assets.ally.outline_material.clone()),
+                    Mesh3d::from(assets.ally.outline_mesh.clone_weak()),
+                    MeshMaterial3d::from(assets.ally.outline_material.clone_weak()),
                     in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
                     NotShadowCaster,
                     NotShadowReceiver,
@@ -207,6 +210,7 @@ fn draw_ally_system(
                 builder.spawn((
                     assets.ally.scene.clone(),
                     Transform::from_translation(foot_offset.to_vec()),
+                    BlocksSight,
                     Bar::<Health>::default(),
                     Bar::<Energy>::default(),
                 ));

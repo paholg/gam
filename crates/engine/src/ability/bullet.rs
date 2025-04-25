@@ -133,9 +133,9 @@ pub fn collision_system(
             }
 
             if let Ok((mut velocity, mass)) = momentum_q.get_mut(target) {
-                // TODO: This should never come up.
+                // TODO: This should never come up. But it does because of explosions. ADDRESS!
                 if !mass.mass.is_normal() {
-                    tracing::warn!("bullet hit something with no mass, mass: {mass:?}");
+                    // tracing::warn!("bullet hit something with no mass, mass: {mass:?}");
                     continue;
                 }
                 // TODO: Add angvel maybe?

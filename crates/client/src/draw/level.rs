@@ -16,8 +16,6 @@ use bevy::prelude::Transform;
 use bevy::prelude::Vec2;
 use bevy::prelude::Vec3;
 use bevy::prelude::With;
-// FIXME
-// use bevy_mod_raycast::prelude::RaycastMesh;
 use engine::level::Floor;
 use engine::level::InLevel;
 use engine::level::LevelProps;
@@ -28,6 +26,7 @@ use engine::Health;
 use engine::To2d;
 use engine::UP;
 
+use crate::aim::BlocksSight;
 use crate::asset_handler::AssetHandler;
 use crate::bar::Bar;
 
@@ -132,12 +131,9 @@ pub fn draw_wall_system(
                         kind,
                     ))
                     .id();
-                // TODO: Raycast
-                // if kind.is_wall() {
-                //     commands
-                //         .entity(wall)
-                //         .insert((Wall, RaycastMesh::<()>::default()));
-                // }
+                if kind.is_wall() {
+                    commands.entity(wall).insert((Wall, BlocksSight));
+                }
                 wall
             })
             .collect::<Vec<_>>();

@@ -1,4 +1,5 @@
 use ability::AbilityPlugin;
+use aim::AimPlugin;
 use asset_handler::asset_handler_setup;
 use asset_handler::AssetHandler;
 use bar::BarPlugin;
@@ -32,8 +33,7 @@ use rand::Rng;
 use splash::SplashPlugin;
 
 pub mod ability;
-// TODO: Replace bevy_mod_raycast
-// mod aim;
+mod aim;
 mod asset_handler;
 mod bar;
 pub mod color_gradient;
@@ -86,8 +86,7 @@ impl Plugin for GraphicsPlugin {
             BarPlugin,
             ui::UiPlugin,
             DrawPlugin,
-            // FIXME
-            // AimPlugin,
+            AimPlugin,
         ));
     }
 }
