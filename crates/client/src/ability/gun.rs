@@ -140,7 +140,7 @@ fn bullet_death_system(
     let sound = assets.despawn_sound.clone_weak();
     audio
         .play(sound)
-        .with_volume(Volume::Decibels(config.sound.effects_volume));
+        .with_volume(Volume::Decibels(config.audio.effects_volume));
 }
 
 fn draw_bullet(

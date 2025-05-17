@@ -79,7 +79,7 @@ fn player_death_system(
     let sound = assets.player.despawn_sound.clone_weak();
     audio
         .play(sound)
-        .with_volume(Volume::Decibels(config.sound.effects_volume));
+        .with_volume(Volume::Decibels(config.audio.effects_volume));
 }
 
 fn enemy_death_system(
@@ -99,7 +99,7 @@ fn enemy_death_system(
     let sound = assets.enemy.despawn_sound.clone_weak();
     audio
         .play(sound)
-        .with_volume(Volume::Decibels(config.sound.effects_volume));
+        .with_volume(Volume::Decibels(config.audio.effects_volume));
 }
 
 fn ally_death_system(
@@ -119,7 +119,7 @@ fn ally_death_system(
     let sound = assets.ally.despawn_sound.clone_weak();
     audio
         .play(sound)
-        .with_volume(Volume::Decibels(config.sound.effects_volume));
+        .with_volume(Volume::Decibels(config.audio.effects_volume));
 }
 
 fn draw_player_system(

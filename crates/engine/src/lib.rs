@@ -41,7 +41,7 @@ use bevy_time::Time;
 use bevy_transform::components::GlobalTransform;
 use bevy_transform::components::Transform;
 use collision::TrackCollisionBundle;
-use input::check_resume;
+use input::pause_resume;
 use level::InLevel;
 use level::LevelProps;
 use movement::DesiredMove;
@@ -80,7 +80,7 @@ pub enum AppState {
     Loading,
     #[default]
     Running,
-    Paused,
+    Menu,
 }
 pub const SCHEDULE: FixedUpdate = FixedUpdate;
 
@@ -345,7 +345,8 @@ impl Plugin for GamPlugin {
                 GameSet::Physics3,
                 GameSet::Despawn,
             )
-                .chain(),
+                .chain()
+                .run_if(game_running),
         );
 
         // Systems in order
@@ -393,12 +394,12 @@ impl Plugin for GamPlugin {
                 )
                     .chain()
                     .in_set(GameSet::Despawn),
-            )
-                .run_if(game_running),
+            ),
         );
 
-        // Special pause systems
-        app.add_systems(SCHEDULE, (check_resume).run_if(game_paused));
+        // TODO: This is a potential source of non-determinism. I suspect that it will run either
+        // before or after other systems, determined at launch time, which is not what we want.
+        app.add_systems(SCHEDULE, pause_resume);
 
         // Ability Plugins
         app.add_plugins(AbilityPlugin);

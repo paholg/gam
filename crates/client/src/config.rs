@@ -79,7 +79,7 @@ fn config_file() -> Result<PathBuf, Error> {
 pub struct Config {
     pub controls: InputMap<UserAction>,
     pub graphics: Graphics,
-    pub sound: Sound,
+    pub audio: Audio,
     pub player: PlayerConfig,
 }
 
@@ -88,7 +88,7 @@ impl Default for Config {
         Self {
             controls: default_controls(),
             graphics: Default::default(),
-            sound: Default::default(),
+            audio: Default::default(),
             player: Default::default(),
         }
     }
@@ -202,14 +202,14 @@ pub enum AntiAliasing {
 
 /// Presently, only 1 or 4 samples is supported
 /// See https://github.com/gfx-rs/wgpu/issues/1832
-#[derive(Debug, Default, Serialize, Deserialize, Copy, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Copy, Clone, PartialEq, Eq)]
 pub enum MsaaSamples {
     One = 1,
     #[default]
     Four = 4,
 }
 
-#[derive(Debug, Default, Serialize, Deserialize, Copy, Clone)]
+#[derive(Debug, Default, Serialize, Deserialize, Copy, Clone, PartialEq, Eq)]
 pub enum Sensitivity {
     Low,
     #[default]
@@ -232,14 +232,14 @@ impl From<Sensitivity> for fxaa::Sensitivity {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Sound {
+pub struct Audio {
     pub global_volume: f64,
     pub effects_volume: f64,
     pub music_volume: f64,
     pub speech_volume: f64,
 }
 
-impl Default for Sound {
+impl Default for Audio {
     fn default() -> Self {
         Self {
             global_volume: -20.0,
@@ -259,7 +259,7 @@ impl Default for PlayerConfig {
     fn default() -> Self {
         Self {
             ability_ids: AbilityIds {
-                left_arm: "fire_gun".into(),
+                left_arm: "gun".into(),
                 right_arm: "rocket".into(),
                 left_shoulder: "frag_grenade".into(),
                 right_shoulder: "gravity_ball".into(),

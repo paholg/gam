@@ -45,7 +45,7 @@ pub enum Action {
     Legs,
     Head,
     // Non-ability actions
-    Pause,
+    Menu,
 }
 
 impl Action {

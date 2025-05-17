@@ -1,3 +1,4 @@
+use bevy::app::FixedUpdate;
 use bevy::prelude::Camera;
 use bevy::prelude::EventReader;
 use bevy::prelude::GlobalTransform;
@@ -7,7 +8,6 @@ use bevy::prelude::Res;
 use bevy::prelude::ResMut;
 use bevy::prelude::Resource;
 use bevy::prelude::Transform;
-use bevy::prelude::Update;
 use bevy::prelude::Vec2;
 use bevy::prelude::With;
 use bevy::prelude::Without;
@@ -38,7 +38,10 @@ impl Plugin for ControlPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.insert_resource(CameraFollowMode::default())
             .insert_resource(self.player)
-            .add_systems(Update, player_input);
+            // TODO: This should be Update, but then we get inconsistent results for pressing Menu.
+            // I think we'll need to do something like hold onto the press until the next FixedUpdate
+            // tick.
+            .add_systems(FixedUpdate, player_input);
     }
 }
 
@@ -79,7 +82,7 @@ pub fn player_input(
     // Handle menu separately, as we only want to send it when `just_pressed`
     // to prevent flickering.
     if action_state.just_pressed(&UserAction::Menu) {
-        actions |= Action::Pause;
+        actions |= Action::Menu;
     }
 
     let movement = action_state.clamped_axis_pair(&UserAction::Move);

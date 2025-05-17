@@ -129,7 +129,7 @@ fn background_music_system(
 
             let handle = audio
                 .play(track)
-                .with_volume(Volume::Decibels(config.sound.music_volume))
+                .with_volume(Volume::Decibels(config.audio.music_volume))
                 .handle();
 
             bg_music.name = Some(name);

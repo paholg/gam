@@ -11,7 +11,7 @@ use tracing::info;
 use crate::status_effect::TimeDilation;
 
 /// The timestep at which we run our game.
-pub const FREQUENCY: f32 = 60.0;
+pub const FREQUENCY: f32 = 64.0;
 pub const TIMESTEP: f32 = 1.0 / FREQUENCY;
 
 /// Represents an absolute time in frames since program start.
