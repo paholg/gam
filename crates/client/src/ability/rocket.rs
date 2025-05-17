@@ -7,9 +7,7 @@ use bevy::color::LinearRgba;
 use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::StandardMaterial;
 use bevy::prelude::Added;
-use bevy::prelude::BuildChildren;
 use bevy::prelude::Capsule3d;
-use bevy::prelude::ChildBuild;
 use bevy::prelude::Commands;
 use bevy::prelude::Entity;
 use bevy::prelude::InheritedVisibility;
@@ -78,7 +76,7 @@ pub fn draw_rocket_system(
     query: Query<Entity, Added<Rocket>>,
 ) {
     for entity in query.iter() {
-        let Some(mut ecmds) = commands.get_entity(entity) else {
+        let Ok(mut ecmds) = commands.get_entity(entity) else {
             continue;
         };
         ecmds.insert((InheritedVisibility::default(),));

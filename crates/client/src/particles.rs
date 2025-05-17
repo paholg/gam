@@ -1,47 +1,49 @@
-use bevy::core::FrameCount;
+use bevy::asset::Handle;
+use bevy::diagnostic::FrameCount;
 use bevy::prelude::Commands;
 use bevy::prelude::Entity;
 use bevy::prelude::Query;
 use bevy::prelude::Transform;
-use bevy_hanabi::EffectInitializers;
-use bevy_hanabi::ParticleEffectBundle;
+use bevy_hanabi::EffectAsset;
+use bevy_hanabi::EffectSpawner;
+use bevy_hanabi::ParticleEffect;
 
-/// A wrapper around `ParticleEffectBundle` that allows spawning multiple copies
+// A wrapper around `Handle<EffectAsset>undle` that allows spawning multiple copies
 /// of the same effect in the same frame.
 ///
 /// Some caveats:
 /// 1. It is expected that the effect's spawner has `starts_immediately: true`.
 ///    This is left to the caller to verify.
 pub struct ParticleEffectPool {
-    bundle: ParticleEffectBundle,
+    asset: Handle<EffectAsset>,
     effects: Vec<Entity>,
     index: usize,
     last_run: u32,
 }
 
-impl Clone for ParticleEffectPool {
-    fn clone(&self) -> Self {
-        Self::new(self.bundle.clone())
-    }
-}
+// impl Clone for ParticleEffectPool {
+//     fn clone(&self) -> Self {
+//         Self::new(self.effect.clone())
+//     }
+// }
 
-impl From<ParticleEffectBundle> for ParticleEffectPool {
-    fn from(value: ParticleEffectBundle) -> Self {
+impl From<Handle<EffectAsset>> for ParticleEffectPool {
+    fn from(value: Handle<EffectAsset>) -> Self {
         Self::new(value)
     }
 }
 
 impl ParticleEffectPool {
-    pub fn new(bundle: ParticleEffectBundle) -> Self {
+    pub fn new(effect: Handle<EffectAsset>) -> Self {
         Self {
-            bundle,
+            asset: effect,
             effects: vec![],
             index: 0,
             last_run: 0,
         }
     }
 
-    /// Each new frame, we can re-use `ParticleEffect`s.
+    /// Each new frame, we can re-use `Handle<EffectAsset>s.
     pub fn reset(&mut self) {
         self.index = 0;
     }
@@ -50,7 +52,7 @@ impl ParticleEffectPool {
         &mut self,
         commands: &mut Commands,
         transform: Transform,
-        effects: &mut Query<(&mut Transform, &mut EffectInitializers)>,
+        effects: &mut Query<(&mut Transform, &mut EffectSpawner)>,
         frame: &FrameCount,
     ) {
         if self.last_run != frame.0 {
@@ -68,9 +70,10 @@ impl ParticleEffectPool {
                 tracing::warn!("Missing effect");
             }
         } else {
-            let mut bundle = self.bundle.clone();
-            bundle.transform = transform;
-            let entity = commands.spawn(bundle).id();
+            let effect = ParticleEffect {
+                handle: self.asset.clone(),
+            };
+            let entity = commands.spawn((effect, transform)).id();
             self.effects.push(entity);
             self.index += 1;
         }

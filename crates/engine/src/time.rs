@@ -1,11 +1,11 @@
 use std::ops::Div;
 use std::ops::Sub;
+use std::time::Duration;
 use std::time::Instant;
 
+use bevy_ecs::resource::Resource;
 use bevy_ecs::system::ResMut;
-use bevy_ecs::system::Resource;
 use bevy_reflect::Reflect;
-use bevy_utils::Duration;
 use tracing::info;
 
 use crate::status_effect::TimeDilation;

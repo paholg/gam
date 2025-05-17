@@ -1,21 +1,19 @@
-use bevy::hierarchy::Children;
-use bevy::hierarchy::HierarchyQueryExt;
+use bevy::ecs::hierarchy::ChildOf;
+use bevy::ecs::hierarchy::Children;
 use bevy::math::Dir3;
 use bevy::math::Ray3d;
 use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::NotShadowReceiver;
+use bevy::picking::mesh_picking::ray_cast::MeshRayCastSettings;
 use bevy::prelude::Added;
-use bevy::prelude::BuildChildren;
 use bevy::prelude::Commands;
 use bevy::prelude::Component;
 use bevy::prelude::Entity;
 use bevy::prelude::Mesh3d;
 use bevy::prelude::MeshRayCast;
-use bevy::prelude::Parent;
 use bevy::prelude::Plugin;
 use bevy::prelude::Query;
-use bevy::prelude::RayCastSettings;
 use bevy::prelude::Res;
 use bevy::prelude::Transform;
 use bevy::prelude::Update;
@@ -74,10 +72,10 @@ fn draw_target_system(
 
 fn update_target_system(
     player_query: Query<(&Transform, &Target), With<Player>>,
-    mut target_query: Query<(&Parent, &mut Transform), (Without<Player>, With<CursorTarget>)>,
+    mut target_query: Query<(&ChildOf, &mut Transform), (Without<Player>, With<CursorTarget>)>,
 ) {
-    for (parent, mut transform) in &mut target_query {
-        if let Ok((player_transform, target)) = player_query.get(parent.get()) {
+    for (child_of, mut transform) in &mut target_query {
+        if let Ok((player_transform, target)) = player_query.get(child_of.parent()) {
             let mut t = in_plane();
             let rotation = player_transform.rotation.inverse();
             t.rotate(rotation);
@@ -121,16 +119,16 @@ fn update_laser_system(
     mut raycast: MeshRayCast,
     asset_handler: Res<AssetHandler>,
     mut laser_query: Query<
-        (&Parent, &mut Transform),
+        (&ChildOf, &mut Transform),
         (With<LaserSight>, Without<Player>, Without<BlocksSight>),
     >,
     player_query: Query<(&Transform, &Target), With<Player>>,
     blocks_sight_query: Query<(), With<BlocksSight>>,
 ) {
     let filter = |entity| blocks_sight_query.get(entity).is_ok();
-    let settings = RayCastSettings::default().with_filter(&filter);
-    for (parent, mut transform) in &mut laser_query {
-        let (player_transform, target) = player_query.get(parent.get()).expect("no player");
+    let settings = MeshRayCastSettings::default().with_filter(&filter);
+    for (child_of, mut transform) in &mut laser_query {
+        let (player_transform, target) = player_query.get(child_of.parent()).expect("no player");
         let Ok(dir) = Dir3::new((target.0 - player_transform.translation.to_2d()).to_3d(0.0))
         else {
             continue;

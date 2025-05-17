@@ -1,23 +1,21 @@
 use std::fmt;
 use std::marker::PhantomData;
 
+use bevy::ecs::hierarchy::ChildOf;
 use bevy::ecs::query::QueryData;
+use bevy::ecs::schedule::IntoScheduleConfigs;
 use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::NotShadowReceiver;
 use bevy::prelude::Added;
-use bevy::prelude::BuildChildren;
-use bevy::prelude::ChildBuild;
 use bevy::prelude::Children;
 use bevy::prelude::Commands;
 use bevy::prelude::Component;
 use bevy::prelude::Entity;
 use bevy::prelude::GlobalTransform;
 use bevy::prelude::Handle;
-use bevy::prelude::IntoSystemConfigs;
 use bevy::prelude::Mesh;
 use bevy::prelude::Mesh3d;
-use bevy::prelude::Parent;
 use bevy::prelude::Plugin;
 use bevy::prelude::Query;
 use bevy::prelude::Res;
@@ -221,19 +219,19 @@ fn bar_add_system<T: Component + BarAssets + Default>(
 pub fn bar_update_system<T: Component + HasBar>(
     entity_q: Query<(&Transform, &T), (Without<BarMarker<T>>, Without<BarChildMarker<T>>)>,
     graphics_q: Query<
-        (&Parent, &Transform, &Bar<T>),
+        (&ChildOf, &Transform, &Bar<T>),
         (Without<BarMarker<T>>, Without<BarChildMarker<T>>),
     >,
     mut bar_q: Query<
-        (&Parent, &Children, &mut Transform),
+        (&ChildOf, &Children, &mut Transform),
         (With<BarMarker<T>>, Without<BarChildMarker<T>>),
     >,
     mut fgbar_q: Query<&mut Transform, (With<BarChildMarker<T>>, Without<BarMarker<T>>)>,
 ) {
-    for (parent, children, mut transform) in &mut bar_q {
-        let Ok((grandparent, graphics_transform, bar)) = graphics_q.get(parent.get()) else {
+    for (child_of, children, mut transform) in &mut bar_q {
+        let Ok((grandchild_of, graphics_transform, bar)) = graphics_q.get(child_of.parent()) else {
             tracing::warn!(
-                ?parent,
+                ?child_of,
                 ?children,
                 ?transform,
                 "Could not get parent for bar"
@@ -241,9 +239,9 @@ pub fn bar_update_system<T: Component + HasBar>(
             continue;
         };
 
-        let Ok((entity_transform, quantity)) = entity_q.get(grandparent.get()) else {
+        let Ok((entity_transform, quantity)) = entity_q.get(grandchild_of.parent()) else {
             tracing::warn!(
-                ?grandparent,
+                ?grandchild_of,
                 ?children,
                 ?transform,
                 "Could not get grandparent for bar"

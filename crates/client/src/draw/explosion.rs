@@ -1,12 +1,11 @@
 use bevy::app::Plugin;
 use bevy::app::Update;
 use bevy::color::Color;
+use bevy::ecs::hierarchy::ChildOf;
 use bevy::pbr::MeshMaterial3d;
 use bevy::prelude::Added;
 use bevy::prelude::AlphaMode;
 use bevy::prelude::Assets;
-use bevy::prelude::BuildChildren;
-use bevy::prelude::ChildBuild;
 use bevy::prelude::Commands;
 use bevy::prelude::Component;
 use bevy::prelude::Entity;
@@ -14,7 +13,6 @@ use bevy::prelude::Handle;
 use bevy::prelude::InheritedVisibility;
 use bevy::prelude::Mesh;
 use bevy::prelude::Mesh3d;
-use bevy::prelude::Parent;
 use bevy::prelude::Query;
 use bevy::prelude::Res;
 use bevy::prelude::ResMut;
@@ -107,14 +105,14 @@ fn draw_explosion(
 
 fn update_explosion(
     mut materials: ResMut<Assets<StandardMaterial>>,
-    mut query: Query<(&Parent, &MeshMaterial3d<StandardMaterial>), With<ExplosionGraphics>>,
+    mut query: Query<(&ChildOf, &MeshMaterial3d<StandardMaterial>), With<ExplosionGraphics>>,
     parent_q: Query<(&Explosion, &Transform)>,
     rocket_assets: Res<RocketAssets>,
     frag_grenade_assets: Res<GrenadeAssets<FragGrenade>>,
     heal_grenade_assets: Res<GrenadeAssets<HealGrenade>>,
 ) {
-    for (parent, material) in &mut query {
-        let Ok((explosion, parent_transform)) = parent_q.get(parent.get()) else {
+    for (child_of, material) in &mut query {
+        let Ok((explosion, parent_transform)) = parent_q.get(child_of.parent()) else {
             tracing::warn!("ExplosionGraphics missing parent");
             continue;
         };

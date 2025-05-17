@@ -1,29 +1,25 @@
 use bevy_ecs::component::Component;
 use bevy_ecs::entity::Entity;
-use bevy_ecs::event::EventWriter;
-use bevy_ecs::query::QueryData;
 use bevy_ecs::query::With;
-use bevy_ecs::query::Without;
-use bevy_ecs::schedule::IntoSystemConfigs;
-use bevy_ecs::schedule::SystemConfigs;
+use bevy_ecs::schedule::IntoScheduleConfigs;
+use bevy_ecs::schedule::ScheduleConfigs;
 use bevy_ecs::system::Commands;
 use bevy_ecs::system::Query;
-use bevy_math::Vec2;
-use bevy_rapier3d::plugin::ReadDefaultRapierContext;
+use bevy_ecs::system::ScheduleSystem;
+use bevy_rapier3d::plugin::ReadRapierContext;
 use bevy_rapier3d::prelude::QueryFilter;
 use bevy_transform::components::Transform;
 use rand::Rng;
 
-use super::pathfind::set_move;
-use super::pathfind::HasPath;
-use super::pathfind::PathfindEvent;
+// use super::pathfind::set_move;
+// use super::pathfind::HasPath;
+// use super::pathfind::PathfindEvent;
 use super::target_closest_system;
 use super::update_target_system;
 use super::Ai;
 use super::AiTarget;
 use crate::ability::AbilityId;
 use crate::level::Floor;
-use crate::movement::DesiredMove;
 use crate::multiplayer::Action;
 use crate::player::Abilities;
 use crate::player::AbilityIds;
@@ -71,7 +67,7 @@ impl Default for ChargeAi {
     }
 }
 
-pub fn system_set() -> SystemConfigs {
+pub fn system_set() -> ScheduleConfigs<ScheduleSystem> {
     (
         target_closest_system::<Enemy, ChargeAi>,
         target_closest_system::<Ally, ChargeAi>,
@@ -80,14 +76,14 @@ pub fn system_set() -> SystemConfigs {
         check_obstructions::<Enemy>,
         check_obstructions::<Ally>,
         gun_system,
-        move_system::<Enemy>,
-        move_system::<Ally>,
+        // move_system::<Enemy>,
+        // move_system::<Ally>,
     )
         .chain()
 }
 
 fn check_obstructions<T: Faction>(
-    rapier_context: ReadDefaultRapierContext,
+    rapier_context: ReadRapierContext,
     mut ai_q: Query<(Entity, &AiTarget, &Transform, &AbilityOffset, &mut ChargeAi), With<T>>,
     wall_q: Query<(), With<Floor>>,
     friend_q: Query<(), With<T>>,
@@ -113,7 +109,12 @@ fn check_obstructions<T: Faction>(
 
         let dir = target.loc.0 - transform.translation.to_2d();
 
-        let ray = rapier_context.cast_ray(origin, dir.to_3d(0.0), 1.0, true, filter);
+        // FIXME Unwrap
+        let ray =
+            rapier_context
+                .single()
+                .unwrap()
+                .cast_ray(origin, dir.to_3d(0.0), 1.0, true, filter);
 
         ai.gun_obstruction = ray.is_some();
     }
@@ -131,69 +132,69 @@ fn gun_system(mut commands: Commands, mut ai_q: Query<(Entity, &ChargeAi, &Abili
     }
 }
 
-#[derive(QueryData)]
-#[query_data(mutable)]
-struct MoveQuery {
-    entity: Entity,
-    target: &'static mut AiTarget,
-    transform: &'static Transform,
-    ai: &'static ChargeAi,
-    has_path: &'static mut HasPath,
-    desired_move: &'static mut DesiredMove,
-}
+// #[derive(QueryData)]
+// #[query_data(mutable)]
+// struct MoveQuery {
+//     entity: Entity,
+//     target: &'static mut AiTarget,
+//     transform: &'static Transform,
+//     ai: &'static ChargeAi,
+//     has_path: &'static mut HasPath,
+//     desired_move: &'static mut DesiredMove,
+// }
 
-fn move_system<T: Faction>(
-    mut ai_q: Query<MoveQuery, With<T>>,
-    target_q: Query<&Transform, (With<T::Foe>, Without<T>)>,
-    mut events: EventWriter<PathfindEvent>,
-) {
-    for mut ai in &mut ai_q {
-        let Some(target_transform) = ai.target.entity.and_then(|e| target_q.get(e).ok()) else {
-            // Can't do much without a target.
-            continue;
-        };
-        let loc = ai.transform.translation.to_2d();
-        let target_loc = target_transform.translation.to_2d();
+// fn move_system<T: Faction>(
+//     mut ai_q: Query<MoveQuery, With<T>>,
+//     target_q: Query<&Transform, (With<T::Foe>, Without<T>)>,
+//     mut events: EventWriter<PathfindEvent>,
+// ) {
+//     for mut ai in &mut ai_q {
+//         let Some(target_transform) = ai.target.entity.and_then(|e| target_q.get(e).ok()) else {
+//             // Can't do much without a target.
+//             continue;
+//         };
+//         let loc = ai.transform.translation.to_2d();
+//         let target_loc = target_transform.translation.to_2d();
 
-        enum Task {
-            Pathfind,
-            Move,
-            Stop,
-        }
+//         enum Task {
+//             Pathfind,
+//             Move,
+//             Stop,
+//         }
 
-        let task = if let Some(final_dest) = ai.has_path.path.last() {
-            // We still have a valid path.
-            if final_dest.to_2d().distance_squared(target_loc) > ai.ai.target_dist_squared {
-                // Target has moved too far; recompute path.
-                Task::Pathfind
-            } else if loc.distance_squared(target_loc) < ai.ai.desired_range_squared
-                && !ai.ai.gun_obstruction
-            {
-                Task::Stop
-            } else {
-                Task::Move
-            }
-        } else {
-            // We don't have a destination. We should always have one just in
-            // case.
-            Task::Pathfind
-        };
+//         let task = if let Some(final_dest) = ai.has_path.path.last() {
+//             // We still have a valid path.
+//             if final_dest.to_2d().distance_squared(target_loc) > ai.ai.target_dist_squared {
+//                 // Target has moved too far; recompute path.
+//                 Task::Pathfind
+//             } else if loc.distance_squared(target_loc) < ai.ai.desired_range_squared
+//                 && !ai.ai.gun_obstruction
+//             {
+//                 Task::Stop
+//             } else {
+//                 Task::Move
+//             }
+//         } else {
+//             // We don't have a destination. We should always have one just in
+//             // case.
+//             Task::Pathfind
+//         };
 
-        match task {
-            Task::Pathfind => {
-                events.send(PathfindEvent {
-                    entity: ai.entity,
-                    target: target_loc,
-                });
-            }
-            Task::Move => {
-                set_move(ai.has_path, ai.transform, ai.desired_move);
-            }
-            Task::Stop => {
-                // TODO: Do something more interesting than stop when we get
-                // close.
-                ai.desired_move.dir = Vec2::ZERO;
-            }
-        }
-    }
-}
+//         match task {
+//             Task::Pathfind => {
+//                 events.send(PathfindEvent {
+//                     entity: ai.entity,
+//                     target: target_loc,
+//                 });
+//             }
+//             Task::Move => {
+//                 set_move(ai.has_path, ai.transform, ai.desired_move);
+//             }
+//             Task::Stop => {
+//                 // TODO: Do something more interesting than stop when we get
+//                 // close.
+//                 ai.desired_move.dir = Vec2::ZERO;
+//             }
+//         }
+//     }
+// }

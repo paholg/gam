@@ -6,11 +6,11 @@ use bevy_app::Startup;
 use bevy_ecs::component::Component;
 use bevy_ecs::entity::Entity;
 use bevy_ecs::query::QueryData;
+use bevy_ecs::resource::Resource;
 use bevy_ecs::system::Commands;
 use bevy_ecs::system::In;
 use bevy_ecs::system::Query;
 use bevy_ecs::system::Res;
-use bevy_ecs::system::Resource;
 use bevy_ecs::world::World;
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::Collider;
@@ -283,8 +283,7 @@ fn fire<S: Side, G: Grenade>(
 
     commands.spawn((
         Object {
-            transform: Transform::from_translation(position)
-                .with_scale(Vec3::splat(props.radius)),
+            transform: Transform::from_translation(position).with_scale(Vec3::splat(props.radius)),
             collider: Collider::ball(1.0),
             foot_offset: (-props.radius).into(),
             mass: MassBundle::new(props.mass),

@@ -1,11 +1,11 @@
 use core::fmt;
 
 use bevy_ecs::entity::Entity;
+use bevy_ecs::resource::Resource;
 use bevy_ecs::system::Commands;
-use bevy_ecs::system::Resource;
 use bevy_math::Vec2;
+use bevy_platform::collections::HashMap;
 use bevy_reflect::TypePath;
-use bevy_utils::HashMap;
 use bitmask_enum::bitmask;
 use bytemuck::Pod;
 use bytemuck::Zeroable;
@@ -51,28 +51,28 @@ pub enum Action {
 impl Action {
     pub fn fire_abilities(&self, commands: &mut Commands, user: Entity, abilities: &Abilities) {
         if self.contains(Action::LeftArm) {
-            commands.run_system_with_input(abilities.left_arm, user);
+            commands.run_system_with(abilities.left_arm, user);
         }
         if self.contains(Action::LeftArmSecondary) {
-            commands.run_system_with_input(abilities.left_arm_secondary, user);
+            commands.run_system_with(abilities.left_arm_secondary, user);
         }
         if self.contains(Action::RightArm) {
-            commands.run_system_with_input(abilities.right_arm, user);
+            commands.run_system_with(abilities.right_arm, user);
         }
         if self.contains(Action::RightArmSecondary) {
-            commands.run_system_with_input(abilities.right_arm_secondary, user);
+            commands.run_system_with(abilities.right_arm_secondary, user);
         }
         if self.contains(Action::LeftShoulder) {
-            commands.run_system_with_input(abilities.left_shoulder, user);
+            commands.run_system_with(abilities.left_shoulder, user);
         }
         if self.contains(Action::RightShoulder) {
-            commands.run_system_with_input(abilities.right_shoulder, user);
+            commands.run_system_with(abilities.right_shoulder, user);
         }
         if self.contains(Action::Legs) {
-            commands.run_system_with_input(abilities.legs, user);
+            commands.run_system_with(abilities.legs, user);
         }
         if self.contains(Action::Head) {
-            commands.run_system_with_input(abilities.head, user);
+            commands.run_system_with(abilities.head, user);
         }
     }
 }

@@ -2,13 +2,12 @@ use bevy::app::Plugin;
 use bevy::app::Startup;
 use bevy::app::Update;
 use bevy::color::LinearRgba;
+use bevy::ecs::hierarchy::ChildOf;
 use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::NotShadowReceiver;
 use bevy::prelude::Added;
 use bevy::prelude::AlphaMode;
 use bevy::prelude::Assets;
-use bevy::prelude::BuildChildren;
-use bevy::prelude::ChildBuild;
 use bevy::prelude::Commands;
 use bevy::prelude::Component;
 use bevy::prelude::Cylinder;
@@ -17,7 +16,6 @@ use bevy::prelude::Handle;
 use bevy::prelude::InheritedVisibility;
 use bevy::prelude::Mesh;
 use bevy::prelude::Mesh3d;
-use bevy::prelude::Parent;
 use bevy::prelude::Query;
 use bevy::prelude::Res;
 use bevy::prelude::ResMut;
@@ -124,7 +122,7 @@ fn update_transport_system(
     assets: Res<TransportBeamAssets>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut sender_q: Query<(
-        &Parent,
+        &ChildOf,
         &mut Transform,
         &MeshMaterial3d<StandardMaterial>,
         &TransportSenderGraphics,
@@ -145,7 +143,7 @@ fn update_transport_system(
     >,
 ) {
     for (parent, mut transform, material, sender) in &mut sender_q {
-        let Ok((parent_transform, beam)) = parent_q.get(parent.get()) else {
+        let Ok((parent_transform, beam)) = parent_q.get(parent.parent()) else {
             tracing::warn!("TransportSenderGraphics missing parent");
             continue;
         };

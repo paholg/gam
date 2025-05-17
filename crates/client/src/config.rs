@@ -24,7 +24,6 @@ use leafwing_input_manager::prelude::InputManagerPlugin;
 use leafwing_input_manager::prelude::InputMap;
 use leafwing_input_manager::prelude::VirtualDPad;
 use leafwing_input_manager::Actionlike;
-use leafwing_input_manager::InputManagerBundle;
 use serde::Deserialize;
 use serde::Serialize;
 use subenum::subenum;
@@ -358,11 +357,6 @@ fn spawn_input_manager(
     config: Res<Config>,
 ) {
     for entity in query.iter() {
-        commands
-            .entity(entity)
-            .insert(InputManagerBundle::<UserAction> {
-                input_map: config.controls.clone(),
-                ..Default::default()
-            });
+        commands.entity(entity).insert(config.controls.clone());
     }
 }

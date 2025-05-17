@@ -5,13 +5,12 @@ use bevy_ecs::component::Component;
 use bevy_ecs::entity::Entity;
 use bevy_ecs::query::With;
 use bevy_ecs::query::Without;
-use bevy_ecs::schedule::IntoSystemConfigs;
-use bevy_ecs::schedule::SystemConfigs;
+use bevy_ecs::schedule::ScheduleConfigs;
 use bevy_ecs::system::Query;
 use bevy_ecs::system::Res;
+use bevy_ecs::system::ScheduleSystem;
 use bevy_rapier3d::prelude::Velocity;
 use bevy_transform::components::Transform;
-use pathfind::HasPath;
 
 use crate::ability::gun::GunProps;
 use crate::ability::gun::StandardGun;
@@ -21,15 +20,15 @@ use crate::Target;
 use crate::To2d;
 
 pub mod charge;
-pub mod pathfind;
+// pub mod pathfind;
 
-pub fn systems() -> SystemConfigs {
-    (
-        pathfind::poll_pathfinding_system,
-        charge::system_set(),
-        pathfind::pathfinding_system,
-    )
-        .chain()
+pub fn systems() -> ScheduleConfigs<ScheduleSystem> {
+    // (
+    // pathfind::poll_pathfinding_system,
+    charge::system_set()
+    // pathfind::pathfinding_system,
+    // )
+    //     .chain()
 }
 
 pub trait Ai: Component {
@@ -41,7 +40,7 @@ pub trait Ai: Component {
 pub struct AiBundle<A: Ai + Default> {
     pub ai: A,
     target: AiTarget,
-    path: HasPath,
+    // path: HasPath,
 }
 
 #[derive(Component, Default)]

@@ -5,14 +5,14 @@ use bevy::asset::AssetServer;
 use bevy::asset::Assets;
 use bevy::color::Color;
 use bevy::color::LinearRgba;
-use bevy::core::FrameCount;
+use bevy::diagnostic::FrameCount;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::query::Added;
+use bevy::ecs::resource::Resource;
 use bevy::ecs::system::Commands;
 use bevy::ecs::system::Query;
 use bevy::ecs::system::Res;
 use bevy::ecs::system::ResMut;
-use bevy::ecs::system::Resource;
 use bevy::ecs::system::SystemId;
 use bevy::ecs::world::World;
 use bevy::math::primitives::Sphere;
@@ -29,17 +29,16 @@ use bevy::prelude::Without;
 use bevy_hanabi::Attribute;
 use bevy_hanabi::ColorOverLifetimeModifier;
 use bevy_hanabi::EffectAsset;
-use bevy_hanabi::EffectInitializers;
+use bevy_hanabi::EffectSpawner;
 use bevy_hanabi::ExprWriter;
 use bevy_hanabi::Gradient;
 use bevy_hanabi::LinearDragModifier;
-use bevy_hanabi::ParticleEffectBundle;
 use bevy_hanabi::SetAttributeModifier;
 use bevy_hanabi::SetPositionSphereModifier;
 use bevy_hanabi::SetVelocitySphereModifier;
 use bevy_hanabi::ShapeDimension;
 use bevy_hanabi::SizeOverLifetimeModifier;
-use bevy_hanabi::Spawner;
+use bevy_hanabi::SpawnerSettings;
 use bevy_kira_audio::prelude::Volume;
 use bevy_kira_audio::Audio;
 use bevy_kira_audio::AudioControl;
@@ -93,7 +92,7 @@ fn setup(
     // cold_props: Res<GunProps<ColdGun>>,
 ) {
     let effect = effects.add(bullet_effect(&standard_props));
-    let effect_pool = ParticleEffectBundle::new(effect).into();
+    let effect_pool = effect.into();
 
     let standard_material = StandardMaterial {
         base_color: Color::linear_rgb(0.2, 0.2, 0.2),
@@ -125,12 +124,12 @@ fn setup(
 
 fn bullet_death_system(
     In(entity): In<Entity>,
-    query: Query<&Transform, Without<EffectInitializers>>,
+    query: Query<&Transform, Without<EffectSpawner>>,
     mut commands: Commands,
     mut assets: ResMut<BulletAssets>,
     audio: Res<Audio>,
     config: Res<Config>,
-    mut effects: Query<(&mut Transform, &mut EffectInitializers)>,
+    mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
     frame: Res<FrameCount>,
 ) {
     let effect = &mut assets.collision_effect;
@@ -148,9 +147,11 @@ fn draw_bullet(
     assets: Res<BulletAssets>,
     death_callback: Res<GunDeathCallback>,
     query: Query<(Entity, &Bullet), Added<Bullet>>,
+    audio: Res<Audio>,
+    config: Res<Config>,
 ) {
     for (entity, bullet) in query.iter() {
-        let Some(mut ecmds) = commands.get_entity(entity) else {
+        let Ok(mut ecmds) = commands.get_entity(entity) else {
             continue;
         };
         let material = if bullet.heat > 0.0 {
@@ -165,6 +166,10 @@ fn draw_bullet(
             MeshMaterial3d::from(material),
             Mesh3d::from(assets.mesh.clone_weak()),
         ));
+        let sound = assets.spawn_sound.clone_weak();
+        audio
+            .play(sound)
+            .with_volume(Volume::Decibels(config.audio.effects_volume));
     }
 }
 
@@ -180,7 +185,7 @@ fn bullet_effect<G: GunKind>(props: &GunProps<G>) -> EffectAsset {
     size_gradient1.add_key(0.3, Vec3::splat(0.1));
     size_gradient1.add_key(1.0, Vec3::splat(0.0));
 
-    let spawner = Spawner::once(250.0.into(), true);
+    let spawner = SpawnerSettings::once(250.0.into());
     let writer = ExprWriter::new();
 
     let pos = SetPositionSphereModifier {
@@ -217,6 +222,7 @@ fn bullet_effect<G: GunKind>(props: &GunProps<G>) -> EffectAsset {
         .update(drag)
         .render(ColorOverLifetimeModifier {
             gradient: color_gradient1,
+            ..Default::default()
         })
         .render(SizeOverLifetimeModifier {
             gradient: size_gradient1,

@@ -5,19 +5,17 @@ use bevy::asset::Assets;
 use bevy::color::palettes::css::BLACK;
 use bevy::ecs::entity::Entity;
 use bevy::ecs::query::Added;
+use bevy::ecs::resource::Resource;
 use bevy::ecs::system::Commands;
 use bevy::ecs::system::Query;
 use bevy::ecs::system::Res;
 use bevy::ecs::system::ResMut;
-use bevy::ecs::system::Resource;
 use bevy::ecs::world::World;
 use bevy::math::primitives::Sphere;
 use bevy::math::Vec3;
 use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::NotShadowReceiver;
-use bevy::prelude::BuildChildren;
-use bevy::prelude::ChildBuild;
 use bevy::prelude::GlobalTransform;
 use bevy::prelude::Handle;
 use bevy::prelude::InheritedVisibility;
@@ -84,7 +82,7 @@ fn draw_gravity_ball(
     query: Query<Entity, Added<GravityBall>>,
 ) {
     for entity in query.iter() {
-        let Some(mut ecmds) = commands.get_entity(entity) else {
+        let Ok(mut ecmds) = commands.get_entity(entity) else {
             continue;
         };
         ecmds.insert((InheritedVisibility::default(),));

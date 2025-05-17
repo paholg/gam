@@ -5,13 +5,12 @@ use bevy_hanabi::ColorOverLifetimeModifier;
 use bevy_hanabi::EffectAsset;
 use bevy_hanabi::ExprWriter;
 use bevy_hanabi::Gradient;
-use bevy_hanabi::ParticleEffectBundle;
 use bevy_hanabi::SetAttributeModifier;
 use bevy_hanabi::SetPositionCircleModifier;
 use bevy_hanabi::SetVelocityCircleModifier;
 use bevy_hanabi::ShapeDimension;
 use bevy_hanabi::SizeOverLifetimeModifier;
-use bevy_hanabi::Spawner;
+use bevy_hanabi::SpawnerSettings;
 use engine::PLAYER_R;
 
 use super::Builder;
@@ -24,7 +23,7 @@ pub struct TimeDilationAssets {
 impl TimeDilationAssets {
     pub fn new(builder: &mut Builder) -> Self {
         let effect = builder.effects.add(fast_effect());
-        let fast_effect = ParticleEffectBundle::new(effect).into();
+        let fast_effect = effect.into();
 
         TimeDilationAssets { fast_effect }
     }
@@ -36,7 +35,7 @@ fn fast_effect() -> EffectAsset {
     color_gradient.add_key(0.5, Vec4::splat(1.0));
     color_gradient.add_key(1.0, Vec4::new(1.0, 1.0, 1.0, 0.0));
 
-    let spawner = Spawner::once(32.0.into(), true);
+    let spawner = SpawnerSettings::once(32.0.into());
     let writer = ExprWriter::new();
 
     let pos = SetPositionCircleModifier {
@@ -64,6 +63,7 @@ fn fast_effect() -> EffectAsset {
         .init(lifetime)
         .render(ColorOverLifetimeModifier {
             gradient: color_gradient,
+            ..Default::default()
         })
         .render(SizeOverLifetimeModifier {
             gradient: Gradient::constant([0.05; 3].into()),

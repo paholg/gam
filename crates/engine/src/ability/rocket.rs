@@ -7,12 +7,12 @@ use bevy_ecs::component::Component;
 use bevy_ecs::entity::Entity;
 use bevy_ecs::query::QueryData;
 use bevy_ecs::query::With;
-use bevy_ecs::schedule::IntoSystemConfigs;
+use bevy_ecs::resource::Resource;
+use bevy_ecs::schedule::IntoScheduleConfigs;
 use bevy_ecs::system::Commands;
 use bevy_ecs::system::In;
 use bevy_ecs::system::Query;
 use bevy_ecs::system::Res;
-use bevy_ecs::system::Resource;
 use bevy_ecs::world::World;
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::Collider;
@@ -207,12 +207,11 @@ fn fire<S: Side>(
 
     commands.spawn((
         Object {
-            transform: transform
-                .with_scale(Vec3::new(
-                    props.capsule_radius,
-                    props.capsule_radius,
-                    props.capsule_length * 0.5,
-                )),
+            transform: transform.with_scale(Vec3::new(
+                props.capsule_radius,
+                props.capsule_radius,
+                props.capsule_length * 0.5,
+            )),
             collider: Collider::capsule_z(1.0, 1.0),
             foot_offset: (-props.capsule_radius).into(),
             mass: MassBundle::new(props.mass),

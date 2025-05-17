@@ -1,8 +1,7 @@
 use std::time::Duration;
 use std::time::Instant;
 
-use bevy::prelude::BuildChildren;
-use bevy::prelude::ChildBuild;
+use bevy::ecs::error::Result;
 use bevy::prelude::Color;
 use bevy::prelude::Commands;
 use bevy::prelude::Component;
@@ -86,9 +85,10 @@ fn persistent_ui_setup(mut commands: Commands) {
 #[derive(Component)]
 struct Score;
 
-fn score_update(num_ai: Res<NumAi>, mut query: Query<&mut Text, With<Score>>) {
-    let mut text = query.single_mut();
+fn score_update(num_ai: Res<NumAi>, mut query: Query<&mut Text, With<Score>>) -> Result {
+    let mut text = query.single_mut()?;
     text.0 = render_score(num_ai.enemies);
+    Ok(())
 }
 
 fn render_score(score: usize) -> String {
@@ -101,9 +101,10 @@ struct FrameTime;
 fn frame_time_update(
     tick_counter: Res<FrameCounter>,
     mut query: Query<&mut Text, With<FrameTime>>,
-) {
-    let mut text = query.single_mut();
+) -> Result {
+    let mut text = query.single_mut()?;
     text.0 = render_frame_time(tick_counter.average_engine_frame);
+    Ok(())
 }
 
 fn render_frame_time(time: Duration) -> String {
@@ -143,9 +144,10 @@ fn fps_track(mut fps: ResMut<FpsTracker>) {
 #[derive(Component)]
 struct FpsText;
 
-fn fps_update(fps: Res<FpsTracker>, mut query: Query<&mut Text, With<FpsText>>) {
-    let mut text = query.single_mut();
+fn fps_update(fps: Res<FpsTracker>, mut query: Query<&mut Text, With<FpsText>>) -> Result {
+    let mut text = query.single_mut()?;
     text.0 = render_fps(fps.fps);
+    Ok(())
 }
 
 fn render_fps(fps: f32) -> String {

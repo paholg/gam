@@ -1,13 +1,13 @@
 use bevy_app::Plugin;
 use bevy_ecs::entity::Entity;
+use bevy_ecs::resource::Resource;
 use bevy_ecs::system::In;
 use bevy_ecs::system::IntoSystem;
-use bevy_ecs::system::Resource;
 use bevy_ecs::system::SystemId;
 use bevy_ecs::world::FromWorld;
 use bevy_ecs::world::World;
+use bevy_platform::collections::HashMap;
 use bevy_reflect::TypePath;
-use bevy_utils::HashMap;
 use explosion::ExplosionPlugin;
 use gravity_ball::GravityBallPlugin;
 use grenade::GrenadePlugin;

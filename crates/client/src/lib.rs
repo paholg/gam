@@ -4,14 +4,9 @@ use asset_handler::asset_handler_setup;
 use asset_handler::AssetHandler;
 use bar::BarPlugin;
 use bevy::asset::LoadedFolder;
-use bevy::ecs::component::ComponentInfo;
 use bevy::prelude::Assets;
-use bevy::prelude::Children;
-use bevy::prelude::Entity;
 use bevy::prelude::Handle;
-use bevy::prelude::Parent;
 use bevy::prelude::Plugin;
-use bevy::prelude::Query;
 use bevy::prelude::Res;
 use bevy::prelude::ResMut;
 use bevy::prelude::Resource;
@@ -19,7 +14,6 @@ use bevy::prelude::Startup;
 use bevy::prelude::Transform;
 use bevy::prelude::Update;
 use bevy::prelude::Vec3;
-use bevy::prelude::World;
 use bevy_kira_audio::prelude::Volume;
 use bevy_kira_audio::Audio;
 use bevy_kira_audio::AudioControl;
@@ -138,56 +132,56 @@ fn background_music_system(
     }
 }
 
-#[derive(Debug)]
-struct Hierarchy {
-    #[allow(dead_code)]
-    entity: Entity,
-    #[allow(dead_code)]
-    components: Vec<String>,
-    #[allow(dead_code)]
-    children: Vec<Hierarchy>,
-}
+// #[derive(Debug)]
+// struct Hierarchy {
+//     #[allow(dead_code)]
+//     entity: Entity,
+//     #[allow(dead_code)]
+//     components: Vec<String>,
+//     #[allow(dead_code)]
+//     children: Vec<Hierarchy>,
+// }
 
-/// Print the full hierarchy that includes this entity.
-pub fn print_hierarchy(
-    initial_entity: Entity,
-    world: &World,
-    q_parents: Query<&Children>,
-    q_children: Query<&Parent>,
-) {
-    // First let's go to the top
-    let mut entity = initial_entity;
-    while let Ok(parent) = q_children.get(entity) {
-        entity = parent.get();
-    }
+// /// Print the full hierarchy that includes this entity.
+// pub fn print_hierarchy(
+//     initial_entity: Entity,
+//     world: &World,
+//     q_parents: Query<&Children>,
+//     q_children: Query<&ChildOf>,
+// ) {
+//     // First let's go to the top
+//     let mut entity = initial_entity;
+//     while let Ok(child_of) = q_children.get(entity) {
+//         entity = child_of.parent();
+//     }
 
-    let hierarchy = print_hierarchy_inner(entity, world, &q_parents);
+//     let hierarchy = print_hierarchy_inner(entity, world, &q_parents);
 
-    println!("**************************************************");
-    println!("{:#?}", hierarchy);
-    println!("**************************************************");
-}
+//     println!("**************************************************");
+//     println!("{:#?}", hierarchy);
+//     println!("**************************************************");
+// }
 
-fn print_hierarchy_inner(entity: Entity, world: &World, q_parents: &Query<&Children>) -> Hierarchy {
-    let components = world
-        .inspect_entity(entity)
-        .map(ComponentInfo::name)
-        .map(ToOwned::to_owned)
-        .collect();
+// fn print_hierarchy_inner(entity: Entity, world: &World, q_parents: &Query<&Children>) -> Hierarchy {
+//     let components = world
+//         .inspect_entity(entity)
+//         .map(ComponentInfo::name)
+//         .map(ToOwned::to_owned)
+//         .collect();
 
-    let children = q_parents
-        .get(entity)
-        .map(|children| {
-            children
-                .iter()
-                .map(|child| print_hierarchy_inner(*child, world, q_parents))
-                .collect()
-        })
-        .unwrap_or_default();
+//     let children = q_parents
+//         .get(entity)
+//         .map(|children| {
+//             children
+//                 .iter()
+//                 .map(|child| print_hierarchy_inner(*child, world, q_parents))
+//                 .collect()
+//         })
+//         .unwrap_or_default();
 
-    Hierarchy {
-        entity,
-        components,
-        children,
-    }
-}
+//     Hierarchy {
+//         entity,
+//         components,
+//         children,
+//     }
+// }

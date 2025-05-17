@@ -1,7 +1,6 @@
 use bevy::prelude::Color;
 use bevy::prelude::Commands;
 use bevy::prelude::Component;
-use bevy::prelude::DespawnRecursiveExt;
 use bevy::prelude::Entity;
 use bevy::prelude::OnEnter;
 use bevy::prelude::OnExit;
@@ -41,6 +40,6 @@ fn splash_setup(mut commands: Commands) {
 
 fn splash_despawn(query: Query<Entity, With<SplashScreen>>, mut commands: Commands) {
     for entity in &query {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }

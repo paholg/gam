@@ -1,8 +1,8 @@
 use bevy::app::Startup;
 use bevy::app::Update;
+use bevy::ecs::resource::Resource;
 use bevy::ecs::system::Res;
 use bevy::ecs::system::ResMut;
-use bevy::ecs::system::Resource;
 use bevy::prelude::App;
 use bevy::prelude::Plugin;
 use bevy::state::state::State;
@@ -27,10 +27,15 @@ pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((hud::HudPlugin, EguiPlugin))
-            .insert_resource(Menu::default())
-            .add_systems(Startup, setup)
-            .add_systems(Update, menu);
+        app.add_plugins((
+            hud::HudPlugin,
+            EguiPlugin {
+                enable_multipass_for_primary_context: false,
+            },
+        ))
+        .insert_resource(Menu::default())
+        .add_systems(Startup, setup)
+        .add_systems(Update, menu);
     }
 }
 

@@ -15,13 +15,12 @@ use bevy_hanabi::EffectAsset;
 use bevy_hanabi::ExprWriter;
 use bevy_hanabi::Gradient;
 use bevy_hanabi::LinearDragModifier;
-use bevy_hanabi::ParticleEffectBundle;
 use bevy_hanabi::SetAttributeModifier;
 use bevy_hanabi::SetPositionSphereModifier;
 use bevy_hanabi::SetVelocitySphereModifier;
 use bevy_hanabi::ShapeDimension;
 use bevy_hanabi::SizeOverLifetimeModifier;
-use bevy_hanabi::Spawner;
+use bevy_hanabi::SpawnerSettings;
 use bevy_kira_audio::AudioSource;
 use engine::PLAYER_R;
 
@@ -67,7 +66,7 @@ impl CharacterAssets {
             .asset_server
             .load("third-party/audio/other/explosionCrunch_000.ogg");
 
-        let despawn_effect = ParticleEffectBundle::new(builder.effects.add(death_effect())).into();
+        let despawn_effect = builder.effects.add(death_effect()).into();
 
         let (outline_mesh, outline_material) = Self::outline(builder, color);
         CharacterAssets {
@@ -104,7 +103,7 @@ fn death_effect() -> EffectAsset {
     size_gradient1.add_key(0.3, Vec3::splat(0.07));
     size_gradient1.add_key(1.0, Vec3::splat(0.0));
 
-    let spawner = Spawner::once(500.0.into(), true);
+    let spawner = SpawnerSettings::once(500.0.into());
     let writer = ExprWriter::new();
 
     let pos = SetPositionSphereModifier {
@@ -141,6 +140,7 @@ fn death_effect() -> EffectAsset {
         .update(drag)
         .render(ColorOverLifetimeModifier {
             gradient: color_gradient1,
+            ..Default::default()
         })
         .render(SizeOverLifetimeModifier {
             gradient: size_gradient1,

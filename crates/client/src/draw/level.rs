@@ -1,6 +1,5 @@
 use bevy::pbr::MeshMaterial3d;
 use bevy::prelude::Added;
-use bevy::prelude::BuildChildren;
 use bevy::prelude::Commands;
 use bevy::prelude::Component;
 use bevy::prelude::Entity;

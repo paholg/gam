@@ -1,3 +1,4 @@
+// FIXME
 use std::num::NonZeroU16;
 use std::sync::Arc;
 use std::sync::RwLock;
@@ -9,11 +10,11 @@ use bevy_ecs::event::Event;
 use bevy_ecs::event::EventReader;
 use bevy_ecs::query::QueryData;
 use bevy_ecs::query::Without;
+use bevy_ecs::resource::Resource;
 use bevy_ecs::system::Commands;
 use bevy_ecs::system::Query;
 use bevy_ecs::system::Res;
 use bevy_ecs::system::ResMut;
-use bevy_ecs::system::Resource;
 use bevy_ecs::world::Mut;
 use bevy_math::Vec2;
 use bevy_math::Vec3;

@@ -4,7 +4,6 @@ use ability::cooldown::global_cooldown_tick_system;
 use ability::cooldown::Cooldown;
 use ability::AbilityMap;
 use ability::AbilityPlugin;
-use ai::pathfind::PathfindPlugin;
 use bevy_app::App;
 use bevy_app::FixedUpdate;
 use bevy_app::Plugin;
@@ -12,12 +11,11 @@ use bevy_app::PostUpdate;
 use bevy_app::Startup;
 use bevy_ecs::bundle::Bundle;
 use bevy_ecs::component::Component;
-use bevy_ecs::schedule::IntoSystemConfigs;
-use bevy_ecs::schedule::IntoSystemSetConfigs;
+use bevy_ecs::resource::Resource;
+use bevy_ecs::schedule::IntoScheduleConfigs;
 use bevy_ecs::schedule::SystemSet;
 use bevy_ecs::system::Query;
 use bevy_ecs::system::Res;
-use bevy_ecs::system::Resource;
 use bevy_math::prelude::InfinitePlane3d;
 use bevy_math::Dir3;
 use bevy_math::Quat;
@@ -413,7 +411,8 @@ impl Plugin for GamPlugin {
         // should be included manually to ensure determinism.
         // TODO: The `ChargeAiPlugin` does include systems, that run on `Update`. We'll
         // need to patch oxidized_navigation or use something else.`
-        app.add_plugins(physics).add_plugins(PathfindPlugin);
+        app.add_plugins(physics);
+        // .add_plugins(PathfindPlugin);
     }
 }
 

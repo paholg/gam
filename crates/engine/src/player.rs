@@ -59,14 +59,14 @@ impl AbilityIds {
         let legs = map.get(NonArmSlot::Legs, &self.legs);
         let head = map.get(NonArmSlot::Head, &self.head);
 
-        commands.run_system_with_input(left_arm.0.setup, entity);
-        commands.run_system_with_input(left_arm.1.setup, entity);
-        commands.run_system_with_input(right_arm.0.setup, entity);
-        commands.run_system_with_input(right_arm.1.setup, entity);
-        commands.run_system_with_input(left_shoulder.setup, entity);
-        commands.run_system_with_input(right_shoulder.setup, entity);
-        commands.run_system_with_input(legs.setup, entity);
-        commands.run_system_with_input(head.setup, entity);
+        commands.run_system_with(left_arm.0.setup, entity);
+        commands.run_system_with(left_arm.1.setup, entity);
+        commands.run_system_with(right_arm.0.setup, entity);
+        commands.run_system_with(right_arm.1.setup, entity);
+        commands.run_system_with(left_shoulder.setup, entity);
+        commands.run_system_with(right_shoulder.setup, entity);
+        commands.run_system_with(legs.setup, entity);
+        commands.run_system_with(head.setup, entity);
 
         Abilities {
             left_arm: left_arm.0.fire,

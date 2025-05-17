@@ -12,8 +12,6 @@ use bevy::pbr::NotShadowCaster;
 use bevy::pbr::NotShadowReceiver;
 use bevy::pbr::StandardMaterial;
 use bevy::prelude::Added;
-use bevy::prelude::BuildChildren;
-use bevy::prelude::ChildBuild;
 use bevy::prelude::Commands;
 use bevy::prelude::Entity;
 use bevy::prelude::InheritedVisibility;
@@ -136,7 +134,7 @@ pub fn draw_grenade<G: Grenade>(
     query: Query<Entity, Added<G>>,
 ) {
     for entity in query.iter() {
-        let Some(mut ecmds) = commands.get_entity(entity) else {
+        let Ok(mut ecmds) = commands.get_entity(entity) else {
             continue;
         };
         ecmds.insert(InheritedVisibility::default());

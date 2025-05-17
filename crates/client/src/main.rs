@@ -71,9 +71,10 @@ fn main() {
 fn debug_stuff(app: &mut App, args: &Args) {
     app.add_plugins(bevy::diagnostic::LogDiagnosticsPlugin::default());
 
-    if args.all || args.paths {
-        app.add_systems(bevy::app::Update, client::debug::draw_pathfinding_system);
-    }
+    // FIXME pathfinding
+    // if args.all || args.paths {
+    //     app.add_systems(bevy::app::Update, client::debug::draw_pathfinding_system);
+    // }
     // if args.all || args.raycast_cursor {
     //     app.insert_resource(
     //         bevy_mod_raycast::prelude::RaycastPluginState::<()>::default().

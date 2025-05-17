@@ -1,12 +1,11 @@
 use bevy_ecs::component::Component;
 use bevy_ecs::entity::Entity;
 use bevy_ecs::query::With;
+use bevy_ecs::resource::Resource;
 use bevy_ecs::system::Commands;
 use bevy_ecs::system::Query;
 use bevy_ecs::system::Res;
 use bevy_ecs::system::ResMut;
-use bevy_ecs::system::Resource;
-use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
 use bevy_rapier3d::prelude::Collider;
 use bevy_rapier3d::prelude::Friction;
@@ -15,7 +14,7 @@ use bevy_rapier3d::prelude::RapierContext;
 use bevy_rapier3d::prelude::RigidBody;
 use bevy_transform::components::GlobalTransform;
 use bevy_transform::components::Transform;
-use oxidized_navigation::NavMeshAffector;
+// use oxidized_navigation::NavMeshAffector;
 use rand::Rng;
 
 use crate::lifecycle::DEATH_Y;
@@ -29,7 +28,7 @@ pub struct InLevel;
 
 pub fn clear_level(mut commands: Commands, query: Query<Entity, With<InLevel>>) {
     for entity in &query {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }
 
@@ -107,7 +106,7 @@ impl FloorSpawner {
                 dim: self.dim,
                 loc: self.loc,
             },
-            NavMeshAffector,
+            // NavMeshAffector,
         ));
     }
 }

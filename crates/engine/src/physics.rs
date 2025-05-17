@@ -1,6 +1,7 @@
 use bevy_app::App;
 use bevy_app::Plugin;
-use bevy_ecs::schedule::SystemConfigs;
+use bevy_ecs::schedule::ScheduleConfigs;
+use bevy_ecs::system::ScheduleSystem;
 use bevy_rapier3d::prelude::NoUserData;
 use bevy_rapier3d::prelude::PhysicsSet;
 use bevy_rapier3d::prelude::RapierPhysicsPlugin;
@@ -34,15 +35,15 @@ impl PhysicsPlugin {
         Self { rapier, timestep }
     }
 
-    pub fn set1(&self) -> SystemConfigs {
+    pub fn set1(&self) -> ScheduleConfigs<ScheduleSystem> {
         RapierPlugin::get_systems(PhysicsSet::SyncBackend)
     }
 
-    pub fn set2(&self) -> SystemConfigs {
+    pub fn set2(&self) -> ScheduleConfigs<ScheduleSystem> {
         RapierPlugin::get_systems(PhysicsSet::StepSimulation)
     }
 
-    pub fn set3(&self) -> SystemConfigs {
+    pub fn set3(&self) -> ScheduleConfigs<ScheduleSystem> {
         RapierPlugin::get_systems(PhysicsSet::Writeback)
     }
 }

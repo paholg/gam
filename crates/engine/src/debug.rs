@@ -1,4 +1,4 @@
-use bevy_ecs::system::Resource;
+use bevy_ecs::resource::Resource;
 
 /// Text used for debugging; set this in a system, and the `DebugTextPlugin`
 /// from client to see it.

@@ -1,15 +1,13 @@
+use bevy::ecs::hierarchy::ChildOf;
 use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::NotShadowReceiver;
 use bevy::prelude::Added;
 use bevy::prelude::Assets;
-use bevy::prelude::BuildChildren;
-use bevy::prelude::ChildBuild;
 use bevy::prelude::Commands;
 use bevy::prelude::Component;
 use bevy::prelude::Entity;
 use bevy::prelude::Mesh3d;
-use bevy::prelude::Parent;
 use bevy::prelude::Query;
 use bevy::prelude::Res;
 use bevy::prelude::ResMut;
@@ -60,11 +58,11 @@ pub fn draw_temperature_system(
 pub fn update_temperature_system(
     assets: Res<AssetHandler>,
     mut materials: ResMut<Assets<StandardMaterial>>,
-    query: Query<(&Parent, &MeshMaterial3d<StandardMaterial>), With<TemperatureGlow>>,
+    query: Query<(&ChildOf, &MeshMaterial3d<StandardMaterial>), With<TemperatureGlow>>,
     parent_q: Query<&Temperature>,
 ) {
-    for (parent, material) in &query {
-        let Ok(temperature) = parent_q.get(parent.get()) else {
+    for (child_of, material) in &query {
+        let Ok(temperature) = parent_q.get(child_of.parent()) else {
             tracing::warn!("TemperatureGlow missing parent");
             continue;
         };

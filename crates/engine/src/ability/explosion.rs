@@ -1,14 +1,14 @@
 use bevy_app::Plugin;
 use bevy_ecs::component::Component;
 use bevy_ecs::entity::Entity;
-use bevy_ecs::schedule::IntoSystemConfigs;
+use bevy_ecs::resource::Resource;
+use bevy_ecs::schedule::IntoScheduleConfigs;
 use bevy_ecs::system::Commands;
 use bevy_ecs::system::In;
 use bevy_ecs::system::Query;
-use bevy_ecs::system::Resource;
 use bevy_ecs::system::SystemId;
 use bevy_math::Vec3;
-use bevy_rapier3d::plugin::ReadDefaultRapierContext;
+use bevy_rapier3d::plugin::ReadRapierContext;
 use bevy_rapier3d::prelude::Collider;
 use bevy_rapier3d::prelude::ExternalForce;
 use bevy_rapier3d::prelude::LockedAxes;
@@ -139,7 +139,7 @@ fn explosion_grow_system(mut explosion_q: Query<(&Explosion, &mut Transform, &Ti
 }
 
 fn explosion_collision_system(
-    rapier_context: ReadDefaultRapierContext,
+    rapier_context: ReadRapierContext,
     explosion_q: Query<(&Explosion, &Transform, &TrackCollisions, &TimeDilation)>,
     mut target_q: Query<(&Transform, &mut Health, &mut ExternalForce, &TimeDilation)>,
 ) {
@@ -159,8 +159,14 @@ fn explosion_collision_system(
             {
                 let origin = transform.translation;
                 let dir = target_transform.translation - origin;
-                let wall_collision =
-                    rapier_context.cast_ray(origin, dir, f32::MAX, true, wall_filter);
+                // FIXME unwrap
+                let wall_collision = rapier_context.single().unwrap().cast_ray(
+                    origin,
+                    dir,
+                    f32::MAX,
+                    true,
+                    wall_filter,
+                );
                 if let Some((_entity, toi)) = wall_collision {
                     let delta_wall = dir * toi;
                     if delta_wall.length_squared() < dir.length_squared() {

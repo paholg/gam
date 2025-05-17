@@ -1,4 +1,5 @@
 use bevy::app::FixedUpdate;
+use bevy::ecs::error::Result;
 use bevy::prelude::Camera;
 use bevy::prelude::EventReader;
 use bevy::prelude::GlobalTransform;
@@ -65,11 +66,11 @@ pub fn player_input(
     mut camera_mode: ResMut<CameraFollowMode>,
     cursor_events: EventReader<CursorMoved>,
     time: Res<Time>,
-) {
+) -> Result {
     let player = *player;
     let filtered_query = player_query.iter().find(|tuple| *tuple.0 == player);
     let Some((_, action_state, player_transform)) = filtered_query else {
-        return;
+        return Ok(());
     };
 
     let mut actions = action_state
@@ -86,7 +87,7 @@ pub fn player_input(
     }
 
     let movement = action_state.clamped_axis_pair(&UserAction::Move);
-    let (camera, camera_global_transform, mut camera_transform) = camera_query.single_mut();
+    let (camera, camera_global_transform, mut camera_transform) = camera_query.single_mut()?;
 
     // Try to determine if the player wants to use mouse or controller to aim.
     let controller_aim = action_state.clamped_axis_pair(&UserAction::Aim);
@@ -98,7 +99,7 @@ pub fn player_input(
 
     let cursor = match *camera_mode {
         CameraFollowMode::Mouse => {
-            cursor_from_mouse(primary_window.single(), camera, camera_global_transform)
+            cursor_from_mouse(primary_window.single()?, camera, camera_global_transform)
                 .unwrap_or(player_transform.translation.to_2d())
         }
         CameraFollowMode::Controller => {
@@ -126,6 +127,8 @@ pub fn player_input(
 
     camera_transform.translation +=
         (delta.normalize_or_zero() * CAMERA_SPEED * time.delta_secs()).clamp_length_max(max);
+
+    Ok(())
 }
 
 fn cursor_from_mouse(

@@ -8,9 +8,8 @@ use bevy_ecs::system::Query;
 use bevy_ecs::system::Res;
 use bevy_ecs::system::ResMut;
 use bevy_ecs::system::SystemId;
-use bevy_hierarchy::DespawnRecursiveExt;
 use bevy_math::Vec3;
-use bevy_rapier3d::plugin::ReadDefaultRapierContext;
+use bevy_rapier3d::plugin::ReadRapierContext;
 use bevy_rapier3d::prelude::CoefficientCombineRule;
 use bevy_rapier3d::prelude::ExternalForce;
 use bevy_rapier3d::prelude::Friction;
@@ -103,12 +102,12 @@ pub fn die(mut commands: Commands, mut query: Query<DieQuery>, tick_counter: Res
         if q.health.cur <= 0.0 && q.health.death_delay.tick(q.dilation) {
             tracing::debug!(tick = ?tick_counter.frame, ?q.entity, ?q.health, ?q.transform, "DEATH");
             if let Some(callback) = q.death_callback {
-                commands.run_system_with_input(callback.system, q.entity);
+                commands.run_system_with(callback.system, q.entity);
             }
             if let Some(callback) = q.client_death_callback {
-                commands.run_system_with_input(callback.system, q.entity);
+                commands.run_system_with(callback.system, q.entity);
             }
-            commands.entity(q.entity).despawn_recursive();
+            commands.entity(q.entity).despawn();
         }
     }
 }
@@ -238,7 +237,7 @@ pub fn reset(
     player_info_query: Query<&PlayerInfo>,
     mut num_ai: ResMut<NumAi>,
     level: Res<LevelProps>,
-    rapier_context: ReadDefaultRapierContext,
+    rapier_context: ReadRapierContext,
     ability_map: Res<AbilityMap>,
 ) {
     if enemy_query.iter().next().is_none() {
@@ -247,7 +246,7 @@ pub fn reset(
             &mut commands,
             num_ai.enemies,
             &level,
-            &rapier_context,
+            &rapier_context.single().unwrap(), // FIXME
             &ability_map,
         );
 
@@ -269,7 +268,7 @@ pub fn reset(
             &mut commands,
             num_ai.allies,
             &level,
-            &rapier_context,
+            &rapier_context.single().unwrap(), // FIXME
             &ability_map,
         );
     }
