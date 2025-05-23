@@ -45,3 +45,7 @@ codegen-units = 1
 [workspace.lints.clippy]
 too_many_arguments = "allow"
 type_complexity = "allow"
+
+[patch.crates-io]
+# Once past 0.30, we can remove this patch.
+bevy_rapier3d = { git = "https://github.com/dimforge/bevy_rapier" }
