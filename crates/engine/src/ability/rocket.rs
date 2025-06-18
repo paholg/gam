@@ -1,27 +1,28 @@
 use std::f32::consts::PI;
 use std::marker::PhantomData;
 
-use bevy_app::Plugin;
-use bevy_app::Startup;
-use bevy_ecs::component::Component;
-use bevy_ecs::entity::Entity;
-use bevy_ecs::query::QueryData;
-use bevy_ecs::query::With;
-use bevy_ecs::resource::Resource;
-use bevy_ecs::schedule::IntoScheduleConfigs;
-use bevy_ecs::system::Commands;
-use bevy_ecs::system::In;
-use bevy_ecs::system::Query;
-use bevy_ecs::system::Res;
-use bevy_ecs::world::World;
-use bevy_math::Vec3;
+use bevy::app::App;
+use bevy::app::Plugin;
+use bevy::app::Startup;
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::query::QueryData;
+use bevy::ecs::query::With;
+use bevy::ecs::resource::Resource;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::Commands;
+use bevy::ecs::system::In;
+use bevy::ecs::system::Query;
+use bevy::ecs::system::Res;
+use bevy::ecs::world::World;
+use bevy::math::Vec3;
+use bevy::transform::components::Transform;
 use bevy_rapier3d::prelude::Collider;
 use bevy_rapier3d::prelude::ExternalForce;
 use bevy_rapier3d::prelude::LockedAxes;
 use bevy_rapier3d::prelude::RigidBody;
 use bevy_rapier3d::prelude::Sensor;
 use bevy_rapier3d::prelude::Velocity;
-use bevy_transform::components::Transform;
 
 use super::cooldown::Cooldown;
 use super::explosion::ExplosionCallback;
@@ -60,7 +61,7 @@ use crate::SCHEDULE;
 
 pub struct RocketPlugin;
 impl Plugin for RocketPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut App) {
         app.insert_resource(RocketProps::default())
             .add_systems(Startup, register)
             .add_systems(

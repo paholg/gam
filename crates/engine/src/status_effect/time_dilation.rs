@@ -1,5 +1,5 @@
-use bevy_ecs::component::Component;
-use bevy_ecs::system::Query;
+use bevy::ecs::component::Component;
+use bevy::ecs::system::Query;
 use smallvec::SmallVec;
 
 use super::Effect;

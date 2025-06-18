@@ -1,7 +1,7 @@
-use bevy_ecs::component::Component;
-use bevy_ecs::system::Commands;
-use bevy_ecs::system::Query;
-use bevy_ecs::system::Res;
+use bevy::ecs::component::Component;
+use bevy::ecs::system::Commands;
+use bevy::ecs::system::Query;
+use bevy::ecs::system::Res;
 use bevy_rapier3d::prelude::Collider;
 use bevy_rapier3d::prelude::ExternalForce;
 use bevy_rapier3d::prelude::LockedAxes;
@@ -10,7 +10,7 @@ use bevy_rapier3d::prelude::QueryFilterFlags;
 use bevy_rapier3d::prelude::RapierContext;
 use bevy_rapier3d::prelude::Sensor;
 use bevy_rapier3d::prelude::Velocity;
-use bevy_transform::components::Transform;
+use bevy::transform::components::Transform;
 
 use crate::ability::properties::ExplosionProps;
 use crate::collision::TrackCollisionBundle;

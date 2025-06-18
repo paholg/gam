@@ -1,25 +1,26 @@
 use std::f32::consts::PI;
 use std::marker::PhantomData;
 
-use bevy_app::Plugin;
-use bevy_app::Startup;
-use bevy_ecs::component::Component;
-use bevy_ecs::entity::Entity;
-use bevy_ecs::query::QueryData;
-use bevy_ecs::resource::Resource;
-use bevy_ecs::system::Commands;
-use bevy_ecs::system::In;
-use bevy_ecs::system::Query;
-use bevy_ecs::system::Res;
-use bevy_ecs::world::World;
-use bevy_math::Vec3;
+use bevy::app::App;
+use bevy::app::Plugin;
+use bevy::app::Startup;
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::query::QueryData;
+use bevy::ecs::resource::Resource;
+use bevy::ecs::system::Commands;
+use bevy::ecs::system::In;
+use bevy::ecs::system::Query;
+use bevy::ecs::system::Res;
+use bevy::ecs::world::World;
+use bevy::math::Vec3;
+use bevy::transform::components::Transform;
 use bevy_rapier3d::prelude::Collider;
 use bevy_rapier3d::prelude::ExternalForce;
 use bevy_rapier3d::prelude::Friction;
 use bevy_rapier3d::prelude::LockedAxes;
 use bevy_rapier3d::prelude::Restitution;
 use bevy_rapier3d::prelude::Velocity;
-use bevy_transform::components::Transform;
 
 use super::cooldown::Cooldown;
 use super::explosion::ExplosionCallback;
@@ -143,7 +144,7 @@ impl GrenadeProps<HealGrenade> {
 
 pub struct GrenadePlugin;
 impl Plugin for GrenadePlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut App) {
         app.insert_resource(GrenadeProps::<FragGrenade>::new())
             .insert_resource(GrenadeProps::<HealGrenade>::new())
             .add_systems(Startup, (register::<FragGrenade>, register::<HealGrenade>))

@@ -43,7 +43,7 @@ bevy_egui = { version = "0.34.1", features = ["serde"] }
 bevy_hanabi = { git = "https://github.com/djeedai/bevy_hanabi", default-features = false, features = ["3d"] }
 bevy_kira_audio = "0.23.0"
 bevy_rapier3d.workspace = true
-clap = { version = "4.5.38", features = ["derive"] }
+clap = { version = "4.5.40", features = ["derive"] }
 directories = "6"
 i18n-embed = { version = "0.15.4", features = ["desktop-requester", "fluent-system"] }
 i18n-embed-fl = "0.9.4"

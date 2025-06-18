@@ -1,12 +1,12 @@
-use bevy_ecs::entity::Entity;
-use bevy_ecs::query::QueryData;
-use bevy_ecs::system::Commands;
-use bevy_ecs::system::Query;
-use bevy_ecs::system::Res;
-use bevy_ecs::system::ResMut;
-use bevy_state::state::NextState;
-use bevy_state::state::State;
-use bevy_transform::components::Transform;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::query::QueryData;
+use bevy::ecs::system::Commands;
+use bevy::ecs::system::Query;
+use bevy::ecs::system::Res;
+use bevy::ecs::system::ResMut;
+use bevy::state::state::NextState;
+use bevy::state::state::State;
+use bevy::transform::components::Transform;
 
 use crate::face;
 use crate::movement::DesiredMove;

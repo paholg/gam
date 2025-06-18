@@ -1,4 +1,4 @@
-use bevy_ecs::bundle::Bundle;
+use bevy::ecs::bundle::Bundle;
 pub use charge::Charge;
 pub use phased::Phased;
 pub use temperature::Temperature;

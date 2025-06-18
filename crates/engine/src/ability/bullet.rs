@@ -1,11 +1,12 @@
-use bevy_ecs::component::Component;
-use bevy_ecs::entity::Entity;
-use bevy_ecs::query::Added;
-use bevy_ecs::query::With;
-use bevy_ecs::query::Without;
-use bevy_ecs::system::Commands;
-use bevy_ecs::system::Query;
-use bevy_math::Vec3;
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::query::Added;
+use bevy::ecs::query::With;
+use bevy::ecs::query::Without;
+use bevy::ecs::system::Commands;
+use bevy::ecs::system::Query;
+use bevy::math::Vec3;
+use bevy::transform::components::Transform;
 use bevy_rapier3d::prelude::Ccd;
 use bevy_rapier3d::prelude::Collider;
 use bevy_rapier3d::prelude::ExternalForce;
@@ -14,7 +15,6 @@ use bevy_rapier3d::prelude::ReadMassProperties;
 use bevy_rapier3d::prelude::RigidBody;
 use bevy_rapier3d::prelude::Sensor;
 use bevy_rapier3d::prelude::Velocity;
-use bevy_transform::components::Transform;
 
 use crate::collision::TrackCollisionBundle;
 use crate::collision::TrackCollisions;

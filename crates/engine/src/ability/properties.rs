@@ -1,6 +1,6 @@
 use std::f32::consts::PI;
 
-use bevy_ecs::system::Resource;
+use bevy::ecs::system::Resource;
 
 use super::grenade::GrenadeKind;
 use super::Ability;

@@ -1,13 +1,14 @@
-use bevy_app::Plugin;
-use bevy_ecs::entity::Entity;
-use bevy_ecs::resource::Resource;
-use bevy_ecs::system::In;
-use bevy_ecs::system::IntoSystem;
-use bevy_ecs::system::SystemId;
-use bevy_ecs::world::FromWorld;
-use bevy_ecs::world::World;
-use bevy_platform::collections::HashMap;
-use bevy_reflect::TypePath;
+use bevy::app::App;
+use bevy::app::Plugin;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::resource::Resource;
+use bevy::ecs::system::In;
+use bevy::ecs::system::IntoSystem;
+use bevy::ecs::system::SystemId;
+use bevy::ecs::world::FromWorld;
+use bevy::ecs::world::World;
+use bevy::platform::collections::HashMap;
+use bevy::reflect::TypePath;
 use explosion::ExplosionPlugin;
 use gravity_ball::GravityBallPlugin;
 use grenade::GrenadePlugin;
@@ -29,7 +30,7 @@ pub mod transport;
 
 pub struct AbilityPlugin;
 impl Plugin for AbilityPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut App) {
         app.add_plugins((
             ExplosionPlugin,
             GravityBallPlugin,

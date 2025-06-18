@@ -1,19 +1,20 @@
 use std::marker::PhantomData;
 
-use bevy_app::Plugin;
-use bevy_app::Startup;
-use bevy_ecs::component::Component;
-use bevy_ecs::entity::Entity;
-use bevy_ecs::query::QueryData;
-use bevy_ecs::resource::Resource;
-use bevy_ecs::schedule::IntoScheduleConfigs;
-use bevy_ecs::system::Commands;
-use bevy_ecs::system::In;
-use bevy_ecs::system::Query;
-use bevy_ecs::system::Res;
-use bevy_ecs::world::World;
+use bevy::app::App;
+use bevy::app::Plugin;
+use bevy::app::Startup;
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::query::QueryData;
+use bevy::ecs::resource::Resource;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::Commands;
+use bevy::ecs::system::In;
+use bevy::ecs::system::Query;
+use bevy::ecs::system::Res;
+use bevy::ecs::world::World;
+use bevy::transform::components::Transform;
 use bevy_rapier3d::prelude::Velocity;
-use bevy_transform::components::Transform;
 
 use super::bullet::BulletProps;
 use super::bullet::BulletSpawner;
@@ -37,7 +38,7 @@ use crate::SCHEDULE;
 
 pub struct GunPlugin;
 impl Plugin for GunPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut App) {
         app.insert_resource(GunProps::<StandardGun>::default())
             .insert_resource(GunProps::<FireGun>::default())
             .insert_resource(GunProps::<ColdGun>::default())

@@ -1,7 +1,7 @@
-use bevy_app::App;
-use bevy_app::Plugin;
-use bevy_ecs::schedule::ScheduleConfigs;
-use bevy_ecs::system::ScheduleSystem;
+use bevy::app::App;
+use bevy::app::Plugin;
+use bevy::ecs::schedule::ScheduleConfigs;
+use bevy::ecs::system::ScheduleSystem;
 use bevy_rapier3d::prelude::NoUserData;
 use bevy_rapier3d::prelude::PhysicsSet;
 use bevy_rapier3d::prelude::RapierPhysicsPlugin;

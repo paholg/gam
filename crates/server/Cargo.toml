@@ -5,10 +5,5 @@ version = "0.1.0"
 
 [dependencies]
 # Internal crates
+bevy = { version = "0.16.1", default-features = false }
 engine.path = "../engine"
-
-# Bevy crates
-bevy_app.workspace = true
-bevy_internal.workspace = true
-
-# Other crates

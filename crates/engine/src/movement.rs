@@ -1,10 +1,10 @@
 use std::ops::MulAssign;
 
-use bevy_ecs::component::Component;
-use bevy_ecs::system::Query;
-use bevy_math::Vec2;
+use bevy::ecs::component::Component;
+use bevy::ecs::system::Query;
+use bevy::math::Vec2;
+use bevy::reflect::Reflect;
 use bevy_rapier3d::prelude::Velocity;
-use bevy_reflect::Reflect;
 
 use crate::status_effect::TimeDilation;
 use crate::time::FREQUENCY;

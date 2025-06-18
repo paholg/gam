@@ -1,6 +1,6 @@
-use bevy_ecs::component::Component;
-use bevy_ecs::system::Query;
-use bevy_ecs::world::Mut;
+use bevy::ecs::component::Component;
+use bevy::ecs::system::Query;
+use bevy::ecs::world::Mut;
 
 use super::TimeDilation;
 use crate::time::TIMESTEP;

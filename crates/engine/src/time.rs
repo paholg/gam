@@ -3,9 +3,9 @@ use std::ops::Sub;
 use std::time::Duration;
 use std::time::Instant;
 
-use bevy_ecs::resource::Resource;
-use bevy_ecs::system::ResMut;
-use bevy_reflect::Reflect;
+use bevy::ecs::resource::Resource;
+use bevy::ecs::system::ResMut;
+use bevy::reflect::Reflect;
 use tracing::info;
 
 use crate::status_effect::TimeDilation;

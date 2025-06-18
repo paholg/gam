@@ -1,9 +1,10 @@
-use bevy_ecs::component::Component;
-use bevy_ecs::entity::Entity;
-use bevy_ecs::system::Commands;
-use bevy_ecs::system::In;
-use bevy_ecs::system::SystemId;
-use bevy_math::Vec3;
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::system::Commands;
+use bevy::ecs::system::In;
+use bevy::ecs::system::SystemId;
+use bevy::math::Vec3;
+use bevy::transform::components::Transform;
 use bevy_rapier3d::prelude::CoefficientCombineRule;
 use bevy_rapier3d::prelude::Collider;
 use bevy_rapier3d::prelude::ExternalForce;
@@ -11,7 +12,6 @@ use bevy_rapier3d::prelude::Friction;
 use bevy_rapier3d::prelude::LockedAxes;
 use bevy_rapier3d::prelude::RigidBody;
 use bevy_rapier3d::prelude::Velocity;
-use bevy_transform::components::Transform;
 use serde::Deserialize;
 use serde::Serialize;
 

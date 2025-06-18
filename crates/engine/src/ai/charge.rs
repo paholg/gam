@@ -1,14 +1,14 @@
-use bevy_ecs::component::Component;
-use bevy_ecs::entity::Entity;
-use bevy_ecs::query::With;
-use bevy_ecs::schedule::IntoScheduleConfigs;
-use bevy_ecs::schedule::ScheduleConfigs;
-use bevy_ecs::system::Commands;
-use bevy_ecs::system::Query;
-use bevy_ecs::system::ScheduleSystem;
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::query::With;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::schedule::ScheduleConfigs;
+use bevy::ecs::system::Commands;
+use bevy::ecs::system::Query;
+use bevy::ecs::system::ScheduleSystem;
+use bevy::transform::components::Transform;
 use bevy_rapier3d::plugin::ReadRapierContext;
 use bevy_rapier3d::prelude::QueryFilter;
-use bevy_transform::components::Transform;
 use rand::Rng;
 
 // use super::pathfind::set_move;

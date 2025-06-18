@@ -1,11 +1,11 @@
 use core::fmt;
 
-use bevy_ecs::entity::Entity;
-use bevy_ecs::resource::Resource;
-use bevy_ecs::system::Commands;
-use bevy_math::Vec2;
-use bevy_platform::collections::HashMap;
-use bevy_reflect::TypePath;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::resource::Resource;
+use bevy::ecs::system::Commands;
+use bevy::math::Vec2;
+use bevy::platform::collections::HashMap;
+use bevy::reflect::TypePath;
 use bitmask_enum::bitmask;
 use bytemuck::Pod;
 use bytemuck::Zeroable;

@@ -1,16 +1,16 @@
 use std::cmp::Ordering;
 
-use bevy_ecs::bundle::Bundle;
-use bevy_ecs::component::Component;
-use bevy_ecs::entity::Entity;
-use bevy_ecs::query::With;
-use bevy_ecs::query::Without;
-use bevy_ecs::schedule::ScheduleConfigs;
-use bevy_ecs::system::Query;
-use bevy_ecs::system::Res;
-use bevy_ecs::system::ScheduleSystem;
+use bevy::ecs::bundle::Bundle;
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::query::With;
+use bevy::ecs::query::Without;
+use bevy::ecs::schedule::ScheduleConfigs;
+use bevy::ecs::system::Query;
+use bevy::ecs::system::Res;
+use bevy::ecs::system::ScheduleSystem;
+use bevy::transform::components::Transform;
 use bevy_rapier3d::prelude::Velocity;
-use bevy_transform::components::Transform;
 
 use crate::ability::gun::GunProps;
 use crate::ability::gun::StandardGun;

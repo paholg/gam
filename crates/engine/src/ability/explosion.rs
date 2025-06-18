@@ -1,13 +1,15 @@
-use bevy_app::Plugin;
-use bevy_ecs::component::Component;
-use bevy_ecs::entity::Entity;
-use bevy_ecs::resource::Resource;
-use bevy_ecs::schedule::IntoScheduleConfigs;
-use bevy_ecs::system::Commands;
-use bevy_ecs::system::In;
-use bevy_ecs::system::Query;
-use bevy_ecs::system::SystemId;
-use bevy_math::Vec3;
+use bevy::app::App;
+use bevy::app::Plugin;
+use bevy::ecs::component::Component;
+use bevy::ecs::entity::Entity;
+use bevy::ecs::resource::Resource;
+use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::Commands;
+use bevy::ecs::system::In;
+use bevy::ecs::system::Query;
+use bevy::ecs::system::SystemId;
+use bevy::math::Vec3;
+use bevy::transform::components::Transform;
 use bevy_rapier3d::plugin::ReadRapierContext;
 use bevy_rapier3d::prelude::Collider;
 use bevy_rapier3d::prelude::ExternalForce;
@@ -17,7 +19,6 @@ use bevy_rapier3d::prelude::QueryFilterFlags;
 use bevy_rapier3d::prelude::RigidBody;
 use bevy_rapier3d::prelude::Sensor;
 use bevy_rapier3d::prelude::Velocity;
-use bevy_transform::components::Transform;
 
 use crate::collision::TrackCollisionBundle;
 use crate::collision::TrackCollisions;
@@ -35,7 +36,7 @@ use crate::SCHEDULE;
 
 pub struct ExplosionPlugin;
 impl Plugin for ExplosionPlugin {
-    fn build(&self, app: &mut bevy_app::App) {
+    fn build(&self, app: &mut App) {
         let callback = ExplosionCallback {
             system: app.register_system(explosion_callback),
         };

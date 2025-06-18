@@ -21,12 +21,6 @@ pub struct ParticleEffectPool {
     last_run: u32,
 }
 
-// impl Clone for ParticleEffectPool {
-//     fn clone(&self) -> Self {
-//         Self::new(self.effect.clone())
-//     }
-// }
-
 impl From<Handle<EffectAsset>> for ParticleEffectPool {
     fn from(value: Handle<EffectAsset>) -> Self {
         Self::new(value)
@@ -72,6 +66,7 @@ impl ParticleEffectPool {
         } else {
             let effect = ParticleEffect {
                 handle: self.asset.clone(),
+                prng_seed: None,
             };
             let entity = commands.spawn((effect, transform)).id();
             self.effects.push(entity);
