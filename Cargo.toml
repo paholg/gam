@@ -8,7 +8,7 @@ resolver = "2"
 
 [workspace.dependencies]
 bevy = { version = "0.16.1", default-features = false }
-bevy_rapier3d = { version = "0.30", features = ["enhanced-determinism"] }
+bevy_rapier3d = { version = "0.31", features = ["enhanced-determinism"] }
 smallvec = "2.0.0-alpha.11"
 subenum = "1.1.2"
 tracing = "0.1.41"

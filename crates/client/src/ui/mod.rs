@@ -1,5 +1,6 @@
 use bevy::app::Startup;
 use bevy::app::Update;
+use bevy::ecs::error::Result;
 use bevy::ecs::resource::Resource;
 use bevy::ecs::system::Res;
 use bevy::ecs::system::ResMut;
@@ -27,15 +28,9 @@ pub struct UiPlugin;
 
 impl Plugin for UiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((
-            hud::HudPlugin,
-            EguiPlugin {
-                enable_multipass_for_primary_context: false,
-            },
-        ))
-        .insert_resource(Menu::default())
-        .add_systems(Startup, setup)
-        .add_systems(Update, menu);
+        app.add_plugins((hud::HudPlugin, EguiPlugin::default()))
+            .insert_resource(Menu::default())
+            .add_systems(Update, menu);
     }
 }
 
@@ -51,23 +46,17 @@ enum SettingsTab {
     Graphics,
 }
 
-fn setup(mut contexts: EguiContexts) {
-    contexts.ctx_mut().all_styles_mut(|style| {
-        style.override_text_style = Some(egui::TextStyle::Monospace);
-    });
-}
-
 fn menu(
     mut contexts: EguiContexts,
     mut config: ResMut<Config>,
     mut menu: ResMut<Menu>,
     state: Res<State<AppState>>,
-) {
+) -> Result {
     if state.get() != &AppState::Menu {
-        return;
+        return Ok(());
     }
 
-    egui::SidePanel::left("settings").show(contexts.ctx_mut(), |ui| {
+    egui::SidePanel::left("settings").show(contexts.ctx_mut()?, |ui| {
         ui.horizontal(|ui| {
             ui.selectable_value(&mut menu.settings_tab, SettingsTab::Audio, t!("audio"));
             ui.selectable_value(
@@ -85,6 +74,7 @@ fn menu(
         // ui.heading(t!("graphics"));
         // ui.checkbox(&mut config.graphics.bloom, t!("bloom"))
     });
+    Ok(())
 }
 
 fn audio(ui: &mut Ui, config: &mut Audio) {
