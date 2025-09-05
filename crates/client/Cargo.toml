@@ -40,7 +40,7 @@ bevy = { workspace = true, default-features = false, features = [
 ] }
 bevy-inspector-egui = "0.33"
 bevy_egui = { version = "0.36.0", features = ["serde"] }
-bevy_hanabi = { git = "https://github.com/djeedai/bevy_hanabi", default-features = false, features = ["3d"] }
+bevy_hanabi = { version = "0.16.0", default-features = false, features = ["3d"] }
 bevy_kira_audio = "0.23.0"
 bevy_rapier3d.workspace = true
 clap = { version = "4.5.47", features = ["derive"] }
@@ -59,7 +59,6 @@ thiserror = "2"
 tracing.workspace = true
 # iyes_progress = { version = "0.13.0", features = ["assets"] }
 # bevy-ui-navigation = "0.33.1"
-# bevy_hanabi = { version = "0.15.1", default-features = false, features = ["3d"] }
 
 [lints]
 workspace = true
