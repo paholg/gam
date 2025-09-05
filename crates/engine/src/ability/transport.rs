@@ -1,48 +1,28 @@
-use bevy::app::App;
-use bevy::app::Plugin;
-use bevy::app::Startup;
-use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::query::QueryData;
-use bevy::ecs::query::Without;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::schedule::IntoScheduleConfigs;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::In;
-use bevy::ecs::system::Query;
-use bevy::ecs::system::Res;
-use bevy::ecs::world::World;
-use bevy::math::Vec2;
-use bevy::transform::components::Transform;
-use bevy_rapier3d::prelude::Collider;
-use bevy_rapier3d::prelude::ExternalForce;
-use bevy_rapier3d::prelude::LockedAxes;
-use bevy_rapier3d::prelude::RigidBody;
-use bevy_rapier3d::prelude::Sensor;
-use bevy_rapier3d::prelude::Velocity;
+use bevy::{
+    app::{App, Plugin, Startup},
+    ecs::{
+        component::Component,
+        entity::Entity,
+        query::{QueryData, Without},
+        resource::Resource,
+        schedule::IntoScheduleConfigs,
+        system::{Commands, In, Query, Res},
+        world::World,
+    },
+    math::Vec2,
+    transform::components::Transform,
+};
+use bevy_rapier3d::prelude::{Collider, ExternalForce, LockedAxes, RigidBody, Sensor, Velocity};
 
-use super::cooldown::Cooldown;
-use super::Ability;
-use super::AbilityId;
-use super::AbilityMap;
-use crate::collision::TrackCollisionBundle;
-use crate::collision::TrackCollisions;
-use crate::level::Floor;
-use crate::level::InLevel;
-use crate::movement::DesiredMove;
-use crate::movement::MaxSpeed;
-use crate::status_effect::StatusProps;
-use crate::status_effect::TimeDilation;
-use crate::time::Dur;
-use crate::Energy;
-use crate::GameSet;
-use crate::Health;
-use crate::MassBundle;
-use crate::Object;
-use crate::Target;
-use crate::To2d;
-use crate::To3d;
-use crate::SCHEDULE;
+use super::{cooldown::Cooldown, Ability, AbilityId, AbilityMap};
+use crate::{
+    collision::{TrackCollisionBundle, TrackCollisions},
+    level::{Floor, InLevel},
+    movement::{DesiredMove, MaxSpeed},
+    status_effect::{StatusProps, TimeDilation},
+    time::Dur,
+    Energy, GameSet, Health, MassBundle, Object, Target, To2d, To3d, SCHEDULE,
+};
 
 pub struct TransportBeamPlugin;
 impl Plugin for TransportBeamPlugin {

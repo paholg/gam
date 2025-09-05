@@ -1,70 +1,37 @@
 use std::marker::PhantomData;
 
-use bevy::app::Plugin;
-use bevy::app::Startup;
-use bevy::app::Update;
-use bevy::asset::AssetServer;
-use bevy::asset::Assets;
-use bevy::asset::Handle;
-use bevy::color::palettes::css::GREEN;
-use bevy::color::palettes::css::LIGHT_CYAN;
-use bevy::color::palettes::css::RED;
-use bevy::color::Alpha;
-use bevy::color::LinearRgba;
-use bevy::diagnostic::FrameCount;
-use bevy::ecs::system::SystemId;
-use bevy::math::Vec4;
-use bevy::pbr::MeshMaterial3d;
-use bevy::pbr::NotShadowCaster;
-use bevy::pbr::NotShadowReceiver;
-use bevy::pbr::StandardMaterial;
-use bevy::prelude::Added;
-use bevy::prelude::Commands;
-use bevy::prelude::Entity;
-use bevy::prelude::In;
-use bevy::prelude::InheritedVisibility;
-use bevy::prelude::Mesh3d;
-use bevy::prelude::Query;
-use bevy::prelude::Res;
-use bevy::prelude::ResMut;
-use bevy::prelude::Resource;
-use bevy::prelude::Transform;
-use bevy::prelude::Vec3;
-use bevy::prelude::Without;
-use bevy::render::mesh::Mesh;
-use bevy::scene::SceneRoot;
-use bevy_hanabi::Attribute;
-use bevy_hanabi::ColorOverLifetimeModifier;
-use bevy_hanabi::EffectAsset;
-use bevy_hanabi::EffectSpawner;
-use bevy_hanabi::ExprWriter;
-use bevy_hanabi::Gradient;
-use bevy_hanabi::LinearDragModifier;
-use bevy_hanabi::SetAttributeModifier;
-use bevy_hanabi::SetPositionSphereModifier;
-use bevy_hanabi::SetVelocitySphereModifier;
-use bevy_hanabi::ShapeDimension;
-use bevy_hanabi::SizeOverLifetimeModifier;
-use bevy_hanabi::SpawnerSettings;
-use bevy_kira_audio::prelude::Volume;
-use bevy_kira_audio::Audio;
-use bevy_kira_audio::AudioControl;
-use bevy_kira_audio::AudioSource;
-use engine::lifecycle::ClientDeathCallback;
-use engine::Ally;
-use engine::Enemy;
-use engine::Energy;
-use engine::FootOffset;
-use engine::Health;
-use engine::Player;
-use engine::PLAYER_R;
+use bevy::{
+    app::{Plugin, Startup, Update},
+    asset::{AssetServer, Assets, Handle},
+    color::{
+        palettes::css::{GREEN, LIGHT_CYAN, RED},
+        Alpha, LinearRgba,
+    },
+    diagnostic::FrameCount,
+    ecs::system::SystemId,
+    math::Vec4,
+    pbr::{MeshMaterial3d, NotShadowCaster, NotShadowReceiver, StandardMaterial},
+    prelude::{
+        Added, Commands, Entity, In, InheritedVisibility, Mesh3d, Query, Res, ResMut, Resource,
+        Transform, Vec3, Without,
+    },
+    render::mesh::Mesh,
+    scene::SceneRoot,
+};
+use bevy_hanabi::{
+    Attribute, ColorOverLifetimeModifier, EffectAsset, EffectSpawner, ExprWriter, Gradient,
+    LinearDragModifier, SetAttributeModifier, SetPositionSphereModifier, SetVelocitySphereModifier,
+    ShapeDimension, SizeOverLifetimeModifier, SpawnerSettings,
+};
+use bevy_kira_audio::{prelude::Volume, Audio, AudioControl, AudioSource};
+use engine::{
+    lifecycle::ClientDeathCallback, Ally, Enemy, Energy, FootOffset, Health, Player, PLAYER_R,
+};
 
-use crate::aim::BlocksSight;
-use crate::bar::Bar;
-use crate::in_plane;
-use crate::particles::ParticleEffectPool;
-use crate::shapes::HollowPolygon;
-use crate::Config;
+use crate::{
+    aim::BlocksSight, bar::Bar, in_plane, particles::ParticleEffectPool, shapes::HollowPolygon,
+    Config,
+};
 
 pub struct CharacterPlugin;
 

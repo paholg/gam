@@ -1,15 +1,7 @@
-use bevy::prelude::Color;
-use bevy::prelude::Commands;
-use bevy::prelude::Component;
-use bevy::prelude::Entity;
-use bevy::prelude::OnEnter;
-use bevy::prelude::OnExit;
-use bevy::prelude::Plugin;
-use bevy::prelude::Query;
-use bevy::prelude::With;
-use bevy::ui::BackgroundColor;
-use bevy::ui::Node;
-use bevy::ui::Val;
+use bevy::{
+    prelude::{Color, Commands, Component, Entity, OnEnter, OnExit, Plugin, Query, With},
+    ui::{BackgroundColor, Node, Val},
+};
 use engine::AppState;
 
 pub struct SplashPlugin;

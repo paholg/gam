@@ -1,31 +1,16 @@
-use bevy::app::Plugin;
-use bevy::app::Startup;
-use bevy::app::Update;
-use bevy::asset::Assets;
-use bevy::asset::Handle;
-use bevy::color::LinearRgba;
-use bevy::pbr::MeshMaterial3d;
-use bevy::pbr::StandardMaterial;
-use bevy::prelude::Added;
-use bevy::prelude::Capsule3d;
-use bevy::prelude::Commands;
-use bevy::prelude::Entity;
-use bevy::prelude::InheritedVisibility;
-use bevy::prelude::Mesh;
-use bevy::prelude::Mesh3d;
-use bevy::prelude::Query;
-use bevy::prelude::Res;
-use bevy::prelude::ResMut;
-use bevy::prelude::Resource;
-use bevy::prelude::Vec2;
-use bevy::prelude::World;
-use engine::ability::rocket::Rocket;
-use engine::Energy;
+use bevy::{
+    app::{Plugin, Startup, Update},
+    asset::{Assets, Handle},
+    color::LinearRgba,
+    pbr::{MeshMaterial3d, StandardMaterial},
+    prelude::{
+        Added, Capsule3d, Commands, Entity, InheritedVisibility, Mesh, Mesh3d, Query, Res, ResMut,
+        Resource, Vec2, World,
+    },
+};
+use engine::{ability::rocket::Rocket, Energy};
 
-use crate::bar::Bar;
-use crate::color_gradient::ColorGradient;
-use crate::draw::explosion::ExplosionAssets;
-use crate::in_plane;
+use crate::{bar::Bar, color_gradient::ColorGradient, draw::explosion::ExplosionAssets, in_plane};
 
 pub struct RocketPlugin;
 

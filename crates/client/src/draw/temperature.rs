@@ -1,32 +1,16 @@
-use bevy::asset::Handle;
-use bevy::color::Color;
-use bevy::color::LinearRgba;
-use bevy::ecs::hierarchy::ChildOf;
-use bevy::ecs::resource::Resource;
-use bevy::math::primitives::Sphere;
-use bevy::pbr::MeshMaterial3d;
-use bevy::pbr::NotShadowCaster;
-use bevy::pbr::NotShadowReceiver;
-use bevy::prelude::Added;
-use bevy::prelude::Assets;
-use bevy::prelude::Commands;
-use bevy::prelude::Component;
-use bevy::prelude::Entity;
-use bevy::prelude::Mesh3d;
-use bevy::prelude::Query;
-use bevy::prelude::Res;
-use bevy::prelude::ResMut;
-use bevy::prelude::StandardMaterial;
-use bevy::prelude::Transform;
-use bevy::prelude::Vec3;
-use bevy::prelude::With;
-use bevy::render::alpha::AlphaMode;
-use bevy::render::mesh::Mesh;
-use engine::status_effect::Temperature;
-use engine::CharacterMarker;
-use engine::FootOffset;
-use engine::PLAYER_HEIGHT;
-use engine::PLAYER_R;
+use bevy::{
+    asset::Handle,
+    color::{Color, LinearRgba},
+    ecs::{hierarchy::ChildOf, resource::Resource},
+    math::primitives::Sphere,
+    pbr::{MeshMaterial3d, NotShadowCaster, NotShadowReceiver},
+    prelude::{
+        Added, Assets, Commands, Component, Entity, Mesh3d, Query, Res, ResMut, StandardMaterial,
+        Transform, Vec3, With,
+    },
+    render::{alpha::AlphaMode, mesh::Mesh},
+};
+use engine::{status_effect::Temperature, CharacterMarker, FootOffset, PLAYER_HEIGHT, PLAYER_R};
 
 use crate::color_gradient::ColorGradient;
 

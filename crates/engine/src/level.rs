@@ -1,25 +1,19 @@
-use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::query::With;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::Query;
-use bevy::ecs::system::Res;
-use bevy::ecs::system::ResMut;
-use bevy::math::Vec3;
-use bevy::transform::components::GlobalTransform;
-use bevy::transform::components::Transform;
-use bevy_rapier3d::prelude::Collider;
-use bevy_rapier3d::prelude::Friction;
-use bevy_rapier3d::prelude::QueryFilter;
-use bevy_rapier3d::prelude::RapierContext;
-use bevy_rapier3d::prelude::RigidBody;
+use bevy::{
+    ecs::{
+        component::Component,
+        entity::Entity,
+        query::With,
+        resource::Resource,
+        system::{Commands, Query, Res, ResMut},
+    },
+    math::Vec3,
+    transform::components::{GlobalTransform, Transform},
+};
+use bevy_rapier3d::prelude::{Collider, Friction, QueryFilter, RapierContext, RigidBody};
 // use oxidized_navigation::NavMeshAffector;
 use rand::Rng;
 
-use crate::lifecycle::DEATH_Y;
-use crate::Shootable;
-use crate::PLAYER_R;
+use crate::{lifecycle::DEATH_Y, Shootable, PLAYER_R};
 
 /// A market to indicate that an entity is part of a level, and should be
 /// deleted when it ends.

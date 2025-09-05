@@ -1,16 +1,17 @@
 use std::ops::MulAssign;
 
-use bevy::ecs::component::Component;
-use bevy::ecs::system::Query;
-use bevy::math::Vec2;
-use bevy::reflect::Reflect;
+use bevy::{
+    ecs::{component::Component, system::Query},
+    math::Vec2,
+    reflect::Reflect,
+};
 use bevy_rapier3d::prelude::Velocity;
 
-use crate::status_effect::TimeDilation;
-use crate::time::FREQUENCY;
-use crate::time::TIMESTEP;
-use crate::To2d;
-use crate::To3d;
+use crate::{
+    status_effect::TimeDilation,
+    time::{FREQUENCY, TIMESTEP},
+    To2d, To3d,
+};
 
 /// The desired movement of an entity.
 ///

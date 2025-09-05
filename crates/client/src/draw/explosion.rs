@@ -1,35 +1,23 @@
-use bevy::app::Plugin;
-use bevy::app::Update;
-use bevy::color::Color;
-use bevy::ecs::hierarchy::ChildOf;
-use bevy::pbr::MeshMaterial3d;
-use bevy::prelude::Added;
-use bevy::prelude::AlphaMode;
-use bevy::prelude::Assets;
-use bevy::prelude::Commands;
-use bevy::prelude::Component;
-use bevy::prelude::Entity;
-use bevy::prelude::Handle;
-use bevy::prelude::InheritedVisibility;
-use bevy::prelude::Mesh;
-use bevy::prelude::Mesh3d;
-use bevy::prelude::Query;
-use bevy::prelude::Res;
-use bevy::prelude::ResMut;
-use bevy::prelude::Sphere;
-use bevy::prelude::StandardMaterial;
-use bevy::prelude::Transform;
-use bevy::prelude::Vec3;
-use bevy::prelude::With;
+use bevy::{
+    app::{Plugin, Update},
+    color::Color,
+    ecs::hierarchy::ChildOf,
+    pbr::MeshMaterial3d,
+    prelude::{
+        Added, AlphaMode, Assets, Commands, Component, Entity, Handle, InheritedVisibility, Mesh,
+        Mesh3d, Query, Res, ResMut, Sphere, StandardMaterial, Transform, Vec3, With,
+    },
+};
 use bevy_rapier3d::prelude::Collider;
-use engine::ability::explosion::Explosion;
-use engine::ability::explosion::ExplosionKind;
-use engine::ability::grenade::FragGrenade;
-use engine::ability::grenade::HealGrenade;
+use engine::ability::{
+    explosion::{Explosion, ExplosionKind},
+    grenade::{FragGrenade, HealGrenade},
+};
 
-use crate::ability::grenade::GrenadeAssets;
-use crate::ability::rocket::RocketAssets;
-use crate::color_gradient::ColorGradient;
+use crate::{
+    ability::{grenade::GrenadeAssets, rocket::RocketAssets},
+    color_gradient::ColorGradient,
+};
 
 #[derive(Component)]
 pub struct ExplosionAssets {

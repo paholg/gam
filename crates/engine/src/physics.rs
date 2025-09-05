@@ -1,11 +1,8 @@
-use bevy::app::App;
-use bevy::app::Plugin;
-use bevy::ecs::schedule::ScheduleConfigs;
-use bevy::ecs::system::ScheduleSystem;
-use bevy_rapier3d::prelude::NoUserData;
-use bevy_rapier3d::prelude::PhysicsSet;
-use bevy_rapier3d::prelude::RapierPhysicsPlugin;
-use bevy_rapier3d::prelude::TimestepMode;
+use bevy::{
+    app::{App, Plugin},
+    ecs::{schedule::ScheduleConfigs, system::ScheduleSystem},
+};
+use bevy_rapier3d::prelude::{NoUserData, PhysicsSet, RapierPhysicsPlugin, TimestepMode};
 
 use crate::time::TIMESTEP;
 

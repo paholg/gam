@@ -1,34 +1,22 @@
-use std::fs;
-use std::io;
-use std::path::PathBuf;
+use std::{fs, io, path::PathBuf};
 
-use bevy::core_pipeline::fxaa;
-use bevy::prelude::Added;
-use bevy::prelude::Commands;
-use bevy::prelude::Entity;
-use bevy::prelude::GamepadButton;
-use bevy::prelude::KeyCode;
-use bevy::prelude::MouseButton;
-use bevy::prelude::Plugin;
-use bevy::prelude::Query;
-use bevy::prelude::Res;
-use bevy::prelude::Resource;
-use bevy::prelude::Update;
-use bevy::reflect::Reflect;
+use bevy::{
+    core_pipeline::fxaa,
+    prelude::{
+        Added, Commands, Entity, GamepadButton, KeyCode, MouseButton, Plugin, Query, Res, Resource,
+        Update,
+    },
+    reflect::Reflect,
+};
 use directories::ProjectDirs;
-use engine::multiplayer::Action;
-use engine::player::AbilityIds;
-use engine::Player;
-use leafwing_input_manager::prelude::GamepadStick;
-use leafwing_input_manager::prelude::InputManagerPlugin;
-use leafwing_input_manager::prelude::InputMap;
-use leafwing_input_manager::prelude::VirtualDPad;
-use leafwing_input_manager::Actionlike;
-use serde::Deserialize;
-use serde::Serialize;
+use engine::{multiplayer::Action, player::AbilityIds, Player};
+use leafwing_input_manager::{
+    prelude::{GamepadStick, InputManagerPlugin, InputMap, VirtualDPad},
+    Actionlike,
+};
+use serde::{Deserialize, Serialize};
 use subenum::subenum;
-use tracing::error;
-use tracing::info;
+use tracing::{error, info};
 
 // TODO: NAME THESE THINGS
 const ORG: &str = "Paho Corp";

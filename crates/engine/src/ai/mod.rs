@@ -1,23 +1,22 @@
 use std::cmp::Ordering;
 
-use bevy::ecs::bundle::Bundle;
-use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::query::With;
-use bevy::ecs::query::Without;
-use bevy::ecs::schedule::ScheduleConfigs;
-use bevy::ecs::system::Query;
-use bevy::ecs::system::Res;
-use bevy::ecs::system::ScheduleSystem;
-use bevy::transform::components::Transform;
+use bevy::{
+    ecs::{
+        bundle::Bundle,
+        component::Component,
+        entity::Entity,
+        query::{With, Without},
+        schedule::ScheduleConfigs,
+        system::{Query, Res, ScheduleSystem},
+    },
+    transform::components::Transform,
+};
 use bevy_rapier3d::prelude::Velocity;
 
-use crate::ability::gun::GunProps;
-use crate::ability::gun::StandardGun;
-use crate::face;
-use crate::Faction;
-use crate::Target;
-use crate::To2d;
+use crate::{
+    ability::gun::{GunProps, StandardGun},
+    face, Faction, Target, To2d,
+};
 
 pub mod charge;
 // pub mod pathfind;

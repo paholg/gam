@@ -1,42 +1,22 @@
-use std::fmt;
-use std::marker::PhantomData;
+use std::{fmt, marker::PhantomData};
 
-use bevy::app::Startup;
-use bevy::asset::Assets;
-use bevy::color::palettes::css::BLACK;
-use bevy::color::palettes::css::GREEN;
-use bevy::ecs::hierarchy::ChildOf;
-use bevy::ecs::query::QueryData;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::schedule::IntoScheduleConfigs;
-use bevy::ecs::system::ResMut;
-use bevy::math::primitives::Rectangle;
-use bevy::pbr::MeshMaterial3d;
-use bevy::pbr::NotShadowCaster;
-use bevy::pbr::NotShadowReceiver;
-use bevy::prelude::Added;
-use bevy::prelude::Children;
-use bevy::prelude::Color;
-use bevy::prelude::Commands;
-use bevy::prelude::Component;
-use bevy::prelude::Entity;
-use bevy::prelude::GlobalTransform;
-use bevy::prelude::Handle;
-use bevy::prelude::Mesh;
-use bevy::prelude::Mesh3d;
-use bevy::prelude::Plugin;
-use bevy::prelude::Query;
-use bevy::prelude::Res;
-use bevy::prelude::StandardMaterial;
-use bevy::prelude::Transform;
-use bevy::prelude::Update;
-use bevy::prelude::Vec2;
-use bevy::prelude::Vec3;
-use bevy::prelude::Visibility;
-use bevy::prelude::With;
-use bevy::prelude::Without;
-use engine::Energy;
-use engine::Health;
+use bevy::{
+    app::Startup,
+    asset::Assets,
+    color::palettes::css::{BLACK, GREEN},
+    ecs::{
+        hierarchy::ChildOf, query::QueryData, resource::Resource, schedule::IntoScheduleConfigs,
+        system::ResMut,
+    },
+    math::primitives::Rectangle,
+    pbr::{MeshMaterial3d, NotShadowCaster, NotShadowReceiver},
+    prelude::{
+        Added, Children, Color, Commands, Component, Entity, GlobalTransform, Handle, Mesh, Mesh3d,
+        Plugin, Query, Res, StandardMaterial, Transform, Update, Vec2, Vec3, Visibility, With,
+        Without,
+    },
+};
+use engine::{Energy, Health};
 use tracing::warn;
 
 use crate::in_plane;

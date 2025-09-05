@@ -1,63 +1,36 @@
-use std::f32::consts::PI;
-use std::marker::PhantomData;
+use std::{f32::consts::PI, marker::PhantomData};
 
-use bevy::app::App;
-use bevy::app::Plugin;
-use bevy::app::Startup;
-use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::query::QueryData;
-use bevy::ecs::query::With;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::schedule::IntoScheduleConfigs;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::In;
-use bevy::ecs::system::Query;
-use bevy::ecs::system::Res;
-use bevy::ecs::world::World;
-use bevy::math::Vec3;
-use bevy::transform::components::Transform;
-use bevy_rapier3d::prelude::Collider;
-use bevy_rapier3d::prelude::ExternalForce;
-use bevy_rapier3d::prelude::LockedAxes;
-use bevy_rapier3d::prelude::RigidBody;
-use bevy_rapier3d::prelude::Sensor;
-use bevy_rapier3d::prelude::Velocity;
+use bevy::{
+    app::{App, Plugin, Startup},
+    ecs::{
+        component::Component,
+        entity::Entity,
+        query::{QueryData, With},
+        resource::Resource,
+        schedule::IntoScheduleConfigs,
+        system::{Commands, In, Query, Res},
+        world::World,
+    },
+    math::Vec3,
+    transform::components::Transform,
+};
+use bevy_rapier3d::prelude::{Collider, ExternalForce, LockedAxes, RigidBody, Sensor, Velocity};
 
-use super::cooldown::Cooldown;
-use super::explosion::ExplosionCallback;
-use super::explosion::ExplosionKind;
-use super::explosion::ExplosionProps;
-use super::noop_ability;
-use super::Ability;
-use super::AbilityId;
-use super::AbilityMap;
-use super::Left;
-use super::Right;
-use super::Side;
-use super::SideEnum;
-use crate::collision::TrackCollisionBundle;
-use crate::collision::TrackCollisions;
-use crate::level::InLevel;
-use crate::lifecycle::DeathCallback;
-use crate::movement::DesiredMove;
-use crate::movement::MaxSpeed;
-use crate::status_effect::StatusProps;
-use crate::status_effect::TimeDilation;
-use crate::time::Dur;
-use crate::time::TIMESTEP;
-use crate::AbilityOffset;
-use crate::Energy;
-use crate::GameSet;
-use crate::Health;
-use crate::MassBundle;
-use crate::Object;
-use crate::Shootable;
-use crate::Target;
-use crate::To2d;
-use crate::FORWARD;
-use crate::PLAYER_R;
-use crate::SCHEDULE;
+use super::{
+    cooldown::Cooldown,
+    explosion::{ExplosionCallback, ExplosionKind, ExplosionProps},
+    noop_ability, Ability, AbilityId, AbilityMap, Left, Right, Side, SideEnum,
+};
+use crate::{
+    collision::{TrackCollisionBundle, TrackCollisions},
+    level::InLevel,
+    lifecycle::DeathCallback,
+    movement::{DesiredMove, MaxSpeed},
+    status_effect::{StatusProps, TimeDilation},
+    time::{Dur, TIMESTEP},
+    AbilityOffset, Energy, GameSet, Health, MassBundle, Object, Shootable, Target, To2d, FORWARD,
+    PLAYER_R, SCHEDULE,
+};
 
 pub struct RocketPlugin;
 impl Plugin for RocketPlugin {

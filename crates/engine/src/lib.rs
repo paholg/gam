@@ -1,60 +1,42 @@
 use std::fmt;
 
-use ability::cooldown::global_cooldown_tick_system;
-use ability::cooldown::Cooldown;
-use ability::AbilityMap;
-use ability::AbilityPlugin;
-use bevy::app::App;
-use bevy::app::FixedUpdate;
-use bevy::app::Plugin;
-use bevy::app::PostUpdate;
-use bevy::app::Startup;
-use bevy::ecs::bundle::Bundle;
-use bevy::ecs::component::Component;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::schedule::IntoScheduleConfigs;
-use bevy::ecs::schedule::SystemSet;
-use bevy::ecs::system::Query;
-use bevy::ecs::system::Res;
-use bevy::math::prelude::InfinitePlane3d;
-use bevy::math::Dir3;
-use bevy::math::Quat;
-use bevy::math::Vec2;
-use bevy::math::Vec3;
-use bevy::reflect::Reflect;
-use bevy::state::app::AppExtStates;
-use bevy::state::state::State;
-use bevy::state::state::States;
-use bevy::time::Fixed;
-use bevy::time::Time;
-use bevy::transform::components::GlobalTransform;
-use bevy::transform::components::Transform;
-use bevy_rapier3d::prelude::Collider;
-use bevy_rapier3d::prelude::ColliderMassProperties;
-use bevy_rapier3d::prelude::ContactSkin;
-use bevy_rapier3d::prelude::ExternalForce;
-use bevy_rapier3d::prelude::Friction;
-use bevy_rapier3d::prelude::LockedAxes;
-use bevy_rapier3d::prelude::ReadMassProperties;
-use bevy_rapier3d::prelude::RigidBody;
-use bevy_rapier3d::prelude::Velocity;
+use ability::{
+    cooldown::{global_cooldown_tick_system, Cooldown},
+    AbilityMap, AbilityPlugin,
+};
+use bevy::{
+    app::{App, FixedUpdate, Plugin, PostUpdate, Startup},
+    ecs::{
+        bundle::Bundle,
+        component::Component,
+        resource::Resource,
+        schedule::{IntoScheduleConfigs, SystemSet},
+        system::{Query, Res},
+    },
+    math::{prelude::InfinitePlane3d, Dir3, Quat, Vec2, Vec3},
+    reflect::Reflect,
+    state::{
+        app::AppExtStates,
+        state::{State, States},
+    },
+    time::{Fixed, Time},
+    transform::components::{GlobalTransform, Transform},
+};
+use bevy_rapier3d::prelude::{
+    Collider, ColliderMassProperties, ContactSkin, ExternalForce, Friction, LockedAxes,
+    ReadMassProperties, RigidBody, Velocity,
+};
 use collision::TrackCollisionBundle;
 use input::pause_resume;
-use level::InLevel;
-use level::LevelProps;
-use movement::DesiredMove;
-use movement::MaxSpeed;
+use level::{InLevel, LevelProps};
+use movement::{DesiredMove, MaxSpeed};
 use multiplayer::PlayerInputs;
 use physics::PhysicsPlugin;
-use status_effect::charge::charge_tick;
-use status_effect::phased::phased_tick;
-use status_effect::temperature::temperature_tick;
-use status_effect::time_dilation::time_dilation_tick;
-use status_effect::StatusBundle;
-use status_effect::TimeDilation;
-use time::Dur;
-use time::FrameCounter;
-use time::FREQUENCY;
+use status_effect::{
+    charge::charge_tick, phased::phased_tick, temperature::temperature_tick,
+    time_dilation::time_dilation_tick, StatusBundle, TimeDilation,
+};
+use time::{Dur, FrameCounter, FREQUENCY};
 
 pub mod ability;
 pub mod ai;

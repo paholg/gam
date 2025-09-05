@@ -1,33 +1,25 @@
-use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::query::Added;
-use bevy::ecs::query::With;
-use bevy::ecs::query::Without;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::Query;
-use bevy::math::Vec3;
-use bevy::transform::components::Transform;
-use bevy_rapier3d::prelude::Ccd;
-use bevy_rapier3d::prelude::Collider;
-use bevy_rapier3d::prelude::ExternalForce;
-use bevy_rapier3d::prelude::LockedAxes;
-use bevy_rapier3d::prelude::ReadMassProperties;
-use bevy_rapier3d::prelude::RigidBody;
-use bevy_rapier3d::prelude::Sensor;
-use bevy_rapier3d::prelude::Velocity;
+use bevy::{
+    ecs::{
+        component::Component,
+        entity::Entity,
+        query::{Added, With, Without},
+        system::{Commands, Query},
+    },
+    math::Vec3,
+    transform::components::Transform,
+};
+use bevy_rapier3d::prelude::{
+    Ccd, Collider, ExternalForce, LockedAxes, ReadMassProperties, RigidBody, Sensor, Velocity,
+};
 
-use crate::collision::TrackCollisionBundle;
-use crate::collision::TrackCollisions;
-use crate::level::InLevel;
-use crate::lifecycle::Lifetime;
-use crate::status_effect::StatusProps;
-use crate::status_effect::Temperature;
-use crate::status_effect::TimeDilation;
-use crate::time::Dur;
-use crate::Health;
-use crate::MassBundle;
-use crate::Object;
-use crate::Shootable;
+use crate::{
+    collision::{TrackCollisionBundle, TrackCollisions},
+    level::InLevel,
+    lifecycle::Lifetime,
+    status_effect::{StatusProps, Temperature, TimeDilation},
+    time::Dur,
+    Health, MassBundle, Object, Shootable,
+};
 
 #[derive(Debug, Copy, Clone)]
 pub struct BulletProps {

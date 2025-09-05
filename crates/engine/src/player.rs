@@ -1,44 +1,26 @@
-use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::In;
-use bevy::ecs::system::SystemId;
-use bevy::math::Vec3;
-use bevy::transform::components::Transform;
-use bevy_rapier3d::prelude::CoefficientCombineRule;
-use bevy_rapier3d::prelude::Collider;
-use bevy_rapier3d::prelude::ExternalForce;
-use bevy_rapier3d::prelude::Friction;
-use bevy_rapier3d::prelude::LockedAxes;
-use bevy_rapier3d::prelude::RigidBody;
-use bevy_rapier3d::prelude::Velocity;
-use serde::Deserialize;
-use serde::Serialize;
+use bevy::{
+    ecs::{
+        component::Component,
+        entity::Entity,
+        system::{Commands, In, SystemId},
+    },
+    math::Vec3,
+    transform::components::Transform,
+};
+use bevy_rapier3d::prelude::{
+    CoefficientCombineRule, Collider, ExternalForce, Friction, LockedAxes, RigidBody, Velocity,
+};
+use serde::{Deserialize, Serialize};
 
-use crate::ability::cooldown::Cooldown;
-use crate::ability::AbilityId;
-use crate::ability::AbilityMap;
-use crate::ability::NonArmSlot;
-use crate::ability::SideEnum;
-use crate::collision::TrackCollisionBundle;
-use crate::level::InLevel;
-use crate::lifecycle::ENERGY_REGEN;
-use crate::status_effect::StatusProps;
-use crate::Ally;
-use crate::Character;
-use crate::CharacterMarker;
-use crate::Energy;
-use crate::Health;
-use crate::MassBundle;
-use crate::Object;
-use crate::Player;
-use crate::Shootable;
-use crate::Target;
-use crate::ABILITY_Y;
-use crate::CONTACT_SKIN;
-use crate::PLAYER_HEIGHT;
-use crate::PLAYER_MASS;
-use crate::PLAYER_R;
+use crate::{
+    ability::{cooldown::Cooldown, AbilityId, AbilityMap, NonArmSlot, SideEnum},
+    collision::TrackCollisionBundle,
+    level::InLevel,
+    lifecycle::ENERGY_REGEN,
+    status_effect::StatusProps,
+    Ally, Character, CharacterMarker, Energy, Health, MassBundle, Object, Player, Shootable,
+    Target, ABILITY_Y, CONTACT_SKIN, PLAYER_HEIGHT, PLAYER_MASS, PLAYER_R,
+};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AbilityIds {

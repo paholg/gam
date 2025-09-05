@@ -1,43 +1,25 @@
-use bevy::asset::Assets;
-use bevy::color::palettes::css::ALICE_BLUE;
-use bevy::color::palettes::css::AQUAMARINE;
-use bevy::color::palettes::css::RED;
-use bevy::color::Alpha;
-use bevy::color::Color;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::system::ResMut;
-use bevy::math::primitives::Cuboid;
-use bevy::pbr::MeshMaterial3d;
-use bevy::prelude::Added;
-use bevy::prelude::Commands;
-use bevy::prelude::Component;
-use bevy::prelude::Entity;
-use bevy::prelude::GlobalTransform;
-use bevy::prelude::Handle;
-use bevy::prelude::InheritedVisibility;
-use bevy::prelude::Mesh3d;
-use bevy::prelude::Query;
-use bevy::prelude::Res;
-use bevy::prelude::SpotLight;
-use bevy::prelude::StandardMaterial;
-use bevy::prelude::Transform;
-use bevy::prelude::Vec2;
-use bevy::prelude::Vec3;
-use bevy::prelude::With;
-use bevy::render::alpha::AlphaMode;
-use bevy::render::mesh::Mesh;
-use engine::level::Floor;
-use engine::level::InLevel;
-use engine::level::LevelProps;
-use engine::level::SHORT_WALL;
-use engine::level::WALL_HEIGHT;
-use engine::lifecycle::DEATH_Y;
-use engine::Health;
-use engine::To2d;
-use engine::UP;
+use bevy::{
+    asset::Assets,
+    color::{
+        palettes::css::{ALICE_BLUE, AQUAMARINE, RED},
+        Alpha, Color,
+    },
+    ecs::{resource::Resource, system::ResMut},
+    math::primitives::Cuboid,
+    pbr::MeshMaterial3d,
+    prelude::{
+        Added, Commands, Component, Entity, GlobalTransform, Handle, InheritedVisibility, Mesh3d,
+        Query, Res, SpotLight, StandardMaterial, Transform, Vec2, Vec3, With,
+    },
+    render::{alpha::AlphaMode, mesh::Mesh},
+};
+use engine::{
+    level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
+    lifecycle::DEATH_Y,
+    Health, To2d, UP,
+};
 
-use crate::aim::BlocksSight;
-use crate::bar::Bar;
+use crate::{aim::BlocksSight, bar::Bar};
 
 #[derive(Resource)]
 pub struct WallAssets {

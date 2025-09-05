@@ -1,25 +1,14 @@
 use ability::AbilityPlugin;
 use aim::AimPlugin;
 use bar::BarPlugin;
-use bevy::asset::AssetServer;
-use bevy::asset::LoadedFolder;
-use bevy::ecs::system::Commands;
-use bevy::prelude::Assets;
-use bevy::prelude::Handle;
-use bevy::prelude::Plugin;
-use bevy::prelude::Res;
-use bevy::prelude::ResMut;
-use bevy::prelude::Resource;
-use bevy::prelude::Startup;
-use bevy::prelude::Transform;
-use bevy::prelude::Update;
-use bevy::prelude::Vec3;
-use bevy_kira_audio::prelude::Volume;
-use bevy_kira_audio::Audio;
-use bevy_kira_audio::AudioControl;
-use bevy_kira_audio::AudioInstance;
-use bevy_kira_audio::AudioPlugin;
-use bevy_kira_audio::PlaybackState;
+use bevy::{
+    asset::{AssetServer, LoadedFolder},
+    ecs::system::Commands,
+    prelude::{Assets, Handle, Plugin, Res, ResMut, Resource, Startup, Transform, Update, Vec3},
+};
+use bevy_kira_audio::{
+    prelude::Volume, Audio, AudioControl, AudioInstance, AudioPlugin, PlaybackState,
+};
 use config::ConfigPlugin;
 use draw::DrawPlugin;
 use engine::UP;

@@ -1,33 +1,15 @@
-use bevy::app::Plugin;
-use bevy::app::Startup;
-use bevy::app::Update;
-use bevy::color::LinearRgba;
-use bevy::ecs::hierarchy::ChildOf;
-use bevy::pbr::MeshMaterial3d;
-use bevy::pbr::NotShadowReceiver;
-use bevy::prelude::Added;
-use bevy::prelude::AlphaMode;
-use bevy::prelude::Assets;
-use bevy::prelude::Commands;
-use bevy::prelude::Component;
-use bevy::prelude::Cylinder;
-use bevy::prelude::Entity;
-use bevy::prelude::Handle;
-use bevy::prelude::InheritedVisibility;
-use bevy::prelude::Mesh;
-use bevy::prelude::Mesh3d;
-use bevy::prelude::Query;
-use bevy::prelude::Res;
-use bevy::prelude::ResMut;
-use bevy::prelude::Resource;
-use bevy::prelude::StandardMaterial;
-use bevy::prelude::Transform;
-use bevy::prelude::Vec3;
-use bevy::prelude::With;
-use bevy::prelude::Without;
-use bevy::prelude::World;
-use engine::ability::transport::TransportBeam;
-use engine::To3d;
+use bevy::{
+    app::{Plugin, Startup, Update},
+    color::LinearRgba,
+    ecs::hierarchy::ChildOf,
+    pbr::{MeshMaterial3d, NotShadowReceiver},
+    prelude::{
+        Added, AlphaMode, Assets, Commands, Component, Cylinder, Entity, Handle,
+        InheritedVisibility, Mesh, Mesh3d, Query, Res, ResMut, Resource, StandardMaterial,
+        Transform, Vec3, With, Without, World,
+    },
+};
+use engine::{ability::transport::TransportBeam, To3d};
 
 use crate::color_gradient::ColorGradient;
 

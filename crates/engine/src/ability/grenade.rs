@@ -1,60 +1,37 @@
-use std::f32::consts::PI;
-use std::marker::PhantomData;
+use std::{f32::consts::PI, marker::PhantomData};
 
-use bevy::app::App;
-use bevy::app::Plugin;
-use bevy::app::Startup;
-use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::query::QueryData;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::In;
-use bevy::ecs::system::Query;
-use bevy::ecs::system::Res;
-use bevy::ecs::world::World;
-use bevy::math::Vec3;
-use bevy::transform::components::Transform;
-use bevy_rapier3d::prelude::Collider;
-use bevy_rapier3d::prelude::ExternalForce;
-use bevy_rapier3d::prelude::Friction;
-use bevy_rapier3d::prelude::LockedAxes;
-use bevy_rapier3d::prelude::Restitution;
-use bevy_rapier3d::prelude::Velocity;
+use bevy::{
+    app::{App, Plugin, Startup},
+    ecs::{
+        component::Component,
+        entity::Entity,
+        query::QueryData,
+        resource::Resource,
+        system::{Commands, In, Query, Res},
+        world::World,
+    },
+    math::Vec3,
+    transform::components::Transform,
+};
+use bevy_rapier3d::prelude::{
+    Collider, ExternalForce, Friction, LockedAxes, Restitution, Velocity,
+};
 
-use super::cooldown::Cooldown;
-use super::explosion::ExplosionCallback;
-use super::explosion::ExplosionKind;
-use super::explosion::ExplosionProps;
-use super::Ability;
-use super::AbilityId;
-use super::AbilityMap;
-use super::Left;
-use super::NonArmSlot;
-use super::Right;
-use super::Side;
-use super::SideEnum;
-use crate::collision::TrackCollisionBundle;
-use crate::level::InLevel;
-use crate::lifecycle::DeathCallback;
-use crate::lifecycle::Lifetime;
-use crate::physics::G;
-use crate::status_effect::StatusProps;
-use crate::status_effect::TimeDilation;
-use crate::time::Dur;
-use crate::AbilityOffset;
-use crate::Energy;
-use crate::Health;
-use crate::Libm;
-use crate::MassBundle;
-use crate::Object;
-use crate::Shootable;
-use crate::Target;
-use crate::To2d;
-use crate::To3d;
-use crate::FORWARD;
-use crate::PLAYER_R;
-use crate::SCHEDULE;
+use super::{
+    cooldown::Cooldown,
+    explosion::{ExplosionCallback, ExplosionKind, ExplosionProps},
+    Ability, AbilityId, AbilityMap, Left, NonArmSlot, Right, Side, SideEnum,
+};
+use crate::{
+    collision::TrackCollisionBundle,
+    level::InLevel,
+    lifecycle::{DeathCallback, Lifetime},
+    physics::G,
+    status_effect::{StatusProps, TimeDilation},
+    time::Dur,
+    AbilityOffset, Energy, Health, Libm, MassBundle, Object, Shootable, Target, To2d, To3d,
+    FORWARD, PLAYER_R, SCHEDULE,
+};
 
 /// Calculate the initial velocity of a projectile thrown at 45 degrees up, so
 /// that it will land at target.

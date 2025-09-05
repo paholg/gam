@@ -1,5 +1,4 @@
-use bevy::ecs::component::Component;
-use bevy::ecs::system::Query;
+use bevy::ecs::{component::Component, system::Query};
 
 use super::TimeDilation;
 use crate::time::Dur;

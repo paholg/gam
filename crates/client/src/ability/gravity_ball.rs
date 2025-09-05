@@ -1,37 +1,29 @@
-use bevy::app::Plugin;
-use bevy::app::Startup;
-use bevy::app::Update;
-use bevy::asset::Assets;
-use bevy::color::palettes::css::BLACK;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::query::Added;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::Query;
-use bevy::ecs::system::Res;
-use bevy::ecs::system::ResMut;
-use bevy::ecs::world::World;
-use bevy::math::primitives::Sphere;
-use bevy::math::Vec3;
-use bevy::pbr::MeshMaterial3d;
-use bevy::pbr::NotShadowCaster;
-use bevy::pbr::NotShadowReceiver;
-use bevy::prelude::GlobalTransform;
-use bevy::prelude::Handle;
-use bevy::prelude::InheritedVisibility;
-use bevy::prelude::Mesh;
-use bevy::prelude::Mesh3d;
-use bevy::prelude::StandardMaterial;
-use bevy::prelude::Transform;
-use bevy::prelude::Without;
-use engine::ability::gravity_ball::GravityBall;
-use engine::ability::gravity_ball::GravityBallGravityField;
-use engine::collision::TrackCollisions;
-use engine::FootOffset;
+use bevy::{
+    app::{Plugin, Startup, Update},
+    asset::Assets,
+    color::palettes::css::BLACK,
+    ecs::{
+        entity::Entity,
+        query::Added,
+        resource::Resource,
+        system::{Commands, Query, Res, ResMut},
+        world::World,
+    },
+    math::{primitives::Sphere, Vec3},
+    pbr::{MeshMaterial3d, NotShadowCaster, NotShadowReceiver},
+    prelude::{
+        GlobalTransform, Handle, InheritedVisibility, Mesh, Mesh3d, StandardMaterial, Transform,
+        Without,
+    },
+};
+use engine::{
+    ability::gravity_ball::{GravityBall, GravityBallGravityField},
+    collision::TrackCollisions,
+    FootOffset,
+};
 
 use super::HasOutline;
-use crate::in_plane;
-use crate::shapes::HollowPolygon;
+use crate::{in_plane, shapes::HollowPolygon};
 
 pub struct GravityBallPlugin;
 

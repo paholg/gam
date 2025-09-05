@@ -1,41 +1,27 @@
 use std::marker::PhantomData;
 
-use bevy::app::Plugin;
-use bevy::app::Startup;
-use bevy::app::Update;
-use bevy::asset::Assets;
-use bevy::asset::Handle;
-use bevy::color::LinearRgba;
-use bevy::math::Vec3;
-use bevy::pbr::MeshMaterial3d;
-use bevy::pbr::NotShadowCaster;
-use bevy::pbr::NotShadowReceiver;
-use bevy::pbr::StandardMaterial;
-use bevy::prelude::Added;
-use bevy::prelude::Commands;
-use bevy::prelude::Entity;
-use bevy::prelude::InheritedVisibility;
-use bevy::prelude::Mesh;
-use bevy::prelude::Mesh3d;
-use bevy::prelude::Query;
-use bevy::prelude::Res;
-use bevy::prelude::ResMut;
-use bevy::prelude::Resource;
-use bevy::prelude::Sphere;
-use bevy::prelude::Transform;
-use bevy::prelude::Without;
-use bevy::prelude::World;
+use bevy::{
+    app::{Plugin, Startup, Update},
+    asset::{Assets, Handle},
+    color::LinearRgba,
+    math::Vec3,
+    pbr::{MeshMaterial3d, NotShadowCaster, NotShadowReceiver, StandardMaterial},
+    prelude::{
+        Added, Commands, Entity, InheritedVisibility, Mesh, Mesh3d, Query, Res, ResMut, Resource,
+        Sphere, Transform, Without, World,
+    },
+};
 use bevy_rapier3d::prelude::Velocity;
-use engine::ability::grenade::FragGrenade;
-use engine::ability::grenade::Grenade;
-use engine::ability::grenade::HealGrenade;
-use engine::FootOffset;
+use engine::{
+    ability::grenade::{FragGrenade, Grenade, HealGrenade},
+    FootOffset,
+};
 
 use super::HasOutline;
-use crate::color_gradient::ColorGradient;
-use crate::draw::explosion::ExplosionAssets;
-use crate::in_plane;
-use crate::shapes::HollowPolygon;
+use crate::{
+    color_gradient::ColorGradient, draw::explosion::ExplosionAssets, in_plane,
+    shapes::HollowPolygon,
+};
 
 pub struct GrenadePlugin;
 

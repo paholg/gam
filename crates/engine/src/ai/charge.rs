@@ -1,34 +1,28 @@
-use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::query::With;
-use bevy::ecs::schedule::IntoScheduleConfigs;
-use bevy::ecs::schedule::ScheduleConfigs;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::Query;
-use bevy::ecs::system::ScheduleSystem;
-use bevy::transform::components::Transform;
-use bevy_rapier3d::plugin::ReadRapierContext;
-use bevy_rapier3d::prelude::QueryFilter;
+use bevy::{
+    ecs::{
+        component::Component,
+        entity::Entity,
+        query::With,
+        schedule::{IntoScheduleConfigs, ScheduleConfigs},
+        system::{Commands, Query, ScheduleSystem},
+    },
+    transform::components::Transform,
+};
+use bevy_rapier3d::{plugin::ReadRapierContext, prelude::QueryFilter};
 use rand::Rng;
 
 // use super::pathfind::set_move;
 // use super::pathfind::HasPath;
 // use super::pathfind::PathfindEvent;
 use super::target_closest_system;
-use super::update_target_system;
-use super::Ai;
-use super::AiTarget;
-use crate::ability::AbilityId;
-use crate::level::Floor;
-use crate::multiplayer::Action;
-use crate::player::Abilities;
-use crate::player::AbilityIds;
-use crate::AbilityOffset;
-use crate::Ally;
-use crate::Enemy;
-use crate::Faction;
-use crate::To2d;
-use crate::To3d;
+use super::{update_target_system, Ai, AiTarget};
+use crate::{
+    ability::AbilityId,
+    level::Floor,
+    multiplayer::Action,
+    player::{Abilities, AbilityIds},
+    AbilityOffset, Ally, Enemy, Faction, To2d, To3d,
+};
 
 #[derive(Component)]
 pub struct ChargeAi {

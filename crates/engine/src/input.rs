@@ -1,21 +1,20 @@
-use bevy::ecs::entity::Entity;
-use bevy::ecs::query::QueryData;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::Query;
-use bevy::ecs::system::Res;
-use bevy::ecs::system::ResMut;
-use bevy::state::state::NextState;
-use bevy::state::state::State;
-use bevy::transform::components::Transform;
+use bevy::{
+    ecs::{
+        entity::Entity,
+        query::QueryData,
+        system::{Commands, Query, Res, ResMut},
+    },
+    state::state::{NextState, State},
+    transform::components::Transform,
+};
 
-use crate::face;
-use crate::movement::DesiredMove;
-use crate::multiplayer::Action;
-use crate::multiplayer::PlayerInputs;
-use crate::player::Abilities;
-use crate::AppState;
-use crate::Player;
-use crate::Target;
+use crate::{
+    face,
+    movement::DesiredMove,
+    multiplayer::{Action, PlayerInputs},
+    player::Abilities,
+    AppState, Player, Target,
+};
 
 #[derive(QueryData)]
 #[query_data(mutable)]

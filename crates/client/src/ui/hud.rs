@@ -1,28 +1,15 @@
-use std::time::Duration;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
-use bevy::ecs::error::Result;
-use bevy::prelude::Color;
-use bevy::prelude::Commands;
-use bevy::prelude::Component;
-use bevy::prelude::Plugin;
-use bevy::prelude::Query;
-use bevy::prelude::Res;
-use bevy::prelude::ResMut;
-use bevy::prelude::Resource;
-use bevy::prelude::Startup;
-use bevy::prelude::Text;
-use bevy::prelude::Update;
-use bevy::prelude::With;
-use bevy::text::TextColor;
-use bevy::text::TextFont;
-use bevy::ui::AlignItems;
-use bevy::ui::FlexDirection;
-use bevy::ui::JustifyContent;
-use bevy::ui::Node;
-use bevy::ui::Val;
-use engine::time::FrameCounter;
-use engine::NumAi;
+use bevy::{
+    ecs::error::Result,
+    prelude::{
+        Color, Commands, Component, Plugin, Query, Res, ResMut, Resource, Startup, Text, Update,
+        With,
+    },
+    text::{TextColor, TextFont},
+    ui::{AlignItems, FlexDirection, JustifyContent, Node, Val},
+};
+use engine::{time::FrameCounter, NumAi};
 
 use crate::t;
 

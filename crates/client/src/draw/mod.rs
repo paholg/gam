@@ -1,6 +1,7 @@
-use bevy::app::Startup;
-use bevy::prelude::Plugin;
-use bevy::prelude::Update;
+use bevy::{
+    app::Startup,
+    prelude::{Plugin, Update},
+};
 use character::CharacterPlugin;
 use explosion::ExplosionPlugin;
 

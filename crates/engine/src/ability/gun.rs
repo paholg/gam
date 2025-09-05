@@ -1,40 +1,29 @@
 use std::marker::PhantomData;
 
-use bevy::app::App;
-use bevy::app::Plugin;
-use bevy::app::Startup;
-use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::query::QueryData;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::schedule::IntoScheduleConfigs;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::In;
-use bevy::ecs::system::Query;
-use bevy::ecs::system::Res;
-use bevy::ecs::world::World;
-use bevy::transform::components::Transform;
+use bevy::{
+    app::{App, Plugin, Startup},
+    ecs::{
+        component::Component,
+        entity::Entity,
+        query::QueryData,
+        resource::Resource,
+        schedule::IntoScheduleConfigs,
+        system::{Commands, In, Query, Res},
+        world::World,
+    },
+    transform::components::Transform,
+};
 use bevy_rapier3d::prelude::Velocity;
 
-use super::bullet::BulletProps;
-use super::bullet::BulletSpawner;
-use super::cooldown::Cooldown;
-use super::noop_ability;
-use super::Ability;
-use super::AbilityId;
-use super::AbilityMap;
-use super::Left;
-use super::Right;
-use super::Side;
-use super::SideEnum;
-use crate::status_effect::TimeDilation;
-use crate::time::Dur;
-use crate::AbilityOffset;
-use crate::Energy;
-use crate::GameSet;
-use crate::FORWARD;
-use crate::PLAYER_R;
-use crate::SCHEDULE;
+use super::{
+    bullet::{BulletProps, BulletSpawner},
+    cooldown::Cooldown,
+    noop_ability, Ability, AbilityId, AbilityMap, Left, Right, Side, SideEnum,
+};
+use crate::{
+    status_effect::TimeDilation, time::Dur, AbilityOffset, Energy, GameSet, FORWARD, PLAYER_R,
+    SCHEDULE,
+};
 
 pub struct GunPlugin;
 impl Plugin for GunPlugin {

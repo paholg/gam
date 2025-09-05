@@ -1,5 +1,4 @@
-use bevy::app::App;
-use bevy::MinimalPlugins;
+use bevy::{app::App, MinimalPlugins};
 
 fn main() {
     let mut app = App::new();

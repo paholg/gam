@@ -1,12 +1,9 @@
-use bevy::asset::Handle;
-use bevy::diagnostic::FrameCount;
-use bevy::prelude::Commands;
-use bevy::prelude::Entity;
-use bevy::prelude::Query;
-use bevy::prelude::Transform;
-use bevy_hanabi::EffectAsset;
-use bevy_hanabi::EffectSpawner;
-use bevy_hanabi::ParticleEffect;
+use bevy::{
+    asset::Handle,
+    diagnostic::FrameCount,
+    prelude::{Commands, Entity, Query, Transform},
+};
+use bevy_hanabi::{EffectAsset, EffectSpawner, ParticleEffect};
 
 // A wrapper around `Handle<EffectAsset>` that allows spawning multiple copies
 /// of the same effect in the same frame.

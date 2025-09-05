@@ -1,9 +1,9 @@
-use bevy::ecs::component::Component;
-use bevy::ecs::system::Query;
-use bevy::reflect::Reflect;
+use bevy::{
+    ecs::{component::Component, system::Query},
+    reflect::Reflect,
+};
 
-use crate::status_effect::TimeDilation;
-use crate::time::Dur;
+use crate::{status_effect::TimeDilation, time::Dur};
 
 #[derive(Component, Reflect, Default)]
 pub struct Cooldown {

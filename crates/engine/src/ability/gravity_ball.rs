@@ -1,56 +1,34 @@
 use std::marker::PhantomData;
 
-use bevy::app::App;
-use bevy::app::Plugin;
-use bevy::app::Startup;
-use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::query::QueryData;
-use bevy::ecs::query::Without;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::schedule::IntoScheduleConfigs;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::In;
-use bevy::ecs::system::Query;
-use bevy::ecs::system::Res;
-use bevy::ecs::world::World;
-use bevy::math::Vec3;
-use bevy::transform::components::GlobalTransform;
-use bevy::transform::components::Transform;
-use bevy_rapier3d::prelude::ActiveEvents;
-use bevy_rapier3d::prelude::Collider;
-use bevy_rapier3d::prelude::ExternalForce;
-use bevy_rapier3d::prelude::LockedAxes;
-use bevy_rapier3d::prelude::ReadMassProperties;
-use bevy_rapier3d::prelude::Sensor;
-use bevy_rapier3d::prelude::Velocity;
+use bevy::{
+    app::{App, Plugin, Startup},
+    ecs::{
+        component::Component,
+        entity::Entity,
+        query::{QueryData, Without},
+        resource::Resource,
+        schedule::IntoScheduleConfigs,
+        system::{Commands, In, Query, Res},
+        world::World,
+    },
+    math::Vec3,
+    transform::components::{GlobalTransform, Transform},
+};
+use bevy_rapier3d::prelude::{
+    ActiveEvents, Collider, ExternalForce, LockedAxes, ReadMassProperties, Sensor, Velocity,
+};
 
-use super::cooldown::Cooldown;
-use super::Ability;
-use super::AbilityId;
-use super::AbilityMap;
-use super::Left;
-use super::NonArmSlot;
-use super::Right;
-use super::Side;
-use super::SideEnum;
-use crate::collision::TrackCollisionBundle;
-use crate::collision::TrackCollisions;
-use crate::level::InLevel;
-use crate::status_effect::StatusProps;
-use crate::status_effect::TimeDilation;
-use crate::time::Dur;
-use crate::AbilityOffset;
-use crate::Energy;
-use crate::FootOffset;
-use crate::GameSet;
-use crate::Health;
-use crate::MassBundle;
-use crate::Object;
-use crate::Shootable;
-use crate::FORWARD;
-use crate::PLAYER_R;
-use crate::SCHEDULE;
+use super::{
+    cooldown::Cooldown, Ability, AbilityId, AbilityMap, Left, NonArmSlot, Right, Side, SideEnum,
+};
+use crate::{
+    collision::{TrackCollisionBundle, TrackCollisions},
+    level::InLevel,
+    status_effect::{StatusProps, TimeDilation},
+    time::Dur,
+    AbilityOffset, Energy, FootOffset, GameSet, Health, MassBundle, Object, Shootable, FORWARD,
+    PLAYER_R, SCHEDULE,
+};
 
 pub struct GravityBallPlugin;
 impl Plugin for GravityBallPlugin {

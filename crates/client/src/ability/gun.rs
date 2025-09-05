@@ -1,56 +1,34 @@
-use bevy::app::Plugin;
-use bevy::app::Startup;
-use bevy::app::Update;
-use bevy::asset::AssetServer;
-use bevy::asset::Assets;
-use bevy::color::Color;
-use bevy::color::LinearRgba;
-use bevy::diagnostic::FrameCount;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::query::Added;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::Query;
-use bevy::ecs::system::Res;
-use bevy::ecs::system::ResMut;
-use bevy::ecs::system::SystemId;
-use bevy::ecs::world::World;
-use bevy::math::primitives::Sphere;
-use bevy::pbr::MeshMaterial3d;
-use bevy::prelude::Handle;
-use bevy::prelude::In;
-use bevy::prelude::Mesh;
-use bevy::prelude::Mesh3d;
-use bevy::prelude::StandardMaterial;
-use bevy::prelude::Transform;
-use bevy::prelude::Vec3;
-use bevy::prelude::Vec4;
-use bevy::prelude::Without;
-use bevy_hanabi::Attribute;
-use bevy_hanabi::ColorOverLifetimeModifier;
-use bevy_hanabi::EffectAsset;
-use bevy_hanabi::EffectSpawner;
-use bevy_hanabi::ExprWriter;
-use bevy_hanabi::Gradient;
-use bevy_hanabi::LinearDragModifier;
-use bevy_hanabi::SetAttributeModifier;
-use bevy_hanabi::SetPositionSphereModifier;
-use bevy_hanabi::SetVelocitySphereModifier;
-use bevy_hanabi::ShapeDimension;
-use bevy_hanabi::SizeOverLifetimeModifier;
-use bevy_hanabi::SpawnerSettings;
-use bevy_kira_audio::prelude::Volume;
-use bevy_kira_audio::Audio;
-use bevy_kira_audio::AudioControl;
-use bevy_kira_audio::AudioSource;
-use engine::ability::bullet::Bullet;
-use engine::ability::gun::GunKind;
-use engine::ability::gun::GunProps;
-use engine::ability::gun::StandardGun;
-use engine::lifecycle::ClientDeathCallback;
+use bevy::{
+    app::{Plugin, Startup, Update},
+    asset::{AssetServer, Assets},
+    color::{Color, LinearRgba},
+    diagnostic::FrameCount,
+    ecs::{
+        entity::Entity,
+        query::Added,
+        resource::Resource,
+        system::{Commands, Query, Res, ResMut, SystemId},
+        world::World,
+    },
+    math::primitives::Sphere,
+    pbr::MeshMaterial3d,
+    prelude::{Handle, In, Mesh, Mesh3d, StandardMaterial, Transform, Vec3, Vec4, Without},
+};
+use bevy_hanabi::{
+    Attribute, ColorOverLifetimeModifier, EffectAsset, EffectSpawner, ExprWriter, Gradient,
+    LinearDragModifier, SetAttributeModifier, SetPositionSphereModifier, SetVelocitySphereModifier,
+    ShapeDimension, SizeOverLifetimeModifier, SpawnerSettings,
+};
+use bevy_kira_audio::{prelude::Volume, Audio, AudioControl, AudioSource};
+use engine::{
+    ability::{
+        bullet::Bullet,
+        gun::{GunKind, GunProps, StandardGun},
+    },
+    lifecycle::ClientDeathCallback,
+};
 
-use crate::particles::ParticleEffectPool;
-use crate::Config;
+use crate::{particles::ParticleEffectPool, Config};
 
 pub struct GunPlugin;
 

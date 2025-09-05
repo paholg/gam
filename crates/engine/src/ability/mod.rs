@@ -1,21 +1,20 @@
-use bevy::app::App;
-use bevy::app::Plugin;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::system::In;
-use bevy::ecs::system::IntoSystem;
-use bevy::ecs::system::SystemId;
-use bevy::ecs::world::FromWorld;
-use bevy::ecs::world::World;
-use bevy::platform::collections::HashMap;
-use bevy::reflect::TypePath;
+use bevy::{
+    app::{App, Plugin},
+    ecs::{
+        entity::Entity,
+        resource::Resource,
+        system::{In, IntoSystem, SystemId},
+        world::{FromWorld, World},
+    },
+    platform::collections::HashMap,
+    reflect::TypePath,
+};
 use explosion::ExplosionPlugin;
 use gravity_ball::GravityBallPlugin;
 use grenade::GrenadePlugin;
 use gun::GunPlugin;
 use rocket::RocketPlugin;
-use serde::Deserialize;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use subenum::subenum;
 use transport::TransportBeamPlugin;
 

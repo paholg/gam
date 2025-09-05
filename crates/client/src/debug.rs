@@ -1,19 +1,10 @@
-use bevy::prelude::Added;
-use bevy::prelude::Commands;
-use bevy::prelude::Component;
-use bevy::prelude::Entity;
-use bevy::prelude::Plugin;
-use bevy::prelude::Query;
-use bevy::prelude::Res;
-use bevy::prelude::Text;
-use bevy::prelude::Update;
-use bevy::prelude::With;
-use bevy::text::TextColor;
-use bevy::text::TextFont;
+use bevy::{
+    prelude::{Added, Commands, Component, Entity, Plugin, Query, Res, Text, Update, With},
+    text::{TextColor, TextFont},
+};
 use engine::debug::DebugText;
 
-use crate::ui::hud::Hud;
-use crate::ui::hud::TEXT_COLOR;
+use crate::ui::hud::{Hud, TEXT_COLOR};
 
 // fn rand_color() -> Color {
 //     let mut rng = rand::rng();

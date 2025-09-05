@@ -1,25 +1,24 @@
-use bevy::app::Update;
-use bevy::ecs::error::Result;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::system::Res;
-use bevy::ecs::system::ResMut;
-use bevy::prelude::App;
-use bevy::prelude::Plugin;
-use bevy::state::state::State;
-use bevy_egui::egui;
-use bevy_egui::egui::Slider;
-use bevy_egui::egui::Ui;
-use bevy_egui::EguiContexts;
-use bevy_egui::EguiPlugin;
+use bevy::{
+    app::Update,
+    ecs::{
+        error::Result,
+        resource::Resource,
+        system::{Res, ResMut},
+    },
+    prelude::{App, Plugin},
+    state::state::State,
+};
+use bevy_egui::{
+    egui,
+    egui::{Slider, Ui},
+    EguiContexts, EguiPlugin,
+};
 use engine::AppState;
 
-use crate::config::AntiAliasing;
-use crate::config::Audio;
-use crate::config::Graphics;
-use crate::config::MsaaSamples;
-use crate::config::Sensitivity;
-use crate::t;
-use crate::Config;
+use crate::{
+    config::{AntiAliasing, Audio, Graphics, MsaaSamples, Sensitivity},
+    t, Config,
+};
 
 pub mod hud;
 

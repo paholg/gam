@@ -1,10 +1,7 @@
-use bevy::ecs::component::Component;
-use bevy::ecs::query::QueryData;
-use bevy::ecs::system::Query;
+use bevy::ecs::{component::Component, query::QueryData, system::Query};
 
 use super::TimeDilation;
-use crate::time::TIMESTEP;
-use crate::Health;
+use crate::{time::TIMESTEP, Health};
 
 const CHARGE_LOSS_FACTOR: f32 = 0.1 * TIMESTEP;
 const DISCHARGE_DAMAGE_FACTOR: f32 = 1.0;

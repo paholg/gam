@@ -1,20 +1,17 @@
 use core::fmt;
 
-use bevy::ecs::entity::Entity;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::system::Commands;
-use bevy::math::Vec2;
-use bevy::platform::collections::HashMap;
-use bevy::reflect::TypePath;
+use bevy::{
+    ecs::{entity::Entity, resource::Resource, system::Commands},
+    math::Vec2,
+    platform::collections::HashMap,
+    reflect::TypePath,
+};
 use bitmask_enum::bitmask;
-use bytemuck::Pod;
-use bytemuck::Zeroable;
-use serde::Deserialize;
-use serde::Serialize;
+use bytemuck::{Pod, Zeroable};
+use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 
-use crate::player::Abilities;
-use crate::Player;
+use crate::{player::Abilities, Player};
 
 /// The inputs of all players
 #[derive(Resource, Default, Debug)]

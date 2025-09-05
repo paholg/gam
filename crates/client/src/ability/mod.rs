@@ -1,5 +1,4 @@
-use bevy::app::Plugin;
-use bevy::prelude::Component;
+use bevy::{app::Plugin, prelude::Component};
 use gravity_ball::GravityBallPlugin;
 use grenade::GrenadePlugin;
 use gun::GunPlugin;

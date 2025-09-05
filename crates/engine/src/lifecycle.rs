@@ -1,54 +1,32 @@
-use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::query::QueryData;
-use bevy::ecs::query::With;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::In;
-use bevy::ecs::system::Query;
-use bevy::ecs::system::Res;
-use bevy::ecs::system::ResMut;
-use bevy::ecs::system::SystemId;
-use bevy::math::Vec3;
-use bevy::transform::components::Transform;
-use bevy_rapier3d::plugin::ReadRapierContext;
-use bevy_rapier3d::prelude::CoefficientCombineRule;
-use bevy_rapier3d::prelude::ExternalForce;
-use bevy_rapier3d::prelude::Friction;
-use bevy_rapier3d::prelude::LockedAxes;
-use bevy_rapier3d::prelude::RapierContext;
-use bevy_rapier3d::prelude::RigidBody;
-use bevy_rapier3d::prelude::Velocity;
+use bevy::{
+    ecs::{
+        component::Component,
+        entity::Entity,
+        query::{QueryData, With},
+        system::{Commands, In, Query, Res, ResMut, SystemId},
+    },
+    math::Vec3,
+    transform::components::Transform,
+};
+use bevy_rapier3d::{
+    plugin::ReadRapierContext,
+    prelude::{
+        CoefficientCombineRule, ExternalForce, Friction, LockedAxes, RapierContext, RigidBody,
+        Velocity,
+    },
+};
 
-use crate::ability::cooldown::Cooldown;
-use crate::ability::AbilityMap;
-use crate::ai::charge::ChargeAi;
-use crate::ai::AiBundle;
-use crate::collision::TrackCollisionBundle;
-use crate::level::InLevel;
-use crate::level::LevelProps;
-use crate::player::character_collider;
-use crate::player::PlayerInfo;
-use crate::status_effect::StatusProps;
-use crate::status_effect::TimeDilation;
-use crate::time::Dur;
-use crate::time::FrameCounter;
-use crate::Ally;
-use crate::Character;
-use crate::CharacterMarker;
-use crate::Enemy;
-use crate::Energy;
-use crate::FootOffset;
-use crate::Health;
-use crate::MassBundle;
-use crate::NumAi;
-use crate::Object;
-use crate::Player;
-use crate::Shootable;
-use crate::ABILITY_Y;
-use crate::CONTACT_SKIN;
-use crate::PLAYER_HEIGHT;
-use crate::PLAYER_MASS;
-use crate::PLAYER_R;
+use crate::{
+    ability::{cooldown::Cooldown, AbilityMap},
+    ai::{charge::ChargeAi, AiBundle},
+    collision::TrackCollisionBundle,
+    level::{InLevel, LevelProps},
+    player::{character_collider, PlayerInfo},
+    status_effect::{StatusProps, TimeDilation},
+    time::{Dur, FrameCounter},
+    Ally, Character, CharacterMarker, Enemy, Energy, FootOffset, Health, MassBundle, NumAi, Object,
+    Player, Shootable, ABILITY_Y, CONTACT_SKIN, PLAYER_HEIGHT, PLAYER_MASS, PLAYER_R,
+};
 
 pub const DEATH_Y: f32 = -2.0;
 

@@ -1,38 +1,30 @@
-use bevy::app::App;
-use bevy::app::Plugin;
-use bevy::ecs::component::Component;
-use bevy::ecs::entity::Entity;
-use bevy::ecs::resource::Resource;
-use bevy::ecs::schedule::IntoScheduleConfigs;
-use bevy::ecs::system::Commands;
-use bevy::ecs::system::In;
-use bevy::ecs::system::Query;
-use bevy::ecs::system::SystemId;
-use bevy::math::Vec3;
-use bevy::transform::components::Transform;
-use bevy_rapier3d::plugin::ReadRapierContext;
-use bevy_rapier3d::prelude::Collider;
-use bevy_rapier3d::prelude::ExternalForce;
-use bevy_rapier3d::prelude::LockedAxes;
-use bevy_rapier3d::prelude::QueryFilter;
-use bevy_rapier3d::prelude::QueryFilterFlags;
-use bevy_rapier3d::prelude::RigidBody;
-use bevy_rapier3d::prelude::Sensor;
-use bevy_rapier3d::prelude::Velocity;
+use bevy::{
+    app::{App, Plugin},
+    ecs::{
+        component::Component,
+        entity::Entity,
+        resource::Resource,
+        schedule::IntoScheduleConfigs,
+        system::{Commands, In, Query, SystemId},
+    },
+    math::Vec3,
+    transform::components::Transform,
+};
+use bevy_rapier3d::{
+    plugin::ReadRapierContext,
+    prelude::{
+        Collider, ExternalForce, LockedAxes, QueryFilter, QueryFilterFlags, RigidBody, Sensor,
+        Velocity,
+    },
+};
 
-use crate::collision::TrackCollisionBundle;
-use crate::collision::TrackCollisions;
-use crate::level::InLevel;
-use crate::status_effect::StatusProps;
-use crate::status_effect::TimeDilation;
-use crate::time::Dur;
-use crate::GameSet;
-use crate::Health;
-use crate::MassBundle;
-use crate::Object;
-use crate::To2d;
-use crate::To3d;
-use crate::SCHEDULE;
+use crate::{
+    collision::{TrackCollisionBundle, TrackCollisions},
+    level::InLevel,
+    status_effect::{StatusProps, TimeDilation},
+    time::Dur,
+    GameSet, Health, MassBundle, Object, To2d, To3d, SCHEDULE,
+};
 
 pub struct ExplosionPlugin;
 impl Plugin for ExplosionPlugin {
