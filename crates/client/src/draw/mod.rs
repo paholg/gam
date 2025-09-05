@@ -1,3 +1,4 @@
+use bevy::app::Startup;
 use bevy::prelude::Plugin;
 use bevy::prelude::Update;
 use character::CharacterPlugin;
@@ -16,6 +17,14 @@ pub struct DrawPlugin;
 impl Plugin for DrawPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_systems(
+            Startup,
+            (
+                level::create_assets,
+                time_dilation::setup_time_dilation,
+                temperature::create_assets,
+            ),
+        )
+        .add_systems(
             Update,
             (
                 // (

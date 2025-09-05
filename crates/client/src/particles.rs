@@ -8,7 +8,7 @@ use bevy_hanabi::EffectAsset;
 use bevy_hanabi::EffectSpawner;
 use bevy_hanabi::ParticleEffect;
 
-// A wrapper around `Handle<EffectAsset>undle` that allows spawning multiple copies
+// A wrapper around `Handle<EffectAsset>` that allows spawning multiple copies
 /// of the same effect in the same frame.
 ///
 /// Some caveats:

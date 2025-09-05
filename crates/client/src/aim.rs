@@ -1,10 +1,19 @@
+use bevy::app::Startup;
+use bevy::asset::Assets;
+use bevy::asset::Handle;
+use bevy::color::LinearRgba;
 use bevy::ecs::hierarchy::ChildOf;
 use bevy::ecs::hierarchy::Children;
+use bevy::ecs::resource::Resource;
+use bevy::ecs::system::ResMut;
+use bevy::math::primitives::Circle;
+use bevy::math::primitives::Cylinder;
 use bevy::math::Dir3;
 use bevy::math::Ray3d;
 use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::NotShadowReceiver;
+use bevy::pbr::StandardMaterial;
 use bevy::picking::mesh_picking::ray_cast::MeshRayCastSettings;
 use bevy::prelude::Added;
 use bevy::prelude::Commands;
@@ -19,6 +28,7 @@ use bevy::prelude::Transform;
 use bevy::prelude::Update;
 use bevy::prelude::With;
 use bevy::prelude::Without;
+use bevy::render::mesh::Mesh;
 use bevy::scene::SceneInstance;
 use engine::AbilityOffset;
 use engine::Player;
@@ -26,7 +36,6 @@ use engine::Target;
 use engine::To2d;
 use engine::To3d;
 
-use crate::asset_handler::AssetHandler;
 use crate::in_plane;
 
 /// A plugin for managing aiming, such as drawing and updating the cursor.
@@ -34,7 +43,7 @@ pub struct AimPlugin;
 
 impl Plugin for AimPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_systems(
+        app.add_systems(Startup, create_assets).add_systems(
             Update,
             (
                 draw_target_system,
@@ -47,19 +56,58 @@ impl Plugin for AimPlugin {
     }
 }
 
+#[derive(Resource)]
+pub struct TargetAssets {
+    pub cursor_mesh: Handle<Mesh>,
+    pub cursor_material: Handle<StandardMaterial>,
+    pub laser_mesh: Handle<Mesh>,
+    pub laser_material: Handle<StandardMaterial>,
+    pub laser_length: f32,
+}
+
+impl TargetAssets {
+    pub fn new(meshes: &mut Assets<Mesh>, materials: &mut Assets<StandardMaterial>) -> Self {
+        let target_material = StandardMaterial {
+            emissive: LinearRgba::rgb(10.0, 0.0, 0.1),
+            ..Default::default()
+        };
+
+        let target_laser_material = StandardMaterial {
+            emissive: LinearRgba::rgb(10.0, 0.0, 0.1),
+            ..Default::default()
+        };
+        let laser_length = 100.0;
+        TargetAssets {
+            cursor_mesh: meshes.add(Circle::new(0.06)),
+            cursor_material: materials.add(target_material),
+            laser_mesh: meshes.add(Cylinder::new(0.01, 1.0)),
+            laser_material: materials.add(target_laser_material),
+            laser_length,
+        }
+    }
+}
+
+fn create_assets(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    commands.insert_resource(TargetAssets::new(&mut meshes, &mut materials));
+}
+
 #[derive(Component)]
 struct CursorTarget;
 
 fn draw_target_system(
     mut commands: Commands,
     query: Query<(Entity, &Target), Added<Player>>,
-    asset_handler: Res<AssetHandler>,
+    assets: Res<TargetAssets>,
 ) {
     for (entity, target) in &query {
         let target_entity = commands
             .spawn((
-                Mesh3d(asset_handler.target.cursor_mesh.clone_weak()),
-                MeshMaterial3d(asset_handler.target.cursor_material.clone_weak()),
+                Mesh3d(assets.cursor_mesh.clone_weak()),
+                MeshMaterial3d(assets.cursor_material.clone_weak()),
                 in_plane().with_translation(target.0.to_3d(0.0)),
                 NotShadowCaster,
                 NotShadowReceiver,
@@ -95,15 +143,15 @@ struct LaserSight;
 fn draw_laser_system(
     mut commands: Commands,
     query: Query<(Entity, &AbilityOffset), Added<Player>>,
-    asset_handler: Res<AssetHandler>,
+    assets: Res<TargetAssets>,
 ) {
     for (entity, ability_offset) in &query {
         let laser_transform = in_plane().with_translation(ability_offset.to_vec());
 
         let laser = commands
             .spawn((
-                Mesh3d(asset_handler.target.laser_mesh.clone_weak()),
-                MeshMaterial3d(asset_handler.target.laser_material.clone_weak()),
+                Mesh3d(assets.laser_mesh.clone_weak()),
+                MeshMaterial3d(assets.laser_material.clone_weak()),
                 laser_transform,
                 NotShadowCaster,
                 NotShadowReceiver,
@@ -117,7 +165,7 @@ fn draw_laser_system(
 
 fn update_laser_system(
     mut raycast: MeshRayCast,
-    asset_handler: Res<AssetHandler>,
+    assets: Res<TargetAssets>,
     mut laser_query: Query<
         (&ChildOf, &mut Transform),
         (With<LaserSight>, Without<Player>, Without<BlocksSight>),
@@ -138,7 +186,7 @@ fn update_laser_system(
         let len = raycast
             .cast_ray(ray, &settings)
             .first()
-            .map_or(asset_handler.target.laser_length, |hit| hit.1.distance);
+            .map_or(assets.laser_length, |hit| hit.1.distance);
         // We need to scale in the "y" direction because that's the orientation of
         // the cylinder that we use to draw the laser, it's just rotated.
         transform.scale.y = len;

@@ -1,14 +1,22 @@
 use std::fmt;
 use std::marker::PhantomData;
 
+use bevy::app::Startup;
+use bevy::asset::Assets;
+use bevy::color::palettes::css::BLACK;
+use bevy::color::palettes::css::GREEN;
 use bevy::ecs::hierarchy::ChildOf;
 use bevy::ecs::query::QueryData;
+use bevy::ecs::resource::Resource;
 use bevy::ecs::schedule::IntoScheduleConfigs;
+use bevy::ecs::system::ResMut;
+use bevy::math::primitives::Rectangle;
 use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::NotShadowReceiver;
 use bevy::prelude::Added;
 use bevy::prelude::Children;
+use bevy::prelude::Color;
 use bevy::prelude::Commands;
 use bevy::prelude::Component;
 use bevy::prelude::Entity;
@@ -31,10 +39,65 @@ use engine::Energy;
 use engine::Health;
 use tracing::warn;
 
-use crate::asset_handler::AssetHandler;
 use crate::in_plane;
 
 pub const BAR_OFFSET_Y: f32 = 0.01;
+
+#[derive(Resource)]
+struct BarAssets<T> {
+    mesh: Handle<Mesh>,
+    fg_material: Handle<StandardMaterial>,
+    bg_material: Handle<StandardMaterial>,
+    _marker: PhantomData<T>,
+}
+
+// NOTE: We use a very large value for depth_bias, because it doesn't play
+// nicely with scale otherwise. If it's, say "1.0", and we have a small value
+// for scale, it doesn't seem to help.
+impl BarAssets<Health> {
+    fn new(meshes: &mut Assets<Mesh>, materials: &mut Assets<StandardMaterial>) -> Self {
+        let fg = StandardMaterial {
+            base_color: GREEN.into(),
+            unlit: true,
+            depth_bias: 1000.0,
+            ..Default::default()
+        };
+        let bg = StandardMaterial {
+            base_color: BLACK.into(),
+            unlit: true,
+            depth_bias: -1000.0,
+            ..Default::default()
+        };
+        BarAssets {
+            mesh: meshes.add(Rectangle::new(1.0, 1.0)),
+            fg_material: materials.add(fg),
+            bg_material: materials.add(bg),
+            _marker: PhantomData,
+        }
+    }
+}
+impl BarAssets<Energy> {
+    fn new(meshes: &mut Assets<Mesh>, materials: &mut Assets<StandardMaterial>) -> Self {
+        let fg = StandardMaterial {
+            base_color: Color::linear_rgb(0.0, 0.2, 0.8),
+            unlit: true,
+            depth_bias: 1000.0,
+            ..Default::default()
+        };
+        let bg = StandardMaterial {
+            base_color: Color::BLACK,
+            unlit: true,
+            depth_bias: -1000.0,
+            ..Default::default()
+        };
+        BarAssets {
+            mesh: meshes.add(Rectangle::new(1.0, 1.0)),
+            fg_material: materials.add(fg),
+            bg_material: materials.add(bg),
+            _marker: PhantomData,
+        }
+    }
+}
 
 #[derive(Component)]
 #[require(Transform, Visibility)]
@@ -112,7 +175,7 @@ pub struct BarPlugin;
 
 impl Plugin for BarPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_systems(
+        app.add_systems(Startup, create_assets).add_systems(
             Update,
             (
                 (bar_add_system::<Health>, bar_update_system::<Health>).chain(),
@@ -122,46 +185,13 @@ impl Plugin for BarPlugin {
     }
 }
 
-trait BarAssets {
-    fn assets(
-        assets: &AssetHandler,
-    ) -> (
-        Handle<StandardMaterial>,
-        Handle<StandardMaterial>,
-        Handle<Mesh>,
-    );
-}
-
-impl BarAssets for Health {
-    fn assets(
-        assets: &AssetHandler,
-    ) -> (
-        Handle<StandardMaterial>,
-        Handle<StandardMaterial>,
-        Handle<Mesh>,
-    ) {
-        (
-            assets.healthbar.fg_material.clone(),
-            assets.healthbar.bg_material.clone(),
-            assets.healthbar.mesh.clone(),
-        )
-    }
-}
-
-impl BarAssets for Energy {
-    fn assets(
-        assets: &AssetHandler,
-    ) -> (
-        Handle<StandardMaterial>,
-        Handle<StandardMaterial>,
-        Handle<Mesh>,
-    ) {
-        (
-            assets.energybar.fg_material.clone(),
-            assets.energybar.bg_material.clone(),
-            assets.energybar.mesh.clone(),
-        )
-    }
+fn create_assets(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    commands.insert_resource(BarAssets::<Health>::new(&mut meshes, &mut materials));
+    commands.insert_resource(BarAssets::<Energy>::new(&mut meshes, &mut materials));
 }
 
 #[derive(QueryData)]
@@ -171,13 +201,15 @@ struct ParentQuery<T: Component> {
     bar: &'static Bar<T>,
 }
 
-fn bar_add_system<T: Component + BarAssets + Default>(
+fn bar_add_system<T: Component + Default>(
     mut commands: Commands,
-    assets: Res<AssetHandler>,
+    assets: Res<BarAssets<T>>,
     parents: Query<ParentQuery<T>, Added<Bar<T>>>,
 ) {
     for parent in parents.iter() {
-        let (fg, bg, mesh) = T::assets(&assets);
+        let fg = assets.fg_material.clone();
+        let bg = assets.bg_material.clone();
+        let mesh = assets.mesh.clone();
         let recip_scale = parent.global_transform.compute_transform().scale.recip();
         let scale = recip_scale * parent.bar.size.extend(1.0);
 

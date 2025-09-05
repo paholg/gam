@@ -7556,8 +7556,3 @@ checksum = "2c9e525af0a6a658e031e95f14b7f889976b74a11ba0eca5a5fc9ac8a1c43a6a"
 dependencies = [
  "zune-core",
 ]
-
-[[patch.unused]]
-name = "bevy_rapier3d"
-version = "0.30.0"
-source = "git+https://github.com/dimforge/bevy_rapier#4efc34b62f496095a8fe0dd3a4d23beb3e1d0727"

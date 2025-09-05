@@ -1,9 +1,9 @@
 use ability::AbilityPlugin;
 use aim::AimPlugin;
-use asset_handler::asset_handler_setup;
-use asset_handler::AssetHandler;
 use bar::BarPlugin;
+use bevy::asset::AssetServer;
 use bevy::asset::LoadedFolder;
+use bevy::ecs::system::Commands;
 use bevy::prelude::Assets;
 use bevy::prelude::Handle;
 use bevy::prelude::Plugin;
@@ -28,7 +28,6 @@ use splash::SplashPlugin;
 
 pub mod ability;
 mod aim;
-mod asset_handler;
 mod bar;
 pub mod color_gradient;
 mod config;
@@ -66,7 +65,7 @@ impl Plugin for GamClientPlugin {
             AbilityPlugin,
             bevy_hanabi::HanabiPlugin,
         ))
-        .insert_resource(BackgroundMusic::default())
+        .add_systems(Startup, load_music)
         .add_systems(Update, background_music_system)
         .add_systems(Startup, world::setup);
     }
@@ -76,23 +75,33 @@ struct GraphicsPlugin;
 
 impl Plugin for GraphicsPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
-        app.add_systems(Startup, asset_handler_setup).add_plugins((
-            BarPlugin,
-            ui::UiPlugin,
-            DrawPlugin,
-            AimPlugin,
-        ));
+        app.add_plugins((BarPlugin, ui::UiPlugin, DrawPlugin, AimPlugin));
     }
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource)]
 struct BackgroundMusic {
     name: Option<String>,
     handle: Option<Handle<AudioInstance>>,
+    folder: Handle<LoadedFolder>,
+}
+
+impl BackgroundMusic {
+    fn new(asset_server: &AssetServer) -> Self {
+        let folder = asset_server.load_folder("third-party/audio/Galacti-Chrons Weird Music Pack");
+        Self {
+            name: None,
+            handle: None,
+            folder,
+        }
+    }
+}
+
+fn load_music(mut commands: Commands, assets: Res<AssetServer>) {
+    commands.insert_resource(BackgroundMusic::new(&assets));
 }
 
 fn background_music_system(
-    assets: Res<AssetHandler>,
     audio: Res<Audio>,
     config: Res<Config>,
     mut bg_music: ResMut<BackgroundMusic>,
@@ -108,7 +117,7 @@ fn background_music_system(
     };
 
     if should_play {
-        if let Some(folder) = loaded_folders.get(&assets.music) {
+        if let Some(folder) = loaded_folders.get(&bg_music.folder) {
             let mut rng = rand::rng();
             let idx = rng.random_range(0..folder.handles.len());
             let track = folder.handles[idx].clone().typed();

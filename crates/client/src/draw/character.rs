@@ -1,10 +1,23 @@
+use std::marker::PhantomData;
+
 use bevy::app::Plugin;
+use bevy::app::Startup;
 use bevy::app::Update;
+use bevy::asset::AssetServer;
+use bevy::asset::Assets;
+use bevy::asset::Handle;
+use bevy::color::palettes::css::GREEN;
+use bevy::color::palettes::css::LIGHT_CYAN;
+use bevy::color::palettes::css::RED;
+use bevy::color::Alpha;
+use bevy::color::LinearRgba;
 use bevy::diagnostic::FrameCount;
 use bevy::ecs::system::SystemId;
+use bevy::math::Vec4;
 use bevy::pbr::MeshMaterial3d;
 use bevy::pbr::NotShadowCaster;
 use bevy::pbr::NotShadowReceiver;
+use bevy::pbr::StandardMaterial;
 use bevy::prelude::Added;
 use bevy::prelude::Commands;
 use bevy::prelude::Entity;
@@ -18,10 +31,25 @@ use bevy::prelude::Resource;
 use bevy::prelude::Transform;
 use bevy::prelude::Vec3;
 use bevy::prelude::Without;
+use bevy::render::mesh::Mesh;
+use bevy::scene::SceneRoot;
+use bevy_hanabi::Attribute;
+use bevy_hanabi::ColorOverLifetimeModifier;
+use bevy_hanabi::EffectAsset;
 use bevy_hanabi::EffectSpawner;
+use bevy_hanabi::ExprWriter;
+use bevy_hanabi::Gradient;
+use bevy_hanabi::LinearDragModifier;
+use bevy_hanabi::SetAttributeModifier;
+use bevy_hanabi::SetPositionSphereModifier;
+use bevy_hanabi::SetVelocitySphereModifier;
+use bevy_hanabi::ShapeDimension;
+use bevy_hanabi::SizeOverLifetimeModifier;
+use bevy_hanabi::SpawnerSettings;
 use bevy_kira_audio::prelude::Volume;
 use bevy_kira_audio::Audio;
 use bevy_kira_audio::AudioControl;
+use bevy_kira_audio::AudioSource;
 use engine::lifecycle::ClientDeathCallback;
 use engine::Ally;
 use engine::Enemy;
@@ -29,11 +57,13 @@ use engine::Energy;
 use engine::FootOffset;
 use engine::Health;
 use engine::Player;
+use engine::PLAYER_R;
 
 use crate::aim::BlocksSight;
-use crate::asset_handler::AssetHandler;
 use crate::bar::Bar;
 use crate::in_plane;
+use crate::particles::ParticleEffectPool;
+use crate::shapes::HollowPolygon;
 use crate::Config;
 
 pub struct CharacterPlugin;
@@ -53,28 +83,61 @@ impl Plugin for CharacterPlugin {
             ally: app.register_system(ally_death_system),
         };
 
-        app.insert_resource(callbacks).add_systems(
-            Update,
-            (draw_player_system, draw_enemy_system, draw_ally_system),
-        );
+        app.insert_resource(callbacks)
+            .add_systems(Startup, create_assets)
+            .add_systems(
+                Update,
+                (draw_player_system, draw_enemy_system, draw_ally_system),
+            );
     }
+}
+
+// asset_server: &AssetServer,
+// meshes: &mut Assets<Mesh>,
+// materials: &mut Assets<StandardMaterial>,
+// effects: &mut Assets<EffectAsset>,
+fn create_assets(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+    mut effects: ResMut<Assets<EffectAsset>>,
+) {
+    commands.insert_resource(CharacterAssets::player(
+        &asset_server,
+        &mut meshes,
+        &mut materials,
+        &mut effects,
+    ));
+    commands.insert_resource(CharacterAssets::enemy(
+        &asset_server,
+        &mut meshes,
+        &mut materials,
+        &mut effects,
+    ));
+    commands.insert_resource(CharacterAssets::ally(
+        &asset_server,
+        &mut meshes,
+        &mut materials,
+        &mut effects,
+    ));
 }
 
 fn player_death_system(
     In(entity): In<Entity>,
     query: Query<&Transform, Without<EffectSpawner>>,
     mut commands: Commands,
-    mut assets: ResMut<AssetHandler>,
+    mut assets: ResMut<CharacterAssets<Player>>,
     audio: Res<Audio>,
     config: Res<Config>,
     mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
     frame: Res<FrameCount>,
 ) {
-    let effect = &mut assets.player.despawn_effect;
+    let effect = &mut assets.despawn_effect;
     let transform = *query.get(entity).unwrap();
     effect.trigger(&mut commands, transform, &mut effects, &frame);
 
-    let sound = assets.player.despawn_sound.clone_weak();
+    let sound = assets.despawn_sound.clone_weak();
     audio
         .play(sound)
         .with_volume(Volume::Decibels(config.audio.effects_volume));
@@ -84,17 +147,17 @@ fn enemy_death_system(
     In(entity): In<Entity>,
     query: Query<&Transform, Without<EffectSpawner>>,
     mut commands: Commands,
-    mut assets: ResMut<AssetHandler>,
+    mut assets: ResMut<CharacterAssets<Enemy>>,
     audio: Res<Audio>,
     config: Res<Config>,
     mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
     frame: Res<FrameCount>,
 ) {
-    let effect = &mut assets.enemy.despawn_effect;
+    let effect = &mut assets.despawn_effect;
     let transform = *query.get(entity).unwrap();
     effect.trigger(&mut commands, transform, &mut effects, &frame);
 
-    let sound = assets.enemy.despawn_sound.clone_weak();
+    let sound = assets.despawn_sound.clone_weak();
     audio
         .play(sound)
         .with_volume(Volume::Decibels(config.audio.effects_volume));
@@ -104,17 +167,17 @@ fn ally_death_system(
     In(entity): In<Entity>,
     query: Query<&Transform, Without<EffectSpawner>>,
     mut commands: Commands,
-    mut assets: ResMut<AssetHandler>,
+    mut assets: ResMut<CharacterAssets<Ally>>,
     audio: Res<Audio>,
     config: Res<Config>,
     mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
     frame: Res<FrameCount>,
 ) {
-    let effect = &mut assets.ally.despawn_effect;
+    let effect = &mut assets.despawn_effect;
     let transform = *query.get(entity).unwrap();
     effect.trigger(&mut commands, transform, &mut effects, &frame);
 
-    let sound = assets.ally.despawn_sound.clone_weak();
+    let sound = assets.despawn_sound.clone_weak();
     audio
         .play(sound)
         .with_volume(Volume::Decibels(config.audio.effects_volume));
@@ -122,7 +185,7 @@ fn ally_death_system(
 
 fn draw_player_system(
     mut commands: Commands,
-    assets: Res<AssetHandler>,
+    assets: Res<CharacterAssets<Player>>,
     callbacks: Res<CharacterDeathCallbacks>,
     query: Query<(Entity, &FootOffset), Added<Player>>,
 ) {
@@ -135,14 +198,14 @@ fn draw_player_system(
             ))
             .with_children(|builder| {
                 builder.spawn((
-                    Mesh3d::from(assets.player.outline_mesh.clone_weak()),
-                    MeshMaterial3d::from(assets.player.outline_material.clone_weak()),
+                    Mesh3d::from(assets.outline_mesh.clone_weak()),
+                    MeshMaterial3d::from(assets.outline_material.clone_weak()),
                     in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
                     NotShadowCaster,
                     NotShadowReceiver,
                 ));
                 builder.spawn((
-                    assets.player.scene.clone(),
+                    assets.scene.clone(),
                     Transform::from_translation(foot_offset.to_vec()),
                     BlocksSight,
                     Bar::<Health>::default(),
@@ -154,7 +217,7 @@ fn draw_player_system(
 
 fn draw_enemy_system(
     mut commands: Commands,
-    assets: Res<AssetHandler>,
+    assets: Res<CharacterAssets<Enemy>>,
     callbacks: Res<CharacterDeathCallbacks>,
     query: Query<(Entity, &FootOffset), Added<Enemy>>,
 ) {
@@ -167,14 +230,14 @@ fn draw_enemy_system(
             ))
             .with_children(|builder| {
                 builder.spawn((
-                    Mesh3d::from(assets.enemy.outline_mesh.clone_weak()),
-                    MeshMaterial3d::from(assets.enemy.outline_material.clone_weak()),
+                    Mesh3d::from(assets.outline_mesh.clone_weak()),
+                    MeshMaterial3d::from(assets.outline_material.clone_weak()),
                     in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
                     NotShadowCaster,
                     NotShadowReceiver,
                 ));
                 builder.spawn((
-                    assets.enemy.scene.clone(),
+                    assets.scene.clone(),
                     Transform::from_translation(foot_offset.to_vec()),
                     BlocksSight,
                     Bar::<Health>::default(),
@@ -186,7 +249,7 @@ fn draw_enemy_system(
 
 fn draw_ally_system(
     mut commands: Commands,
-    assets: Res<AssetHandler>,
+    assets: Res<CharacterAssets<Ally>>,
     callbacks: Res<CharacterDeathCallbacks>,
     query: Query<(Entity, &FootOffset), (Added<Ally>, Without<Player>)>,
 ) {
@@ -199,14 +262,14 @@ fn draw_ally_system(
             ))
             .with_children(|builder| {
                 builder.spawn((
-                    Mesh3d::from(assets.ally.outline_mesh.clone_weak()),
-                    MeshMaterial3d::from(assets.ally.outline_material.clone_weak()),
+                    Mesh3d::from(assets.outline_mesh.clone_weak()),
+                    MeshMaterial3d::from(assets.outline_material.clone_weak()),
                     in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
                     NotShadowCaster,
                     NotShadowReceiver,
                 ));
                 builder.spawn((
-                    assets.ally.scene.clone(),
+                    assets.scene.clone(),
                     Transform::from_translation(foot_offset.to_vec()),
                     BlocksSight,
                     Bar::<Health>::default(),
@@ -214,4 +277,175 @@ fn draw_ally_system(
                 ));
             });
     }
+}
+
+#[derive(Resource)]
+struct CharacterAssets<T> {
+    scene: SceneRoot,
+    outline_mesh: Handle<Mesh>,
+    outline_material: Handle<StandardMaterial>,
+    despawn_sound: Handle<AudioSource>,
+    despawn_effect: ParticleEffectPool,
+    _marker: PhantomData<T>,
+}
+
+impl<T> CharacterAssets<T> {
+    fn outline(
+        color: LinearRgba,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
+    ) -> (Handle<Mesh>, Handle<StandardMaterial>) {
+        let mesh = meshes.add(HollowPolygon {
+            radius: PLAYER_R,
+            thickness: 0.04,
+            vertices: 30,
+        });
+
+        const OUTLINE_ALPHA: f32 = 0.5;
+        let material = materials.add(StandardMaterial {
+            unlit: true,
+            base_color: color.with_alpha(OUTLINE_ALPHA).into(),
+            // TODO: Make actually emissive???
+            emissive: color.with_alpha(OUTLINE_ALPHA),
+            ..Default::default()
+        });
+
+        (mesh, material)
+    }
+
+    fn character(
+        asset_server: &AssetServer,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
+        effects: &mut Assets<EffectAsset>,
+        color: LinearRgba,
+        model_path: &'static str,
+    ) -> Self {
+        // let model = builder.asset_server.load("models/temp/robot1.glb#Scene0");
+        let model = asset_server.load(model_path);
+        let despawn_sound = asset_server.load("third-party/audio/other/explosionCrunch_000.ogg");
+
+        let despawn_effect = effects.add(death_effect()).into();
+
+        let (outline_mesh, outline_material) = Self::outline(color, meshes, materials);
+        CharacterAssets {
+            scene: SceneRoot(model),
+            outline_mesh,
+            outline_material,
+            despawn_sound,
+            despawn_effect,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl CharacterAssets<Player> {
+    fn player(
+        asset_server: &AssetServer,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
+        effects: &mut Assets<EffectAsset>,
+    ) -> Self {
+        Self::character(
+            asset_server,
+            meshes,
+            materials,
+            effects,
+            GREEN.into(),
+            "models/temp/robot1.glb#Scene0",
+        )
+    }
+}
+
+impl CharacterAssets<Ally> {
+    fn ally(
+        asset_server: &AssetServer,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
+        effects: &mut Assets<EffectAsset>,
+    ) -> Self {
+        Self::character(
+            asset_server,
+            meshes,
+            materials,
+            effects,
+            LIGHT_CYAN.into(),
+            "models/temp/robot1.glb#Scene0",
+        )
+    }
+}
+
+impl CharacterAssets<Enemy> {
+    fn enemy(
+        asset_server: &AssetServer,
+        meshes: &mut Assets<Mesh>,
+        materials: &mut Assets<StandardMaterial>,
+        effects: &mut Assets<EffectAsset>,
+    ) -> Self {
+        Self::character(
+            asset_server,
+            meshes,
+            materials,
+            effects,
+            RED.into(),
+            "models/temp/snowman.glb#Scene0",
+        )
+    }
+}
+
+fn death_effect() -> EffectAsset {
+    let mut color_gradient1 = Gradient::new();
+    color_gradient1.add_key(0.0, Vec4::new(4.0, 4.0, 4.0, 1.0));
+    color_gradient1.add_key(0.1, Vec4::new(4.0, 4.0, 0.0, 1.0));
+    color_gradient1.add_key(0.9, Vec4::new(4.0, 4.0, 0.0, 1.0));
+    color_gradient1.add_key(1.0, Vec4::new(4.0, 4.0, 0.0, 0.0));
+
+    let mut size_gradient1 = Gradient::new();
+    size_gradient1.add_key(0.0, Vec3::splat(0.05));
+    size_gradient1.add_key(0.3, Vec3::splat(0.07));
+    size_gradient1.add_key(1.0, Vec3::splat(0.0));
+
+    let spawner = SpawnerSettings::once(500.0.into());
+    let writer = ExprWriter::new();
+
+    let pos = SetPositionSphereModifier {
+        center: writer.lit(Vec3::ZERO).expr(),
+        radius: writer.lit(PLAYER_R).expr(),
+        dimension: ShapeDimension::Volume,
+    };
+
+    let vel = SetVelocitySphereModifier {
+        center: writer.lit(Vec3::ZERO).expr(),
+        speed: writer.lit(1.5).uniform(writer.lit(2.0)).expr(),
+    };
+
+    let lifetime = SetAttributeModifier {
+        attribute: Attribute::LIFETIME,
+        value: writer.lit(0.4).uniform(writer.lit(0.6)).expr(),
+    };
+
+    let age = SetAttributeModifier {
+        attribute: Attribute::AGE,
+        value: writer.lit(0.0).uniform(writer.lit(0.2)).expr(),
+    };
+
+    let drag = LinearDragModifier {
+        drag: writer.lit(5.0).expr(),
+    };
+
+    EffectAsset::new(32768, spawner, writer.finish())
+        .with_name("death_effect")
+        .init(pos)
+        .init(vel)
+        .init(lifetime)
+        .init(age)
+        .update(drag)
+        .render(ColorOverLifetimeModifier {
+            gradient: color_gradient1,
+            ..Default::default()
+        })
+        .render(SizeOverLifetimeModifier {
+            gradient: size_gradient1,
+            screen_space_size: false,
+        })
 }

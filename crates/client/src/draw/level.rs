@@ -1,3 +1,12 @@
+use bevy::asset::Assets;
+use bevy::color::palettes::css::ALICE_BLUE;
+use bevy::color::palettes::css::AQUAMARINE;
+use bevy::color::palettes::css::RED;
+use bevy::color::Alpha;
+use bevy::color::Color;
+use bevy::ecs::resource::Resource;
+use bevy::ecs::system::ResMut;
+use bevy::math::primitives::Cuboid;
 use bevy::pbr::MeshMaterial3d;
 use bevy::prelude::Added;
 use bevy::prelude::Commands;
@@ -15,6 +24,8 @@ use bevy::prelude::Transform;
 use bevy::prelude::Vec2;
 use bevy::prelude::Vec3;
 use bevy::prelude::With;
+use bevy::render::alpha::AlphaMode;
+use bevy::render::mesh::Mesh;
 use engine::level::Floor;
 use engine::level::InLevel;
 use engine::level::LevelProps;
@@ -26,8 +37,56 @@ use engine::To2d;
 use engine::UP;
 
 use crate::aim::BlocksSight;
-use crate::asset_handler::AssetHandler;
 use crate::bar::Bar;
+
+#[derive(Resource)]
+pub struct WallAssets {
+    pub shape: Handle<Mesh>,
+    pub floor: Handle<StandardMaterial>,
+    pub short_wall: Handle<StandardMaterial>,
+    pub wall: Handle<StandardMaterial>,
+    pub tall_wall: Handle<StandardMaterial>,
+    pub short_wall_trans: Handle<StandardMaterial>,
+    pub wall_trans: Handle<StandardMaterial>,
+    pub tall_wall_trans: Handle<StandardMaterial>,
+}
+
+impl WallAssets {
+    pub fn new(meshes: &mut Assets<Mesh>, materials: &mut Assets<StandardMaterial>) -> Self {
+        let short_wall_color = ALICE_BLUE.into();
+        let wall_color = AQUAMARINE.into();
+        let tall_wall_color = RED.into();
+
+        let trans = |color: Color| StandardMaterial {
+            base_color: color.with_alpha(0.5),
+            alpha_mode: AlphaMode::Blend,
+            ..Default::default()
+        };
+
+        WallAssets {
+            shape: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
+            floor: materials.add(StandardMaterial {
+                base_color: Color::srgb(0.0, 0.6, 0.1),
+                perceptual_roughness: 0.8,
+                ..Default::default()
+            }),
+            short_wall: materials.add(short_wall_color),
+            wall: materials.add(wall_color),
+            tall_wall: materials.add(tall_wall_color),
+            short_wall_trans: materials.add(trans(short_wall_color)),
+            wall_trans: materials.add(trans(wall_color)),
+            tall_wall_trans: materials.add(trans(tall_wall_color)),
+        }
+    }
+}
+
+pub fn create_assets(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
+    commands.insert_resource(WallAssets::new(&mut meshes, &mut materials));
+}
 
 #[derive(Component, Copy, Clone)]
 pub enum WallKind {
@@ -38,21 +97,21 @@ pub enum WallKind {
 }
 
 impl WallKind {
-    fn opaque(&self, assets: &AssetHandler) -> Handle<StandardMaterial> {
+    fn opaque(&self, assets: &WallAssets) -> Handle<StandardMaterial> {
         match self {
-            WallKind::Floor => assets.wall.floor.clone(),
-            WallKind::Short => assets.wall.short_wall.clone(),
-            WallKind::Standard => assets.wall.wall.clone(),
-            WallKind::Tall => assets.wall.tall_wall.clone(),
+            WallKind::Floor => assets.floor.clone_weak(),
+            WallKind::Short => assets.short_wall.clone_weak(),
+            WallKind::Standard => assets.wall.clone_weak(),
+            WallKind::Tall => assets.tall_wall.clone_weak(),
         }
     }
 
-    fn trans(&self, assets: &AssetHandler) -> Handle<StandardMaterial> {
+    fn trans(&self, assets: &WallAssets) -> Handle<StandardMaterial> {
         match self {
-            WallKind::Floor => assets.wall.floor.clone(), // no trans floor
-            WallKind::Short => assets.wall.short_wall_trans.clone(),
-            WallKind::Standard => assets.wall.wall_trans.clone(),
-            WallKind::Tall => assets.wall.tall_wall_trans.clone(),
+            WallKind::Floor => assets.floor.clone_weak(), // no trans floor
+            WallKind::Short => assets.short_wall_trans.clone_weak(),
+            WallKind::Standard => assets.wall_trans.clone_weak(),
+            WallKind::Tall => assets.tall_wall_trans.clone_weak(),
         }
     }
 
@@ -69,7 +128,7 @@ pub struct Wall;
 
 pub fn draw_wall_system(
     mut commands: Commands,
-    assets: Res<AssetHandler>,
+    assets: Res<WallAssets>,
     query: Query<(Entity, &Floor), Added<Floor>>,
 ) {
     for (entity, floor) in &query {
@@ -124,7 +183,7 @@ pub fn draw_wall_system(
             .map(|(transform, kind)| {
                 let wall = commands
                     .spawn((
-                        Mesh3d(assets.wall.shape.clone_weak()),
+                        Mesh3d(assets.shape.clone_weak()),
                         MeshMaterial3d(kind.opaque(&assets)),
                         transform,
                         kind,
@@ -142,7 +201,7 @@ pub fn draw_wall_system(
 }
 
 pub fn update_wall_system(
-    assets: Res<AssetHandler>,
+    assets: Res<WallAssets>,
     mut query: Query<
         (
             &mut MeshMaterial3d<StandardMaterial>,

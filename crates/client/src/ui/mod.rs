@@ -1,4 +1,3 @@
-use bevy::app::Startup;
 use bevy::app::Update;
 use bevy::ecs::error::Result;
 use bevy::ecs::resource::Resource;
