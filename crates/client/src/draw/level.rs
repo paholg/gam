@@ -292,7 +292,9 @@ pub fn draw_lights_system(
 
             commands.spawn((
                 SpotLight {
-                    shadows_enabled: true,
+                    // FIXME: We definitely want shadows, but they're so buggy that they're more
+                    // distracting than helpful at the moment.
+                    shadows_enabled: false,
                     range: 30.0,
                     intensity: 4_000_000.0,
                     outer_angle: std::f32::consts::FRAC_PI_3,
