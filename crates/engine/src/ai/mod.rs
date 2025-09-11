@@ -15,7 +15,7 @@ use bevy_rapier3d::prelude::Velocity;
 
 use crate::{
     ability::gun::{GunProps, StandardGun},
-    face, Faction, Target, To2d,
+    Faction, Target, UP,
 };
 
 pub mod charge;
@@ -90,9 +90,9 @@ fn update_target_system<T: Faction, A: Ai>(
         // Let's use the ai's intelligence factor to determine how much it should lead.
         let lead_factor = ai.intelligence();
         let lead = (target_velocity.linvel - velocity.linvel) * dt * lead_factor;
-        let lead_translation = (target_transform.translation + lead).to_2d();
+        let lead_translation = target_transform.translation + lead;
 
-        face(&mut transform, lead_translation);
-        target.loc.0 = lead_translation;
+        transform.look_to(lead_translation, UP);
+        target.loc.transform.translation = lead_translation;
     }
 }

@@ -246,7 +246,7 @@ impl Default for PlayerConfig {
     fn default() -> Self {
         Self {
             ability_ids: AbilityIds {
-                left_arm: "fire_gun".into(),
+                left_arm: "gun".into(),
                 right_arm: "rocket".into(),
                 left_shoulder: "frag_grenade".into(),
                 right_shoulder: "gravity_ball".into(),

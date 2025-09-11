@@ -8,8 +8,8 @@ use bevy::{
         system::ResMut,
     },
     math::{
-        primitives::{Circle, Cylinder},
-        Dir3, Ray3d,
+        primitives::{Circle, Cylinder, Sphere},
+        Dir3, Ray3d, Vec3,
     },
     pbr::{MeshMaterial3d, NotShadowCaster, NotShadowReceiver, StandardMaterial},
     picking::mesh_picking::ray_cast::MeshRayCastSettings,
@@ -20,7 +20,7 @@ use bevy::{
     render::mesh::Mesh,
     scene::SceneInstance,
 };
-use engine::{AbilityOffset, Player, Target, To2d, To3d};
+use engine::{AbilityOffset, Player, Target, To2d, To3d, UP};
 
 use crate::in_plane;
 
@@ -64,7 +64,7 @@ impl TargetAssets {
         };
         let laser_length = 100.0;
         TargetAssets {
-            cursor_mesh: meshes.add(Circle::new(0.06)),
+            cursor_mesh: meshes.add(Sphere::new(0.06)),
             cursor_material: materials.add(target_material),
             laser_mesh: meshes.add(Cylinder::new(0.01, 1.0)),
             laser_material: materials.add(target_laser_material),
@@ -94,7 +94,7 @@ fn draw_target_system(
             .spawn((
                 Mesh3d(assets.cursor_mesh.clone_weak()),
                 MeshMaterial3d(assets.cursor_material.clone_weak()),
-                in_plane().with_translation(target.0.to_3d(0.0)),
+                Transform::from_translation(target.transform.translation),
                 NotShadowCaster,
                 NotShadowReceiver,
                 CursorTarget,
@@ -113,7 +113,8 @@ fn update_target_system(
             let mut t = in_plane();
             let rotation = player_transform.rotation.inverse();
             t.rotate(rotation);
-            t.translation = rotation * (target.0.to_3d(0.01) - player_transform.translation);
+            t.translation =
+                rotation * (target.transform.translation - player_transform.translation);
 
             *transform = t;
         }
@@ -132,7 +133,9 @@ fn draw_laser_system(
     assets: Res<TargetAssets>,
 ) {
     for (entity, ability_offset) in &query {
-        let laser_transform = in_plane().with_translation(ability_offset.to_vec());
+        let laser_transform = in_plane()
+            .with_translation(ability_offset.to_vec())
+            .with_scale(Vec3::splat(0.01));
 
         let laser = commands
             .spawn((
@@ -150,33 +153,42 @@ fn draw_laser_system(
 }
 
 fn update_laser_system(
-    mut raycast: MeshRayCast,
     assets: Res<TargetAssets>,
     mut laser_query: Query<
         (&ChildOf, &mut Transform),
         (With<LaserSight>, Without<Player>, Without<BlocksSight>),
     >,
     player_query: Query<(&Transform, &Target), With<Player>>,
-    blocks_sight_query: Query<(), With<BlocksSight>>,
 ) {
-    let filter = |entity| blocks_sight_query.get(entity).is_ok();
-    let settings = MeshRayCastSettings::default().with_filter(&filter);
     for (child_of, mut transform) in &mut laser_query {
         let (player_transform, target) = player_query.get(child_of.parent()).expect("no player");
-        let Ok(dir) = Dir3::new((target.0 - player_transform.translation.to_2d()).to_3d(0.0))
-        else {
-            continue;
-        };
-        let ray = Ray3d::new(player_transform.translation, dir);
 
-        let len = raycast
-            .cast_ray(ray, &settings)
-            .first()
-            .map_or(assets.laser_length, |hit| hit.1.distance);
+        let dir = player_transform
+            .looking_at(target.transform.translation, UP)
+            .forward();
+        let len = (target.transform.translation - player_transform.translation).length();
+
+        // *transform = Transform::from_translation(
+        //     player_transform.translation
+        //         + 0.5 * (target.translation - player_transform.translation),
+        // )
+        // .looking_at(target.translation, UP);
+        // let Ok(dir) = Dir3::new(target.translation - player_transform.translation) else {
+        //     continue;
+        // };
+        // let ray = Ray3d::new(player_transform.translation, dir);
+
+        // let len = raycast
+        //     .cast_ray(ray, &settings)
+        //     .first()
+        //     .map_or(assets.laser_length, |hit| hit.1.distance);
         // We need to scale in the "y" direction because that's the orientation of
         // the cylinder that we use to draw the laser, it's just rotated.
-        transform.scale.y = len;
-        transform.translation.z = -len * 0.5;
+
+        // FIXME:
+        // transform.look_to(dir, Vec3::Z);
+        // transform.scale.y = len;
+        // transform.translation.z = -len * 0.5;
     }
 }
 

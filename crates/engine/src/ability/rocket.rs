@@ -28,8 +28,8 @@ use crate::{
     movement::{DesiredMove, MaxSpeed},
     status_effect::{StatusProps, TimeDilation},
     time::{Dur, TIMESTEP},
-    AbilityOffset, Energy, GameSet, Health, MassBundle, Object, Shootable, Target, To2d, FORWARD,
-    PLAYER_R, SCHEDULE,
+    AbilityOffset, Energy, GameSet, Health, MassBundle, Object, Shootable, Target, FORWARD,
+    PLAYER_R, SCHEDULE, UP,
 };
 
 pub struct RocketPlugin;
@@ -144,6 +144,7 @@ struct FireQuery<S: Side> {
     gcd: &'static mut Cooldown,
     energy: &'static mut Energy,
     transform: &'static Transform,
+    target: &'static Target,
     velocity: &'static Velocity,
     ability_offset: &'static AbilityOffset,
     resources: &'static mut Resources<S>,
@@ -172,7 +173,7 @@ fn fire<S: Side>(
     }
 
     let mut transform = *user.transform;
-    let dir = transform.rotation * FORWARD;
+    let dir = user.target.transform.rotation * FORWARD;
     // TODO: If the rocket spawns inside a wall, no one will be hurt by its
     // explosion.
     transform.translation = transform.translation
@@ -192,7 +193,7 @@ fn fire<S: Side>(
             body: RigidBody::Dynamic,
             force: ExternalForce::default(),
             velocity: *user.velocity,
-            locked_axes: LockedAxes::ROTATION_LOCKED | LockedAxes::TRANSLATION_LOCKED_Y,
+            locked_axes: LockedAxes::ROTATION_LOCKED,
             in_level: InLevel,
             statuses: StatusProps {
                 thermal_mass: 1.0,
@@ -244,17 +245,16 @@ fn tracking_system(
             let Ok(target) = target_query.get(rocket.shooter) else {
                 continue;
             };
-            let target = target.0;
+            let target = target.transform.translation;
 
-            let facing = transform.forward().to_2d();
+            let desired_direction = transform.looking_at(target, UP).rotation;
 
-            let desired_rotation = facing.angle_to(target - transform.translation.to_2d());
-            let rotation = desired_rotation.clamp(-rocket.turning_radius, rocket.turning_radius);
-
-            transform.rotate_y(rotation);
+            transform.rotation = transform
+                .rotation
+                .rotate_towards(desired_direction, rocket.turning_radius);
 
             // Rockets always go forward.
-            desired_move.dir = (transform.rotation * FORWARD).to_2d();
+            desired_move.vec = FORWARD;
         } else {
             // Unlock y translation, so it can fall.
             *locked_axes = LockedAxes::ROTATION_LOCKED;

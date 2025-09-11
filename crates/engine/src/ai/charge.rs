@@ -21,7 +21,7 @@ use crate::{
     level::Floor,
     multiplayer::Action,
     player::{Abilities, AbilityIds},
-    AbilityOffset, Ally, Enemy, Faction, To2d, To3d,
+    AbilityOffset, Ally, Enemy, Faction,
 };
 
 #[derive(Component)]
@@ -101,14 +101,13 @@ fn check_obstructions<T: Faction>(
         let filter = QueryFilter::new().predicate(&pred);
         let origin = transform.translation + ability_offset.to_vec();
 
-        let dir = target.loc.0 - transform.translation.to_2d();
+        let dir = target.loc.transform.translation - transform.translation;
 
         // FIXME Unwrap
-        let ray =
-            rapier_context
-                .single()
-                .unwrap()
-                .cast_ray(origin, dir.to_3d(0.0), 1.0, true, filter);
+        let ray = rapier_context
+            .single()
+            .unwrap()
+            .cast_ray(origin, dir, 1.0, true, filter);
 
         ai.gun_obstruction = ray.is_some();
     }

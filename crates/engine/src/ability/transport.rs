@@ -9,7 +9,7 @@ use bevy::{
         system::{Commands, In, Query, Res},
         world::World,
     },
-    math::Vec2,
+    math::Vec3,
     transform::components::Transform,
 };
 use bevy_rapier3d::prelude::{Collider, ExternalForce, LockedAxes, RigidBody, Sensor, Velocity};
@@ -21,7 +21,7 @@ use crate::{
     movement::{DesiredMove, MaxSpeed},
     status_effect::{StatusProps, TimeDilation},
     time::Dur,
-    Energy, GameSet, Health, MassBundle, Object, Target, To2d, To3d, SCHEDULE,
+    Energy, GameSet, Health, MassBundle, Object, Target, FORWARD, SCHEDULE, UP,
 };
 
 pub struct TransportBeamPlugin;
@@ -154,14 +154,14 @@ fn fire(
             activates_in: props.delay,
             radius: props.radius,
             height: props.height,
-            destination: user.target.0,
+            destination: user.target.transform.translation,
         },
         MaxSpeed {
             accel: props.accel,
             speed: props.speed,
         },
         DesiredMove {
-            dir: Vec2::ZERO,
+            vec: Vec3::ZERO,
             can_fly: true,
         },
         Sensor,
@@ -175,21 +175,26 @@ pub struct TransportBeam {
     pub activates_in: Dur,
     pub radius: f32,
     pub height: f32,
-    pub destination: Vec2,
+    pub destination: Vec3,
 }
 
 fn move_system(
-    mut query: Query<(&mut DesiredMove, &Transform, &mut TransportBeam)>,
-    target_q: Query<&Transform>,
+    mut query: Query<(&mut DesiredMove, &mut Transform, &TransportBeam)>,
+    target_q: Query<&Transform, Without<TransportBeam>>,
 ) {
-    for (mut desired_move, transform, beam) in &mut query {
+    for (mut desired_move, mut transform, beam) in &mut query {
         let Ok(target_transform) = target_q.get(beam.target) else {
             desired_move.reset();
             continue;
         };
 
-        desired_move.dir = (target_transform.translation.to_2d() - transform.translation.to_2d())
-            .clamp_length_max(1.0);
+        *transform = transform.looking_at(target_transform.translation, UP);
+
+        let desired_move_dist = (target_transform.translation - transform.translation)
+            .length()
+            .clamp(0.0, 1.0);
+
+        desired_move.vec = desired_move_dist * FORWARD;
     }
 }
 
@@ -211,14 +216,14 @@ fn activation_system(
         // A transport beam originates from the ship above, so it doesn't dilate.
         if q.beam.activates_in.tick(&TimeDilation::NONE) {
             commands.entity(q.entity).insert(Health::new(0.0));
-            let delta = q.beam.destination - q.transform.translation.to_2d();
+            let delta = q.beam.destination - q.transform.translation;
             for &target in &q.collisions.targets {
                 let Ok(mut target_transform) = target_q.get_mut(target) else {
                     continue;
                 };
                 // TODO: We'll likely want to account for altitude difference, or just not allow
                 // targeting inside a wall.
-                target_transform.translation += delta.to_3d(0.0);
+                target_transform.translation += delta;
             }
         }
     }

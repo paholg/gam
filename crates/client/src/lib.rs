@@ -1,28 +1,34 @@
+use std::time::Duration;
+
 use ability::AbilityPlugin;
 use aim::AimPlugin;
 use bar::BarPlugin;
 use bevy::{
     asset::{AssetServer, LoadedFolder},
-    ecs::system::Commands,
+    ecs::system::{Commands, Query},
     prelude::{Assets, Handle, Plugin, Res, ResMut, Resource, Startup, Transform, Update, Vec3},
+    state::state::{OnEnter, OnExit},
+    window::{CursorGrabMode, Window},
 };
+use bevy_framepace::FramepaceSettings;
 use bevy_kira_audio::{
     prelude::Volume, Audio, AudioControl, AudioInstance, AudioPlugin, PlaybackState,
 };
 use config::ConfigPlugin;
 use draw::DrawPlugin;
-use engine::UP;
+use engine::{time::TIMESTEP, AppState, UP};
 use rand::Rng;
 use splash::SplashPlugin;
 
 pub mod ability;
 mod aim;
 mod bar;
+mod camera;
 pub mod color_gradient;
 mod config;
 mod controls;
 pub mod debug;
-mod draw;
+pub mod draw;
 mod i18n;
 mod particles;
 mod shapes;
@@ -33,7 +39,7 @@ mod world;
 pub use config::Config;
 pub use controls::ControlPlugin;
 
-const CAMERA_OFFSET: Vec3 = Vec3::new(0.0, 12.0, 12.0);
+use crate::camera::CameraPlugin;
 
 /// Return a Transform such that things normally in the XY-plane will instead be
 /// correctly oriented in the XZ plane.
@@ -52,11 +58,15 @@ impl Plugin for GamClientPlugin {
             ConfigPlugin,
             GraphicsPlugin,
             AbilityPlugin,
+            CameraPlugin,
             bevy_hanabi::HanabiPlugin,
+            bevy_framepace::FramepacePlugin,
         ))
-        .add_systems(Startup, load_music)
+        .add_systems(Startup, (load_music, setup_framepace))
         .add_systems(Update, background_music_system)
-        .add_systems(Startup, world::setup);
+        .add_systems(Startup, world::setup)
+        .add_systems(OnEnter(AppState::Running), hide_cursor)
+        .add_systems(OnExit(AppState::Running), show_cursor);
     }
 }
 
@@ -88,6 +98,11 @@ impl BackgroundMusic {
 
 fn load_music(mut commands: Commands, assets: Res<AssetServer>) {
     commands.insert_resource(BackgroundMusic::new(&assets));
+}
+
+fn setup_framepace(mut settings: ResMut<FramepaceSettings>) {
+    // FIXME: Remove
+    settings.limiter = bevy_framepace::Limiter::Manual(Duration::from_secs_f32(TIMESTEP));
 }
 
 fn background_music_system(
@@ -183,3 +198,21 @@ fn background_music_system(
 //         children,
 //     }
 // }
+
+fn hide_cursor(mut windows: Query<&mut Window>) {
+    let Ok(mut window) = windows.single_mut() else {
+        return;
+    };
+
+    window.cursor_options.visible = false;
+    window.cursor_options.grab_mode = CursorGrabMode::Locked;
+}
+
+fn show_cursor(mut windows: Query<&mut Window>) {
+    let Ok(mut window) = windows.single_mut() else {
+        return;
+    };
+
+    window.cursor_options.visible = true;
+    window.cursor_options.grab_mode = CursorGrabMode::None;
+}

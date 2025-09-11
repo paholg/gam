@@ -9,7 +9,7 @@ use bevy::{
         Transform, Vec3, With, Without, World,
     },
 };
-use engine::{ability::transport::TransportBeam, To3d};
+use engine::{ability::transport::TransportBeam, To3d, UP};
 
 use crate::color_gradient::ColorGradient;
 
@@ -82,7 +82,7 @@ fn draw_transport_system(
                     MeshMaterial3d::from(material.clone_weak()),
                     Mesh3d::from(assets.mesh.clone_weak()),
                     Transform::from_scale(Vec3::new(beam.radius, 0.0, beam.radius))
-                        .with_translation(beam.destination.to_3d(0.0) - transform.translation),
+                        .with_translation(beam.destination - transform.translation),
                     TransportReceiverGraphics,
                     NotShadowReceiver,
                 ))
@@ -143,6 +143,6 @@ fn update_transport_system(
         };
         receiver_transform.scale.y = frac * beam.height;
         receiver_transform.translation =
-            beam.destination.to_3d(frac * beam.height * 0.5) - parent_transform.translation;
+            beam.destination + (frac * beam.height * 0.5) * UP - parent_transform.translation;
     }
 }

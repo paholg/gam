@@ -2,15 +2,15 @@ use std::ops::MulAssign;
 
 use bevy::{
     ecs::{component::Component, system::Query},
-    math::Vec2,
+    math::Vec3,
     reflect::Reflect,
+    transform::components::Transform,
 };
 use bevy_rapier3d::prelude::Velocity;
 
 use crate::{
     status_effect::TimeDilation,
     time::{FREQUENCY, TIMESTEP},
-    To2d, To3d,
 };
 
 /// The desired movement of an entity.
@@ -20,13 +20,13 @@ use crate::{
 /// <= 1.0
 #[derive(Component, Default, Debug)]
 pub struct DesiredMove {
-    pub dir: Vec2,
+    pub vec: Vec3,
     pub can_fly: bool,
 }
 
 impl DesiredMove {
     pub fn reset(&mut self) {
-        self.dir = Vec2::ZERO;
+        self.vec = Vec3::ZERO;
     }
 }
 
@@ -54,14 +54,22 @@ impl Default for MaxSpeed {
     }
 }
 
-pub fn apply_movement(mut query: Query<(&DesiredMove, &mut Velocity, &MaxSpeed, &TimeDilation)>) {
-    for (desired, mut velocity, max_speed, time_dilation) in &mut query {
+pub fn apply_movement(
+    mut query: Query<(
+        &Transform,
+        &DesiredMove,
+        &mut Velocity,
+        &MaxSpeed,
+        &TimeDilation,
+    )>,
+) {
+    for (transform, desired, mut velocity, max_speed, time_dilation) in &mut query {
         let factor = time_dilation.factor();
-        let desired_v = max_speed.speed * desired.dir * factor;
+        let desired_v = transform.rotation * (max_speed.speed * desired.vec * factor);
 
-        let desired_delta_v = desired_v - velocity.linvel.to_2d();
+        let desired_delta_v = desired_v - velocity.linvel;
         let delta_a = (desired_delta_v * FREQUENCY).clamp_length_max(max_speed.accel * factor);
 
-        velocity.linvel += (delta_a * TIMESTEP).to_3d(0.0);
+        velocity.linvel += delta_a * TIMESTEP;
     }
 }

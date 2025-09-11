@@ -138,7 +138,9 @@ impl Energy {
 /// A target corresponds to a player's cursor location in game coordinates.
 /// It may also end up representing something for AI.
 #[derive(Component, Default)]
-pub struct Target(pub Vec2);
+pub struct Target {
+    pub transform: Transform,
+}
 
 #[derive(Component, Debug, Copy, Clone, PartialEq, Eq, Hash, Resource)]
 pub struct Player {
@@ -494,14 +496,14 @@ impl PrettyPrint for GlobalTransform {
 
 /// Orient a transform to look at the target, being careful to keep its
 /// orientation in the plane.
-pub fn face(transform: &mut Transform, target: Vec2) {
-    let y = transform.translation.y;
-    transform.look_at(target.to_3d(y), UP);
-    debug_assert!(
-        transform.is_finite(),
-        "transform '{transform:?}' NaN while trying to face '{target:?}'"
-    );
-}
+// pub fn face(transform: &mut Transform, target: Vec3) {
+//     let y = transform.translation.y;
+//     transform.look_at(target.to_3d(y), UP);
+//     debug_assert!(
+//         transform.is_finite(),
+//         "transform '{transform:?}' NaN while trying to face '{target:?}'"
+//     );
+// }
 
 /// Sometimes we want to work in a 2d plane, so functions like `Vec3::truncate`
 /// and `Vec2::extend` would be useful, except that Bevy and Rapier really want

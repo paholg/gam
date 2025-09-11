@@ -9,7 +9,6 @@ use bevy::{
 };
 
 use crate::{
-    face,
     movement::DesiredMove,
     multiplayer::{Action, PlayerInputs},
     player::Abilities,
@@ -38,16 +37,17 @@ pub fn apply_inputs(
         };
 
         // Targeting
-        if let Some(cursor) = input.cursor() {
-            user.target.0 = cursor;
-            face(&mut user.transform, cursor);
-        }
+        // FIXME
+        // if let Some(cursor) = input.cursor() {
+        //     user.target.0 = cursor;
+        //     face(&mut user.transform, cursor);
+        // }
         // Abilities
         let buttons = input.buttons();
         buttons.fire_abilities(&mut commands, user.entity, user.abilities);
 
         // Movement
-        user.desired_move.dir = input.movement().clamp_length_max(1.0);
+        user.desired_move.vec = input.movement().clamp_length_max(1.0);
     }
 }
 

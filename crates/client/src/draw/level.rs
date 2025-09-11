@@ -169,70 +169,17 @@ pub fn draw_wall_system(
                         MeshMaterial3d(kind.opaque(&assets)),
                         transform,
                         kind,
+                        BlocksSight,
                     ))
                     .id();
                 if kind.is_wall() {
-                    commands.entity(wall).insert((Wall, BlocksSight));
+                    commands.entity(wall).insert(Wall);
                 }
                 wall
             })
             .collect::<Vec<_>>();
 
         commands.entity(entity).add_children(&ids);
-    }
-}
-
-pub fn update_wall_system(
-    assets: Res<WallAssets>,
-    mut query: Query<
-        (
-            &mut MeshMaterial3d<StandardMaterial>,
-            &Transform,
-            &GlobalTransform,
-            &WallKind,
-        ),
-        With<Wall>,
-    >,
-    healthbar_q: Query<(&GlobalTransform, &Bar<Health>)>,
-) {
-    const DELTA_Y: f32 = 1.3;
-
-    struct BarInfo {
-        loc: Vec2,
-        size: Vec2,
-    }
-
-    let healthbars = healthbar_q
-        .iter()
-        .map(|(gt, bar)| BarInfo {
-            loc: gt.translation().to_2d(),
-            size: bar.size,
-        })
-        .collect::<Vec<_>>();
-    // TODO: This is really inefficient.
-    for (mut material, transform, global_transform, kind) in &mut query {
-        let loc = global_transform.translation().to_2d();
-        let shape = transform.scale.to_2d();
-
-        let wall_left = loc.x - shape.x * 0.5;
-        let wall_right = loc.x + shape.x * 0.5;
-        let wall_top = loc.y + shape.y * 0.5;
-
-        if healthbars.iter().any(|hb| {
-            let hb_left = hb.loc.x - hb.size.x * 0.5;
-            let hb_right = hb.loc.x + hb.size.x * 0.5;
-            let hb_bottom = hb.loc.y + hb.size.y * 0.5;
-
-            // Check if this bar is being blocked visually by this wall.
-            hb_left < wall_right
-                && hb_right > wall_left
-                && hb_bottom > wall_top
-                && hb_bottom < wall_top + DELTA_Y
-        }) {
-            *material = kind.trans(&assets).into();
-        } else {
-            *material = kind.opaque(&assets).into();
-        }
     }
 }
 

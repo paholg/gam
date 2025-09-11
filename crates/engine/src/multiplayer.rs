@@ -2,7 +2,7 @@ use core::fmt;
 
 use bevy::{
     ecs::{entity::Entity, resource::Resource, system::Commands},
-    math::Vec2,
+    math::{Vec2, Vec3},
     platform::collections::HashMap,
     reflect::TypePath,
 };
@@ -130,18 +130,16 @@ pub struct Input {
     buttons: u16,
     move_x: BoundedF8,
     move_z: BoundedF8,
-    cursor_x: f32,
-    cursor_z: f32,
+    cursor: Vec3,
 }
 
 impl Input {
-    pub fn new(buttons: Action, movement: Vec2, cursor: Vec2) -> Self {
+    pub fn new(buttons: Action, movement: Vec2, cursor: Vec3) -> Self {
         Self {
             buttons: buttons.bits(),
             move_x: movement.x.into(),
             move_z: movement.y.into(),
-            cursor_x: cursor.x,
-            cursor_z: cursor.y,
+            cursor,
         }
     }
 
@@ -149,16 +147,12 @@ impl Input {
         Action::from(self.buttons)
     }
 
-    pub fn movement(&self) -> Vec2 {
-        Vec2::new(self.move_x.into(), self.move_z.into())
+    pub fn movement(&self) -> Vec3 {
+        Vec3::new(f32::from(self.move_x), 0.0, -f32::from(self.move_z))
     }
 
-    pub fn cursor(&self) -> Option<Vec2> {
-        if self.cursor_x.is_finite() && self.cursor_z.is_finite() {
-            Some(Vec2::new(self.cursor_x, self.cursor_z))
-        } else {
-            None
-        }
+    pub fn cursor(&self) -> Vec3 {
+        self.cursor
     }
 }
 

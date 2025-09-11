@@ -253,11 +253,11 @@ fn fire<S: Side, G: Grenade>(
         return;
     }
 
-    let dir = user.transform.rotation * FORWARD;
+    let dir = user.target.transform.rotation * FORWARD;
     let position = user.transform.translation
         + dir * (PLAYER_R + props.radius + 0.01)
         + user.ability_offset.to_vec();
-    let vel = calculate_initial_vel(position, user.target.0.to_3d(props.radius));
+    let vel = calculate_initial_vel(position, user.target.transform.translation);
 
     commands.spawn((
         Object {

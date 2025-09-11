@@ -21,8 +21,8 @@ use super::{
     noop_ability, Ability, AbilityId, AbilityMap, Left, Right, Side, SideEnum,
 };
 use crate::{
-    status_effect::TimeDilation, time::Dur, AbilityOffset, Energy, GameSet, FORWARD, PLAYER_R,
-    SCHEDULE,
+    status_effect::TimeDilation, time::Dur, AbilityOffset, Energy, GameSet, Target, FORWARD,
+    PLAYER_R, SCHEDULE,
 };
 
 pub struct GunPlugin;
@@ -236,6 +236,7 @@ impl<S: Side, G: GunKind> Resources<S, G> {
 struct FireQuery<S: Side, G: GunKind> {
     gcd: &'static mut Cooldown,
     transform: &'static Transform,
+    target: &'static Target,
     velocity: &'static Velocity,
     ability_offset: &'static AbilityOffset,
     resources: &'static mut Resources<S, G>,
@@ -259,7 +260,7 @@ fn fire<S: Side, G: GunKind>(
     }
     // user.gcd.set(props.cooldown);
 
-    let dir = user.transform.rotation * FORWARD;
+    let dir = user.target.transform.rotation * FORWARD;
     let position = user.transform.translation
         + dir * (PLAYER_R + props.bullet.radius * 2.0)
         + user.ability_offset.to_vec();
