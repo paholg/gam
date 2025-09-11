@@ -8,18 +8,18 @@ use bevy::{
     math::primitives::Cuboid,
     pbr::MeshMaterial3d,
     prelude::{
-        Added, Commands, Component, Entity, GlobalTransform, Handle, InheritedVisibility, Mesh3d,
-        Query, Res, SpotLight, StandardMaterial, Transform, Vec2, Vec3, With,
+        Added, Commands, Component, Entity, Handle, InheritedVisibility, Mesh3d, Query, Res,
+        SpotLight, StandardMaterial, Transform, Vec3,
     },
     render::{alpha::AlphaMode, mesh::Mesh},
 };
 use engine::{
     level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
     lifecycle::DEATH_Y,
-    Health, To2d, UP,
+    UP,
 };
 
-use crate::{aim::BlocksSight, bar::Bar};
+use crate::aim::BlocksSight;
 
 #[derive(Resource)]
 pub struct WallAssets {

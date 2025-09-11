@@ -9,7 +9,7 @@ use bevy::{
         Transform, Vec3, With, Without, World,
     },
 };
-use engine::{ability::transport::TransportBeam, To3d, UP};
+use engine::{ability::transport::TransportBeam, UP};
 
 use crate::color_gradient::ColorGradient;
 

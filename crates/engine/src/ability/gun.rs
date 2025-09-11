@@ -115,7 +115,7 @@ impl Default for GunProps<StandardGun> {
         Self {
             ammo: 100,
             cooldown: Dur::new(5),
-            speed: 12.0,
+            speed: 16.0,
             reload_cost: 50.0,
             reload_gcd: Dur::new(30),
             reload_cd: Dur::new(120),
@@ -137,7 +137,7 @@ impl Default for GunProps<FireGun> {
         Self {
             ammo: 100,
             cooldown: Dur::new(5),
-            speed: 12.0,
+            speed: 16.0,
             reload_cost: 50.0,
             reload_gcd: Dur::new(30),
             reload_cd: Dur::new(120),

@@ -23,7 +23,7 @@ use crate::{
     level::InLevel,
     status_effect::{StatusProps, TimeDilation},
     time::Dur,
-    GameSet, Health, MassBundle, Object, To2d, To3d, SCHEDULE,
+    GameSet, Health, MassBundle, Object, SCHEDULE,
 };
 
 pub struct ExplosionPlugin;
@@ -171,9 +171,8 @@ fn explosion_collision_system(
                     }
                 }
                 health.take(explosion_damage, target_dilation);
-                let dir = (target_transform.translation.to_2d() - transform.translation.to_2d())
-                    .normalize_or_zero()
-                    .to_3d(0.0);
+                let dir =
+                    (target_transform.translation - transform.translation).normalize_or_zero();
                 force.force += dir * explosion_force;
             }
         }

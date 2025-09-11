@@ -1,4 +1,4 @@
-use std::{f32::consts::PI, marker::PhantomData};
+use std::marker::PhantomData;
 
 use bevy::{
     app::{App, Plugin, Startup},
@@ -26,40 +26,11 @@ use crate::{
     collision::TrackCollisionBundle,
     level::InLevel,
     lifecycle::{DeathCallback, Lifetime},
-    physics::G,
     status_effect::{StatusProps, TimeDilation},
     time::Dur,
-    AbilityOffset, Energy, Health, Libm, MassBundle, Object, Shootable, Target, To2d, To3d,
-    FORWARD, PLAYER_R, SCHEDULE,
+    AbilityOffset, Energy, Health, MassBundle, Object, Shootable, Target, FORWARD, PLAYER_R,
+    SCHEDULE,
 };
-
-/// Calculate the initial velocity of a projectile thrown at 45 degrees up, so
-/// that it will land at target.
-fn calculate_initial_vel(spawn: Vec3, target: Vec3) -> Velocity {
-    let dir_in_plane = target.to_2d() - spawn.to_2d();
-    let height_delta = target.y - spawn.y;
-    let dist_in_plane = dir_in_plane.length();
-
-    // TODO: These can all be constants at some point. Or generated with a proc-
-    // macro or build script.
-    // Or maybe we'll make "throw angle" customizable.
-    let phi = PI / 12.0;
-    let cos_phi = Libm::cos(phi);
-    let cos_sq_phi = cos_phi * cos_phi;
-    let tan_phi = Libm::tan(phi);
-
-    let v0_sq = dist_in_plane * dist_in_plane * G
-        / (2.0 * cos_sq_phi * (dist_in_plane * tan_phi - height_delta));
-    let v0 = Libm::sqrt(v0_sq);
-
-    let dir = dir_in_plane.to_3d(dist_in_plane * tan_phi).normalize();
-    let linvel = v0 * dir;
-
-    Velocity {
-        linvel,
-        angvel: Vec3::ZERO,
-    }
-}
 
 #[derive(Debug, Resource)]
 pub struct GrenadeProps<G: Grenade> {
@@ -71,6 +42,7 @@ pub struct GrenadeProps<G: Grenade> {
     health: f32,
     explosion: ExplosionProps,
     mass: f32,
+    speed: f32,
     _marker: PhantomData<G>,
 }
 impl GrenadeProps<FragGrenade> {
@@ -91,6 +63,7 @@ impl GrenadeProps<FragGrenade> {
                 kind: ExplosionKind::FragGrenade,
             },
             mass: 1.5,
+            speed: 8.0,
             _marker: PhantomData,
         }
     }
@@ -114,6 +87,7 @@ impl GrenadeProps<HealGrenade> {
                 kind: ExplosionKind::HealGrenade,
             },
             mass: 1.0,
+            speed: 8.0,
             _marker: PhantomData,
         }
     }
@@ -257,7 +231,7 @@ fn fire<S: Side, G: Grenade>(
     let position = user.transform.translation
         + dir * (PLAYER_R + props.radius + 0.01)
         + user.ability_offset.to_vec();
-    let vel = calculate_initial_vel(position, user.target.transform.translation);
+    let vel = Velocity::linear(dir * props.speed);
 
     commands.spawn((
         Object {

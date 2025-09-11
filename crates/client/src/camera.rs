@@ -3,7 +3,6 @@ use std::f32::consts::PI;
 use bevy::{
     animation::animatable::Animatable,
     app::{Plugin, Startup, Update},
-    color::palettes::css::BLUE,
     core_pipeline::{bloom::Bloom, core_3d::Camera3d},
     ecs::{
         component::Component,
@@ -12,7 +11,6 @@ use bevy::{
         schedule::IntoScheduleConfigs,
         system::{Commands, Query, Res},
     },
-    gizmos::gizmos::Gizmos,
     input::mouse::AccumulatedMouseMotion,
     math::{Dir3, EulerRot, Quat, Ray3d, Vec3},
     picking::mesh_picking::ray_cast::{MeshRayCast, MeshRayCastSettings},
@@ -78,7 +76,6 @@ fn update(
     mut raycast: MeshRayCast,
     world_query: Query<(), With<WallKind>>,
     blocks_sight_query: Query<(), With<BlocksSight>>,
-    mut gizmos: Gizmos,
     time: Res<Time>,
 ) -> Result {
     let Ok(mut player) = player_query.single_mut() else {
@@ -132,12 +129,6 @@ fn update(
             .unwrap_or_else(|| ray.get_point(1000.0));
         player.target.transform.rotation = target_quat;
     }
-
-    gizmos.line(
-        player.transform.translation,
-        player.target.transform.translation,
-        BLUE,
-    );
 
     {
         // FIXME: Don't do this here!

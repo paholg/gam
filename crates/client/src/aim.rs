@@ -8,19 +8,18 @@ use bevy::{
         system::ResMut,
     },
     math::{
-        primitives::{Circle, Cylinder, Sphere},
-        Dir3, Ray3d, Vec3,
+        primitives::{Cylinder, Sphere},
+        Vec3,
     },
     pbr::{MeshMaterial3d, NotShadowCaster, NotShadowReceiver, StandardMaterial},
-    picking::mesh_picking::ray_cast::MeshRayCastSettings,
     prelude::{
-        Added, Commands, Component, Entity, Mesh3d, MeshRayCast, Plugin, Query, Res, Transform,
-        Update, With, Without,
+        Added, Commands, Component, Entity, Mesh3d, Plugin, Query, Res, Transform, Update, With,
+        Without,
     },
     render::mesh::Mesh,
     scene::SceneInstance,
 };
-use engine::{AbilityOffset, Player, Target, To2d, To3d, UP};
+use engine::{AbilityOffset, Player, Target, UP};
 
 use crate::in_plane;
 
