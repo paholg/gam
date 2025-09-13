@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::{
     app::Startup,
     asset::{Assets, Handle},
@@ -9,7 +11,7 @@ use bevy::{
     },
     math::{
         primitives::{Cylinder, Sphere},
-        Vec3,
+        Quat,
     },
     pbr::{MeshMaterial3d, NotShadowCaster, NotShadowReceiver, StandardMaterial},
     prelude::{
@@ -19,7 +21,7 @@ use bevy::{
     render::mesh::Mesh,
     scene::SceneInstance,
 };
-use engine::{AbilityOffset, Player, Target, UP};
+use engine::{Player, Target, UP};
 
 use crate::in_plane;
 
@@ -47,7 +49,6 @@ pub struct TargetAssets {
     pub cursor_material: Handle<StandardMaterial>,
     pub laser_mesh: Handle<Mesh>,
     pub laser_material: Handle<StandardMaterial>,
-    pub laser_length: f32,
 }
 
 impl TargetAssets {
@@ -61,13 +62,13 @@ impl TargetAssets {
             emissive: LinearRgba::rgb(10.0, 0.0, 0.1),
             ..Default::default()
         };
-        let laser_length = 100.0;
+        let laser_mesh =
+            Mesh::from(Cylinder::new(0.01, 1.0)).rotated_by(Quat::from_rotation_x(PI / 2.0));
         TargetAssets {
             cursor_mesh: meshes.add(Sphere::new(0.06)),
             cursor_material: materials.add(target_material),
-            laser_mesh: meshes.add(Cylinder::new(0.01, 1.0)),
+            laser_mesh: meshes.add(laser_mesh),
             laser_material: materials.add(target_laser_material),
-            laser_length,
         }
     }
 }
@@ -128,19 +129,15 @@ struct LaserSight;
 
 fn draw_laser_system(
     mut commands: Commands,
-    query: Query<(Entity, &AbilityOffset), Added<Player>>,
+    query: Query<Entity, Added<Player>>,
     assets: Res<TargetAssets>,
 ) {
-    for (entity, ability_offset) in &query {
-        let laser_transform = in_plane()
-            .with_translation(ability_offset.to_vec())
-            .with_scale(Vec3::splat(0.01));
-
+    for entity in &query {
         let laser = commands
             .spawn((
                 Mesh3d(assets.laser_mesh.clone_weak()),
                 MeshMaterial3d(assets.laser_material.clone_weak()),
-                laser_transform,
+                Transform::default(),
                 NotShadowCaster,
                 NotShadowReceiver,
                 LaserSight {},
@@ -152,7 +149,6 @@ fn draw_laser_system(
 }
 
 fn update_laser_system(
-    assets: Res<TargetAssets>,
     mut laser_query: Query<
         (&ChildOf, &mut Transform),
         (With<LaserSight>, Without<Player>, Without<BlocksSight>),
@@ -162,32 +158,13 @@ fn update_laser_system(
     for (child_of, mut transform) in &mut laser_query {
         let (player_transform, target) = player_query.get(child_of.parent()).expect("no player");
 
-        let dir = player_transform
-            .looking_at(target.transform.translation, UP)
-            .forward();
         let len = (target.transform.translation - player_transform.translation).length();
-
-        // *transform = Transform::from_translation(
-        //     player_transform.translation
-        //         + 0.5 * (target.translation - player_transform.translation),
-        // )
-        // .looking_at(target.translation, UP);
-        // let Ok(dir) = Dir3::new(target.translation - player_transform.translation) else {
-        //     continue;
-        // };
-        // let ray = Ray3d::new(player_transform.translation, dir);
-
-        // let len = raycast
-        //     .cast_ray(ray, &settings)
-        //     .first()
-        //     .map_or(assets.laser_length, |hit| hit.1.distance);
-        // We need to scale in the "y" direction because that's the orientation of
-        // the cylinder that we use to draw the laser, it's just rotated.
-
-        // FIXME:
-        // transform.look_to(dir, Vec3::Z);
-        // transform.scale.y = len;
-        // transform.translation.z = -len * 0.5;
+        transform.rotation = player_transform.rotation.inverse()
+            * player_transform
+                .looking_at(target.transform.translation, UP)
+                .rotation;
+        transform.translation = 0.5 * len * transform.forward();
+        transform.scale.z = len;
     }
 }
 
