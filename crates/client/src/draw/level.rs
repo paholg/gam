@@ -88,15 +88,6 @@ impl WallKind {
         }
     }
 
-    fn trans(&self, assets: &WallAssets) -> Handle<StandardMaterial> {
-        match self {
-            WallKind::Floor => assets.floor.clone_weak(), // no trans floor
-            WallKind::Short => assets.short_wall_trans.clone_weak(),
-            WallKind::Standard => assets.wall_trans.clone_weak(),
-            WallKind::Tall => assets.tall_wall_trans.clone_weak(),
-        }
-    }
-
     fn is_wall(&self) -> bool {
         match self {
             WallKind::Floor => false,

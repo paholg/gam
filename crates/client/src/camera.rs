@@ -87,10 +87,9 @@ fn update(
     const TOP_MAX_PITCH: f32 = PI / 2.1;
     const BOTTOM_MAX_PITCH: f32 = PI / 2.1;
 
-    // let radius = 0.0;
-    let camera_offset = Vec3::new(0.0, 2.0, 10.0);
-    let target_offset = 500000000.0;
+    let camera_offset = Vec3::new(0.0, 1.5, 8.0);
     let sensitivity = 0.001;
+    let lerp_factor: f32 = 0.001;
 
     // Set angles
     let (_, player_pitch, player_roll) = player.transform.rotation.to_euler(EulerRot::default());
@@ -121,11 +120,12 @@ fn update(
 
         let ray = Ray3d::new(player.transform.translation, target_dir);
 
-        // TODO: We probably want some lag here?
-        player.target.transform.translation = raycast
+        let hit = raycast
             .cast_ray(ray, &settings)
             .first()
-            .map(|(_entity, hit)| hit.point)
+            .map(|(_entity, hit)| hit);
+        player.target.transform.translation = hit
+            .map(|h| h.point)
             .unwrap_or_else(|| ray.get_point(1000.0));
         player.target.transform.rotation = target_quat;
     }
@@ -139,34 +139,29 @@ fn update(
             player_roll,
         );
     }
-    // camera_target.transform.translation = target;
 
     // Position camera
-    // Camera raycast
     {
-        // let filter = |entity| world_query.get(entity).is_ok();
-        // let settings = MeshRayCastSettings::default()
-        //     .with_filter(&filter)
-        //     .with_visibility(bevy::picking::mesh_picking::ray_cast::RayCastVisibility::Visible);
+        let filter = |entity| world_query.get(entity).is_ok();
+        let settings = MeshRayCastSettings::default()
+            .with_filter(&filter)
+            .with_visibility(bevy::picking::mesh_picking::ray_cast::RayCastVisibility::Visible);
 
         let desired_camera_translation = player.transform.translation + target_quat * camera_offset;
 
-        // let ray = Ray3d::new(player.transform.translation, dir);
+        let dir = Dir3::new(desired_camera_translation - player.transform.translation).unwrap();
+        let ray = Ray3d::new(player.transform.translation, dir);
 
-        // let point = raycast
-        //     .cast_ray(ray, &settings)
-        //     .first()
-        //     .map(|(_, hit)| hit.point)
-        //     .unwrap_or(desired_camera_translation);
-        //
-        let camera_target = player.transform.translation + target_offset * (target_quat * FORWARD);
+        let point = raycast
+            .cast_ray(ray, &settings)
+            .first()
+            .map(|(_, hit)| hit.point)
+            .unwrap_or(desired_camera_translation);
 
-        let final_camera_transform =
-            Transform::from_translation(desired_camera_translation).looking_at(camera_target, UP);
+        let final_camera_transform = Transform::from_translation(point).with_rotation(target_quat);
 
         let dt = time.delta_secs();
-        let factor: f32 = 0.0005;
-        let t = 1.0 - factor.powf(dt);
+        let t = 1.0 - lerp_factor.powf(dt);
         *camera.transform = Transform::interpolate(&camera.transform, &final_camera_transform, t);
     }
 
