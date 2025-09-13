@@ -8,8 +8,6 @@ use crate::time::TIMESTEP;
 
 pub type RapierPlugin = RapierPhysicsPlugin<NoUserData>;
 
-pub const G: f32 = 9.81;
-
 pub struct PhysicsPlugin {
     timestep: TimestepMode,
     rapier: RapierPlugin,
@@ -27,7 +25,17 @@ impl PhysicsPlugin {
             dt: TIMESTEP,
             substeps: 1,
         };
-        let rapier = RapierPlugin::default().with_default_system_setup(false);
+        let rapier = RapierPlugin::default()
+            .with_default_system_setup(false)
+            .with_custom_initialization(
+            bevy_rapier3d::plugin::RapierContextInitialization::InitializeDefaultRapierContext {
+                integration_parameters: bevy_rapier3d::rapier::prelude::IntegrationParameters {
+                    dt: TIMESTEP,
+                    ..Default::default()
+                },
+                rapier_configuration: bevy_rapier3d::plugin::RapierConfiguration::new(1.0),
+            },
+        );
 
         Self { rapier, timestep }
     }

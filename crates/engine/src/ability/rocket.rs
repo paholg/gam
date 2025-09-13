@@ -193,7 +193,7 @@ fn fire<S: Side>(
             body: RigidBody::Dynamic,
             force: ExternalForce::default(),
             velocity: *user.velocity,
-            locked_axes: LockedAxes::ROTATION_LOCKED,
+            locked_axes: LockedAxes::empty(),
             in_level: InLevel,
             statuses: StatusProps {
                 thermal_mass: 1.0,
@@ -230,34 +230,36 @@ pub struct Rocket {
     pub energy_cost: f32,
 }
 
-fn tracking_system(
-    mut query: Query<(
-        &Rocket,
-        &mut Transform,
-        &mut DesiredMove,
-        &mut Energy,
-        &mut LockedAxes,
-    )>,
-    target_query: Query<&Target>,
-) {
-    for (rocket, mut transform, mut desired_move, mut energy, mut locked_axes) in query.iter_mut() {
-        if energy.try_use(rocket.energy_cost) {
-            let Ok(target) = target_query.get(rocket.shooter) else {
+#[derive(QueryData)]
+#[query_data(mutable)]
+struct RocketQuery {
+    rocket: &'static Rocket,
+    transform: &'static mut Transform,
+    desired_move: &'static mut DesiredMove,
+    max_speed: &'static mut MaxSpeed,
+    energy: &'static mut Energy,
+    vel: &'static Velocity,
+}
+
+fn tracking_system(mut query: Query<RocketQuery>, target_query: Query<&Target>) {
+    for mut item in query.iter_mut() {
+        if item.energy.try_use(item.rocket.energy_cost) {
+            let Ok(target) = target_query.get(item.rocket.shooter) else {
                 continue;
             };
             let target = target.transform.translation;
 
-            let desired_direction = transform.looking_at(target, UP).rotation;
+            let desired_direction = item.transform.looking_at(target, UP).rotation;
 
-            transform.rotation = transform
+            item.transform.rotation = item
+                .transform
                 .rotation
-                .rotate_towards(desired_direction, rocket.turning_radius);
+                .rotate_towards(desired_direction, item.rocket.turning_radius);
 
             // Rockets always go forward.
-            desired_move.vec = FORWARD;
+            item.desired_move.vec = FORWARD;
         } else {
-            // Unlock y translation, so it can fall.
-            *locked_axes = LockedAxes::ROTATION_LOCKED;
+            *item.max_speed = MaxSpeed::ZERO;
         }
     }
 }

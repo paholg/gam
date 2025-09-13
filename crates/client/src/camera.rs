@@ -18,7 +18,7 @@ use bevy::{
     time::Time,
     transform::components::Transform,
 };
-use engine::{game_running, Player, Target, FORWARD, UP};
+use engine::{game_running, Player, Target, FORWARD};
 
 use crate::{aim::BlocksSight, draw::level::WallKind};
 
@@ -48,7 +48,6 @@ fn spawn(mut commands: Commands) {
             fov: PI * 0.25,
             ..Default::default()
         }),
-        Transform::from_translation(Vec3::new(0.0, 12.0, 12.0)).looking_at(Vec3::ZERO, UP),
         Bloom::default(),
         CameraAngles::default(),
     ));

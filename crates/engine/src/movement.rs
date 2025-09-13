@@ -54,6 +54,13 @@ impl Default for MaxSpeed {
     }
 }
 
+impl MaxSpeed {
+    pub const ZERO: MaxSpeed = MaxSpeed {
+        accel: 0.0,
+        speed: 0.0,
+    };
+}
+
 pub fn apply_movement(
     mut query: Query<(
         &Transform,
