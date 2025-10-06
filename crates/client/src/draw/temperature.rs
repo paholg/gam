@@ -12,9 +12,9 @@ use bevy::{
     },
     render::alpha::AlphaMode,
 };
-use engine::{status_effect::Temperature, CharacterMarker, FootOffset, PLAYER_HEIGHT, PLAYER_R};
+use engine::{status_effect::Temperature, FootOffset, PLAYER_HEIGHT, PLAYER_R};
 
-use crate::color_gradient::ColorGradient;
+use crate::{color_gradient::ColorGradient, draw::character::CharacterMarker};
 
 #[derive(Resource)]
 pub struct TemperatureAssets {

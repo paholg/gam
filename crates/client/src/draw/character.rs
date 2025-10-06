@@ -3,12 +3,13 @@ use std::marker::PhantomData;
 use bevy::{
     app::{Plugin, Startup, Update},
     asset::{AssetServer, Assets, Handle},
+    audio::AudioSource,
     color::{
         palettes::css::{GREEN, LIGHT_CYAN, RED},
         Alpha, LinearRgba,
     },
     diagnostic::FrameCount,
-    ecs::system::SystemId,
+    ecs::{component::Component, system::SystemId},
     light::{NotShadowCaster, NotShadowReceiver},
     math::Vec4,
     mesh::Mesh,
@@ -24,14 +25,13 @@ use bevy_hanabi::{
     LinearDragModifier, SetAttributeModifier, SetPositionSphereModifier, SetVelocitySphereModifier,
     ShapeDimension, SizeOverLifetimeModifier, SpawnerSettings,
 };
-use bevy_kira_audio::{prelude::Decibels, Audio, AudioControl, AudioSource};
 use engine::{
     lifecycle::ClientDeathCallback, Ally, Enemy, Energy, FootOffset, Health, Player, PLAYER_R,
 };
 
 use crate::{
-    aim::BlocksSight, bar::Bar, in_plane, particles::ParticleEffectPool, shapes::HollowPolygon,
-    Config,
+    aim::BlocksSight, audio::play_sound_effect, bar::Bar, in_plane, particles::ParticleEffectPool,
+    shapes::HollowPolygon, Config,
 };
 
 pub struct CharacterPlugin;
@@ -42,6 +42,9 @@ struct CharacterDeathCallbacks {
     enemy: SystemId<In<Entity>>,
     ally: SystemId<In<Entity>>,
 }
+
+#[derive(Component)]
+pub struct CharacterMarker;
 
 impl Plugin for CharacterPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
@@ -96,7 +99,6 @@ fn player_death_system(
     query: Query<&Transform, Without<EffectSpawner>>,
     mut commands: Commands,
     mut assets: ResMut<CharacterAssets<Player>>,
-    audio: Res<Audio>,
     config: Res<Config>,
     mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
     frame: Res<FrameCount>,
@@ -106,9 +108,7 @@ fn player_death_system(
     effect.trigger(&mut commands, transform, &mut effects, &frame);
 
     let sound = assets.despawn_sound.clone();
-    audio
-        .play(sound)
-        .with_volume(Decibels(config.audio.effects_volume));
+    play_sound_effect(&mut commands, &config, sound, transform);
 }
 
 fn enemy_death_system(
@@ -116,7 +116,6 @@ fn enemy_death_system(
     query: Query<&Transform, Without<EffectSpawner>>,
     mut commands: Commands,
     mut assets: ResMut<CharacterAssets<Enemy>>,
-    audio: Res<Audio>,
     config: Res<Config>,
     mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
     frame: Res<FrameCount>,
@@ -126,9 +125,7 @@ fn enemy_death_system(
     effect.trigger(&mut commands, transform, &mut effects, &frame);
 
     let sound = assets.despawn_sound.clone();
-    audio
-        .play(sound)
-        .with_volume(Decibels(config.audio.effects_volume));
+    play_sound_effect(&mut commands, &config, sound, transform);
 }
 
 fn ally_death_system(
@@ -136,7 +133,6 @@ fn ally_death_system(
     query: Query<&Transform, Without<EffectSpawner>>,
     mut commands: Commands,
     mut assets: ResMut<CharacterAssets<Ally>>,
-    audio: Res<Audio>,
     config: Res<Config>,
     mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
     frame: Res<FrameCount>,
@@ -146,9 +142,7 @@ fn ally_death_system(
     effect.trigger(&mut commands, transform, &mut effects, &frame);
 
     let sound = assets.despawn_sound.clone();
-    audio
-        .play(sound)
-        .with_volume(Decibels(config.audio.effects_volume));
+    play_sound_effect(&mut commands, &config, sound, transform);
 }
 
 fn draw_player_system(
@@ -161,7 +155,8 @@ fn draw_player_system(
         commands
             .entity(entity)
             .insert((
-                InheritedVisibility::default(),
+                InheritedVisibility::VISIBLE,
+                CharacterMarker,
                 ClientDeathCallback::new(callbacks.player),
             ))
             .with_children(|builder| {
@@ -193,7 +188,8 @@ fn draw_enemy_system(
         commands
             .entity(entity)
             .insert((
-                InheritedVisibility::default(),
+                InheritedVisibility::VISIBLE,
+                CharacterMarker,
                 ClientDeathCallback::new(callbacks.enemy),
             ))
             .with_children(|builder| {
@@ -226,6 +222,7 @@ fn draw_ally_system(
             .entity(entity)
             .insert((
                 InheritedVisibility::default(),
+                CharacterMarker,
                 ClientDeathCallback::new(callbacks.ally),
             ))
             .with_children(|builder| {

@@ -1,6 +1,7 @@
 use bevy::{
     app::{Plugin, Startup, Update},
     asset::{AssetServer, Assets},
+    audio::AudioSource,
     color::{Color, LinearRgba},
     diagnostic::FrameCount,
     ecs::{
@@ -19,7 +20,6 @@ use bevy_hanabi::{
     LinearDragModifier, SetAttributeModifier, SetPositionSphereModifier, SetVelocitySphereModifier,
     ShapeDimension, SizeOverLifetimeModifier, SpawnerSettings,
 };
-use bevy_kira_audio::{prelude::Decibels, Audio, AudioControl, AudioSource};
 use engine::{
     ability::{
         bullet::Bullet,
@@ -28,7 +28,7 @@ use engine::{
     lifecycle::ClientDeathCallback,
 };
 
-use crate::{particles::ParticleEffectPool, Config};
+use crate::{audio::play_sound_effect, particles::ParticleEffectPool, Config};
 
 pub struct GunPlugin;
 
@@ -105,7 +105,6 @@ fn bullet_death_system(
     query: Query<&Transform, Without<EffectSpawner>>,
     mut commands: Commands,
     mut assets: ResMut<BulletAssets>,
-    audio: Res<Audio>,
     config: Res<Config>,
     mut effects: Query<(&mut Transform, &mut EffectSpawner)>,
     frame: Res<FrameCount>,
@@ -115,20 +114,17 @@ fn bullet_death_system(
     effect.trigger(&mut commands, transform, &mut effects, &frame);
 
     let sound = assets.despawn_sound.clone();
-    audio
-        .play(sound)
-        .with_volume(Decibels(config.audio.effects_volume));
+    play_sound_effect(&mut commands, &config, sound, transform);
 }
 
 fn draw_bullet(
     mut commands: Commands,
     assets: Res<BulletAssets>,
     death_callback: Res<GunDeathCallback>,
-    query: Query<(Entity, &Bullet), Added<Bullet>>,
-    audio: Res<Audio>,
+    query: Query<(Entity, &Bullet, &Transform), Added<Bullet>>,
     config: Res<Config>,
 ) {
-    for (entity, bullet) in query.iter() {
+    for (entity, bullet, transform) in query.iter() {
         let Ok(mut ecmds) = commands.get_entity(entity) else {
             continue;
         };
@@ -145,9 +141,7 @@ fn draw_bullet(
             Mesh3d::from(assets.mesh.clone()),
         ));
         let sound = assets.spawn_sound.clone();
-        audio
-            .play(sound)
-            .with_volume(Decibels(config.audio.effects_volume));
+        play_sound_effect(&mut commands, &config, sound, *transform);
     }
 }
 

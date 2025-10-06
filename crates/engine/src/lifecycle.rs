@@ -24,8 +24,8 @@ use crate::{
     player::{character_collider, PlayerInfo},
     status_effect::{StatusProps, TimeDilation},
     time::{Dur, FrameCounter},
-    Ally, Character, CharacterMarker, Enemy, Energy, FootOffset, Health, MassBundle, NumAi, Object,
-    Player, Shootable, ABILITY_Y, CONTACT_SKIN, PLAYER_HEIGHT, PLAYER_MASS, PLAYER_R,
+    Ally, Character, Enemy, Energy, FootOffset, Health, MassBundle, NumAi, Object, Player,
+    Shootable, ABILITY_Y, CONTACT_SKIN, PLAYER_HEIGHT, PLAYER_MASS, PLAYER_R,
 };
 
 pub const DEATH_Y: f32 = -2.0;
@@ -139,7 +139,6 @@ fn spawn_enemies(
                     global_cooldown: Cooldown::new(),
                     desired_movement: Default::default(),
                     ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
-                    marker: CharacterMarker,
                     contact_skin: CONTACT_SKIN,
                 },
             ))
@@ -197,7 +196,6 @@ fn spawn_allies(
                     global_cooldown: Cooldown::new(),
                     desired_movement: Default::default(),
                     ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
-                    marker: CharacterMarker,
                 },
             ))
             .id();

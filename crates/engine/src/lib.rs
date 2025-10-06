@@ -253,9 +253,6 @@ pub struct Object {
     collisions: TrackCollisionBundle,
 }
 
-#[derive(Component)]
-pub struct CharacterMarker;
-
 #[derive(Bundle)]
 struct Character {
     object: Object,
@@ -268,7 +265,6 @@ struct Character {
     global_cooldown: Cooldown,
     desired_movement: DesiredMove,
     ability_offset: AbilityOffset,
-    marker: CharacterMarker,
 }
 
 #[derive(Resource, Reflect, Default, Debug)]

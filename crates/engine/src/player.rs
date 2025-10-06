@@ -18,8 +18,8 @@ use crate::{
     level::InLevel,
     lifecycle::ENERGY_REGEN,
     status_effect::StatusProps,
-    Ally, Character, CharacterMarker, Energy, Health, MassBundle, Object, Player, Shootable,
-    Target, ABILITY_Y, CONTACT_SKIN, PLAYER_HEIGHT, PLAYER_MASS, PLAYER_R,
+    Ally, Character, Energy, Health, MassBundle, Object, Player, Shootable, Target, ABILITY_Y,
+    CONTACT_SKIN, PLAYER_HEIGHT, PLAYER_MASS, PLAYER_R,
 };
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -118,7 +118,6 @@ impl PlayerInfo {
                     global_cooldown: Cooldown::new(),
                     desired_movement: Default::default(),
                     ability_offset: ((-PLAYER_HEIGHT * 0.5) + ABILITY_Y.y).into(),
-                    marker: CharacterMarker,
                 },
             ))
             .id();

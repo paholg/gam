@@ -4,27 +4,24 @@ use ability::AbilityPlugin;
 use aim::AimPlugin;
 use bar::BarPlugin;
 use bevy::{
-    asset::{AssetServer, LoadedFolder},
     ecs::{
+        error::{BevyError, DefaultErrorHandler, ErrorContext},
         query::With,
-        system::{Commands, Single},
+        system::Single,
     },
-    prelude::{Assets, Handle, Plugin, Res, ResMut, Resource, Startup, Transform, Update, Vec3},
+    prelude::{Plugin, ResMut, Startup, Transform, Vec3},
     state::state::{OnEnter, OnExit},
     window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use bevy_framepace::FramepaceSettings;
-use bevy_kira_audio::{
-    prelude::Decibels, Audio, AudioControl, AudioInstance, AudioPlugin, PlaybackState,
-};
 use config::ConfigPlugin;
 use draw::DrawPlugin;
 use engine::{time::TIMESTEP, AppState, UP};
-use rand::Rng;
 use splash::SplashPlugin;
 
 pub mod ability;
 mod aim;
+mod audio;
 mod bar;
 mod camera;
 pub mod color_gradient;
@@ -41,8 +38,9 @@ mod world;
 
 pub use config::Config;
 pub use controls::ControlPlugin;
+use tracing::error;
 
-use crate::camera::CameraPlugin;
+use crate::{audio::MusicPlugin, camera::CameraPlugin};
 
 /// Return a Transform such that things normally in the XY-plane will instead be
 /// correctly oriented in the XZ plane.
@@ -56,17 +54,17 @@ pub struct GamClientPlugin;
 impl Plugin for GamClientPlugin {
     fn build(&self, app: &mut bevy::prelude::App) {
         app.add_plugins((
-            SplashPlugin,
-            AudioPlugin,
-            ConfigPlugin,
-            GraphicsPlugin,
             AbilityPlugin,
             CameraPlugin,
-            bevy_hanabi::HanabiPlugin,
+            ConfigPlugin,
+            GraphicsPlugin,
+            MusicPlugin,
+            SplashPlugin,
             bevy_framepace::FramepacePlugin,
+            bevy_hanabi::HanabiPlugin,
         ))
-        .add_systems(Startup, (load_music, setup_framepace))
-        .add_systems(Update, background_music_system)
+        .insert_resource(DefaultErrorHandler(error_handler))
+        .add_systems(Startup, setup_framepace)
         .add_systems(Startup, world::setup)
         .add_systems(OnEnter(AppState::Running), hide_cursor)
         .add_systems(OnExit(AppState::Running), show_cursor);
@@ -81,71 +79,13 @@ impl Plugin for GraphicsPlugin {
     }
 }
 
-#[derive(Resource)]
-struct BackgroundMusic {
-    name: Option<String>,
-    handle: Option<Handle<AudioInstance>>,
-    folder: Handle<LoadedFolder>,
-}
-
-impl BackgroundMusic {
-    fn new(asset_server: &AssetServer) -> Self {
-        let folder = asset_server.load_folder("third-party/audio/Galacti-Chrons Weird Music Pack");
-        Self {
-            name: None,
-            handle: None,
-            folder,
-        }
-    }
-}
-
-fn load_music(mut commands: Commands, assets: Res<AssetServer>) {
-    commands.insert_resource(BackgroundMusic::new(&assets));
-}
-
 fn setup_framepace(mut settings: ResMut<FramepaceSettings>) {
     // FIXME: Remove
     settings.limiter = bevy_framepace::Limiter::Manual(Duration::from_secs_f32(TIMESTEP));
 }
 
-fn background_music_system(
-    audio: Res<Audio>,
-    config: Res<Config>,
-    mut bg_music: ResMut<BackgroundMusic>,
-    audio_assets: Res<Assets<AudioInstance>>,
-    loaded_folders: Res<Assets<LoadedFolder>>,
-) {
-    let should_play = match &bg_music.handle {
-        None => true,
-        Some(handle) => match audio_assets.get(handle) {
-            Some(asset) => asset.state() == PlaybackState::Stopped,
-            None => false,
-        },
-    };
-
-    if should_play {
-        if let Some(folder) = loaded_folders.get(&bg_music.folder) {
-            let mut rng = rand::rng();
-            let idx = rng.random_range(0..folder.handles.len());
-            let track = folder.handles[idx].clone().typed();
-            let name = track
-                .path()
-                .unwrap()
-                .path()
-                .file_stem()
-                .unwrap()
-                .to_string_lossy()
-                .to_string();
-
-            let handle = audio
-                .play(track)
-                .with_volume(Decibels(config.audio.music_volume))
-                .handle();
-
-            bg_music.name = Some(name);
-            bg_music.handle = Some(handle);
-        }
-    }
+pub fn error_handler(error: BevyError, ctx: ErrorContext) {
+    error!(?error, ?ctx, "Bevy error");
 }
 
 // #[derive(Debug)]
