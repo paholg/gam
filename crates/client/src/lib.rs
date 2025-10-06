@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use ability::AbilityPlugin;
 use aim::AimPlugin;
 use bar::BarPlugin;
@@ -16,7 +14,7 @@ use bevy::{
 use bevy_framepace::FramepaceSettings;
 use config::ConfigPlugin;
 use draw::DrawPlugin;
-use engine::{time::TIMESTEP, AppState, UP};
+use engine::{AppState, UP};
 use splash::SplashPlugin;
 
 pub mod ability;
@@ -80,8 +78,7 @@ impl Plugin for GraphicsPlugin {
 }
 
 fn setup_framepace(mut settings: ResMut<FramepaceSettings>) {
-    // FIXME: Remove
-    settings.limiter = bevy_framepace::Limiter::Manual(Duration::from_secs_f32(TIMESTEP));
+    settings.limiter = bevy_framepace::Limiter::Auto;
 }
 
 pub fn error_handler(error: BevyError, ctx: ErrorContext) {

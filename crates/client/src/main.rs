@@ -1,4 +1,5 @@
 use bevy::{
+    dev_tools::fps_overlay::FpsOverlayPlugin,
     math::bool,
     prelude::{App, Commands, PluginGroup, Res, Startup},
 };
@@ -46,7 +47,7 @@ fn main() -> color_eyre::eyre::Result<()> {
         bevy::DefaultPlugins
             .set(bevy::window::WindowPlugin {
                 primary_window: Some(bevy::window::Window {
-                    present_mode: bevy::window::PresentMode::AutoVsync,
+                    present_mode: bevy::window::PresentMode::AutoNoVsync,
                     ..Default::default()
                 }),
                 ..Default::default()
@@ -85,9 +86,9 @@ fn debug_stuff(app: &mut App, args: &Args) {
     if args.all || args.rapier {
         app.add_plugins(bevy_rapier3d::render::RapierDebugRenderPlugin::default());
     }
-    // if args.all || args.frame_time {
-    //     app.add_plugins(bevy::diagnostic::FrameTimeDiagnosticsPlugin);
-    // }
+    if args.all || args.frame_time {
+        app.add_plugins(FpsOverlayPlugin::default());
+    }
     if args.all || args.debug_text {
         app.add_plugins(DebugTextPlugin);
     }
