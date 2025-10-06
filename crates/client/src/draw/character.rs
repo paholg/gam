@@ -9,13 +9,14 @@ use bevy::{
     },
     diagnostic::FrameCount,
     ecs::system::SystemId,
+    light::{NotShadowCaster, NotShadowReceiver},
     math::Vec4,
-    pbr::{MeshMaterial3d, NotShadowCaster, NotShadowReceiver, StandardMaterial},
+    mesh::Mesh,
+    pbr::{MeshMaterial3d, StandardMaterial},
     prelude::{
         Added, Commands, Entity, In, InheritedVisibility, Mesh3d, Query, Res, ResMut, Resource,
         Transform, Vec3, Without,
     },
-    render::mesh::Mesh,
     scene::SceneRoot,
 };
 use bevy_hanabi::{
@@ -23,7 +24,7 @@ use bevy_hanabi::{
     LinearDragModifier, SetAttributeModifier, SetPositionSphereModifier, SetVelocitySphereModifier,
     ShapeDimension, SizeOverLifetimeModifier, SpawnerSettings,
 };
-use bevy_kira_audio::{prelude::Volume, Audio, AudioControl, AudioSource};
+use bevy_kira_audio::{prelude::Decibels, Audio, AudioControl, AudioSource};
 use engine::{
     lifecycle::ClientDeathCallback, Ally, Enemy, Energy, FootOffset, Health, Player, PLAYER_R,
 };
@@ -104,10 +105,10 @@ fn player_death_system(
     let transform = *query.get(entity).unwrap();
     effect.trigger(&mut commands, transform, &mut effects, &frame);
 
-    let sound = assets.despawn_sound.clone_weak();
+    let sound = assets.despawn_sound.clone();
     audio
         .play(sound)
-        .with_volume(Volume::Decibels(config.audio.effects_volume));
+        .with_volume(Decibels(config.audio.effects_volume));
 }
 
 fn enemy_death_system(
@@ -124,10 +125,10 @@ fn enemy_death_system(
     let transform = *query.get(entity).unwrap();
     effect.trigger(&mut commands, transform, &mut effects, &frame);
 
-    let sound = assets.despawn_sound.clone_weak();
+    let sound = assets.despawn_sound.clone();
     audio
         .play(sound)
-        .with_volume(Volume::Decibels(config.audio.effects_volume));
+        .with_volume(Decibels(config.audio.effects_volume));
 }
 
 fn ally_death_system(
@@ -144,10 +145,10 @@ fn ally_death_system(
     let transform = *query.get(entity).unwrap();
     effect.trigger(&mut commands, transform, &mut effects, &frame);
 
-    let sound = assets.despawn_sound.clone_weak();
+    let sound = assets.despawn_sound.clone();
     audio
         .play(sound)
-        .with_volume(Volume::Decibels(config.audio.effects_volume));
+        .with_volume(Decibels(config.audio.effects_volume));
 }
 
 fn draw_player_system(
@@ -165,8 +166,8 @@ fn draw_player_system(
             ))
             .with_children(|builder| {
                 builder.spawn((
-                    Mesh3d::from(assets.outline_mesh.clone_weak()),
-                    MeshMaterial3d::from(assets.outline_material.clone_weak()),
+                    Mesh3d::from(assets.outline_mesh.clone()),
+                    MeshMaterial3d::from(assets.outline_material.clone()),
                     in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
                     NotShadowCaster,
                     NotShadowReceiver,
@@ -197,8 +198,8 @@ fn draw_enemy_system(
             ))
             .with_children(|builder| {
                 builder.spawn((
-                    Mesh3d::from(assets.outline_mesh.clone_weak()),
-                    MeshMaterial3d::from(assets.outline_material.clone_weak()),
+                    Mesh3d::from(assets.outline_mesh.clone()),
+                    MeshMaterial3d::from(assets.outline_material.clone()),
                     in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
                     NotShadowCaster,
                     NotShadowReceiver,
@@ -229,8 +230,8 @@ fn draw_ally_system(
             ))
             .with_children(|builder| {
                 builder.spawn((
-                    Mesh3d::from(assets.outline_mesh.clone_weak()),
-                    MeshMaterial3d::from(assets.outline_material.clone_weak()),
+                    Mesh3d::from(assets.outline_mesh.clone()),
+                    MeshMaterial3d::from(assets.outline_material.clone()),
                     in_plane().with_translation(Vec3::new(0.0, foot_offset.y, 0.0)),
                     NotShadowCaster,
                     NotShadowReceiver,

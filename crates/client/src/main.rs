@@ -31,7 +31,8 @@ struct Args {
     debug_text: bool,
 }
 
-fn main() {
+fn main() -> color_eyre::eyre::Result<()> {
+    color_eyre::install()?;
     let args = Args::parse();
 
     let mut app = App::new();
@@ -62,6 +63,8 @@ fn main() {
     debug_stuff(&mut app, &args);
 
     app.run();
+
+    Ok(())
 }
 
 fn debug_stuff(app: &mut App, args: &Args) {

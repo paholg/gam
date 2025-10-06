@@ -83,7 +83,7 @@ fn draw_explosion(
         commands.entity(entity).with_children(|builder| {
             builder.spawn((
                 MeshMaterial3d::from(materials.add(material)),
-                Mesh3d::from(explosion_assets.mesh.clone_weak()),
+                Mesh3d::from(explosion_assets.mesh.clone()),
                 Transform::from_scale(Vec3::splat(radius)),
                 ExplosionGraphics,
             ));

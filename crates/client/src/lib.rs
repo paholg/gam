@@ -5,14 +5,17 @@ use aim::AimPlugin;
 use bar::BarPlugin;
 use bevy::{
     asset::{AssetServer, LoadedFolder},
-    ecs::system::{Commands, Query},
+    ecs::{
+        query::With,
+        system::{Commands, Single},
+    },
     prelude::{Assets, Handle, Plugin, Res, ResMut, Resource, Startup, Transform, Update, Vec3},
     state::state::{OnEnter, OnExit},
-    window::{CursorGrabMode, Window},
+    window::{CursorGrabMode, CursorOptions, PrimaryWindow},
 };
 use bevy_framepace::FramepaceSettings;
 use bevy_kira_audio::{
-    prelude::Volume, Audio, AudioControl, AudioInstance, AudioPlugin, PlaybackState,
+    prelude::Decibels, Audio, AudioControl, AudioInstance, AudioPlugin, PlaybackState,
 };
 use config::ConfigPlugin;
 use draw::DrawPlugin;
@@ -136,7 +139,7 @@ fn background_music_system(
 
             let handle = audio
                 .play(track)
-                .with_volume(Volume::Decibels(config.audio.music_volume))
+                .with_volume(Decibels(config.audio.music_volume))
                 .handle();
 
             bg_music.name = Some(name);
@@ -199,20 +202,12 @@ fn background_music_system(
 //     }
 // }
 
-fn hide_cursor(mut windows: Query<&mut Window>) {
-    let Ok(mut window) = windows.single_mut() else {
-        return;
-    };
-
-    window.cursor_options.visible = false;
-    window.cursor_options.grab_mode = CursorGrabMode::Locked;
+fn hide_cursor(mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>) {
+    cursor_options.visible = false;
+    cursor_options.grab_mode = CursorGrabMode::Locked;
 }
 
-fn show_cursor(mut windows: Query<&mut Window>) {
-    let Ok(mut window) = windows.single_mut() else {
-        return;
-    };
-
-    window.cursor_options.visible = true;
-    window.cursor_options.grab_mode = CursorGrabMode::None;
+fn show_cursor(mut cursor_options: Single<&mut CursorOptions, With<PrimaryWindow>>) {
+    cursor_options.visible = true;
+    cursor_options.grab_mode = CursorGrabMode::None;
 }

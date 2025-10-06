@@ -2,13 +2,15 @@ use bevy::{
     asset::Handle,
     color::{Color, LinearRgba},
     ecs::{hierarchy::ChildOf, resource::Resource},
+    light::{NotShadowCaster, NotShadowReceiver},
     math::primitives::Sphere,
-    pbr::{MeshMaterial3d, NotShadowCaster, NotShadowReceiver},
+    mesh::Mesh,
+    pbr::MeshMaterial3d,
     prelude::{
         Added, Assets, Commands, Component, Entity, Mesh3d, Query, Res, ResMut, StandardMaterial,
         Transform, Vec3, With,
     },
-    render::{alpha::AlphaMode, mesh::Mesh},
+    render::alpha::AlphaMode,
 };
 use engine::{status_effect::Temperature, CharacterMarker, FootOffset, PLAYER_HEIGHT, PLAYER_R};
 
@@ -67,7 +69,7 @@ pub fn draw_temperature_system(
             // Clone material because we'll mutate it.
             let material = materials.get(&assets.material).unwrap().clone();
             builder.spawn((
-                Mesh3d(assets.mesh.clone_weak()),
+                Mesh3d(assets.mesh.clone()),
                 MeshMaterial3d(materials.add(material)),
                 Transform::from_translation(
                     foot_offset.to_vec() + Vec3::new(0.0, PLAYER_HEIGHT * 0.5, 0.0),

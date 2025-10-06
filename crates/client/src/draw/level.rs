@@ -6,12 +6,13 @@ use bevy::{
     },
     ecs::{resource::Resource, system::ResMut},
     math::primitives::Cuboid,
+    mesh::Mesh,
     pbr::MeshMaterial3d,
     prelude::{
         Added, Commands, Component, Entity, Handle, InheritedVisibility, Mesh3d, Query, Res,
         SpotLight, StandardMaterial, Transform, Vec3,
     },
-    render::{alpha::AlphaMode, mesh::Mesh},
+    render::alpha::AlphaMode,
 };
 use engine::{
     level::{Floor, InLevel, LevelProps, SHORT_WALL, WALL_HEIGHT},
@@ -81,10 +82,10 @@ pub enum WallKind {
 impl WallKind {
     fn opaque(&self, assets: &WallAssets) -> Handle<StandardMaterial> {
         match self {
-            WallKind::Floor => assets.floor.clone_weak(),
-            WallKind::Short => assets.short_wall.clone_weak(),
-            WallKind::Standard => assets.wall.clone_weak(),
-            WallKind::Tall => assets.tall_wall.clone_weak(),
+            WallKind::Floor => assets.floor.clone(),
+            WallKind::Short => assets.short_wall.clone(),
+            WallKind::Standard => assets.wall.clone(),
+            WallKind::Tall => assets.tall_wall.clone(),
         }
     }
 
@@ -156,7 +157,7 @@ pub fn draw_wall_system(
             .map(|(transform, kind)| {
                 let wall = commands
                     .spawn((
-                        Mesh3d(assets.shape.clone_weak()),
+                        Mesh3d(assets.shape.clone()),
                         MeshMaterial3d(kind.opaque(&assets)),
                         transform,
                         kind,
@@ -212,9 +213,7 @@ pub fn draw_lights_system(
 
             commands.spawn((
                 SpotLight {
-                    // FIXME: We definitely want shadows, but they're so buggy that they're more
-                    // distracting than helpful at the moment.
-                    shadows_enabled: false,
+                    shadows_enabled: true,
                     range: 30.0,
                     intensity: 4_000_000.0,
                     outer_angle: std::f32::consts::FRAC_PI_3,

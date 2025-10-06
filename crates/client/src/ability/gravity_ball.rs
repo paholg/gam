@@ -9,8 +9,9 @@ use bevy::{
         system::{Commands, Query, Res, ResMut},
         world::World,
     },
+    light::{NotShadowCaster, NotShadowReceiver},
     math::{primitives::Sphere, Vec3},
-    pbr::{MeshMaterial3d, NotShadowCaster, NotShadowReceiver},
+    pbr::MeshMaterial3d,
     prelude::{
         GlobalTransform, Handle, InheritedVisibility, Mesh, Mesh3d, StandardMaterial, Transform,
         Without,
@@ -81,8 +82,8 @@ fn draw_gravity_ball(
 
         ecmds.with_children(|builder| {
             builder.spawn((
-                MeshMaterial3d::from(assets.material.clone_weak()),
-                Mesh3d::from(assets.mesh.clone_weak()),
+                MeshMaterial3d::from(assets.material.clone()),
+                Mesh3d::from(assets.mesh.clone()),
                 Transform::IDENTITY,
             ));
         });
@@ -112,7 +113,7 @@ fn draw_gravity_ball_outline(
             .insert(HasOutline)
             .with_children(|builder| {
                 builder.spawn((
-                    MeshMaterial3d::from(assets.outline_material.clone_weak()),
+                    MeshMaterial3d::from(assets.outline_material.clone()),
                     Mesh3d::from(assets.outline_mesh.clone()),
                     in_plane().with_translation(offset),
                     NotShadowCaster,

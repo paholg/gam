@@ -8,8 +8,9 @@ use bevy::{
         hierarchy::ChildOf, query::QueryData, resource::Resource, schedule::IntoScheduleConfigs,
         system::ResMut,
     },
+    light::{NotShadowCaster, NotShadowReceiver},
     math::primitives::Rectangle,
-    pbr::{MeshMaterial3d, NotShadowCaster, NotShadowReceiver},
+    pbr::MeshMaterial3d,
     prelude::{
         Added, Children, Color, Commands, Component, Entity, GlobalTransform, Handle, Mesh, Mesh3d,
         Plugin, Query, Res, StandardMaterial, Transform, Update, Vec2, Vec3, Visibility, With,

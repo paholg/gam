@@ -2,7 +2,8 @@ use bevy::{
     app::{Plugin, Startup, Update},
     color::LinearRgba,
     ecs::hierarchy::ChildOf,
-    pbr::{MeshMaterial3d, NotShadowReceiver},
+    light::NotShadowReceiver,
+    pbr::MeshMaterial3d,
     prelude::{
         Added, AlphaMode, Assets, Commands, Component, Cylinder, Entity, Handle,
         InheritedVisibility, Mesh, Mesh3d, Query, Res, ResMut, Resource, StandardMaterial,
@@ -79,8 +80,8 @@ fn draw_transport_system(
         commands.entity(entity).with_children(|builder| {
             let receiver = builder
                 .spawn((
-                    MeshMaterial3d::from(material.clone_weak()),
-                    Mesh3d::from(assets.mesh.clone_weak()),
+                    MeshMaterial3d::from(material.clone()),
+                    Mesh3d::from(assets.mesh.clone()),
                     Transform::from_scale(Vec3::new(beam.radius, 0.0, beam.radius))
                         .with_translation(beam.destination - transform.translation),
                     TransportReceiverGraphics,
@@ -90,7 +91,7 @@ fn draw_transport_system(
 
             builder.spawn((
                 MeshMaterial3d::from(material),
-                Mesh3d::from(assets.mesh.clone_weak()),
+                Mesh3d::from(assets.mesh.clone()),
                 Transform::from_scale(Vec3::new(beam.radius, 0.0, beam.radius))
                     .with_translation(Vec3::new(0.0, beam.height, 0.0)),
                 TransportSenderGraphics { receiver },

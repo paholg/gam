@@ -1,8 +1,9 @@
 use std::f32::consts::PI;
 
 use bevy::{
+    asset::RenderAssetUsages,
+    mesh::{Indices, PrimitiveTopology},
     prelude::Mesh,
-    render::{render_asset::RenderAssetUsages, render_resource::PrimitiveTopology},
 };
 
 /// A hollow polygon. Can also act as a hollow circle when vertices is large.
@@ -91,7 +92,7 @@ impl From<Chunk> for Mesh {
         let (positions, indices) = value.into_positions_and_indices();
 
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
-        mesh.insert_indices(bevy::render::mesh::Indices::U32(indices));
+        mesh.insert_indices(Indices::U32(indices));
 
         mesh
     }
@@ -144,7 +145,7 @@ impl From<HollowChunk> for Mesh {
             RenderAssetUsages::RENDER_WORLD,
         );
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
-        mesh.insert_indices(bevy::render::mesh::Indices::U32(indices));
+        mesh.insert_indices(Indices::U32(indices));
 
         mesh
     }

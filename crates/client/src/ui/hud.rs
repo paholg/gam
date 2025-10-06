@@ -120,7 +120,7 @@ impl FpsTracker {
 fn fps_track(mut fps: ResMut<FpsTracker>) {
     fps.frame += 1;
 
-    if fps.frame % 100 == 0 {
+    if fps.frame.is_multiple_of(100) {
         let dur = fps.since.elapsed();
 
         fps.fps = 100_f32 / dur.as_secs_f32();

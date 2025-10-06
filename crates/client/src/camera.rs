@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use bevy::{
     animation::animatable::Animatable,
     app::{Plugin, Startup, Update},
-    core_pipeline::{bloom::Bloom, core_3d::Camera3d},
+    camera::{Camera, Camera3d, PerspectiveProjection, Projection},
     ecs::{
         component::Component,
         error::Result,
@@ -14,7 +14,8 @@ use bevy::{
     input::mouse::AccumulatedMouseMotion,
     math::{Dir3, EulerRot, Quat, Ray3d, Vec3},
     picking::mesh_picking::ray_cast::{MeshRayCast, MeshRayCastSettings},
-    render::camera::{Camera, PerspectiveProjection, Projection},
+    post_process::bloom::Bloom,
+    render::view::Hdr,
     time::Time,
     transform::components::Transform,
 };
@@ -41,9 +42,9 @@ fn spawn(mut commands: Commands) {
     commands.spawn((
         Camera3d::default(),
         Camera {
-            hdr: true,
             ..Default::default()
         },
+        Hdr,
         Projection::Perspective(PerspectiveProjection {
             fov: PI * 0.25,
             ..Default::default()

@@ -9,7 +9,7 @@ bevy = { workspace = true, default-features = false, features = [] }
 # Other crates
 bevy_rapier3d.workspace = true
 bitmask-enum = "2.2.5"
-bytemuck = { version = "1.23.2", features = ["derive"] }
+bytemuck = { version = "1.24.0", features = ["derive"] }
 # Not on bevy 0.16 yet:
 # oxidized_navigation = { version = "0.12.0", features = ["rapier"] }
 # bincode = { version = "2.0.0-rc.2", features = ["serde"] }

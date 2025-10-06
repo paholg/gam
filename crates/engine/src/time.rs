@@ -101,7 +101,7 @@ impl FrameCounter {
     }
 
     pub fn diagnostic_iter(&self) -> bool {
-        self.frame.0 % Self::DIAGNOSTIC_ITERS == 0
+        self.frame.0.is_multiple_of(Self::DIAGNOSTIC_ITERS)
     }
 
     pub fn at(&self, dur: Dur) -> Frame {

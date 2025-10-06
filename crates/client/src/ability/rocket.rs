@@ -68,8 +68,8 @@ pub fn draw_rocket_system(
 
         ecmds.with_children(|builder| {
             builder.spawn((
-                MeshMaterial3d::from(assets.material.clone_weak()),
-                Mesh3d::from(assets.mesh.clone_weak()),
+                MeshMaterial3d::from(assets.material.clone()),
+                Mesh3d::from(assets.mesh.clone()),
                 Bar::<Energy>::new(0.2, Vec2::new(0.15, 0.08)),
                 in_plane(),
             ));

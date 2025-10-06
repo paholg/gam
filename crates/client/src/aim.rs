@@ -9,16 +9,17 @@ use bevy::{
         resource::Resource,
         system::ResMut,
     },
+    light::{NotShadowCaster, NotShadowReceiver},
     math::{
         primitives::{Cylinder, Sphere},
         Quat,
     },
-    pbr::{MeshMaterial3d, NotShadowCaster, NotShadowReceiver, StandardMaterial},
+    mesh::Mesh,
+    pbr::{MeshMaterial3d, StandardMaterial},
     prelude::{
         Added, Commands, Component, Entity, Mesh3d, Plugin, Query, Res, Transform, Update, With,
         Without,
     },
-    render::mesh::Mesh,
     scene::SceneInstance,
 };
 use engine::{Player, Target, UP};
@@ -92,8 +93,8 @@ fn draw_target_system(
     for (entity, target) in &query {
         let target_entity = commands
             .spawn((
-                Mesh3d(assets.cursor_mesh.clone_weak()),
-                MeshMaterial3d(assets.cursor_material.clone_weak()),
+                Mesh3d(assets.cursor_mesh.clone()),
+                MeshMaterial3d(assets.cursor_material.clone()),
                 Transform::from_translation(target.transform.translation),
                 NotShadowCaster,
                 NotShadowReceiver,
@@ -135,8 +136,8 @@ fn draw_laser_system(
     for entity in &query {
         let laser = commands
             .spawn((
-                Mesh3d(assets.laser_mesh.clone_weak()),
-                MeshMaterial3d(assets.laser_material.clone_weak()),
+                Mesh3d(assets.laser_mesh.clone()),
+                MeshMaterial3d(assets.laser_material.clone()),
                 Transform::default(),
                 NotShadowCaster,
                 NotShadowReceiver,

@@ -64,9 +64,9 @@ struct CollisionQuery {
     time_dilation: Option<&'static TimeDilation>,
 }
 
-impl CollisionQueryItem<'_> {
+impl CollisionQueryItem<'_, '_> {
     #[allow(unused)]
-    fn discharge(&mut self, other: &mut CollisionQueryItem<'_>) {
+    fn discharge(&mut self, other: &mut CollisionQueryItem) {
         let damage = self.charge.discharge(&mut other.charge);
         self.take(damage);
         other.take(damage);

@@ -1,7 +1,7 @@
 use std::{fs, io, path::PathBuf};
 
 use bevy::{
-    core_pipeline::fxaa,
+    anti_alias::fxaa,
     prelude::{
         Added, Commands, Entity, GamepadButton, KeyCode, MouseButton, Plugin, Query, Res, Resource,
         Update,
@@ -220,10 +220,10 @@ impl From<Sensitivity> for fxaa::Sensitivity {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Audio {
-    pub global_volume: f64,
-    pub effects_volume: f64,
-    pub music_volume: f64,
-    pub speech_volume: f64,
+    pub global_volume: f32,
+    pub effects_volume: f32,
+    pub music_volume: f32,
+    pub speech_volume: f32,
 }
 
 impl Default for Audio {

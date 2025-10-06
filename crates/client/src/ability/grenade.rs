@@ -4,8 +4,9 @@ use bevy::{
     app::{Plugin, Startup, Update},
     asset::{Assets, Handle},
     color::LinearRgba,
+    light::{NotShadowCaster, NotShadowReceiver},
     math::Vec3,
-    pbr::{MeshMaterial3d, NotShadowCaster, NotShadowReceiver, StandardMaterial},
+    pbr::{MeshMaterial3d, StandardMaterial},
     prelude::{
         Added, Commands, Entity, InheritedVisibility, Mesh, Mesh3d, Query, Res, ResMut, Resource,
         Sphere, Transform, Without, World,
@@ -126,8 +127,8 @@ pub fn draw_grenade<G: Grenade>(
         ecmds.insert(InheritedVisibility::default());
         ecmds.with_children(|builder| {
             builder.spawn((
-                MeshMaterial3d::from(assets.material.clone_weak()),
-                Mesh3d::from(assets.mesh.clone_weak()),
+                MeshMaterial3d::from(assets.material.clone()),
+                Mesh3d::from(assets.mesh.clone()),
             ));
         });
     }
@@ -147,8 +148,8 @@ pub fn draw_grenade_outline<G: Grenade>(
                 .insert(HasOutline)
                 .with_children(|builder| {
                     builder.spawn((
-                        Mesh3d::from(assets.outline_mesh.clone_weak()),
-                        MeshMaterial3d::from(assets.outline_material.clone_weak()),
+                        Mesh3d::from(assets.outline_mesh.clone()),
+                        MeshMaterial3d::from(assets.outline_material.clone()),
                         in_plane()
                             .with_translation(Vec3::new(0.0, foot_offset.y + 0.01, 0.0))
                             .with_scale(transform.scale.recip() * grenade.explosion_radius()),

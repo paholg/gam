@@ -1,5 +1,5 @@
 use bevy::ecs::{
-    bundle::Bundle, component::Component, entity::Entity, event::EventReader, system::Query,
+    bundle::Bundle, component::Component, entity::Entity, message::MessageReader, system::Query,
 };
 use bevy_rapier3d::prelude::{ActiveEvents, CollisionEvent};
 use smallvec::SmallVec;
@@ -59,7 +59,7 @@ fn add_collision(entity: Entity, target: Entity, collisions_q: &mut Query<&mut T
 }
 
 pub fn collision_system(
-    mut collision_events: EventReader<CollisionEvent>,
+    mut collision_events: MessageReader<CollisionEvent>,
     mut collisions_q: Query<&mut TrackCollisions>,
 ) {
     for event in collision_events.read() {

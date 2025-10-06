@@ -19,7 +19,7 @@ use bevy_hanabi::{
     LinearDragModifier, SetAttributeModifier, SetPositionSphereModifier, SetVelocitySphereModifier,
     ShapeDimension, SizeOverLifetimeModifier, SpawnerSettings,
 };
-use bevy_kira_audio::{prelude::Volume, Audio, AudioControl, AudioSource};
+use bevy_kira_audio::{prelude::Decibels, Audio, AudioControl, AudioSource};
 use engine::{
     ability::{
         bullet::Bullet,
@@ -114,10 +114,10 @@ fn bullet_death_system(
     let transform = *query.get(entity).unwrap();
     effect.trigger(&mut commands, transform, &mut effects, &frame);
 
-    let sound = assets.despawn_sound.clone_weak();
+    let sound = assets.despawn_sound.clone();
     audio
         .play(sound)
-        .with_volume(Volume::Decibels(config.audio.effects_volume));
+        .with_volume(Decibels(config.audio.effects_volume));
 }
 
 fn draw_bullet(
@@ -133,21 +133,21 @@ fn draw_bullet(
             continue;
         };
         let material = if bullet.heat > 0.0 {
-            assets.fire_material.clone_weak()
+            assets.fire_material.clone()
         } else if bullet.heat < 0.0 {
-            assets.cold_material.clone_weak()
+            assets.cold_material.clone()
         } else {
-            assets.standard_material.clone_weak()
+            assets.standard_material.clone()
         };
         ecmds.insert((
             ClientDeathCallback::new(death_callback.system),
             MeshMaterial3d::from(material),
-            Mesh3d::from(assets.mesh.clone_weak()),
+            Mesh3d::from(assets.mesh.clone()),
         ));
-        let sound = assets.spawn_sound.clone_weak();
+        let sound = assets.spawn_sound.clone();
         audio
             .play(sound)
-            .with_volume(Volume::Decibels(config.audio.effects_volume));
+            .with_volume(Decibels(config.audio.effects_volume));
     }
 }
 
